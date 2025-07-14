@@ -1,9 +1,9 @@
 #pragma once
 #include "Project.h"
 #include <vector>
-
-class Firm;
-class Distributor;
+#include <string>
+#include "Firm.h"
+#include "Distributor.h"
 
 struct WorkRecord {
     int workerId;
@@ -37,6 +37,7 @@ class Worker {
         // Labor time exchange with distributors
         void consumeGoodsServices(Distributor& distributor, const std::vector<GoodsService>& goods);
         void receiveGoodsServices(const std::vector<GoodsService>& goods);
+        int buyGoodsServices(Distributor& distributor, const std::vector<GoodsService>& goods);
         
         // Labor time accounting
         void updateLaborTimeBalance(double laborTimeValue);

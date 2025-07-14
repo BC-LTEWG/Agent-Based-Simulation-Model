@@ -17,6 +17,16 @@ int Worker::getLaborTimeHoursWorked() const {
     return laborTimeHoursWorked;
 }
 
+int Worker::buyGoodsServices(Distributor& distributor, const std::vector<GoodsService>& goods) {
+    if (!goods.empty()) {
+        distributor.supplyGoodsServicesToWorkers(*this, goods);
+        for (const auto& good : goods) {
+            totalLaborTimeValue -= good.laborTimeValue;
+        }
+    }
+    return totalLaborTimeValue;
+}
+
 int Worker::getLaborTimeCertificateWorth() const {
     return laborTimeCertificateWorth;
 }
@@ -43,7 +53,7 @@ void Worker::receiveWorkRecord(const WorkRecord& record) {
 
 void Worker::consumeGoodsServices(Distributor& distributor, const std::vector<GoodsService>& goods) {
     if (!goods.empty()) {
-        distributor.supplyGoodsServices(*this, goods);
+        distributor.supplyGoodsServicesToWorkers(*this, goods);
     }
 }
 
