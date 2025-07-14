@@ -1,6 +1,7 @@
 #include "../include/Project.h"
 #include "../include/Worker.h"
 #include <algorithm>
+#include <iostream>
 
 Project::Project(int id, int totalLaborTimeHoursForProject, int numWorkersNeeded)
     : id(id), totalLaborTimeHoursForProject(totalLaborTimeHoursForProject),
@@ -25,6 +26,10 @@ int Project::getLaborTimeHoursPerWorker() const {
 }
 
 void Project::addWorker(Worker* worker) {
+    if(!worker) {
+        std::cout << "Null ptr error\n";
+    }
+
     if (worker && assignedWorkers.size() < static_cast<size_t>(numWorkersNeeded)) {
         auto it = std::find(assignedWorkers.begin(), assignedWorkers.end(), worker);
         if (it == assignedWorkers.end()) {
@@ -35,6 +40,10 @@ void Project::addWorker(Worker* worker) {
 }
 
 void Project::removeWorker(Worker* worker) {
+    if(!worker) {
+        std::cout << "Null ptr error\n";
+    }
+
     auto it = std::find(assignedWorkers.begin(), assignedWorkers.end(), worker);
     if (it != assignedWorkers.end()) {
         assignedWorkers.erase(it);
