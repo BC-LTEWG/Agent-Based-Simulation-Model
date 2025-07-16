@@ -4,12 +4,12 @@
 #include "company.h"
 
 void add_plan_to_company(Company * company) {
-    Plan plan;
-    plan.product_name = "widget";
-    plan.quantity = 16;
-    plan.unit = "item";
-    plan.raw_materials = 10.0;
-    plan.labor = 20.0;
+    Plan * plan = new Plan();
+    plan->product_name = "widget";
+    plan->quantity = 16;
+    plan->unit = "item";
+    plan->inputs.raw_materials = 10.0;
+    plan->inputs.labor = 20.0;
     company->add_plan(plan);
 }
 
