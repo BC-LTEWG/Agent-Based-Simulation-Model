@@ -36,6 +36,7 @@
 *.exe
 *.out
 *.app
+Signals/sim
 
 # debug information files
 *.dwo
