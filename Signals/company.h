@@ -36,3 +36,11 @@ class Company {
         vector<Plan *> plans;
         vector<Worker *> workers;
 };
+
+
+/*
+f means of production  p
+c raw materials        r
+l labor                a
+prd product = -(f + c + l)
+*/

@@ -1,12 +1,12 @@
 #include <iostream>
 #include <cstdlib>
-
 #include "accountant.h"
 #include "company.h"
 
 void add_plan_to_company(Company * company, Accountant * accountant) {
     Plan * plan = new Plan();
     plan->product_name = "widget";
+    plan->company = company;
     plan->quantity = 16;
     plan->unit = "item";
     plan->inputs.raw_materials = 10.0;
@@ -21,10 +21,9 @@ void add_plan_to_company(Company * company, Accountant * accountant) {
 
 int main() {
     Company * company = new Company("A");
-    Accountant  accountant;
+    Accountant accountant;
     cout << "Company: " << company->name() << endl;
     add_plan_to_company(company, &accountant);
     company->print_plans();
     return EXIT_SUCCESS;
 }
-

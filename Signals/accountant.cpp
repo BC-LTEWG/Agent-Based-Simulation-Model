@@ -1,6 +1,8 @@
 #include "accountant.h"
 #include "company.h"
 
+#include <iostream>
+
 bool Accountant::approve_plan(Plan * draft_plan, Inputs * amended_inputs) {
     Company * company = draft_plan->company;
     int num_plans = company->plans.size();
