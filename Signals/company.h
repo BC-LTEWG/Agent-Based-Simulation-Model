@@ -20,7 +20,7 @@ struct Plan {
     Company * company;
     Inputs inputs;
     double product;
-    Plan();
+    Plan(Company *);
 };
 
 class Company {

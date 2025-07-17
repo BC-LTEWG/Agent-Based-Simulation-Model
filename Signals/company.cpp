@@ -9,11 +9,11 @@ Inputs::Inputs() {
     labor = 0.0;
 }
 
-Plan::Plan() {
+Plan::Plan(Company * company) {
     product_name = "";
     quantity = 0;
     unit = "";
-    company = NULL;
+    this->company = company;
     product = 0.0;
 }
 
@@ -26,7 +26,6 @@ string Company::name() {
 }
 
 void Company::add_plan(Plan * plan) {
-    plan->company = this;
     plan->product = -(plan->inputs.fixed_capital + plan->inputs.raw_materials
             + plan->inputs.labor);
     plans.push_back(plan);

@@ -4,9 +4,8 @@
 #include "company.h"
 
 void add_plan_to_company(Company * company, Accountant * accountant) {
-    Plan * plan = new Plan();
+    Plan * plan = new Plan(company);
     plan->product_name = "widget";
-    plan->company = company;
     plan->quantity = 16;
     plan->unit = "item";
     plan->inputs.raw_materials = 10.0;
