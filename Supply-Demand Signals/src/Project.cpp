@@ -26,7 +26,7 @@ void Project::tick() {
         return;
     }
 
-    hours_left -= hours_worked * workers.size();
+    hours_left -= hours_worked * num_workers();
 
     for (auto & worker : workers) {
         society->pay(worker, hours_worked);

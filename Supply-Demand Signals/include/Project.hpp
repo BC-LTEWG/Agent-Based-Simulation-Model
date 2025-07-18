@@ -10,6 +10,8 @@ class Society;
 class Worker;
 
 class Project {
+    friend class Firm;
+
     private:
         Society * society;
 

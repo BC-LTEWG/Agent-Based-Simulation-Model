@@ -8,7 +8,7 @@
 class Society;
 
 class Firm {
-    friend class Distributor;
+        friend class Distributor;
 
     private:
         std::vector<Project *> projects;
@@ -38,4 +38,5 @@ class Firm {
         void tick();
 
         void new_plans();
+        Plan generate_plan(Project * project);
 };

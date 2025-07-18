@@ -17,10 +17,12 @@ void Society::pay(Worker * worker, double amount) {
     reserve += amount * tax_rate;
 }
 
-void Society::tick_cycle() {
-    // Beginning of plan cycle - generate plans
-    for (auto & firm : firms) {
-        firm->new_plans();
+void Society::tick_cycle(bool is_first) {
+    if (!is_first) {
+        // Beginning of plan cycle - generate plans
+        for (auto & firm : firms) {
+            firm->new_plans();
+        }
     }
 
     // Go through the cycle duration in daily ticks
@@ -34,10 +36,8 @@ void Society::tick() {
         firm->tick();
     }
 
-
     for (auto & worker : workers) {
         worker->update_needs();
         worker->fulfill_needs();
     }
-
 }

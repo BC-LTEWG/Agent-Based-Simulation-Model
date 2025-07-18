@@ -19,7 +19,7 @@ class Society {
         std::vector<Firm *> firms;
         std::vector<Good *> goods;
         std::vector<Distributor *> distributors;
-        
+
         // For now, a fixed plan cycle duration
         int plan_cycle_duration;
 
@@ -37,7 +37,6 @@ class Society {
         void add_good(Good * g);
 
         void pay(Worker * worker, double amount);
-    
-    void tick_cycle();
 
+        void tick_cycle(bool is_first = false);
 };

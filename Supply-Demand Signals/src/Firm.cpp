@@ -1,6 +1,10 @@
 #include "../include/Firm.hpp"
+
 #include <cstdio>
+#include <stdexcept>
 #include <vector>
+
+#include "../include/Society.hpp"
 
 Firm::Firm(Society * society) : society(society) {}
 
@@ -54,7 +58,7 @@ bool Firm::employ(Worker * w) {
     Project * best_project = nullptr;
 
     best_project = least_staffed_project();
-    
+
     if (best_project) {
         best_project->add_worker(w);
         return true;
@@ -70,10 +74,49 @@ void Firm::tick() {
 }
 
 void Firm::new_plans() {
-    // std::vector<Project *> new_projects;
-    // for (auto & project : projects) {
-        
-    // }
+    std::vector<Project *> new_projects;
 
-    // projects = std::move(new_projects);
+    // Pool of workers not currently assigned to a project
+    std::vector<Worker *> unassigned_workers;
+
+    for (auto & project : projects) {
+        printf("Project with %d/%d workers completing plan of %s: %.2f hours left\n",
+            project->num_workers(), project->ideal_workers, project->plan.good->name.c_str(),
+            project->hours_left);
+        auto new_plan = generate_plan(project);
+
+        while (!society->accountant->approve_plan(new_plan, *project)) {
+            // TODO: generate a new plan / change plan parameters
+            throw std::runtime_error("Plan was not approved by accountant");
+        }
+
+        // Create the new project and assign as many workers as possible
+        auto new_project = new Project(society, new_plan);
+        while (new_project->num_workers() < new_project->ideal_workers && project->num_workers() > 0) {
+            // transfer workers to new project
+            auto worker = project->workers.back();
+            project->workers.pop_back();
+            new_project->add_worker(worker);
+        }
+
+        // Assign unassigned workers to the new project
+        while (new_project->num_workers() < new_project->ideal_workers && !unassigned_workers.empty()) {
+            auto worker = unassigned_workers.back();
+            unassigned_workers.pop_back();
+            new_project->add_worker(worker);
+        }
+
+        new_projects.push_back(new_project);
+
+        // Add remaining workers to unassigned pool
+        unassigned_workers.insert(unassigned_workers.end(), project->workers.begin(), project->workers.end());
+    }
+
+    // Replace old projects with new projects
+    projects = std::move(new_projects);
+}
+
+Plan Firm::generate_plan(Project * project) {
+    // current plan for now
+    return project->plan;
 }
