@@ -38,6 +38,7 @@
 *.app
 Signals/sim
 Hours-Money\ Interface/main
+.DS_Store
 
 # debug information files
 *.dwo
