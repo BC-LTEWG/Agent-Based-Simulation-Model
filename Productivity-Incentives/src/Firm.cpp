@@ -1,17 +1,28 @@
 #include "../include/Firm.h"
-#include "../include/Worker.h"
-#include "../include/Distributor.h"
 #include <algorithm>
 
-Firm::Firm(int id, double laborTimeRate)
-    : id(id), laborTimeRate(laborTimeRate), laborTimeForProject(0.0),
-      totalLaborTimeReceived(0.0), totalLaborTimeValue(0.0) {
+struct WorkRecord {
+    int workerId;
+    int laborTimeHours;
+    int projectId;
+    double laborTimeValue;
+};
+
+struct GoodsService {
+    std::string name;
+    int quantity;
+    std::string unit;
+    double laborTimeValue;
+};
+
+Firm::Firm(int id, Project project)
+    : id(id), laborTimeHoursSpent(0.0) {
+    projects.push_back(project);
 }
 
-void Firm::receiveProject(Worker& worker, int laborTimeHours) {
+void Firm::receiveWork(Worker& worker, int laborTimeHours) {
     if (laborTimeHours > 0) {
         totalLaborTimeReceived += laborTimeHours;
-        laborTimeForProject += laborTimeHours;
         
         // Create and issue work record
         WorkRecord record = issueWorkRecord(worker, laborTimeHours);

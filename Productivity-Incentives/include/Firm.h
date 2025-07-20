@@ -1,51 +1,57 @@
 #pragma once
 #include <vector>
 #include <memory>
+#include <string>
+#include <unordered_map>
+#include <map>
 
 class Worker;
-class Project;
-class Distributor;
+struct GoodsService;
+struct WorkRecord;
 
-struct WorkRecord {
-    int workerId;
-    int laborTimeHours;
+struct Project {
+    std::string productName;
+    int productQuantity;
     int projectId;
-    double laborTimeValue;
+    std::string unit;
+    std::map<Firm, double> priceOfProjectPerFirm;
 };
 
-struct GoodsService {
+struct PriceController {
+    std::unordered_map<Project, double> avgPriceOfProject;
+
+    void updateAvgPriceOfProject(Project project);
+    double getAvgPriceOfProject(Project project);
+};
+
+struct Worker {
     int id;
-    std::string name;
+    int laborTimeHoursSpent;
+    Firm & firmWorkingFor;
+    Project projectWorkingOn;
     double laborTimeValue;
-    int quantity;
+
+    void setProjectForWorker(Project project);
+
 };
 
 class Firm {
     public:
-        Firm(int id, double laborTimeRate);
+        Firm(int id, Project project);
         
-        // Labor time exchange with workers
-        void receiveWork(Worker& worker, int laborTimeHours);
-        WorkRecord issueWorkRecord(Worker& worker, int laborTimeHours);
-        
-        // Labor time exchange with distributors
-        void produceGoodsServices(std::vector<GoodsService>& goods);
-        double calculateLaborTimeValue(const std::vector<GoodsService>& goods);
-        
-        // Raw materials from distributors
-        void receiveRawMaterials(const std::vector<GoodsService>& materials, double laborTimeValue);
-        
+        // Setters
+        void addWorker(Worker worker);
+        void updatePriceOfProject(Project project);
+        void addProject(Project project);
+
         // Getters
-        int getId() const { return id; }
-        double getTotalLaborTimeReceived() const { return totalLaborTimeReceived; }
-        double getTotalLaborTimeValue() const { return totalLaborTimeValue; }
-        
+        int getId() const;
+        double getTotalLaborTimeSpent() const;
+        double getTotalLaborTimeValue() const;
+
     private:
         int id;
-        double laborTimeRate;
-        double totalLaborTimeReceived;
-        double totalLaborTimeValue;
-        std::vector<WorkRecord> workRecords;
-        std::vector<GoodsService> producedGoods;
-        std::vector<GoodsService> rawMaterials;
+        double laborTimeHoursSpent;
+        std::vector<Worker> workers;
+        std::vector<Project> projects;
 };
