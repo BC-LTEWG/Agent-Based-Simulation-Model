@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build All and Run",
+      "type": "shell",
+      "command": "g++",
+      "args": [
+        "-Iinclude",                 
+        "src/*.cpp",                
+        "-o", "main",               
+        "&&",                       
+        "./main"                    
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$gcc"],
+      "detail": "Compile all cpp files and run the output"
+    }
+  ]
+}
