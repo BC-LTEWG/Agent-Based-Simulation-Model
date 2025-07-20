@@ -37,6 +37,7 @@
 *.out
 *.app
 Signals/sim
+Hours-Money\ Interface/main
 
 # debug information files
 *.dwo
