@@ -5,9 +5,9 @@
 #include <unordered_map>
 #include <map>
 
+// Forward declaration
 class Worker;
-struct GoodsService;
-struct WorkRecord;
+
 
 struct Project {
     std::string productName;
@@ -24,34 +24,32 @@ struct PriceController {
     double getAvgPriceOfProject(Project project);
 };
 
-struct Worker {
-    int id;
-    int laborTimeHoursSpent;
-    Firm & firmWorkingFor;
-    Project projectWorkingOn;
-    double laborTimeValue;
 
-    void setProjectForWorker(Project project);
-
-};
 
 class Firm {
     public:
-        Firm(int id, Project project);
+        Firm(int id, std::string name);
         
         // Setters
-        void addWorker(Worker worker);
+        void addWorker(std::shared_ptr<Worker> worker);
         void updatePriceOfProject(Project project);
         void addProject(Project project);
 
+        void setProjectprice(Project project, double price);
+
+        void findInnovation(Project project);
+
+
         // Getters
         int getId() const;
-        double getTotalLaborTimeSpent() const;
-        double getTotalLaborTimeValue() const;
+        void getProjectsForFirm(Firm firm);
+        void getWorkersForFirm(Firm firm);
+        double getTotalLaborTimeValueOfProject(Project project) const;
 
     private:
+        std::string name;
         int id;
         double laborTimeHoursSpent;
-        std::vector<Worker> workers;
+        std::vector<std::shared_ptr<Worker>> workers;
         std::vector<Project> projects;
 };
