@@ -24,14 +24,14 @@ void PriceController::updateCurrentCosts(const std::vector<Project>& allProjects
     recomputeAverageCosts(allProjects);
 }
 
-void PriceController::updateOfficialPrices(double thresholdPercentage, double deltaThreshold) {
+void PriceController::updateOfficialPrices(double thresholdPercentage) {
     int updatedCount = 0;
     for (const auto& [product, currentCost] : current_costs) {
         if (official_prices.find(product) != official_prices.end()) {
             double officialPrice = official_prices[product];
             double percentageDiff = ((officialPrice - currentCost) / officialPrice) * 100.0;
             
-            if (percentageDiff >= thresholdPercentage && (officialPrice - currentCost) >= deltaThreshold) {
+            if (percentageDiff >= thresholdPercentage) {
                 official_prices[product] = currentCost;
                 std::cout << "Updated official price for " << product << " from " 
                          << officialPrice << " to " << currentCost << " labor hours\n";

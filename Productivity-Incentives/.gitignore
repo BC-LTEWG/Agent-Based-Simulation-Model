@@ -1,0 +1,40 @@
+# Compiled binary
+simulation
+
+# Object files
+*.o
+src/*.o
+
+# Build directories
+build/
+bin/
+
+# IDE files
+.vscode/
+.vs/
+*.code-workspace
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# Log files
+*.log
+
+# Core dumps
+core
+core.*
+
+# Debug files
+*.dSYM/
+*.debug
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db 

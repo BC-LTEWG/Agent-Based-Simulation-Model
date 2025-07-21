@@ -38,12 +38,10 @@ void Firm::reportProjectPriceToPriceController(const Project& project) {
 }
 
 void Firm::findInnovation(Project& project) {
-    // Random innovation reduces labor time by 10-30%
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-    static std::uniform_real_distribution<> dis(0.1, 0.3);
+    static std::default_random_engine generator;
+    std::uniform_real_distribution<double> distribution(0.1, 0.3);
     
-    double reduction = dis(gen);
+    double reduction = distribution(generator);
     double currentPrice = projectPrices[project.projectId];
     double newPrice = currentPrice * (1.0 - reduction);
     
@@ -52,11 +50,6 @@ void Firm::findInnovation(Project& project) {
     std::cout << "Innovation at " << name << "! Reduced labor time for " 
               << project.productName << " from " << currentPrice 
               << " to " << newPrice << " hours\n";
-}
-
-void Firm::drawPriceFromOfficial(Project& project) {
-    double officialPrice = priceController.getOfficialPrice(project.productName);
-    projectPrices[project.projectId] = officialPrice;
 }
 
 void Firm::updateProjectHours(int projectId, double hours) {

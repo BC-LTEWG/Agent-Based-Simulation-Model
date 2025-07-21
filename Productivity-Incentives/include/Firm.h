@@ -5,9 +5,8 @@
 #include <unordered_map>
 #include <map>
 #include "PriceController.h"
-
+#include "Worker.h"
 // Forward declaration to avoid circular dependency
-class Worker;
 
 struct Project {
     std::string productName;
@@ -21,14 +20,7 @@ struct Project {
         : projectId(id), productName(name), productQuantity(quantity), unit(unitType), 
           account(0.0), actualHoursSpent(0.0) {}
           
-    // Equality operator needed for map usage
-    bool operator==(const Project& other) const {
-        return projectId == other.projectId;
-    }
     
-    bool operator<(const Project& other) const {
-        return projectId < other.projectId;
-    }
 };
 
 class Firm {
@@ -43,7 +35,6 @@ public:
     void reportProjectPriceToPriceController(const Project& project);
     
     void findInnovation(Project& project); // Apply innovation to reduce labor time
-    void drawPriceFromOfficial(Project& project); // Set project price from official prices
     void updateProjectHours(int projectId, double hours);
     
     // Getters
@@ -63,5 +54,5 @@ private:
     std::vector<std::shared_ptr<Worker>> workers;
     std::vector<Project> projects; // Project history
     PriceController & priceController;
-    std::map<int, double> projectPrices; // projectId -> assumed price
+    std::map<int, double> projectPrices;
 };
