@@ -81,8 +81,3 @@ void PriceController::recomputeAverageCosts(const std::vector<Project>& allProje
 double PriceController::getAvgPriceOfProject(const Project& project) {
     return getCurrentCost(project.productName);
 }
-
-void PriceController::updateAvgPriceOfProject(const Project& project) {
-    // This would be called to update a specific project's average
-    // For now, we'll just trigger a full recompute
-} 
