@@ -13,7 +13,7 @@ class Firm {
     private:
         std::vector<Project *> projects;
         Society * society;
-        std::unordered_map<Good *, double> inventory;
+        std::unordered_map<Good *, std::unordered_map<Project *, double>> inventory;
 
         // Returns the project with the lowest worker-to-ideal-worker ratio.
         // Returns nullptr if there are no projects that have workers < ideal workers.
@@ -33,6 +33,9 @@ class Firm {
         // Attempts to employ a worker, returns true if successful
         // false if there are no open positions
         bool employ(Worker * w);
+
+        void add_stock(Good * good, Project * project, double amount);
+        double total_inventory(Good * good);
 
         // Runs one day of production for all projects
         void tick();

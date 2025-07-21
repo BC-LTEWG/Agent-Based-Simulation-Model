@@ -10,7 +10,7 @@ class Society;
 class Worker;
 
 class Project {
-    friend class Firm;
+        friend class Firm;
 
     private:
         Society * society;
@@ -20,6 +20,8 @@ class Project {
         double hours_left;
 
     public:
+        int plan_cycle;
+
         Plan plan;
         int ideal_workers;
 

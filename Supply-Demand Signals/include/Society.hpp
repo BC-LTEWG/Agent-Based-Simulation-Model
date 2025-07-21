@@ -30,6 +30,8 @@ class Society {
 
         Accountant * accountant;
 
+        int plan_cycle = 0;
+
         Society(int plan_cycle_duration);
 
         void add_worker(Worker * w);

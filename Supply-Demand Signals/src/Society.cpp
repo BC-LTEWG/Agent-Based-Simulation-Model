@@ -29,6 +29,8 @@ void Society::tick_cycle(bool is_first) {
     for (int day = 0; day < plan_cycle_duration; day++) {
         tick();
     }
+
+    plan_cycle++;
 }
 
 void Society::tick() {

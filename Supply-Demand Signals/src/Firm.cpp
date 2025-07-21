@@ -67,6 +67,26 @@ bool Firm::employ(Worker * w) {
     return false;
 }
 
+void Firm::add_stock(Good * good, Project * project, double amount) {
+    if (!inventory.count(good)) {
+        inventory[good] = std::unordered_map<Project *, double>();
+    }
+
+    inventory[good][project] += amount;
+}
+
+double Firm::total_inventory(Good * good) {
+    if (!inventory.count(good)) {
+        return 0.0;
+    }
+
+    double total = 0.0;
+    for (const auto & [project, amount] : inventory[good]) {
+        total += amount;
+    }
+    return total;
+}
+
 void Firm::tick() {
     for (auto & project : projects) {
         project->tick();
@@ -81,7 +101,9 @@ void Firm::new_plans() {
 
     for (auto & project : projects) {
         printf("Project with %d/%d workers completing plan of %s: %.2f hours left\n",
-            project->num_workers(), project->ideal_workers, project->plan.good->name.c_str(),
+            project->num_workers(),
+            project->ideal_workers,
+            project->plan.good->name.c_str(),
             project->hours_left);
         auto new_plan = generate_plan(project);
 
@@ -92,7 +114,8 @@ void Firm::new_plans() {
 
         // Create the new project and assign as many workers as possible
         auto new_project = new Project(society, new_plan);
-        while (new_project->num_workers() < new_project->ideal_workers && project->num_workers() > 0) {
+        while (
+            new_project->num_workers() < new_project->ideal_workers && project->num_workers() > 0) {
             // transfer workers to new project
             auto worker = project->workers.back();
             project->workers.pop_back();
@@ -100,7 +123,8 @@ void Firm::new_plans() {
         }
 
         // Assign unassigned workers to the new project
-        while (new_project->num_workers() < new_project->ideal_workers && !unassigned_workers.empty()) {
+        while (new_project->num_workers() < new_project->ideal_workers &&
+               !unassigned_workers.empty()) {
             auto worker = unassigned_workers.back();
             unassigned_workers.pop_back();
             new_project->add_worker(worker);
@@ -109,7 +133,9 @@ void Firm::new_plans() {
         new_projects.push_back(new_project);
 
         // Add remaining workers to unassigned pool
-        unassigned_workers.insert(unassigned_workers.end(), project->workers.begin(), project->workers.end());
+        unassigned_workers.insert(unassigned_workers.end(),
+            project->workers.begin(),
+            project->workers.end());
     }
 
     // Replace old projects with new projects
@@ -117,6 +143,11 @@ void Firm::new_plans() {
 }
 
 Plan Firm::generate_plan(Project * project) {
+    if (project->plan_cycle < 2) {
+        // for the first two cycles, we don't have enough data to make a new plan
+        // so just return the existing plan
+        return project->plan;
+    }
     // current plan for now
     return project->plan;
 }

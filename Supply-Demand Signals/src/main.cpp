@@ -32,7 +32,7 @@ int main() {
     }
 
     for (int i = 0; i < 10; i++) {
-        printf("Tick cycle %d\n", i);
+        printf(" ------- Tick cycle %d -------\n", i);
         society->tick_cycle(i == 0);
         distributor->head();
     }

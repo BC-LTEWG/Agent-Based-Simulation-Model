@@ -6,7 +6,9 @@ Project::Project(Society * society, Plan plan)
     : society(society),
       plan(plan),
       hours_left(plan.means + plan.labor + plan.resources),
-      ideal_workers(plan.labor / society->workday_length / society->plan_cycle_duration) {}
+      ideal_workers(plan.labor / society->workday_length / society->plan_cycle_duration) {
+    plan_cycle = society->plan_cycle;
+}
 
 void Project::add_worker(Worker * w) { workers.push_back(w); }
 
@@ -37,7 +39,7 @@ void Project::tick() {
         double per_dist =
             plan.quantity / society->plan_cycle_duration / fraction / society->distributors.size();
         for (auto & distributor : society->distributors) {
-            distributor->add_stock(plan.good, per_dist);
+            distributor->add_stock(plan.good, this, per_dist);
         }
     }
 }
