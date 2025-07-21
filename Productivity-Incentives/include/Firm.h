@@ -4,52 +4,64 @@
 #include <string>
 #include <unordered_map>
 #include <map>
+#include "PriceController.h"
 
-// Forward declaration
+// Forward declaration to avoid circular dependency
 class Worker;
-
 
 struct Project {
     std::string productName;
     int productQuantity;
     int projectId;
     std::string unit;
-    std::map<Firm, double> priceOfProjectPerFirm;
+    double account; // Project account
+    double actualHoursSpent; // Track actual hours spent
+    
+    Project(int id, const std::string& name, int quantity, const std::string& unitType = "units")
+        : projectId(id), productName(name), productQuantity(quantity), unit(unitType), 
+          account(0.0), actualHoursSpent(0.0) {}
+          
+    // Equality operator needed for map usage
+    bool operator==(const Project& other) const {
+        return projectId == other.projectId;
+    }
+    
+    bool operator<(const Project& other) const {
+        return projectId < other.projectId;
+    }
 };
-
-struct PriceController {
-    std::unordered_map<Project, double> avgPriceOfProject;
-
-    void updateAvgPriceOfProject(Project project);
-    double getAvgPriceOfProject(Project project);
-};
-
-
 
 class Firm {
-    public:
-        Firm(int id, std::string name);
-        
-        // Setters
-        void addWorker(std::shared_ptr<Worker> worker);
-        void updatePriceOfProject(Project project);
-        void addProject(Project project);
-
-        void setProjectprice(Project project, double price);
-
-        void findInnovation(Project project);
-
-
-        // Getters
-        int getId() const;
-        void getProjectsForFirm(Firm firm);
-        void getWorkersForFirm(Firm firm);
-        double getTotalLaborTimeValueOfProject(Project project) const;
-
-    private:
-        std::string name;
-        int id;
-        double laborTimeHoursSpent;
-        std::vector<std::shared_ptr<Worker>> workers;
-        std::vector<Project> projects;
+public:
+    Firm(int id, std::string name, PriceController& priceController);
+    
+    // Setters
+    void addWorker(std::shared_ptr<Worker> worker);
+    void updatePriceOfProject(const Project& project);
+    void addProject(const Project& project);
+    void setProjectPrice(const Project& project, double price);
+    void reportProjectPriceToPriceController(const Project& project);
+    
+    void findInnovation(Project& project); // Apply innovation to reduce labor time
+    void drawPriceFromOfficial(Project& project); // Set project price from official prices
+    void updateProjectHours(int projectId, double hours);
+    
+    // Getters
+    int getId() const;
+    std::string getName() const;
+    double getProjectPrice(const Project& project) const;
+    const std::vector<Project>& getProjects() const;
+    std::vector<Project>& getProjects();
+    const std::vector<std::shared_ptr<Worker>>& getWorkers() const;
+    double getTotalLaborTimeValueOfProject(const Project& project) const;
+    double getTotalLaborTimeSpent() const;
+    
+private:
+    std::string name;
+    int id;
+    double laborTimeHoursSpent;
+    std::vector<std::shared_ptr<Worker>> workers;
+    std::vector<Project> projects; // Project history
+    PriceController & priceController;
+    std::map<int, double> projectPrices; // projectId -> assumed price
 };

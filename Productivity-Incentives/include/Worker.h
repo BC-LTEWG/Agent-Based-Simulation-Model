@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-// Forward declaration
+// Forward declarations
 class Firm;
 struct Project;
 
