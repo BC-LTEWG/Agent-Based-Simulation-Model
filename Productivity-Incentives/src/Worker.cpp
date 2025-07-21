@@ -41,6 +41,6 @@ void Worker::workOnProject(int hours) {
     if (currentProject != nullptr && hours > 0) {
         laborTimeHoursSpent += hours;
         // Record the work with the firm
-        firmWorkingFor.recordLaborTime(id, currentProject->projectId, hours);
+        firmWorkingFor.updateProjectHours(currentProject->projectId, hours);
     }
 } 

@@ -5,9 +5,7 @@
 #include <map>
 #include <vector>
 
-// PriceController implementation
 
-// PriceController methods implementation
 void PriceController::initializeOfficialPrices() {
     official_prices["shirts"] = 5.0;    // 5 labor hours
     official_prices["shoes"] = 8.0;     // 8 labor hours
@@ -17,7 +15,6 @@ void PriceController::initializeOfficialPrices() {
     official_prices["chairs"] = 12.0;   // 12 labor hours
     official_prices["tables"] = 20.0;   // 20 labor hours
     
-    // Initialize current_costs with same values
     current_costs = official_prices;
     
     std::cout << "Initialized official prices for " << official_prices.size() << " products\n";

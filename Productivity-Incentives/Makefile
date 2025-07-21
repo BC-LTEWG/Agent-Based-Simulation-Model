@@ -5,7 +5,7 @@ INCDIR = include
 TARGET = simulation
 
 # Source files
-SOURCES = $(SRCDIR)/main.cpp $(SRCDIR)/Firm.cpp $(SRCDIR)/Worker.cpp $(SRCDIR)/PriceController.cpp
+SOURCES = $(SRCDIR)/main.cpp $(SRCDIR)/Firm.cpp $(SRCDIR)/Worker.cpp $(SRCDIR)/PriceController.cpp $(SRCDIR)/Simulation.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 
 # Include path
