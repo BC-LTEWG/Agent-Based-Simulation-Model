@@ -1,7 +1,3 @@
-# Economic Simulation: Labor Time Value System
-
-This is a C++ simulation of an economic system based on labor time value, featuring firms, workers, projects, and dynamic pricing mechanisms.
-
 ## Overview
 
 The simulation models an economy where:
@@ -15,6 +11,7 @@ The simulation models an economy where:
 ### Global Price Maps
 - `official_prices`: Official labor time prices for goods/services (shirts, shoes, shorts, apples, etc.)
 - `current_costs`: Average actual costs computed from production data
+- `PriceController`: Agent that recalculates labor time costs for each cycle (look at simulation.cpp and Simulation.cpp to get a better understanding of how it works)
 
 ### Innovation System
 - Random innovations reduce labor time requirements (10-30% reduction)
@@ -36,31 +33,27 @@ Each cycle consists of 5 phases:
 4. **Production**: Projects are completed with actual labor time tracking
 5. **Price Updates**: PriceController analyzes results and may update official prices
 
-## Building and Running
 
-### Prerequisites
-- C++17 compatible compiler (g++)
-- Make
 
 ### Build Commands
 
-```bash
-# Compile the simulation
+```
+# Compile simulation
 make
 
-# Run the simulation
+# Run simulation
 make run
 
-# Clean build artifacts
+# Clean build
 make clean
 
 # Debug build
 make debug
 ```
 
-### Manual Compilation
+### Compilation
 
-```bash
+```
 g++ -std=c++17 -Wall -Wextra -O2 -Iinclude src/main.cpp src/Firm.cpp src/Worker.cpp -o simulation
 ./simulation
 ```
@@ -133,4 +126,3 @@ This simulation demonstrates how:
 - Competition drives continuous improvement
 - Everyone benefits when productivity increases (shorter work days)
 
-Run the simulation multiple times to see different innovation patterns and price evolution paths!
