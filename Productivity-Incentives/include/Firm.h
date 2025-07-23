@@ -9,9 +9,9 @@
 // Forward declaration to avoid circular dependency
 
 struct Project {
+    int projectId;
     std::string productName;
     int productQuantity;
-    int projectId;
     std::string unit;
     double account; // Project account
     double actualHoursSpent; // Track actual hours spent
