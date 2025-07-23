@@ -36,8 +36,12 @@ void Project::tick() {
 
     if (!society->distributors.empty()) {
         double fraction = hours_worked / workday_length;
-        double per_dist =
-            plan.quantity / society->plan_cycle_duration / fraction / society->distributors.size();
+
+        double produced = plan.quantity / society->plan_cycle_duration / fraction;
+        goods_produced += produced;
+
+        double per_dist = produced / society->distributors.size();
+
         for (auto & distributor : society->distributors) {
             distributor->add_stock(plan.good, this, per_dist);
         }

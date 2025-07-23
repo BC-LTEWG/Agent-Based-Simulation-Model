@@ -19,6 +19,8 @@ class Project {
 
         double hours_left;
 
+        double goods_produced = 0.0;
+
     public:
         int plan_cycle;
 

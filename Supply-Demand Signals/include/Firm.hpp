@@ -3,9 +3,17 @@
 #include <unordered_map>
 #include <vector>
 
+#include "Good.hpp"
 #include "Project.hpp"
 
 class Society;
+
+struct InventoryItem {
+        std::unordered_map<Project *, double> projects;
+        std::vector<double> deficit_history;
+};
+
+typedef std::unordered_map<Good *, InventoryItem> Inventory;
 
 class Firm {
         friend class Distributor;
@@ -13,7 +21,7 @@ class Firm {
     private:
         std::vector<Project *> projects;
         Society * society;
-        std::unordered_map<Good *, std::unordered_map<Project *, double>> inventory;
+        Inventory inventory;
 
         // Returns the project with the lowest worker-to-ideal-worker ratio.
         // Returns nullptr if there are no projects that have workers < ideal workers.

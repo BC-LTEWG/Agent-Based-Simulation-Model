@@ -1,6 +1,7 @@
 #include "../include/Distributor.hpp"
 
 #include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <set>
 
@@ -17,12 +18,14 @@ std::pair<double, double> Distributor::purchase(Good * good, double amount) {
     double purchase_amount = std::min(available_amount, amount);
     double cost = purchase_amount * good->value;
 
+    inventory[good].deficit_history[society->plan_cycle] += (amount - purchase_amount);
+
     if (purchase_amount > 0) {
         double remaining = purchase_amount;
 
         // clear out old inventory first
         std::vector<Project *> old_projects;
-        for (auto & [project, qty] : inventory[good]) {
+        for (auto & [project, qty] : inventory[good].projects) {
             if (project->plan_cycle < society->plan_cycle - 1) {
                 old_projects.push_back(project);
             }
@@ -34,29 +37,29 @@ std::pair<double, double> Distributor::purchase(Good * good, double amount) {
             });
 
             for (auto & project : old_projects) {
-                double & project_amount = inventory[good][project];
+                double & project_amount = inventory[good].projects[project];
                 if (project_amount >= remaining) {
                     project_amount -= remaining;
                     if (project_amount <= 0) {
-                        inventory[good].erase(project);
+                        inventory[good].projects.erase(project);
                     }
                     remaining = 0;
                     break;
                 } else {
                     remaining -= project_amount;
-                    inventory[good].erase(project);
+                    inventory[good].projects.erase(project);
                 }
             }
         }
 
-        while (remaining > 0 && !inventory[good].empty()) {
+        while (remaining > 0 && !inventory[good].projects.empty()) {
             // select a random project, weighted by amount
             double total = total_inventory(good);
             double r = ((double)rand() / RAND_MAX) * total;
             // pick by cumulative weights
             Project * selected = nullptr;
             double cumulative = 0.0;
-            for (auto & entry : inventory[good]) {
+            for (auto & entry : inventory[good].projects) {
                 cumulative += entry.second;
                 if (r < cumulative) {
                     selected = entry.first;
@@ -65,15 +68,15 @@ std::pair<double, double> Distributor::purchase(Good * good, double amount) {
             }
             if (!selected) {
                 // fallback
-                selected = inventory[good].begin()->first;
+                selected = inventory[good].projects.begin()->first;
             }
             // remove up to remaining amount
-            double & proj_qty = inventory[good][selected];
+            double & proj_qty = inventory[good].projects[selected];
             double remove_amt = std::min(proj_qty, remaining);
             proj_qty -= remove_amt;
             remaining -= remove_amt;
             if (proj_qty <= 0) {
-                inventory[good].erase(selected);
+                inventory[good].projects.erase(selected);
             }
         }
 
@@ -82,13 +85,34 @@ std::pair<double, double> Distributor::purchase(Good * good, double amount) {
     return {0, 0};
 }
 
+double Distributor::get_project_inventory(Project * project) {
+    const auto good = project->plan.good;
+
+    if (!inventory.count(good) || !inventory[good].projects.count(project)) {
+        return 0.0;
+    }
+    
+    return inventory[good].projects[project];
+}
+
+double Distributor::get_production_deficit(Good * good, int plan_cycle) {
+    if (!inventory.count(good)) {
+        return 0.0;
+    }
+    const auto & deficit_history = inventory[good].deficit_history;
+    if (plan_cycle < 0 || plan_cycle >= (int)deficit_history.size()) {
+        return 0.0;
+    }
+    return deficit_history[plan_cycle];
+}
+
 void Distributor::display_inventory(int rows) {
     int count = 0;
-    for (const auto & [good, amount] : inventory) {
+    for (const auto & [good, item] : inventory) {
         if (rows > 0 && count >= rows) break;
         printf("%s: %.2f\n", good->name.c_str(), total_inventory(good));
         std::set<int> cycles;
-        for (const auto & [project, qty] : amount) {
+        for (const auto & [project, qty] : item.projects) {
             cycles.insert(project->plan_cycle);
         }
         printf("  Plan cycles in inventory: ");

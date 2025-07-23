@@ -69,10 +69,12 @@ bool Firm::employ(Worker * w) {
 
 void Firm::add_stock(Good * good, Project * project, double amount) {
     if (!inventory.count(good)) {
-        inventory[good] = std::unordered_map<Project *, double>();
+        inventory[good] = InventoryItem{std::unordered_map<Project *, double>(), std::vector<double>()};
+        // Fill deficit history with zeros up to society plan cycle
+        inventory[good].deficit_history.resize(society->plan_cycle + 1, 0.0);
     }
 
-    inventory[good][project] += amount;
+    inventory[good].projects[project] += amount;
 }
 
 double Firm::total_inventory(Good * good) {
@@ -81,7 +83,7 @@ double Firm::total_inventory(Good * good) {
     }
 
     double total = 0.0;
-    for (const auto & [project, amount] : inventory[good]) {
+    for (const auto & [project, amount] : inventory[good].projects) {
         total += amount;
     }
     return total;
@@ -94,6 +96,14 @@ void Firm::tick() {
 }
 
 void Firm::new_plans() {
+    for (auto & good_pair : inventory) {
+        // Shift deficit history to the right
+        auto & deficit_history = good_pair.second.deficit_history;
+        while (deficit_history.size() <= society->plan_cycle) {
+            deficit_history.push_back(0.0);
+        }
+    }
+
     std::vector<Project *> new_projects;
 
     // Pool of workers not currently assigned to a project
@@ -148,6 +158,35 @@ Plan Firm::generate_plan(Project * project) {
         // so just return the existing plan
         return project->plan;
     }
-    // current plan for now
-    return project->plan;
+
+    // Step 1: estimate the acutal necessity of the good
+    double remaining_inventory = society->distributors[0]->get_project_inventory(project);
+    double deficit = society->distributors[0]->get_production_deficit(project->plan.good, project->plan_cycle);
+    
+    // How much people actually consume
+    double consumption = project->goods_produced - remaining_inventory + deficit;
+
+    double estimated_necessity = consumption - remaining_inventory;
+
+    estimated_necessity = std::max(estimated_necessity, 0.0);
+
+    // Step 2: adjust the plan quantity based on estimated necessity
+    double multiplier =
+        project->goods_produced > 0 ? estimated_necessity / project->goods_produced : 0;
+
+    // produce a little bit extra
+    multiplier *= 1.05;
+
+    Plan new_plan = {
+        .means = project->plan.means * multiplier,
+        .resources = project->plan.resources * multiplier,
+        .labor = project->plan.labor * multiplier,
+
+        .good = project->plan.good,
+        .quantity = project->plan.quantity * multiplier,
+
+        .product = project->goods_produced * multiplier
+    };
+
+    return new_plan;
 }
