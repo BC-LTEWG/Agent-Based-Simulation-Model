@@ -43,8 +43,8 @@ void PriceController::updateOfficialPrices(double thresholdPercentage) {
         }
 
         if (updatedCount > current_costs.size() * 0.5) {
-            for (const auto& product : current_costs) {
-                official_prices[product] = updatedPrices[product];
+            for (const auto& [product, costs]: current_costs) {
+                official_prices[product] = costs;
             }
         }
     }
