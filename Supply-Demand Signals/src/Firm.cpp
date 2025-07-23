@@ -40,6 +40,10 @@ int Firm::total_ideal_jobs() {
 
 void Firm::add_project(Project * p) { projects.push_back(p); }
 
+std::vector<Project *> Firm::all_projects() {
+    return projects;
+}
+
 Project * Firm::least_staffed_project() {
     Project * least = nullptr;
     double least_ratio = 1.0;
@@ -146,6 +150,11 @@ void Firm::new_plans() {
         unassigned_workers.insert(unassigned_workers.end(),
             project->workers.begin(),
             project->workers.end());
+    }
+
+    // tell all the unassigned workers they are unemployed
+    for (auto & worker : unassigned_workers) {
+        worker->employed = false;
     }
 
     // Replace old projects with new projects

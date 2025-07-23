@@ -8,6 +8,12 @@
 #include "Good.hpp"
 #include "Worker.hpp"
 
+struct Config {
+    double plan_cycle_duration = 90;
+    double fic = 0.8;
+    double workday_length = 8.0;
+};
+
 class Society {
     private:
         void tick();
@@ -20,19 +26,13 @@ class Society {
         std::vector<Good *> goods;
         std::vector<Distributor *> distributors;
 
-        // For now, a fixed plan cycle duration
-        int plan_cycle_duration;
-
-        // Standard workday length in hours
-        double workday_length = 8.0;
-
-        double tax_rate = 0.2;
+        Config config;
 
         Accountant * accountant;
 
         int plan_cycle = 0;
 
-        Society(int plan_cycle_duration);
+        Society(Config config);
 
         void add_worker(Worker * w);
         void add_firm(Firm * f);

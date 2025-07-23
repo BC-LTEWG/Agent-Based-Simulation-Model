@@ -9,7 +9,11 @@
 
 int main() {
     // Quarterly plan cycle duration
-    Society * society = new Society(90);
+    Society * society = new Society(Config {
+        .plan_cycle_duration = 90,
+        .fic = 0.8,
+        .workday_length = 8.0
+    });
 
     Good * good = new Good{.name = "Apples", .value = .10};
     society->add_good(good);
@@ -19,6 +23,7 @@ int main() {
 
     Distributor * distributor = new Distributor(society);
     society->distributors.push_back(distributor);
+    society->add_firm(distributor);
 
     firm->add_project(new Project(society,
         Plan{.means = 0, .resources = 0, .labor = 90 * 8 * 10, .good = good, .quantity = 1000}));

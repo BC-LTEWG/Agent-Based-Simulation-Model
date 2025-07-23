@@ -1,9 +1,10 @@
 #include "../include/Society.hpp"
 
+#include <algorithm>
 #include <cstdio>
 
-Society::Society(int plan_cycle_duration)
-    : plan_cycle_duration(plan_cycle_duration), accountant(new Accountant()) {}
+Society::Society(Config config)
+    : config(config), accountant(new Accountant()) {}
 
 void Society::add_worker(Worker * w) { workers.push_back(w); }
 
@@ -12,9 +13,9 @@ void Society::add_firm(Firm * f) { firms.push_back(f); }
 void Society::add_good(Good * g) { goods.push_back(g); }
 
 void Society::pay(Worker * worker, double amount) {
-    double taxed_amount = amount * (1.0 - tax_rate);
-    worker->pay(taxed_amount);
-    reserve += amount * tax_rate;
+    double earned = amount * config.fic;
+    worker->pay(earned);
+    reserve += amount * (1 - config.fic);
 }
 
 void Society::tick_cycle(bool is_first) {
@@ -23,10 +24,41 @@ void Society::tick_cycle(bool is_first) {
         for (auto & firm : firms) {
             firm->new_plans();
         }
+
+        // Step 2: Distribute workers to firms
+
+        // Build a list of projects
+        std::vector<Project *> all_projects;
+        for (auto & firm : firms) {
+            for (auto & project : firm->all_projects()) {
+                all_projects.push_back(project);
+            }
+        }
+
+        // Sort projects by how understaffed they are, by ratio
+        std::sort(all_projects.begin(), all_projects.end(), [](Project * a, Project * b) {
+            double ratio_a = static_cast<double>(a->num_workers()) / a->ideal_workers;
+            double ratio_b = static_cast<double>(b->num_workers()) / b->ideal_workers;
+            return ratio_a < ratio_b;
+        });
+
+        // Assign workers to projects
+        for (auto & worker : workers) {
+            if (worker->employed) {
+                continue;
+            }
+            for (auto & project : all_projects) {
+                if (project->num_workers() < project->ideal_workers) {
+                    project->add_worker(worker);
+                    worker->employed = true;
+                    break;
+                }
+            }
+        }
     }
 
     // Go through the cycle duration in daily ticks
-    for (int day = 0; day < plan_cycle_duration; day++) {
+    for (int day = 0; day < config.plan_cycle_duration; day++) {
         tick();
     }
 

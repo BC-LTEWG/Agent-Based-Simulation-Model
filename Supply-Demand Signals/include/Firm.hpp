@@ -36,6 +36,8 @@ class Firm {
         double job_availability();
         int total_ideal_jobs();
 
+        std::vector<Project *> all_projects();
+
         void add_project(Project * p);
 
         // Attempts to employ a worker, returns true if successful
