@@ -6,4 +6,5 @@ The four values include
 - GDP PPP
 - Median Income
 - Mean Income
+
 Real world data from 2023 is used to compute the results, with all currency values converted to US dollars using the 2023 currency to US dollar conversion rates. 
