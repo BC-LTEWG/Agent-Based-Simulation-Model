@@ -8,6 +8,9 @@
 #include <string>
 
 #define NUM_FIRMS 10
+#define INNOVATION_PROBABILITY 0.15;  // 15% chance per cycle
+#define DISCOVERY_PROBABILITY 0.25;   // 25% chance to discover others' innovations
+#define THRESHOLD_PERCENTAGE 20.0;    // 20% improvement needed
 
 class Simulation {
 private:
@@ -21,10 +24,9 @@ private:
     PriceController priceController;
     
     // Simulation parameters
-    const double INNOVATION_PROBABILITY = 0.15;  // 15% chance per cycle
-    const double DISCOVERY_PROBABILITY = 0.25;   // 25% chance to discover others' innovations
-    const double THRESHOLD_PERCENTAGE = 20.0;    // 20% improvement needed
-    const double DELTA_THRESHOLD = 0.5;          // Minimum 0.5 hour improvement
+    const double innovation_probability = INNOVATION_PROBABILITY;  // 15% chance per cycle
+    const double discovery_probability = DISCOVERY_PROBABILITY;   // 25% chance to discover others' innovations
+    const double threshold_percentage = THRESHOLD_PERCENTAGE;   // 20% improvement needed
     
     std::vector<std::string> products = {"shirts", "shoes", "shorts", "apples", "bread", "chairs", "tables"};
     std::vector<std::string> firmNames = {"Alpha Corp", "Beta Industries", "Gamma Works", "Delta Manufacturing", 

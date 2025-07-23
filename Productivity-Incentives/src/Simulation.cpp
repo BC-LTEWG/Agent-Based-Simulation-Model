@@ -58,7 +58,7 @@ void Simulation::innovationDiscoveryPhase() {
     
     // Some firms discover innovations from others
     for (auto& firm : firms) {
-        if (probability(gen) < DISCOVERY_PROBABILITY) {
+        if (probability(gen) < discovery_probability) {
             // Pick a random firm that might have an innovation
             auto otherFirm = firms[firmSelector(gen)];
             if (otherFirm != firm && !otherFirm->getProjects().empty()) {
@@ -95,7 +95,7 @@ void Simulation::randomInnovationPhase() {
     
     // Random firms get innovations
     for (auto& firm : firms) {
-        if (probability(gen) < INNOVATION_PROBABILITY) {
+        if (probability(gen) < innovation_probability) {
             auto& projects = firm->getProjects();
             if (!projects.empty()) {
                 // Pick a random project to innovate on
@@ -167,7 +167,7 @@ void Simulation::priceControllerPhase() {
     
     // Update official prices if conditions are met
     std::cout << "\nChecking for price updates...\n";
-    priceController.updateOfficialPrices(THRESHOLD_PERCENTAGE);
+    priceController.updateOfficialPrices(threshold_percentage);
     std::cout << "\n";
 }
 

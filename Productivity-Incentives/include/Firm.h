@@ -48,8 +48,8 @@ public:
     double getTotalLaborTimeSpent() const;
     
 private:
-    std::string name;
     int id;
+    std::string name;
     double laborTimeHoursSpent;
     std::vector<std::shared_ptr<Worker>> workers;
     std::vector<Project> projects; // Project history
