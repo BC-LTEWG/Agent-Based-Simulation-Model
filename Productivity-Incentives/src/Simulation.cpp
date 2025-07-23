@@ -10,8 +10,8 @@ Simulation::Simulation() : gen(std::random_device{}()), probability(0.0, 1.0), n
 }
 
 void Simulation::createFirms() {
-    // Create 10 firms
-    for (int i = 0; i < 10; ++i) {
+    // Create NUM_FIRMS firms
+    for (int i = 0; i < NUM_FIRMS; ++i) {
         auto firm = std::make_shared<Firm>(nextFirmId++, firmNames[i], priceController);
         
         // Add some workers to each firm

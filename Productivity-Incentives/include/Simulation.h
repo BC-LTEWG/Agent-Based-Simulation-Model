@@ -7,6 +7,8 @@
 #include <random>
 #include <string>
 
+#define NUM_FIRMS 10
+
 class Simulation {
 private:
     std::vector<std::shared_ptr<Firm>> firms;
