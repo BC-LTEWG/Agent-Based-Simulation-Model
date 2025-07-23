@@ -3,6 +3,7 @@
 #include <iostream>
 #include <algorithm>
 #include <map>
+#include <unordered_map>
 #include <vector>
 
 
@@ -26,19 +27,28 @@ void PriceController::updateCurrentCosts(const std::vector<Project>& allProjects
 
 void PriceController::updateOfficialPrices(double thresholdPercentage) {
     int updatedCount = 0;
+    std::unordered_map<std::string, double> updatedPrices;
     for (const auto& [product, currentCost] : current_costs) {
         if (official_prices.find(product) != official_prices.end()) {
             double officialPrice = official_prices[product];
             double percentageDiff = ((officialPrice - currentCost) / officialPrice) * 100.0;
             
             if (percentageDiff >= thresholdPercentage) {
-                official_prices[product] = currentCost;
-                std::cout << "Updated official price for " << product << " from " 
-                         << officialPrice << " to " << currentCost << " labor hours\n";
+                updatedPrices[product] = currentCost;
+                // official_prices[product] = currentCost;
+                // std::cout << "Updated official price for " << product << " from " 
+                //         << officialPrice << " to " << currentCost << " labor hours\n";
                 updatedCount++;
             }
         }
+
+        if (updatedCount > current_costs.size() * 0.5) {
+            for (const auto& product : current_costs) {
+                official_prices[product] = updatedPrices[product];
+            }
+        }
     }
+    
     if (updatedCount > 0) {
         std::cout << "Average work day is now shorter! Updated " << updatedCount << " prices.\n";
     }
