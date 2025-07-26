@@ -40,9 +40,7 @@ int Firm::total_ideal_jobs() {
 
 void Firm::add_project(Project * p) { projects.push_back(p); }
 
-std::vector<Project *> Firm::all_projects() {
-    return projects;
-}
+std::vector<Project *> Firm::all_projects() { return projects; }
 
 Project * Firm::least_staffed_project() {
     Project * least = nullptr;
@@ -73,7 +71,8 @@ bool Firm::employ(Worker * w) {
 
 void Firm::add_stock(Good * good, Project * project, double amount) {
     if (!inventory.count(good)) {
-        inventory[good] = InventoryItem{std::unordered_map<Project *, double>(), std::vector<double>()};
+        inventory[good] =
+            InventoryItem{std::unordered_map<Project *, double>(), std::vector<double>()};
         // Fill deficit history with zeros up to society plan cycle
         inventory[good].deficit_history.resize(society->plan_cycle + 1, 0.0);
     }
@@ -103,7 +102,7 @@ void Firm::new_plans() {
     for (auto & good_pair : inventory) {
         // Shift deficit history to the right
         auto & deficit_history = good_pair.second.deficit_history;
-        while (deficit_history.size() <= society->plan_cycle) {
+        while (deficit_history.size() <= (unsigned long int)society->plan_cycle) {
             deficit_history.push_back(0.0);
         }
     }
@@ -170,10 +169,17 @@ Plan Firm::generate_plan(Project * project) {
 
     // Step 1: estimate the acutal necessity of the good
     double remaining_inventory = society->distributors[0]->get_project_inventory(project);
-    double deficit = society->distributors[0]->get_production_deficit(project->plan.good, project->plan_cycle);
-    
+    double deficit =
+        society->distributors[0]->get_production_deficit(project->plan.good, project->plan_cycle);
+
     // How much people actually consume
     double consumption = project->goods_produced - remaining_inventory + deficit;
+
+    printf("Estimated consumption for %s: %.2f (remainin    g: %.2f, deficit: %.2f)\n",
+        project->plan.good->name.c_str(),
+        consumption,
+        remaining_inventory,
+        deficit);
 
     double estimated_necessity = consumption - remaining_inventory;
 
@@ -184,18 +190,16 @@ Plan Firm::generate_plan(Project * project) {
         project->goods_produced > 0 ? estimated_necessity / project->goods_produced : 0;
 
     // produce a little bit extra
-    multiplier *= 1.05;
+    multiplier *= 1.1;
 
-    Plan new_plan = {
-        .means = project->plan.means * multiplier,
+    Plan new_plan = {.means = project->plan.means * multiplier,
         .resources = project->plan.resources * multiplier,
         .labor = project->plan.labor * multiplier,
 
         .good = project->plan.good,
         .quantity = project->plan.quantity * multiplier,
 
-        .product = project->goods_produced * multiplier
-    };
+        .product = project->goods_produced * multiplier};
 
     return new_plan;
 }

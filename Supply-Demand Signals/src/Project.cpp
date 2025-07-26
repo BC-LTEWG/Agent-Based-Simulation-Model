@@ -4,10 +4,11 @@
 
 Project::Project(Society * society, Plan plan)
     : society(society),
+      plan_cycle(society->plan_cycle),
       plan(plan),
-      hours_left(plan.means + plan.labor + plan.resources),
-      ideal_workers(plan.labor / society->config.workday_length / society->config.plan_cycle_duration) {
-    plan_cycle = society->plan_cycle;
+      ideal_workers(
+          plan.labor / society->config.workday_length / society->config.plan_cycle_duration) {
+    hours_left = plan.means + plan.labor + plan.resources;
 }
 
 void Project::add_worker(Worker * w) { workers.push_back(w); }

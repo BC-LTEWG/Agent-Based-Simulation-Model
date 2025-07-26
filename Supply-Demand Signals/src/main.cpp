@@ -1,19 +1,20 @@
 #include <cassert>
 #include <cstdio>
+#include <vector>
 
+#include "../extern/matplotlib-cpp/matplotlibcpp.h"
 #include "../include/Distributor.hpp"
 #include "../include/Firm.hpp"
 #include "../include/Plan.hpp"
 #include "../include/Society.hpp"
 #include "../include/Worker.hpp"
 
+namespace plt = matplotlibcpp;
+
 int main() {
     // Quarterly plan cycle duration
-    Society * society = new Society(Config {
-        .plan_cycle_duration = 90,
-        .fic = 0.8,
-        .workday_length = 8.0
-    });
+    Society * society =
+        new Society(Config{.plan_cycle_duration = 90, .fic = 0.8, .workday_length = 8.0});
 
     Good * good = new Good{.name = "Apples", .value = .10};
     society->add_good(good);
@@ -36,11 +37,27 @@ int main() {
         assert(firm->employ(worker));
     }
 
+    std::vector<double> x;
+    std::vector<double> y;
+    std::vector<double> y2;
+
     for (int i = 0; i < 10; i++) {
-        printf(" ------- Tick cycle %d -------\n", i);
+        printf("\n ------- Tick cycle %d -------\n", i);
         society->tick_cycle(i == 0);
         distributor->head();
+
+        x.push_back(i);
+        y.push_back(distributor->total_inventory(good));
+        y2.push_back(distributor->get_production_deficit(good, i));
     }
+
+    plt::figure_size(800, 600);
+    plt::plot(x, y, "b-");
+    plt::plot(x, y2, "r-");
+    plt::title("Inventory and Production Deficit of Apples Over Time");
+    plt::xlabel("Time (cycles)");
+    plt::ylabel("Quantity");
+    plt::show();
 
     return 0;
 }

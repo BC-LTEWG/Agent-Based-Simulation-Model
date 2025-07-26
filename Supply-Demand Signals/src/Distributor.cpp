@@ -91,7 +91,7 @@ double Distributor::get_project_inventory(Project * project) {
     if (!inventory.count(good) || !inventory[good].projects.count(project)) {
         return 0.0;
     }
-    
+
     return inventory[good].projects[project];
 }
 
@@ -120,6 +120,9 @@ void Distributor::display_inventory(int rows) {
             printf("%d ", cycle);
         }
         printf("\n");
+        printf("  Deficit (current cycle %d): %.2f\n",
+            (int)item.deficit_history.size() - 1,
+            item.deficit_history.back());
         count++;
     }
 }
