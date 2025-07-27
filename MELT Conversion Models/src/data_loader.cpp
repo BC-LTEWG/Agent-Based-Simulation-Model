@@ -4,10 +4,15 @@
 #include <sstream>
 #include <iostream>
 
-std::unordered_map<std::string, std::unordered_map<std::string, double> > DataLoader::data;
+// Static member definitions
+std::unordered_map<std::string, std::unordered_map<std::string, double>> DataLoader::data;
+std::vector<std::string> DataLoader::country_in_order;
 
 void DataLoader::loadData(const std::string &filename)
 {
+    data.clear();
+    country_in_order.clear();
+
     std::ifstream file(filename);
     if (!file.is_open())
     {
@@ -27,6 +32,8 @@ void DataLoader::loadData(const std::string &filename)
 
         data[country]["GDP_NOMINAL"] = (gdp_nominal == "Missing") ? INVALID_VALUE : std::stod(gdp_nominal);
         data[country]["GDP_PPP"] = (gdp_ppp == "Missing") ? INVALID_VALUE : std::stod(gdp_ppp);
+
+        country_in_order.push_back(country);
     }
     file.close();
 }
@@ -40,7 +47,12 @@ double DataLoader::getValue(const std::string &country, const std::string &key)
     return data[country][key];
 }
 
-const std::unordered_map<std::string, std::unordered_map<std::string, double> > &DataLoader::getAllData()
+const std::unordered_map<std::string, std::unordered_map<std::string, double>> &DataLoader::getAllData()
 {
     return data;
+}
+
+const std::vector<std::string> &DataLoader::getCountryOrder()
+{
+    return country_in_order;
 }

@@ -26,21 +26,16 @@ int main()
     vector<CapitalistEconomy> capitalist_economies;
     int id_counter = 1;
 
-    // Iterate through the countries stored in DataLoader using getAllData()
-    for (const auto &countryEntry : DataLoader::getAllData())
+    // Iterate through the countries in the order they appear in the CSV
+    for (const string &country : DataLoader::getCountryOrder())
     {
         CapitalistEconomy ce{};
         ce.ce_id = id_counter++;
-        ce.economy_name = countryEntry.first;
+        ce.economy_name = country;
 
         // Assign GDP values (other fields remain INVALID_VALUE)
-        auto it_nominal = countryEntry.second.find("GDP_NOMINAL");
-        if (it_nominal != countryEntry.second.end())
-            ce.gdp_nominal_per_capita = it_nominal->second;
-
-        auto it_ppp = countryEntry.second.find("GDP_PPP");
-        if (it_ppp != countryEntry.second.end())
-            ce.gdp_ppp_per_capita = it_ppp->second;
+        ce.gdp_nominal_per_capita = DataLoader::getValue(country, "GDP_NOMINAL");
+        ce.gdp_ppp_per_capita = DataLoader::getValue(country, "GDP_PPP");
 
         capitalist_economies.push_back(ce);
     }
