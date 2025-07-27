@@ -8,9 +8,9 @@
 #include <string>
 
 #define NUM_FIRMS 10
-#define INNOVATION_PROBABILITY 0.15;  // 15% chance per cycle
-#define DISCOVERY_PROBABILITY 0.25;   // 25% chance to discover others' innovations
-#define THRESHOLD_PERCENTAGE 20.0;    // 20% improvement needed
+#define INNOVATION_PROBABILITY 0.15  // 15% chance per cycle
+#define DISCOVERY_PROBABILITY 0.25   // 25% chance to discover others' innovations
+#define THRESHOLD_PERCENTAGE 20.0    // 20% improvement needed
 
 class Simulation {
 private:

@@ -64,24 +64,22 @@ void Simulation::innovationDiscoveryPhase() {
             if (otherFirm != firm && !otherFirm->getProjects().empty()) {
                 // Find a project from the other firm to copy innovation from
                 const auto& otherProjects = otherFirm->getProjects();
-                if (!otherProjects.empty()) {
-                    const auto& innovativeProject = otherProjects.back();
-                    
-                    // Find our project of the same product type
-                    auto& ourProjects = firm->getProjects();
-                    for (auto& project : ourProjects) {
-                        if (project.productName == innovativeProject.productName) {
-                            double otherPrice = otherFirm->getProjectPrice(innovativeProject);
-                            double ourPrice = firm->getProjectPrice(project);
-                            
-                            if (otherPrice < ourPrice) {
-                                firm->setProjectPrice(project, otherPrice);
-                                std::cout << firm->getName() << " discovered " << otherFirm->getName() 
-                                         << "'s innovation for " << project.productName 
-                                         << " (reduced from " << ourPrice << " to " << otherPrice << " hours)\n";
-                            }
-                            break;
+                const auto& innovativeProject = otherProjects.back();
+                
+                // Find our project of the same product type
+                auto& ourProjects = firm->getProjects();
+                for (auto& project : ourProjects) {
+                    if (project.productName == innovativeProject.productName) {
+                        double otherPrice = otherFirm->getProjectPrice(innovativeProject);
+                        double ourPrice = firm->getProjectPrice(project);
+                        
+                        if (otherPrice < ourPrice) {
+                            firm->setProjectPrice(project, otherPrice);
+                            std::cout << firm->getName() << " discovered " << otherFirm->getName() 
+                                        << "'s innovation for " << project.productName 
+                                        << " (reduced from " << ourPrice << " to " << otherPrice << " hours)\n";
                         }
+                        break;
                     }
                 }
             }
