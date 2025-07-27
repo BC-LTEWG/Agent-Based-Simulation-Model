@@ -4,4 +4,5 @@ This sub-probject investigates mechanisms for supporting trade between a labor-t
 Possible techniques include
 - The use of "foreign" currency reserves obtained from exports
 - The use of barter contracts.
+
 The latter option may be important in developing system-wide in-kind accounting.

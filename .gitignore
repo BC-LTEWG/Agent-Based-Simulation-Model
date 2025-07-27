@@ -38,7 +38,13 @@
 *.app
 Signals/sim
 Hours-Money\ Interface/main
+MELT\ Conversion\ Models/main
+
+# Hidden system and tool artifacts
 .DS_Store
+.venv
+myenv
+.vscode
 
 # debug information files
 *.dwo
