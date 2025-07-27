@@ -17,7 +17,7 @@ void Firm::addWorker(std::shared_ptr<Worker> worker) {
 }
 
 void Firm::addProject(const Project& project) {
-    projects.push_back(project);
+    project_history[project.productName].push_back(project);
     // Set initial price from official prices
     projectPrices[project.projectId] = priceController.getOfficialPrice(project.productName);
 }
@@ -53,11 +53,14 @@ void Firm::findInnovation(Project& project) {
 }
 
 void Firm::updateProjectHours(int projectId, double hours) {
-    for (auto& project : projects) {
-        if (project.projectId == projectId) {
-            project.actualHoursSpent += hours;
-            laborTimeHoursSpent += hours;
-            break;
+    // Search through all product histories to find the project
+    for (auto& [productName, projects] : project_history) {
+        for (auto& project : projects) {
+            if (project.projectId == projectId) {
+                project.actualHoursSpent += hours;
+                laborTimeHoursSpent += hours;
+                return;
+            }
         }
     }
 }
@@ -76,11 +79,27 @@ double Firm::getProjectPrice(const Project& project) const {
 }
 
 const std::vector<Project>& Firm::getProjects() const {
-    return projects;
+    // For compatibility, return all projects as a single vector
+    static std::vector<Project> allProjects;
+    allProjects.clear();
+    
+    for (const auto& [productName, projects] : project_history) {
+        allProjects.insert(allProjects.end(), projects.begin(), projects.end());
+    }
+    
+    return allProjects;
 }
 
 std::vector<Project>& Firm::getProjects() {
-    return projects;
+    // For compatibility, return all projects as a single vector
+    static std::vector<Project> allProjects;
+    allProjects.clear();
+    
+    for (const auto& [productName, projects] : project_history) {
+        allProjects.insert(allProjects.end(), projects.begin(), projects.end());
+    }
+    
+    return allProjects;
 }
 
 const std::vector<std::shared_ptr<Worker>>& Firm::getWorkers() const {
@@ -94,6 +113,38 @@ double Firm::getTotalLaborTimeValueOfProject(const Project& project) const {
 
 double Firm::getTotalLaborTimeSpent() const {
     return laborTimeHoursSpent;
+}
+
+// New methods for project history
+const std::unordered_map<std::string, std::vector<Project>>& Firm::getProjectHistory() const {
+    return project_history;
+}
+
+std::vector<Project> Firm::getProjectsForProduct(const std::string& productName) const {
+    auto it = project_history.find(productName);
+    return (it != project_history.end()) ? it->second : std::vector<Project>();
+}
+
+double Firm::getMostRecentProductPrice(const std::string& productName) const {
+    auto it = project_history.find(productName);
+    if (it != project_history.end() && !it->second.empty()) {
+        const Project& mostRecentProject = it->second.back();
+        return getProjectPrice(mostRecentProject);
+    }
+    return priceController.getOfficialPrice(productName);
+}
+
+bool Firm::hasProjectsForProduct(const std::string& productName) const {
+    auto it = project_history.find(productName);
+    return it != project_history.end() && !it->second.empty();
+}
+
+void Firm::setMostRecentProductPrice(const std::string& productName, double price) {
+    auto it = project_history.find(productName);
+    if (it != project_history.end() && !it->second.empty()) {
+        const Project& mostRecentProject = it->second.back();
+        projectPrices[mostRecentProject.projectId] = price;
+    }
 }
 
 

@@ -47,12 +47,19 @@ public:
     double getTotalLaborTimeValueOfProject(const Project& project) const;
     double getTotalLaborTimeSpent() const;
     
+    // New methods for project history
+    const std::unordered_map<std::string, std::vector<Project>>& getProjectHistory() const;
+    std::vector<Project> getProjectsForProduct(const std::string& productName) const;
+    double getMostRecentProductPrice(const std::string& productName) const;
+    bool hasProjectsForProduct(const std::string& productName) const;
+    void setMostRecentProductPrice(const std::string& productName, double price);
+    
 private:
     int id;
     std::string name;
     double laborTimeHoursSpent;
     std::vector<std::shared_ptr<Worker>> workers;
-    std::vector<Project> projects; // Project history
+    std::unordered_map<std::string, std::vector<Project>> project_history;
     PriceController & priceController;
     std::map<int, double> projectPrices;
 };

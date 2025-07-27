@@ -61,25 +61,23 @@ void Simulation::innovationDiscoveryPhase() {
         if (probability(gen) < discovery_probability) {
             // Pick a random firm that might have an innovation
             auto otherFirm = firms[firmSelector(gen)];
-            if (otherFirm != firm && !otherFirm->getProjects().empty()) {
-                // Find a project from the other firm to copy innovation from
-                const auto& otherProjects = otherFirm->getProjects();
-                const auto& innovativeProject = otherProjects.back();
+            if (otherFirm != firm) {
+                // Pick a random product that we might discover innovations for
+                std::uniform_int_distribution<> productSelector(0, products.size() - 1);
+                std::string product = products[productSelector(gen)];
                 
-                // Find our project of the same product type
-                auto& ourProjects = firm->getProjects();
-                for (auto& project : ourProjects) {
-                    if (project.productName == innovativeProject.productName) {
-                        double otherPrice = otherFirm->getProjectPrice(innovativeProject);
-                        double ourPrice = firm->getProjectPrice(project);
+                // Check if the other firm has projects for this product and we do too
+                if (otherFirm->hasProjectsForProduct(product) && firm->hasProjectsForProduct(product)) {
+                    double otherPrice = otherFirm->getMostRecentProductPrice(product);
+                    double ourPrice = firm->getMostRecentProductPrice(product);
+                    
+                    if (otherPrice < ourPrice) {
+                        // Apply the innovation to our most recent project of this product type
+                        firm->setMostRecentProductPrice(product, otherPrice);
                         
-                        if (otherPrice < ourPrice) {
-                            firm->setProjectPrice(project, otherPrice);
-                            std::cout << firm->getName() << " discovered " << otherFirm->getName() 
-                                        << "'s innovation for " << project.productName 
-                                        << " (reduced from " << ourPrice << " to " << otherPrice << " hours)\n";
-                        }
-                        break;
+                        std::cout << firm->getName() << " discovered " << otherFirm->getName() 
+                                    << "'s innovation for " << product 
+                                    << " (reduced from " << ourPrice << " to " << otherPrice << " hours)\n";
                     }
                 }
             }
