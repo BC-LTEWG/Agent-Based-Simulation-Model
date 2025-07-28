@@ -6,6 +6,7 @@
 #include <memory>
 #include <random>
 #include <string>
+#include <map>
 
 #define NUM_FIRMS 10
 #define INNOVATION_PROBABILITY 0.15  // 15% chance per cycle
@@ -23,6 +24,9 @@ private:
     std::uniform_int_distribution<> projectSelector;
     int nextProjectId;
     int nextFirmId;
+    
+    // Products vector must be declared before PriceController for initialization
+    std::vector<std::string> products = {"shirts", "shoes", "shorts", "apples", "bread", "chairs", "tables"};
     PriceController priceController;
     
     // Simulation parameters
@@ -31,7 +35,11 @@ private:
     const double threshold_percentage_firms = THRESHOLD_PERCENTAGE_FIRMS;   // 20% improvement needed
     const double threshold_percentage_products = THRESHOLD_PERCENTAGE_PRODUCTS;   // 20% improvement needed
     
-    std::vector<std::string> products = {"shirts", "shoes", "shorts", "apples", "bread", "chairs", "tables"};
+    // Price tracking for plotting and summary
+    std::map<std::string, double> initialPrices;
+    std::map<std::string, std::vector<double>> priceHistory; // product -> price per cycle
+    std::vector<double> workDayHours; // average work day hours per cycle
+    std::vector<int> cycleNumbers; // cycle numbers for x-axis
     std::vector<std::string> firmNames = {"Alpha Corp", "Beta Industries", "Gamma Works", "Delta Manufacturing", 
                                          "Epsilon Enterprises", "Zeta Production", "Eta Systems", "Theta Co",
                                          "Iota Labs", "Kappa Industries"};
@@ -48,4 +56,10 @@ public:
     void runCycle(int cycleNumber);
     void showSummary();
     void run(int numCycles = 5);
+    
+    // New methods for tracking and plotting
+    void saveInitialPrices();
+    void trackPricesAndWorkDay(int cycle);
+    void generatePlots();
+    double calculateAverageWorkDay();
 }; 

@@ -3,10 +3,136 @@
 #include <algorithm>
 #include <chrono>
 #include <thread>
+#include <fstream>
+#include <iomanip>
+#include <matplot/matplot.h>
 
-Simulation::Simulation() : gen(std::random_device{}()), probability(0.0, 1.0), nextProjectId(1), nextFirmId(1) {
-    priceController.initializeOfficialPrices();
+Simulation::Simulation() : gen(std::random_device{}()), probability(0.0, 1.0), nextProjectId(1), nextFirmId(1),
+    priceController(products, {5, 8, 3, 1, 2, 12, 20}) {
+    saveInitialPrices();
     createFirms();
+}
+
+void Simulation::saveInitialPrices() {
+    for (const auto& product : products) {
+        initialPrices[product] = priceController.getOfficialPrice(product);
+        priceHistory[product] = std::vector<double>();
+    }
+}
+
+double Simulation::calculateAverageWorkDay() {
+    // Calculate average work day based on productivity improvements
+    // Base work day is 8 hours, reduced by average productivity gains
+    double totalProductivityGain = 0.0;
+    int productCount = 0;
+    
+    for (const auto& product : products) {
+        double initial = initialPrices[product];
+        double current = priceController.getCurrentCost(product);
+        if (initial > 0) {
+            double savings = (initial - current) / initial;
+            totalProductivityGain += savings;
+            productCount++;
+        }
+    }
+    
+    double avgProductivityGain = (productCount > 0) ? totalProductivityGain / productCount : 0.0;
+    double baseWorkDay = 8.0; // hours
+    return baseWorkDay * (1.0 - avgProductivityGain);
+}
+
+void Simulation::trackPricesAndWorkDay(int cycle) {
+    cycleNumbers.push_back(cycle);
+    
+    // Track current prices for each product
+    for (const auto& product : products) {
+        priceHistory[product].push_back(priceController.getCurrentCost(product));
+    }
+    
+    // Track average work day hours
+    workDayHours.push_back(calculateAverageWorkDay());
+}
+
+void Simulation::generatePlots() {
+    using namespace matplot;
+    
+    // Convert cycle numbers to double for plotting
+    std::vector<double> cycles;
+    for (int cycle : cycleNumbers) {
+        cycles.push_back(static_cast<double>(cycle));
+    }
+    
+    // Create figure with subplots
+    auto fig = figure(true);
+    fig->size(1200, 800);
+    
+    // First subplot: Commodity prices
+    subplot(2, 1, 1);
+    
+    // Plot each product price history
+    for (const auto& product : products) {
+        const auto& prices = priceHistory[product];
+        auto p = plot(cycles, prices, "-o");
+        p->display_name(product);
+        p->line_width(2);
+    }
+    
+    xlabel("Cycle");
+    ylabel("Labor Hours per Unit");
+    title("Commodity Prices Over Time");
+    legend();
+    grid(on);
+    
+    // Second subplot: Work day hours
+    subplot(2, 1, 2);
+    auto p2 = plot(cycles, workDayHours, "-s");
+    p2->color("red");
+    p2->line_width(2);
+    
+    xlabel("Cycle");
+    ylabel("Average Work Day (Hours)");
+    title("Average Work Day Duration Over Time");
+    grid(on);
+    
+    // Save and show the plot
+    save("simulation_results.png");
+    show();
+    
+    // Generate CSV file for external analysis
+    std::ofstream csvFile("simulation_data.csv");
+    csvFile << "Cycle,";
+    for (const auto& product : products) {
+        csvFile << product << "_price,";
+    }
+    csvFile << "work_day_hours\n";
+    
+    for (size_t i = 0; i < cycleNumbers.size(); ++i) {
+        csvFile << cycleNumbers[i] << ",";
+        for (const auto& product : products) {
+            csvFile << std::fixed << std::setprecision(4) << priceHistory[product][i] << ",";
+        }
+        csvFile << std::fixed << std::setprecision(4) << workDayHours[i] << "\n";
+    }
+    csvFile.close();
+    
+    // Create simple ASCII visualization for work day trends
+    std::cout << "\n=== WORK DAY TREND (ASCII) ===\n";
+    std::cout << "Cycle | Work Day Hours | Trend\n";
+    std::cout << "------|-----------------|------\n";
+    
+    for (size_t i = 0; i < cycleNumbers.size(); ++i) {
+        double hours = workDayHours[i];
+        int barLength = static_cast<int>((hours / 8.0) * 20); // Scale to 20 chars max
+        
+        std::cout << std::setw(5) << cycleNumbers[i] << " | " 
+                 << std::setw(14) << std::fixed << std::setprecision(2) << hours << " | ";
+        
+        for (int j = 0; j < barLength; ++j) std::cout << "█";
+        std::cout << " (" << std::setprecision(1) << hours << "h)\n";
+    }
+    
+    std::cout << "\nPlots saved as 'simulation_results.png' and displayed using matplot++\n";
+    std::cout << "Data also exported to 'simulation_data.csv' for external analysis\n";
 }
 
 void Simulation::createFirms() {
@@ -163,7 +289,7 @@ void Simulation::priceControllerPhase() {
     
     // Update official prices if conditions are met
     std::cout << "\nChecking for price updates...\n";
-    priceController.updateOfficialPrices(threshold_percentage);
+    priceController.updateOfficialPrices(threshold_percentage_firms, threshold_percentage_products);
     std::cout << "\n";
 }
 
@@ -175,6 +301,7 @@ void Simulation::runCycle(int cycleNumber) {
     randomInnovationPhase();
     productionPhase();
     priceControllerPhase();
+    trackPricesAndWorkDay(cycleNumber); // Track prices and work day after each cycle
     
     std::cout << "Cycle " << cycleNumber << " completed.\n\n";
     
@@ -187,9 +314,33 @@ void Simulation::showSummary() {
     std::cout << "Total firms: " << firms.size() << "\n";
     std::cout << "Total projects created: " << nextProjectId - 1 << "\n";
     
+    std::cout << "\nInitial official prices:\n";
+    for (const auto& product : products) {
+        std::cout << product << ": " << initialPrices[product] << " hours\n";
+    }
+    
     std::cout << "\nFinal official prices:\n";
     for (const auto& product : products) {
-        std::cout << product << ": " << priceController.getOfficialPrice(product) << " hours\n";
+        double initial = initialPrices[product];
+        double final = priceController.getOfficialPrice(product);
+        double delta = final - initial;
+        double percentChange = (initial > 0) ? (delta / initial) * 100.0 : 0.0;
+        
+        std::cout << product << ": " << final << " hours (delta: " << std::showpos 
+                 << delta << std::noshowpos << " hours, " << std::showpos 
+                 << percentChange << std::noshowpos << "%)\n";
+    }
+    
+    std::cout << "\nFinal current costs (actual productivity):\n";
+    for (const auto& product : products) {
+        double initial = initialPrices[product];
+        double current = priceController.getCurrentCost(product);
+        double delta = current - initial;
+        double percentChange = (initial > 0) ? (delta / initial) * 100.0 : 0.0;
+        
+        std::cout << product << ": " << current << " hours (delta: " << std::showpos 
+                 << delta << std::noshowpos << " hours, " << std::showpos 
+                 << percentChange << std::noshowpos << "%)\n";
     }
     
     std::cout << "\nFirm production summary:\n";
@@ -208,5 +359,6 @@ void Simulation::run(int numCycles) {
     }
     
     showSummary();
+    generatePlots(); // Generate plots after the simulation run
     std::cout << "\nSimulation completed successfully!\n";
 } 
