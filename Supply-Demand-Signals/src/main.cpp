@@ -46,15 +46,15 @@ int main(int argc, char *argv[]) {
         society->add_worker(worker);
         assert(firm->employ(worker));
     }
-
+    
     std::vector<double> x;
     std::vector<double> y1;
     std::vector<double> y2;
     std::vector<double> y3;
     std::vector<double> y4;
 
-    for (int i = 0; i < 10; i++) {
-        printf("\n ------- Tick cycle %d -------\n", i);
+    for (int i = 0; i < 100; i++) {
+        printf("\n ------- Tick cycle %d -------\n", i + 1);
         society->tick_cycle(i == 0);
         distributor->head();
 
@@ -63,6 +63,12 @@ int main(int argc, char *argv[]) {
         y2.push_back(distributor->get_production_deficit(good, i));
         y3.push_back(firm->all_projects()[0]->plan.quantity);
         y4.push_back(firm->all_projects()[0]->goods_produced);
+
+        printf("Worker 0 needs: %d\n", society->workers[0]->need_count());
+    }
+
+    if (!arg_present("--save") && !arg_present("--show")) {
+        return 0;
     }
 
     plt::figure_size(800, 600);
@@ -77,9 +83,14 @@ int main(int argc, char *argv[]) {
 
     plt::grid(true);
 
+    for (int i = 0; i < argc; i++) {
+        printf("%s ", argv[i]);
+    }
+    printf("\n");
+
     if (arg_present("--save")) {
         plt::save("img/output.png");
-    } else {
+    } else if (arg_present("--show")) {
         plt::show();
     }
 

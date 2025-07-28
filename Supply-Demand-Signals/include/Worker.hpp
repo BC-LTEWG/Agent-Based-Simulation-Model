@@ -40,6 +40,8 @@ class Worker {
         void pay(double amount);
         // Returns whether or not the worker had enough credits to spend
         bool spend(double amount);
+
+        int need_count();
         
         void update_needs();
         // Fulfill needs in order of priority

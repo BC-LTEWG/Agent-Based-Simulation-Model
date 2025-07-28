@@ -7,6 +7,7 @@
 
 #include "../include/Society.hpp"
 #include "Good.hpp"
+#include "Worker.hpp"
 
 Distributor::Distributor(Society * society) : Firm(society) {}
 
@@ -76,7 +77,7 @@ void Distributor::take_from_new_projects(Good * good, double remaining) {
     }
 }
 
-std::pair<double, double> Distributor::purchase(Good * good, double amount) {
+std::pair<double, double> Distributor::purchase(Worker * worker, Good * good, double amount) {
     if (!inventory.count(good) || total_inventory(good) <= 0) {
         return {0, 0};
     }
@@ -90,12 +91,18 @@ std::pair<double, double> Distributor::purchase(Good * good, double amount) {
     if (purchase_amount <= 0) {
         return {0, 0};
     }
+
     double remaining = purchase_amount;
 
     // clear out old inventory first
     remaining = take_from_old_projects(good, remaining);
 
     take_from_new_projects(good, remaining);
+
+    purchase_records.push_back(PurchaseRecord{.purchaser = this,
+        .good = good,
+        .amount = purchase_amount,
+        .plan_cycle = society->plan_cycle});
 
     return {purchase_amount, cost};
 }

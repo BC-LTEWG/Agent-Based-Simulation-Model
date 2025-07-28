@@ -8,7 +8,10 @@ add_compile_options(-Wall -Wno-deprecated-declarations)
 
 
 # Uncomment the following line to enable Address Sanitizer
-# set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer")
+# set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -g")
+
+# Uncomment the following line when using profiling/flamegraph
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -g")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
