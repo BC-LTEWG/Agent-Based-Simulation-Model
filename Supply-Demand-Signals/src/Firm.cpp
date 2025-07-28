@@ -72,7 +72,7 @@ bool Firm::employ(Worker * w) {
 void Firm::add_stock(Good * good, Project * project, double amount) {
     if (!inventory.count(good)) {
         inventory[good] =
-            InventoryItem{std::unordered_map<Project *, double>(), std::vector<double>()};
+            InventoryItem{robin_hood::unordered_map<Project *, double>(), std::vector<double>()};
         // Fill deficit history with zeros up to society plan cycle
         inventory[good].deficit_history.resize(society->plan_cycle + 1, 0.0);
     }

@@ -1,4 +1,5 @@
 #include <cassert>
+#include <chrono>
 #include <cstdio>
 #include <map>
 #include <vector>
@@ -12,8 +13,8 @@
 
 namespace plt = matplotlibcpp;
 
-int main(int argc, char *argv[]) {
-    auto arg_present = [&argc, &argv](const char *arg) {
+int main(int argc, char * argv[]) {
+    auto arg_present = [&argc, &argv](const char * arg) {
         for (int i = 0; i < argc; i++) {
             if (strcmp(argv[i], arg) == 0) {
                 return true;
@@ -46,16 +47,26 @@ int main(int argc, char *argv[]) {
         society->add_worker(worker);
         assert(firm->employ(worker));
     }
-    
+
     std::vector<double> x;
     std::vector<double> y1;
     std::vector<double> y2;
     std::vector<double> y3;
     std::vector<double> y4;
 
+    std::vector<double> tick_times;
+
     for (int i = 0; i < 100; i++) {
         printf("\n ------- Tick cycle %d -------\n", i + 1);
+
+        auto start_time = std::chrono::high_resolution_clock::now();
         society->tick_cycle(i == 0);
+        auto end_time = std::chrono::high_resolution_clock::now();
+
+        auto duration =
+            std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+        tick_times.push_back(duration.count() / 1000.0);
+
         distributor->head();
 
         x.push_back(i);
@@ -66,6 +77,17 @@ int main(int argc, char *argv[]) {
 
         printf("Worker 0 needs: %d\n", society->workers[0]->need_count());
     }
+
+    double total_tick_time = 0.0;
+    for (double time : tick_times) {
+        total_tick_time += time;
+    }
+    double average_tick_time = total_tick_time / tick_times.size();
+
+    printf("\n------- Performance Summary -------\n");
+    printf("Total ticks: %zu\n", tick_times.size());
+    printf("Total tick time: %.2f ms\n", total_tick_time);
+    printf("Average tick time: %.2f ms\n", average_tick_time);
 
     if (!arg_present("--save") && !arg_present("--show")) {
         return 0;

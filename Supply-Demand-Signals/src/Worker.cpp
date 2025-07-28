@@ -41,23 +41,23 @@ void Worker::update_needs() {
         return a->priority < b->priority;
     });
 
-    int need_pointer = 0;
-    int new_need_pointer = 0;
+    int need_ptr = 0;
+    int new_need_ptr = 0;
 
-    while (new_need_pointer < (int)new_needs.size() && need_pointer < (int)needs.size()) {
-        if (new_needs[new_need_pointer]->priority < needs[need_pointer]->priority) {
+    while (new_need_ptr < (int)new_needs.size() && need_ptr < (int)needs.size()) {
+        if (new_needs[new_need_ptr]->priority < needs[need_ptr]->priority) {
             // Insert new need before current need
-            needs.insert(needs.begin() + need_pointer, new_needs[new_need_pointer]);
-            new_need_pointer++;
+            needs.insert(needs.begin() + need_ptr, new_needs[new_need_ptr]);
+            new_need_ptr++;
         } else {
             // Keep current need, move to next
-            need_pointer++;
+            need_ptr++;
         }
     }
 
-    while (new_need_pointer < (int)new_needs.size()) {
-        needs.push_back(new_needs[new_need_pointer]);
-        new_need_pointer++;
+    while (new_need_ptr < (int)new_needs.size()) {
+        needs.push_back(new_needs[new_need_ptr]);
+        new_need_ptr++;
     }
 
 }
