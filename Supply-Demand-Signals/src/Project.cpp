@@ -1,4 +1,5 @@
 #include "../include/Project.hpp"
+#include <cmath>
 
 #include "../include/Society.hpp"
 
@@ -7,7 +8,7 @@ Project::Project(Society * society, Plan plan)
       plan_cycle(society->plan_cycle),
       plan(plan),
       ideal_workers(
-          plan.labor / society->config.workday_length / society->config.plan_cycle_duration) {
+          std::ceil(plan.labor / society->config.workday_length / society->config.plan_cycle_duration)) {
     hours_left = plan.means + plan.labor + plan.resources;
 }
 

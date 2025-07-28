@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cstdio>
+#include <map>
 #include <vector>
 
 #include "../extern/matplotlib-cpp/matplotlibcpp.h"
@@ -11,7 +12,16 @@
 
 namespace plt = matplotlibcpp;
 
-int main() {
+int main(int argc, char *argv[]) {
+    auto arg_present = [&argc, &argv](const char *arg) {
+        for (int i = 0; i < argc; i++) {
+            if (strcmp(argv[i], arg) == 0) {
+                return true;
+            }
+        }
+        return false;
+    };
+
     // Quarterly plan cycle duration
     Society * society =
         new Society(Config{.plan_cycle_duration = 90, .fic = 0.8, .workday_length = 8.0});
@@ -38,8 +48,10 @@ int main() {
     }
 
     std::vector<double> x;
-    std::vector<double> y;
+    std::vector<double> y1;
     std::vector<double> y2;
+    std::vector<double> y3;
+    std::vector<double> y4;
 
     for (int i = 0; i < 10; i++) {
         printf("\n ------- Tick cycle %d -------\n", i);
@@ -47,17 +59,29 @@ int main() {
         distributor->head();
 
         x.push_back(i);
-        y.push_back(distributor->total_inventory(good));
+        y1.push_back(distributor->total_inventory(good));
         y2.push_back(distributor->get_production_deficit(good, i));
+        y3.push_back(firm->all_projects()[0]->plan.quantity);
+        y4.push_back(firm->all_projects()[0]->goods_produced);
     }
 
     plt::figure_size(800, 600);
-    plt::plot(x, y, "b-");
-    plt::plot(x, y2, "r-");
+    plt::plot(x, y1, {{"label", "Inventory"}, {"color", "blue"}});
+    plt::plot(x, y2, {{"label", "Production Deficit"}, {"color", "red"}});
+    plt::plot(x, y3, {{"label", "Planned Production"}, {"color", "green"}});
+    plt::plot(x, y4, {{"label", "Actual Production"}, {"color", "orange"}});
     plt::title("Inventory and Production Deficit of Apples Over Time");
     plt::xlabel("Time (cycles)");
     plt::ylabel("Quantity");
-    plt::show();
+    plt::legend();
+
+    plt::grid(true);
+
+    if (arg_present("--save")) {
+        plt::save("img/output.png");
+    } else {
+        plt::show();
+    }
 
     return 0;
 }

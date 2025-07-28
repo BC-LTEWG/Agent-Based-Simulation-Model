@@ -1,10 +1,18 @@
 #pragma once
 
 #include <utility>
+#include <vector>
 #include "Firm.hpp"
+#include "Project.hpp"
 
 class Distributor : public Firm {
     private:
+    std::vector<Project *> old_projects(Good * good);
+    // Returns the remaining amount needed to be purchased that can not be taken from old projects
+    double take_from_old_projects(Good * good, double remaining);
+    // Precondition: there is enough inventory of the good to purchase the amount
+    void take_from_new_projects(Good * good, double remaining);
+
     public:
         Distributor(Society * society);
 
