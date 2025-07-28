@@ -10,7 +10,8 @@
 #define NUM_FIRMS 10
 #define INNOVATION_PROBABILITY 0.15  // 15% chance per cycle
 #define DISCOVERY_PROBABILITY 0.25   // 25% chance to discover others' innovations
-#define THRESHOLD_PERCENTAGE 20.0    // 20% improvement needed
+#define THRESHOLD_PERCENTAGE_FIRMS 20.0    // 20% improvement needed
+#define THRESHOLD_PERCENTAGE_PRODUCTS 20.0   // 20% improvement needed
 
 class Simulation {
 private:
@@ -19,6 +20,7 @@ private:
     std::mt19937 gen;
     std::uniform_real_distribution<> probability;
     std::uniform_int_distribution<> firmSelector;
+    std::uniform_int_distribution<> projectSelector;
     int nextProjectId;
     int nextFirmId;
     PriceController priceController;
@@ -26,7 +28,8 @@ private:
     // Simulation parameters
     const double innovation_probability = INNOVATION_PROBABILITY;  // 15% chance per cycle
     const double discovery_probability = DISCOVERY_PROBABILITY;   // 25% chance to discover others' innovations
-    const double threshold_percentage = THRESHOLD_PERCENTAGE;   // 20% improvement needed
+    const double threshold_percentage_firms = THRESHOLD_PERCENTAGE_FIRMS;   // 20% improvement needed
+    const double threshold_percentage_products = THRESHOLD_PERCENTAGE_PRODUCTS;   // 20% improvement needed
     
     std::vector<std::string> products = {"shirts", "shoes", "shorts", "apples", "bread", "chairs", "tables"};
     std::vector<std::string> firmNames = {"Alpha Corp", "Beta Industries", "Gamma Works", "Delta Manufacturing", 
