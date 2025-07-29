@@ -9,14 +9,17 @@ SOURCES = $(SRCDIR)/main.cpp $(SRCDIR)/Firm.cpp $(SRCDIR)/Worker.cpp $(SRCDIR)/P
 OBJECTS = $(SOURCES:.cpp=.o)
 
 # Include path
-INCLUDES = -I$(INCDIR)
+INCLUDES = -I$(INCDIR) -I/usr/local/include
+
+# Libraries for matplot++ - static linking with correct order
+LIBS = -Wl,--start-group /usr/local/lib/libmatplot.a /usr/local/lib/Matplot++/libnodesoup.a -Wl,--end-group
 
 # Default target
 all: $(TARGET)
 
 # Build the main executable
 $(TARGET): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $(TARGET)
+	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $(TARGET) $(LIBS)
 
 # Compile source files
 %.o: %.cpp

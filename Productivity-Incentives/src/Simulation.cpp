@@ -27,16 +27,16 @@ double Simulation::calculateAverageWorkDay() {
     int productCount = 0;
     
     for (const auto& product : products) {
-        double initial = initialPrices[product];
+        double initial = priceController.getOfficialPrice(product);
         double current = priceController.getCurrentCost(product);
         if (initial > 0) {
-            double savings = (initial - current) / initial;
-            totalProductivityGain += savings;
+            double savings_in_labor_hours = (initial - current) / initial;
+            totalProductivityGain += savings_in_labor_hours;
             productCount++;
         }
     }
     
-    double avgProductivityGain = (productCount > 0) ? totalProductivityGain / productCount : 0.0;
+    double avgProductivityGain = totalProductivityGain / productCount;
     double baseWorkDay = 8.0; // hours
     return baseWorkDay * (1.0 - avgProductivityGain);
 }
@@ -72,19 +72,17 @@ void Simulation::generatePlots() {
     // Plot each product price history
     for (const auto& product : products) {
         const auto& prices = priceHistory[product];
-        auto p = plot(cycles, prices, "-o");
+        auto& p = plot(cycles, prices, "-s");
+        p->color("red");
         p->display_name(product);
         p->line_width(2);
-    }
+        xlabel("Cycle");
+        ylabel("Labor Hours per Unit");
+        title("Commodity Prices Over Time");
+        legend();
+        grid(on);
+    }    
     
-    xlabel("Cycle");
-    ylabel("Labor Hours per Unit");
-    title("Commodity Prices Over Time");
-    legend();
-    grid(on);
-    
-    // Second subplot: Work day hours
-    subplot(2, 1, 2);
     auto p2 = plot(cycles, workDayHours, "-s");
     p2->color("red");
     p2->line_width(2);

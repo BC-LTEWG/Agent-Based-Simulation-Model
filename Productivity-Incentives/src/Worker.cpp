@@ -40,7 +40,6 @@ void Worker::setLaborTimeValue(double value) {
 void Worker::workOnProject(int hours) {
     if (currentProject != nullptr && hours > 0) {
         laborTimeHoursSpent += hours;
-        // Record the work with the firm
         firmWorkingFor.updateProjectHours(currentProject->projectId, hours);
     }
 } 
