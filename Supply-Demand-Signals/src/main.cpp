@@ -1,5 +1,7 @@
 #include <cassert>
+#include <chrono>
 #include <cstdio>
+#include <map>
 #include <vector>
 
 #include "../extern/matplotlib-cpp/matplotlibcpp.h"
@@ -11,7 +13,16 @@
 
 namespace plt = matplotlibcpp;
 
-int main() {
+int main(int argc, char * argv[]) {
+    auto arg_present = [&argc, &argv](const char * arg) {
+        for (int i = 0; i < argc; i++) {
+            if (strcmp(argv[i], arg) == 0) {
+                return true;
+            }
+        }
+        return false;
+    };
+
     // Quarterly plan cycle duration
     Society * society =
         new Society(Config{.plan_cycle_duration = 90, .fic = 0.8, .workday_length = 8.0});
@@ -38,26 +49,72 @@ int main() {
     }
 
     std::vector<double> x;
-    std::vector<double> y;
+    std::vector<double> y1;
     std::vector<double> y2;
+    std::vector<double> y3;
+    std::vector<double> y4;
 
-    for (int i = 0; i < 10; i++) {
-        printf("\n ------- Tick cycle %d -------\n", i);
+    std::vector<double> tick_times;
+
+    for (int i = 0; i < 100; i++) {
+        printf("\n ------- Tick cycle %d -------\n", i + 1);
+
+        auto start_time = std::chrono::high_resolution_clock::now();
         society->tick_cycle(i == 0);
+        auto end_time = std::chrono::high_resolution_clock::now();
+
+        auto duration =
+            std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+        tick_times.push_back(duration.count() / 1000.0);
+
         distributor->head();
 
         x.push_back(i);
-        y.push_back(distributor->total_inventory(good));
+        y1.push_back(distributor->total_inventory(good));
         y2.push_back(distributor->get_production_deficit(good, i));
+        y3.push_back(firm->all_projects()[0]->plan.quantity);
+        y4.push_back(firm->all_projects()[0]->goods_produced);
+
+        printf("Worker 0 needs: %d\n", society->workers[0]->need_count());
+    }
+
+    double total_tick_time = 0.0;
+    for (double time : tick_times) {
+        total_tick_time += time;
+    }
+    double average_tick_time = total_tick_time / tick_times.size();
+
+    printf("\n------- Performance Summary -------\n");
+    printf("Total ticks: %zu\n", tick_times.size());
+    printf("Total tick time: %.2f ms\n", total_tick_time);
+    printf("Average tick time: %.2f ms\n", average_tick_time);
+
+    if (!arg_present("--save") && !arg_present("--show")) {
+        return 0;
     }
 
     plt::figure_size(800, 600);
-    plt::plot(x, y, "b-");
-    plt::plot(x, y2, "r-");
+    plt::plot(x, y1, {{"label", "Inventory"}, {"color", "blue"}});
+    plt::plot(x, y2, {{"label", "Production Deficit"}, {"color", "red"}});
+    plt::plot(x, y3, {{"label", "Planned Production"}, {"color", "green"}});
+    plt::plot(x, y4, {{"label", "Actual Production"}, {"color", "orange"}});
     plt::title("Inventory and Production Deficit of Apples Over Time");
     plt::xlabel("Time (cycles)");
     plt::ylabel("Quantity");
-    plt::show();
+    plt::legend();
+
+    plt::grid(true);
+
+    for (int i = 0; i < argc; i++) {
+        printf("%s ", argv[i]);
+    }
+    printf("\n");
+
+    if (arg_present("--save")) {
+        plt::save("img/output.png");
+    } else if (arg_present("--show")) {
+        plt::show();
+    }
 
     return 0;
 }

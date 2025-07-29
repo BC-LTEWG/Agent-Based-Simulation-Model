@@ -19,13 +19,14 @@ class Project {
 
         double hours_left;
 
-        double goods_produced = 0.0;
-
-    public:
+        
+        public:
         int plan_cycle;
-
+        
         Plan plan;
         int ideal_workers;
+        
+        double goods_produced = 0.0;
 
         Project(Society * society, Plan plan);
 

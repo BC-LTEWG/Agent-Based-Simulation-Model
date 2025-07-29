@@ -18,3 +18,10 @@ Makefile
 *~
 
 .cache
+compile_commands.json
+
+img
+
+flamegraph.svg
+perf.data
+perf.data.old

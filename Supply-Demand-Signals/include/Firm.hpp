@@ -1,6 +1,7 @@
 #pragma once
 
-#include <unordered_map>
+#include "../extern/robin_hood/robin_hood.h"
+
 #include <vector>
 
 #include "Good.hpp"
@@ -9,11 +10,11 @@
 class Society;
 
 struct InventoryItem {
-        std::unordered_map<Project *, double> projects;
+        robin_hood::unordered_map<Project *, double> projects;
         std::vector<double> deficit_history;
 };
 
-typedef std::unordered_map<Good *, InventoryItem> Inventory;
+typedef robin_hood::unordered_map<Good *, InventoryItem> Inventory;
 
 class Firm {
         friend class Distributor;

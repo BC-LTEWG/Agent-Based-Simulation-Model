@@ -72,9 +72,13 @@ bool Firm::employ(Worker * w) {
 void Firm::add_stock(Good * good, Project * project, double amount) {
     if (!inventory.count(good)) {
         inventory[good] =
-            InventoryItem{std::unordered_map<Project *, double>(), std::vector<double>()};
+            InventoryItem{robin_hood::unordered_map<Project *, double>(), std::vector<double>()};
         // Fill deficit history with zeros up to society plan cycle
         inventory[good].deficit_history.resize(society->plan_cycle + 1, 0.0);
+    }
+
+    if (!inventory[good].projects.count(project)) {
+        inventory[good].projects[project] = 0.0;
     }
 
     inventory[good].projects[project] += amount;
@@ -189,8 +193,10 @@ Plan Firm::generate_plan(Project * project) {
     double multiplier =
         project->goods_produced > 0 ? estimated_necessity / project->goods_produced : 0;
 
-    // produce a little bit extra
-    multiplier *= 1.1;
+    printf("Produced: %.2f, Estimated necessity: %.2f\n, Multiplier: %.2f\n",
+        project->goods_produced,
+        estimated_necessity,
+        multiplier);
 
     Plan new_plan = {.means = project->plan.means * multiplier,
         .resources = project->plan.resources * multiplier,

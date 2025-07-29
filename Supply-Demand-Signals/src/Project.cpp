@@ -1,13 +1,15 @@
 #include "../include/Project.hpp"
 
+#include <cmath>
+
 #include "../include/Society.hpp"
 
 Project::Project(Society * society, Plan plan)
     : society(society),
       plan_cycle(society->plan_cycle),
       plan(plan),
-      ideal_workers(
-          plan.labor / society->config.workday_length / society->config.plan_cycle_duration) {
+      ideal_workers(std::ceil(
+          plan.labor / society->config.workday_length / society->config.plan_cycle_duration)) {
     hours_left = plan.means + plan.labor + plan.resources;
 }
 
@@ -38,7 +40,7 @@ void Project::tick() {
     if (!society->distributors.empty()) {
         double fraction = hours_worked / workday_length;
 
-        double produced = plan.quantity / society->config.plan_cycle_duration / fraction;
+        double produced = plan.quantity / society->config.plan_cycle_duration * fraction;
         goods_produced += produced;
 
         double per_dist = produced / society->distributors.size();
