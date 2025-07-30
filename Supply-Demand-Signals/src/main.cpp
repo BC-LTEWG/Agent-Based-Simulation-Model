@@ -27,7 +27,7 @@ int main(int argc, char * argv[]) {
     Society * society =
         new Society(Config{.plan_cycle_duration = 90, .fic = 0.8, .workday_length = 8.0});
 
-    Good * good = new Good{.name = "Apples", .value = .10};
+    Good * good = new Good{.name = "Apples", .value = .20};
     society->add_good(good);
 
     Firm * firm = new Firm(society);
@@ -38,7 +38,7 @@ int main(int argc, char * argv[]) {
     society->add_firm(distributor);
 
     firm->add_project(new Project(society,
-        Plan{.means = 0, .resources = 0, .labor = 90 * 8 * 10, .good = good, .quantity = 1000}));
+        Plan{.means = 0, .resources = 0, .labor = 90 * 8 * 10, .good = good, .quantity = 500}));
 
     const int population_size = firm->total_ideal_jobs();
     for (int i = 0; i < population_size; i++) {
@@ -56,7 +56,7 @@ int main(int argc, char * argv[]) {
 
     std::vector<double> tick_times;
 
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 300; i++) {
         printf("\n ------- Tick cycle %d -------\n", i + 1);
 
         auto start_time = std::chrono::high_resolution_clock::now();
@@ -75,7 +75,12 @@ int main(int argc, char * argv[]) {
         y3.push_back(firm->all_projects()[0]->plan.quantity);
         y4.push_back(firm->all_projects()[0]->goods_produced);
 
-        printf("Worker 0 needs: %d\n", society->workers[0]->need_count());
+        double avg_worker_needs = 0;
+        for (auto & worker : society->workers) {
+            avg_worker_needs += worker->need_count();
+        }
+        avg_worker_needs /= society->workers.size();
+        printf("Average worker needs: %.2f\n", avg_worker_needs);
     }
 
     double total_tick_time = 0.0;

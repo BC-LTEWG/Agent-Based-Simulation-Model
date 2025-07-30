@@ -20,17 +20,24 @@ bool Worker::spend(double amount) {
     return false;
 }
 
-int Worker::need_count() {
-    return needs.size();
-}
+int Worker::need_count() { return needs.size(); }
 
 void Worker::update_needs() {
     std::vector<WorkerNeed *> new_needs;
+
+    robin_hood::unordered_set<Good *> needed_goods;
+
+    for (auto & need : needs) {
+        needed_goods.insert(need->good);
+    }
+
     for (auto & need_cycle : need_cycles) {
         need_cycle.clock--;
         if (need_cycle.clock <= 0) {
-            // Time to replenish this need
-            new_needs.push_back(new WorkerNeed{*need_cycle.need});
+            // Time to replenish this need, only if we don't already need it
+            if (!needed_goods.count(need_cycle.need->good)) {
+                new_needs.push_back(new WorkerNeed{*need_cycle.need});
+            }
             // Reset the clock
             need_cycle.clock = need_cycle.cycles;
         }
@@ -59,7 +66,6 @@ void Worker::update_needs() {
         needs.push_back(new_needs[new_need_ptr]);
         new_need_ptr++;
     }
-
 }
 
 void Worker::fulfill_needs() {
