@@ -22,38 +22,52 @@ void Simulation::saveInitialPrices() {
 }
 
 double Simulation::calculateAverageWorkDay() {
-    // Calculate average work day based on productivity improvements
-    // Base work day is 8 hours, reduced by average productivity gains
+    // Work day calculation: starts at 8 hours, decreases ONLY with genuine innovations
+    double baseWorkDay = 8.0; // hours
+    
+    // Track the minimum work day achieved so far (starts at 8, can only go down)
+    static double minimumWorkDayAchieved = baseWorkDay;
+    
     double totalProductivityGain = 0.0;
     int productCount = 0;
     
+    // Only count products that have demonstrable improvements from innovation
+    // Must be compared against OFFICIAL prices (what firms plan for)
     for (const auto& product : products) {
-        double initial = initialPrices.at(product);  // Use original starting prices
-        double current = priceController.getCurrentCost(product);
+        double officialPrice = priceController.getOfficialPrice(product);  // What firms plan for
+        double actualAverage = priceController.getCurrentCost(product);    // What actually happened
         
-        // Only include products that have actual cost data (different from initial)
-        // This prevents unproduced products from affecting the calculation
-        if (initial > 0 && current > 0 && current != initial) {
-            double savings_in_labor_hours = (initial - current) / initial;
-            totalProductivityGain += savings_in_labor_hours;
+        // Only count if we have actual data AND it's genuinely better than official target
+        if (officialPrice > 0 && actualAverage > 0 && actualAverage < officialPrice) {
+            double improvement = (officialPrice - actualAverage) / officialPrice;
+            totalProductivityGain += improvement;
             productCount++;
             
-            std::cout << "Product " << product << ": initial=" << initial 
-                      << ", current=" << current << ", savings=" << (savings_in_labor_hours * 100.0) << "%\n";
+            std::cout << "Product " << product << ": official=" << officialPrice 
+                      << ", actual=" << actualAverage << ", improvement=" << (improvement * 100.0) << "%\n";
         }
     }
     
-    double avgProductivityGain = (productCount > 0) ? totalProductivityGain / productCount : 0.0;
-    double baseWorkDay = 8.0; // hours
-    double newWorkDay = baseWorkDay * (1.0 - avgProductivityGain);
-    
-    // Ensure work day never goes above base work day (productivity can't be negative)
-    if (newWorkDay > baseWorkDay) {
-        newWorkDay = baseWorkDay;
+    double newWorkDay;
+    if (productCount == 0) {
+        // No improvements detected, keep current minimum
+        newWorkDay = minimumWorkDayAchieved;
+        std::cout << "Work day calculation: No productivity improvements, maintaining " << newWorkDay << " hours\n";
+    } else {
+        // Calculate new work day based on productivity gains
+        double avgProductivityGain = totalProductivityGain / productCount;
+        newWorkDay = baseWorkDay * (1.0 - avgProductivityGain);
+        
+        // Work day can only decrease (ratchet effect)
+        if (newWorkDay < minimumWorkDayAchieved) {
+            minimumWorkDayAchieved = newWorkDay;
+        } else {
+            newWorkDay = minimumWorkDayAchieved;
+        }
+        
+        std::cout << "Work day calculation: products improved=" << productCount 
+                  << ", avgGain=" << (avgProductivityGain * 100.0) << "%, workDay=" << newWorkDay << " hours\n";
     }
-    
-    std::cout << "Work day calculation: avgProductivityGain=" << (avgProductivityGain * 100.0) 
-              << "%, workDay=" << newWorkDay << " hours\n";
     
     return newWorkDay;
 }
@@ -384,6 +398,17 @@ void Simulation::showSummary() {
 void Simulation::run(int numCycles) {
     std::cout << "Starting Economic Simulation with Labor Time Value\n";
     std::cout << "================================================\n\n";
+    
+    // Add cycle 0 to show the baseline of 8 hours before any simulation
+    cycleNumbers.push_back(0);
+    workDayHours.push_back(8.0);  // Baseline work day
+    
+    // Track initial prices for cycle 0
+    for (const auto& product : products) {
+        priceHistory[product].push_back(initialPrices[product]);
+    }
+    
+    std::cout << "Cycle 0 (Baseline): Work day = 8.0 hours\n\n";
     
     for (int cycle = 1; cycle <= numCycles; ++cycle) {
         runCycle(cycle);

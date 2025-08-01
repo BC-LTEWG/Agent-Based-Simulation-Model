@@ -38,7 +38,7 @@ void Firm::reportProjectPriceToPriceController(const Project& project) {
 
 void Firm::findInnovation(Project& project) {
     static std::default_random_engine generator;
-    std::uniform_real_distribution<double> distribution(0.1, 0.3);
+    std::uniform_real_distribution<double> distribution(0.15, 0.4);  // 15-40% cost reduction
     
     double reduction = distribution(generator);
     double oldCost = project.actualCost;

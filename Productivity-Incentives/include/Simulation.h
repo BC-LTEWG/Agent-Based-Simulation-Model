@@ -9,10 +9,10 @@
 #include <map>
 
 #define NUM_FIRMS 10
-#define INNOVATION_PROBABILITY 0.15  // 15% chance per cycle
-#define DISCOVERY_PROBABILITY 0.25   // 25% chance to discover others' innovations
-#define THRESHOLD_PERCENTAGE_FIRMS 20.0    // 20% improvement needed
-#define THRESHOLD_PERCENTAGE_PRODUCTS 20.0   // 20% improvement needed
+#define INNOVATION_PROBABILITY 0.4   // 40% chance per cycle - higher for visible results
+#define DISCOVERY_PROBABILITY 0.6    // 60% chance to discover others' innovations
+#define THRESHOLD_PERCENTAGE_FIRMS 15.0    // 15% improvement needed (lower threshold)
+#define THRESHOLD_PERCENTAGE_PRODUCTS 15.0   // 15% improvement needed (lower threshold)
 
 class Simulation {
 private:
