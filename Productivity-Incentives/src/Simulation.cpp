@@ -8,7 +8,8 @@
 #include <matplot/matplot.h>
 
 Simulation::Simulation() : gen(std::random_device{}()), probability(0.0, 1.0), nextProjectId(1), nextFirmId(1),
-    priceController(products, {5, 8, 3, 1, 2, 12, 20}) {
+    priceController({{"shirts", 5.0}, {"shoes", 8.0}, {"shorts", 3.0}, {"apples", 1.0}, {"bread", 2.0}, {"chairs", 12.0}, {"tables", 20.0}}, 
+                    {{"shirts", "units"}, {"shoes", "pairs"}, {"shorts", "units"}, {"apples", "kg"}, {"bread", "loaves"}, {"chairs", "units"}, {"tables", "units"}}) {
     saveInitialPrices();
     createFirms();
 }
@@ -27,18 +28,34 @@ double Simulation::calculateAverageWorkDay() {
     int productCount = 0;
     
     for (const auto& product : products) {
-        double initial = priceController.getOfficialPrice(product);
+        double initial = initialPrices.at(product);  // Use original starting prices
         double current = priceController.getCurrentCost(product);
-        if (initial > 0) {
+        
+        // Only include products that have actual cost data (different from initial)
+        // This prevents unproduced products from affecting the calculation
+        if (initial > 0 && current > 0 && current != initial) {
             double savings_in_labor_hours = (initial - current) / initial;
             totalProductivityGain += savings_in_labor_hours;
             productCount++;
+            
+            std::cout << "Product " << product << ": initial=" << initial 
+                      << ", current=" << current << ", savings=" << (savings_in_labor_hours * 100.0) << "%\n";
         }
     }
     
-    double avgProductivityGain = totalProductivityGain / productCount;
+    double avgProductivityGain = (productCount > 0) ? totalProductivityGain / productCount : 0.0;
     double baseWorkDay = 8.0; // hours
-    return baseWorkDay * (1.0 - avgProductivityGain);
+    double newWorkDay = baseWorkDay * (1.0 - avgProductivityGain);
+    
+    // Ensure work day never goes above base work day (productivity can't be negative)
+    if (newWorkDay > baseWorkDay) {
+        newWorkDay = baseWorkDay;
+    }
+    
+    std::cout << "Work day calculation: avgProductivityGain=" << (avgProductivityGain * 100.0) 
+              << "%, workDay=" << newWorkDay << " hours\n";
+    
+    return newWorkDay;
 }
 
 void Simulation::trackPricesAndWorkDay(int cycle) {
@@ -72,7 +89,7 @@ void Simulation::generatePlots() {
     // Plot each product price history
     for (const auto& product : products) {
         const auto& prices = priceHistory[product];
-        auto& p = plot(cycles, prices, "-s");
+        auto p = plot(cycles, prices, "-s");
         p->color("red");
         p->display_name(product);
         p->line_width(2);
@@ -165,12 +182,12 @@ void Simulation::setProjectsPhase() {
             std::string product = products[productSelector(gen)];
             int quantity = quantityDist(gen);
             
-            Project project(nextProjectId++, product, quantity);
+            Project project(product, quantity);
             firm->addProject(project);
             allProjects.push_back(project);
             
-            std::cout << firm->getName() << " started project " << project.projectId 
-                     << ": " << quantity << " " << product << " (expected: " 
+            std::cout << firm->getName() << " started project for " << product 
+                     << ": " << quantity << " units (expected: " 
                      << firm->getProjectPrice(project) << " hours/unit)\n";
         }
     }
@@ -192,16 +209,28 @@ void Simulation::innovationDiscoveryPhase() {
                 
                 // Check if the other firm has projects for this product and we do too
                 if (otherFirm->hasProjectsForProduct(product) && firm->hasProjectsForProduct(product)) {
-                    double otherPrice = otherFirm->getMostRecentProductPrice(product);
-                    double ourPrice = firm->getMostRecentProductPrice(product);
+                    // Get most recent project costs for comparison
+                    auto otherProjects = otherFirm->getProjectsForProduct(product);
+                    auto& ourProjects = firm->getProjectsForProduct(product);
                     
-                    if (otherPrice < ourPrice) {
-                        // Apply the innovation to our most recent project of this product type
-                        firm->setMostRecentProductPrice(product, otherPrice);
+                    if (!otherProjects.empty() && !ourProjects.empty()) {
+                        const Project& otherProject = otherProjects.back();
+                        Project& ourProject = ourProjects.back();
                         
-                        std::cout << firm->getName() << " discovered " << otherFirm->getName() 
-                                    << "'s innovation for " << product 
-                                    << " (reduced from " << ourPrice << " to " << otherPrice << " hours)\n";
+                        if (otherProject.quantity > 0 && ourProject.quantity > 0) {
+                            double otherCostPerUnit = otherProject.actualCost / otherProject.quantity;
+                            double ourCostPerUnit = ourProject.actualCost / ourProject.quantity;
+                            
+                            if (otherCostPerUnit < ourCostPerUnit && otherProject.actualCost > 0) {
+                                // Apply the innovation to our project
+                                double newCost = otherCostPerUnit * ourProject.quantity;
+                                ourProject.actualCost = newCost;
+                                
+                                std::cout << firm->getName() << " discovered " << otherFirm->getName() 
+                                            << "'s innovation for " << product 
+                                            << " (reduced from " << ourCostPerUnit << " to " << otherCostPerUnit << " hours/unit)\n";
+                            }
+                        }
                     }
                 }
             }
@@ -235,18 +264,22 @@ void Simulation::productionPhase() {
     std::uniform_real_distribution<> variationDist(0.8, 1.2); // ±20% variation
     
     for (auto& firm : firms) {
-        auto& projects = firm->getProjects();
-        for (auto& project : projects) {
-            if (project.actualHoursSpent == 0) { // Only work on new projects
-                double expectedHoursPerUnit = firm->getProjectPrice(project);
-                double actualHoursPerUnit = expectedHoursPerUnit * variationDist(gen);
-                double totalHours = actualHoursPerUnit * project.productQuantity;
-                
-                firm->updateProjectHours(project.projectId, totalHours);
-                
-                std::cout << firm->getName() << " produced " << project.productQuantity 
-                         << " " << project.productName << " using " << totalHours 
-                         << " hours (" << actualHoursPerUnit << " hours/unit)\n";
+        // Work directly with the firm's project history to avoid copy issues
+        auto& projectHistory = const_cast<std::unordered_map<std::string, std::vector<Project>>&>(firm->getProjectHistory());
+        
+        for (auto& [productName, projects] : projectHistory) {
+            for (auto& project : projects) {
+                if (project.actualCost == 0) { // Only work on new projects
+                    double expectedHoursPerUnit = firm->getProjectPrice(project);
+                    double actualHoursPerUnit = expectedHoursPerUnit * variationDist(gen);
+                    double totalHours = actualHoursPerUnit * project.quantity;
+                    
+                    project.actualCost = totalHours;  // Set actualCost directly
+                    
+                    std::cout << firm->getName() << " produced " << project.quantity 
+                             << " " << project.productName << " using " << totalHours 
+                             << " hours (" << actualHoursPerUnit << " hours/unit)\n";
+                }
             }
         }
     }
@@ -261,7 +294,7 @@ void Simulation::priceControllerPhase() {
     for (const auto& firm : firms) {
         const auto& projects = firm->getProjects();
         for (const auto& project : projects) {
-            if (project.actualHoursSpent > 0) {
+            if (project.actualCost > 0) {
                 completedProjects.push_back(project);
             }
         }

@@ -9,18 +9,12 @@
 // Forward declaration to avoid circular dependency
 
 struct Project {
-    int projectId;
     std::string productName;
-    int productQuantity;
-    std::string unit;
-    double account; // Project account
-    double actualHoursSpent; // Track actual hours spent
+    int quantity;
+    double actualCost; // Total actual cost in labor hours
     
-    Project(int id, const std::string& name, int quantity, const std::string& unitType = "units")
-        : projectId(id), productName(name), productQuantity(quantity), unit(unitType), 
-          account(0.0), actualHoursSpent(0.0) {}
-          
-    
+    Project(const std::string& name, int qty, double cost = 0.0)
+        : productName(name), quantity(qty), actualCost(cost) {}
 };
 
 class Firm {
@@ -35,7 +29,7 @@ public:
     void reportProjectPriceToPriceController(const Project& project);
     
     void findInnovation(Project& project); // Apply innovation to reduce labor time
-    void updateProjectHours(int projectId, double hours);
+    void updateProjectHours(const std::string& productName, double hours);
     
     // Getters
     int getId() const;
@@ -50,9 +44,8 @@ public:
     // New methods for project history
     const std::unordered_map<std::string, std::vector<Project>>& getProjectHistory() const;
     std::vector<Project> getProjectsForProduct(const std::string& productName) const;
-    double getMostRecentProductPrice(const std::string& productName) const;
+    std::vector<Project>& getProjectsForProduct(const std::string& productName);
     bool hasProjectsForProduct(const std::string& productName) const;
-    void setMostRecentProductPrice(const std::string& productName, double price);
     
 private:
     int id;
@@ -61,5 +54,5 @@ private:
     std::vector<std::shared_ptr<Worker>> workers;
     std::unordered_map<std::string, std::vector<Project>> project_history;
     PriceController & priceController;
-    std::map<int, double> projectPrices;
+
 };

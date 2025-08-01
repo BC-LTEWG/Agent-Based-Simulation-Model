@@ -5,13 +5,12 @@
 #include <map>
 #include <vector>
 
-PriceController::PriceController(std::vector<std::string> products, std::vector<int> prices) : products(products), prices(prices) {
-    // Initialize official prices using for loop with products and prices vectors
-    for (size_t i = 0; i < products.size() && i < prices.size(); ++i) {
-        official_prices[products[i]] = static_cast<double>(prices[i]);
-    }
+PriceController::PriceController(std::map<std::string, double> initialOfficialPrices, std::map<std::string, std::string> units) : unit(units) {
+    // Copy initial official prices
+    official_prices = initialOfficialPrices;
     
-    current_costs = official_prices;
+    // Initialize current_prices as empty - they will be filled as projects complete
+    // current_prices = official_prices;  // Don't copy - let them be computed from actual data
     
     std::cout << "Initialized official prices for " << official_prices.size() << " products\n";
 }
@@ -24,7 +23,7 @@ void PriceController::updateCurrentCosts(const std::vector<Project>& allProjects
 void PriceController::updateOfficialPrices(double thresholdPercentageFirms, double thresholdPercentageProducts) {
    
     int numFirmPriceChanges = 0;
-    for (auto & [product, currentCost] : current_costs) {
+    for (auto & [product, currentCost] : current_prices) {
         if (official_prices.find(product) != official_prices.end()) {
             double officialPrice = official_prices[product];
             double percentageDiff = ((officialPrice - currentCost) / officialPrice) * 100.0;
@@ -35,10 +34,20 @@ void PriceController::updateOfficialPrices(double thresholdPercentageFirms, doub
         }
     }
 
-    if (((numFirmPriceChanges / products.size()) * 100.0) >= thresholdPercentageProducts) {
-        for (auto & [product, currentCost] : current_costs) {
+    double percentageOfProductsImproved = (numFirmPriceChanges / static_cast<double>(official_prices.size())) * 100.0;
+    std::cout << "Price update check: " << numFirmPriceChanges << "/" << official_prices.size() 
+              << " products improved (" << percentageOfProductsImproved << "%)\n";
+    std::cout << "Threshold needed: " << thresholdPercentageProducts << "%\n";
+    
+    if (percentageOfProductsImproved >= thresholdPercentageProducts) {
+        std::cout << "UPDATING OFFICIAL PRICES based on current costs:\n";
+        for (auto & [product, currentCost] : current_prices) {
+            double oldPrice = official_prices[product];
             official_prices[product] = currentCost;
+            std::cout << "  " << product << ": " << oldPrice << " -> " << currentCost << "\n";
         }
+    } else {
+        std::cout << "Official prices remain unchanged.\n";
     }
 
 }
@@ -49,8 +58,12 @@ double PriceController::getOfficialPrice(const std::string& productName) {
 }
 
 double PriceController::getCurrentCost(const std::string& productName) {
-    auto it = current_costs.find(productName);
-    return (it != current_costs.end()) ? it->second : 0.0;
+    auto it = current_prices.find(productName);
+    if (it != current_prices.end()) {
+        return it->second;
+    }
+    // If no actual cost data, return the official price (initial assumption)
+    return getOfficialPrice(productName);
 }
 
 void PriceController::recomputeAverageCosts(const std::vector<Project>& allProjects) {
@@ -58,8 +71,8 @@ void PriceController::recomputeAverageCosts(const std::vector<Project>& allProje
     
     // Collect all costs for each product
     for (const auto& project : allProjects) {
-        if (project.actualHoursSpent > 0 && project.productQuantity > 0) {
-            double costPerUnit = project.actualHoursSpent / project.productQuantity;
+        if (project.actualCost > 0 && project.quantity > 0) {
+            double costPerUnit = project.actualCost / project.quantity;
             productCosts[project.productName].push_back(costPerUnit);
         }
     }
@@ -71,12 +84,12 @@ void PriceController::recomputeAverageCosts(const std::vector<Project>& allProje
             for (double cost : costs) {
                 sum += cost;
             }
-            current_costs[product] = sum / costs.size();
+            current_prices[product] = sum / costs.size();
         }
     }
 }
 
 // Instance methods for compatibility
-double PriceController::getAvgPriceOfProject(const Project& project) {
+double PriceController::getAvgPriceOfProduct(const Project& project) {
     return getCurrentCost(project.productName);
 }

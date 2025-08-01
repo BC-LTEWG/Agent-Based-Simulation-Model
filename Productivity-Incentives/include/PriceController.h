@@ -10,7 +10,7 @@ struct Project;
 
 class PriceController {
     public:
-        PriceController(std::vector<std::string> products, std::vector<int> prices);
+        PriceController(std::map<std::string, double> initialOfficialPrices, std::map<std::string, std::string> units);
         
         void updateCurrentCosts(const std::vector<Project>& allProjects);
         void updateOfficialPrices(double thresholdPercentageFirms, double thresholdPercentageProducts);
@@ -19,12 +19,12 @@ class PriceController {
         void recomputeAverageCosts(const std::vector<Project>& allProjects);
         
         // Instance methods for compatibility with existing code
-        double getAvgPriceOfProject(const Project& project);
+        double getAvgPriceOfProduct(const Project& project);
         void updateAvgPriceOfProject(const Project& project);
 
     private:
         std::map<std::string, double> official_prices;
-        std::map<std::string, double> current_costs;
-        std::vector<std::string> products;
-        std::vector<int> prices;
+        std::map<std::string, double> current_prices;
+        std::map<std::string, std::string> unit;
+
 }; 
