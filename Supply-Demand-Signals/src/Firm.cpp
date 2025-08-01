@@ -179,7 +179,7 @@ Plan Firm::generate_plan(Project * project) {
     // How much people actually consume
     double consumption = project->goods_produced - remaining_inventory + deficit;
 
-    printf("Estimated consumption for %s: %.2f (remainin    g: %.2f, deficit: %.2f)\n",
+    printf("Estimated consumption for %s: %.2f (remaining: %.2f, deficit: %.2f)\n",
         project->plan.good->name.c_str(),
         consumption,
         remaining_inventory,
