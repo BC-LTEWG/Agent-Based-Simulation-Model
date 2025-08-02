@@ -169,8 +169,8 @@ int main()
 
     // Write CSV header
     outfile << "ce_id,country_name,"
-            << "export_price_gdp_nominal,export_price_gdp_ppp,export_price_mean_income,"
-            << "import_price_gdp_nominal,import_price_gdp_ppp,import_price_mean_income\n";
+            << "export_price_gdp_nominal(20 labor hours to usd 2023),export_price_gdp_ppp(20 labor hours to international usd 2023),export_price_mean_income(20 labor hours to international usd 2023),"
+            << "import_price_gdp_nominal(2000 usd 2023 to labor hours),import_price_gdp_ppp(2000 usd 2023 to international usd 2023 to labor hours),import_price_mean_income(2000 usd 2023 to international usd 2023 to labor hours)\n";
 
     // Write data row-by-row
     for (size_t i = 0; i < capitalist_economies.size(); ++i)

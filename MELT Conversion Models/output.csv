@@ -1,4 +1,4 @@
-ce_id,country_name,export_price_gdp_nominal,export_price_gdp_ppp,export_price_mean_income,import_price_gdp_nominal,import_price_gdp_ppp,import_price_mean_income
+ce_id,country_name,export_price_gdp_nominal(20 labor hours to usd 2023),export_price_gdp_ppp(20 labor hours to international usd 2023),export_price_mean_income(20 labor hours to international usd 2023),import_price_gdp_nominal(2000 usd 2023 to labor hours),import_price_gdp_ppp(2000 usd 2023 to international usd 2023 to labor hours),import_price_mean_income(2000 usd 2023 to international usd 2023 to labor hours)
 1,Germany,803.492,1023.24,985.41,49.7827,49.7827,51.6941
 2,Japan,421.11,620.991,594.452,94.9871,94.9871,99.2277
 3,United Kingdom,645.68,760.046,800.497,61.9502,61.9502,58.8197
