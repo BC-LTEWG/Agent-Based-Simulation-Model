@@ -9,7 +9,6 @@ struct CapitalistEconomy
 
     double gdp_nominal_per_capita = INVALID_VALUE;
     double gdp_ppp_per_capita = INVALID_VALUE;
-    double median_income = INVALID_VALUE;
     double mean_income = INVALID_VALUE;
 
     double avg_work_hours_per_year = INVALID_VALUE;

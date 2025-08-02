@@ -21,20 +21,29 @@ void DataLoader::loadData(const std::string &filename)
     }
 
     std::string line;
-    std::getline(file, line); // Skip header
+    std::getline(file, line); // Read header row
+
     while (std::getline(file, line))
     {
         std::stringstream ss(line);
-        std::string country, gdp_nominal, gdp_ppp;
+        std::string country, gdp_nominal, gdp_ppp, mean_income, work_hours;
+
         std::getline(ss, country, ',');
         std::getline(ss, gdp_nominal, ',');
         std::getline(ss, gdp_ppp, ',');
+        std::getline(ss, mean_income, ',');
+        std::getline(ss, work_hours, ',');
 
-        data[country]["GDP_NOMINAL"] = (gdp_nominal == "Missing") ? INVALID_VALUE : std::stod(gdp_nominal);
-        data[country]["GDP_PPP"] = (gdp_ppp == "Missing") ? INVALID_VALUE : std::stod(gdp_ppp);
+        // Save fields, converting to double or INVALID_VALUE if missing
+        auto &entry = data[country];
+        entry["GDP_Nominal_Per_Capita"] = (gdp_nominal == "Missing") ? INVALID_VALUE : std::stod(gdp_nominal);
+        entry["GDP_PPP_Per_Capita"] = (gdp_ppp == "Missing") ? INVALID_VALUE : std::stod(gdp_ppp);
+        entry["Avg_Annual_Wage_USD_PPP_2023"] = (mean_income == "Missing") ? INVALID_VALUE : std::stod(mean_income);
+        entry["Average_Hours_Worked_2023"] = (work_hours == "Missing") ? INVALID_VALUE : std::stod(work_hours);
 
         country_in_order.push_back(country);
     }
+
     file.close();
 }
 

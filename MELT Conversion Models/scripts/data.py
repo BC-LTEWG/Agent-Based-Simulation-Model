@@ -2,7 +2,7 @@ import world_bank_data as wb
 import csv
 import pandas as pd
 
-# Top 20 OECD countries with valid data in 2023
+# Top 20 OECD countries with valid data in 2023 (using ISO 3-letter codes)
 countries = {
     "Germany": "DEU",
     "Japan": "JPN",
@@ -11,7 +11,6 @@ countries = {
     "Italy": "ITA",
     "Canada": "CAN",
     "Spain": "ESP",
-    "South Korea": "KOR",
     "Australia": "AUS",
     "Mexico": "MEX",
     "Netherlands": "NLD",
@@ -23,7 +22,8 @@ countries = {
     "Norway": "NOR",
     "Denmark": "DNK",
     "Czechia": "CZE",
-    "Chile": "CHL"
+    "Chile": "CHL",
+    "Portugal": "PRT"  
 }
 
 # World Bank indicators
@@ -96,6 +96,4 @@ with open("data.csv", "w", newline="", encoding="utf-8") as f:
 
 print(f"{len(results)} countries' data has been fetched and combined.")
 print("Data exported successfully to data.csv")
-
-
 
