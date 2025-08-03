@@ -128,6 +128,15 @@ double Distributor::get_production_deficit(Good * good, int plan_cycle) {
     return deficit_history[plan_cycle];
 }
 
+void Distributor::simulate_need(Good* good, double amount) {
+    if (inventory.count(good) == 0) {
+        inventory[good] = InventoryItem{robin_hood::unordered_map<Project *, double>(), std::vector<double>()};
+        // Fill deficit history with zeros up to society plan cycle
+        inventory[good].deficit_history.resize(society->plan_cycle + 1, 0.0);
+    }
+    inventory[good].deficit_history[society->plan_cycle] += amount;
+}
+
 void Distributor::display_inventory(int rows) {
     int count = 0;
     for (const auto & [good, item] : inventory) {

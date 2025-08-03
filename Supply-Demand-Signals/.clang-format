@@ -10,3 +10,4 @@ SpaceAroundPointerQualifiers: Both
 BinPackArguments: false
 AllowAllArgumentsOnNextLine: false
 AlignAfterOpenBracket: DontAlign
+NamespaceIndentation: All

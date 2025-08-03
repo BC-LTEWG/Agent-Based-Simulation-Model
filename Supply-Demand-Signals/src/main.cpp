@@ -10,6 +10,7 @@
 #include "../include/Plan.hpp"
 #include "../include/Society.hpp"
 #include "../include/Worker.hpp"
+#include "randomizer.hpp"
 
 namespace plt = matplotlibcpp;
 
@@ -25,9 +26,9 @@ int main(int argc, char * argv[]) {
 
     // Quarterly plan cycle duration
     Society * society =
-        new Society(Config{.plan_cycle_duration = 90, .fic = 0.8, .workday_length = 8.0});
+        new Society(Config{.plan_cycle_duration = 90, .fic = .8, .workday_length = 8.0});
 
-    Good * good = new Good{.name = "Apples", .value = .20};
+    Good * good = new Good{.name = "Apples", .value = 4, .target_surplus = 0};
     society->add_good(good);
 
     Firm * firm = new Firm(society);
@@ -37,15 +38,28 @@ int main(int argc, char * argv[]) {
     society->distributors.push_back(distributor);
     society->add_firm(distributor);
 
-    firm->add_project(new Project(society,
-        Plan{.means = 0, .resources = 0, .labor = 90 * 8 * 10, .good = good, .quantity = 500}));
+    const int population_size = 100;
 
-    const int population_size = firm->total_ideal_jobs();
+    firm->add_project(new Project(society,
+        Plan::from(good, society->config.plan_cycle_duration * population_size)));
+
     for (int i = 0; i < population_size; i++) {
         Worker * worker = new Worker(distributor,
-            {{.need = new WorkerNeed{.good = good, .amount = 1, .priority = 1}, .cycles = 1}});
+            {randomizer::need_cycle({good},
+                1.0,
+                {
+                    randomizer::DistributionType::UNIFORM,
+                    1,
+                    0,
+                },
+                {
+                    randomizer::DistributionType::NORMAL,
+                    1,
+                    0,
+                })},
+            1e4);
         society->add_worker(worker);
-        assert(firm->employ(worker));
+        firm->employ(worker);
     }
 
     std::vector<double> x;
@@ -53,11 +67,29 @@ int main(int argc, char * argv[]) {
     std::vector<double> y2;
     std::vector<double> y3;
     std::vector<double> y4;
+    std::vector<double> y5;
+    std::vector<double> y6;
+    std::vector<double> y7;
 
     std::vector<double> tick_times;
 
-    for (int i = 0; i < 300; i++) {
+    for (int i = 0; i < 1e4; i++) {
         printf("\n ------- Tick cycle %d -------\n", i + 1);
+
+        // for (auto & worker : society->workers) {
+        //     worker->change_needs({randomizer::need_cycle({good},
+        //         1.0,
+        //         {
+        //             randomizer::DistributionType::UNIFORM,
+        //             1,
+        //             0,
+        //         },
+        //         {
+        //             randomizer::DistributionType::NORMAL,
+        //             2 - static_cast<double>(i) / 10000,
+        //             .5,
+        //         })});
+        // }
 
         auto start_time = std::chrono::high_resolution_clock::now();
         society->tick_cycle(i == 0);
@@ -74,6 +106,28 @@ int main(int argc, char * argv[]) {
         y2.push_back(distributor->get_production_deficit(good, i));
         y3.push_back(firm->all_projects()[0]->plan.quantity);
         y4.push_back(firm->all_projects()[0]->goods_produced);
+
+        double median_worker_wealth = 0;
+        std::vector<double> worker_wealths;
+        worker_wealths.reserve(society->workers.size());
+        for (auto & worker : society->workers) {
+            worker_wealths.push_back(worker->wealth());
+        }
+        std::sort(worker_wealths.begin(), worker_wealths.end());
+        if (worker_wealths.size() % 2 == 0) {
+            median_worker_wealth = (worker_wealths[worker_wealths.size() / 2 - 1] +
+                                       worker_wealths[worker_wealths.size() / 2]) /
+                                   2;
+        } else {
+            median_worker_wealth = worker_wealths[worker_wealths.size() / 2];
+        }
+
+        y5.push_back(median_worker_wealth);
+        y7.push_back(worker_wealths.back());
+
+        y6.push_back(society->reserve);
+
+        printf("Median worker wealth: %.2f\n", median_worker_wealth);
 
         double avg_worker_needs = 0;
         for (auto & worker : society->workers) {
@@ -103,6 +157,9 @@ int main(int argc, char * argv[]) {
     plt::plot(x, y2, {{"label", "Production Deficit"}, {"color", "red"}});
     plt::plot(x, y3, {{"label", "Planned Production"}, {"color", "green"}});
     plt::plot(x, y4, {{"label", "Actual Production"}, {"color", "orange"}});
+    plt::plot(x, y5, {{"label", "Median Worker Wealth"}, {"color", "purple"}});
+    plt::plot(x, y6, {{"label", "Society Reserve"}, {"color", "brown"}});
+    // plt::plot(x, y7, {{"label", "Max Worker Wealth"}, {"color", "pink"}});
     plt::title("Inventory and Production Deficit of Apples Over Time");
     plt::xlabel("Time (cycles)");
     plt::ylabel("Quantity");

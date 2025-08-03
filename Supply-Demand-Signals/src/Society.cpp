@@ -3,8 +3,7 @@
 #include <algorithm>
 #include <cstdio>
 
-Society::Society(Config config)
-    : config(config), accountant(new Accountant()) {}
+Society::Society(Config config) : config(config), accountant(new Accountant()) {}
 
 void Society::add_worker(Worker * w) { workers.push_back(w); }
 
@@ -71,6 +70,11 @@ void Society::tick() {
     }
 
     for (auto & worker : workers) {
+        if (!worker->employed) {
+            const double payable = std::min(config.workday_length * config.fic, reserve);
+            worker->pay(payable);
+            reserve -= payable;
+        }
         worker->update_needs();
         worker->fulfill_needs();
     }

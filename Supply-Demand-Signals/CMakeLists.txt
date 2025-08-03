@@ -19,12 +19,14 @@ find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 
 set(SOURCES
     src/main.cpp
-    src/Firm.cpp
+    src/Accountant.cpp
     src/Distributor.cpp
+    src/Firm.cpp
+    src/Plan.cpp
+    src/Project.cpp
+    src/randomizer.cpp
     src/Society.cpp
     src/Worker.cpp
-    src/Accountant.cpp
-    src/Project.cpp
 )
 
 include_directories(
