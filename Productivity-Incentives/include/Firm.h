@@ -28,6 +28,11 @@ public:
     void setProjectPrice(const Project& project, double price);
     void reportProjectPriceToPriceController(const Project& project);
     
+    // Main methods per specification
+    void create_projects();
+    void execute_projects(const std::vector<std::shared_ptr<Firm>>& allFirms);
+    
+    // Helper methods
     void findInnovation(Project& project); // Apply innovation to reduce labor time
     void updateProjectHours(const std::string& productName, double hours);
     

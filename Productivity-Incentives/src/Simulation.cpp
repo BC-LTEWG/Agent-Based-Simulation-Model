@@ -341,12 +341,23 @@ void Simulation::priceControllerPhase() {
 void Simulation::runCycle(int cycleNumber) {
     std::cout << "==================== CYCLE " << cycleNumber << " ====================\n";
     
-    setProjectsPhase();
-    innovationDiscoveryPhase();
-    randomInnovationPhase();
-    productionPhase();
+    // Phase 1: Each firm creates projects
+    std::cout << "=== Phase 1: Project Creation ===\n";
+    for (auto& firm : firms) {
+        firm->create_projects();
+    }
+    std::cout << "\n";
+    
+    // Phase 2: Each firm executes projects (includes learning, innovation, production)
+    std::cout << "=== Phase 2: Project Execution ===\n";
+    for (auto& firm : firms) {
+        firm->execute_projects(firms);
+    }
+    std::cout << "\n";
+    
+    // Phase 3: Price Controller updates
     priceControllerPhase();
-    trackPricesAndWorkDay(cycleNumber); // Track prices and work day after each cycle
+    trackPricesAndWorkDay(cycleNumber);
     
     std::cout << "Cycle " << cycleNumber << " completed.\n\n";
     
