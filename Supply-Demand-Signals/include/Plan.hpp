@@ -11,4 +11,6 @@ struct Plan {
         double quantity;
 
         double product;
+
+        static Plan from(Good * good, double quantity);
 };

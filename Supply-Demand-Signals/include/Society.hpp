@@ -10,6 +10,7 @@
 
 struct Config {
     double plan_cycle_duration = 90;
+    // Fraction of income that is consumed (FIC)
     double fic = 0.8;
     double workday_length = 8.0;
 };
@@ -17,20 +18,20 @@ struct Config {
 class Society {
     private:
         void tick();
-
-        double reserve = 0.0;
-
-    public:
+        
+        public:
         std::vector<Worker *> workers;
         std::vector<Firm *> firms;
         std::vector<Good *> goods;
         std::vector<Distributor *> distributors;
-
+        
         Config config;
-
+        
         Accountant * accountant;
-
+        
         int plan_cycle = 0;
+
+        double reserve = 0.0;
 
         Society(Config config);
 

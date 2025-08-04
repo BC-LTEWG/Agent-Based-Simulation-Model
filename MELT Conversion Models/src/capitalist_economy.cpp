@@ -14,10 +14,6 @@ void CapitalistEconomy::set_value(const std::string &field_name, double value)
     {
         gdp_ppp_per_capita = final_value;
     }
-    else if (field_name == "median_income")
-    {
-        median_income = final_value;
-    }
     else if (field_name == "mean_income")
     {
         mean_income = final_value;

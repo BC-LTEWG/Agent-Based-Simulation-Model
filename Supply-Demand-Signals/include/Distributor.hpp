@@ -36,6 +36,9 @@ class Distributor : public Firm {
 
         double get_production_deficit(Good * good, int plan_cycle);
 
+        // Used when a worker needs something, but can't afford it
+        void simulate_need(Good * good, double amount);
+
         // 0 rows = all
         void display_inventory(int rows = 0);
 

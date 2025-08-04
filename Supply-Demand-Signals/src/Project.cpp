@@ -25,7 +25,7 @@ void Project::tick() {
     }
 
     // assume we do 1/plan_cycle_duration of the work each day
-    double hours_worked = std::min(workday_length, hours_left / workers.size());
+    double hours_worked = std::min(workday_length, hours_left / num_workers());
     if (hours_worked <= 0) {
         // we have nothing left to spend
         return;
@@ -37,16 +37,14 @@ void Project::tick() {
         society->pay(worker, hours_worked);
     }
 
-    if (!society->distributors.empty()) {
-        double fraction = hours_worked / workday_length;
+    double fraction_of_workday = hours_worked / workday_length;
 
-        double produced = plan.quantity / society->config.plan_cycle_duration * fraction;
-        goods_produced += produced;
+    double produced = plan.quantity / society->config.plan_cycle_duration * fraction_of_workday;
+    goods_produced += produced;
 
-        double per_dist = produced / society->distributors.size();
+    double per_dist = produced / society->distributors.size();
 
-        for (auto & distributor : society->distributors) {
-            distributor->add_stock(plan.good, this, per_dist);
-        }
+    for (auto & distributor : society->distributors) {
+        distributor->add_stock(plan.good, this, per_dist);
     }
 }

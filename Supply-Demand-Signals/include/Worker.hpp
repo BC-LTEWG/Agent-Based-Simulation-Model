@@ -31,11 +31,15 @@ class Worker {
         std::vector<WorkerNeed *> needs;
 
         std::vector<WorkerNeedCycle> need_cycles;
+
+        std::vector<WorkerNeed*> cycle_needs();
     public:
 
         bool employed = false;
 
-        Worker(Distributor * distributor, std::vector<WorkerNeedCycle> need_cycles);
+        Worker(Distributor * distributor, std::vector<WorkerNeedCycle> need_cycles, double initial_credits);
+
+        double wealth();
 
         void pay(double amount);
         // Returns whether or not the worker had enough credits to spend
@@ -46,4 +50,6 @@ class Worker {
         void update_needs();
         // Fulfill needs in order of priority
         void fulfill_needs();
+
+        void change_needs(std::vector<WorkerNeedCycle> new_need_cycles);
 };
