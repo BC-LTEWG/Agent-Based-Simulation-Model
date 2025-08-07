@@ -6,14 +6,16 @@
 
 class Society;
 
-// Forward declaration instead of including Worker.hpp
+// Forward declaration instead of including Worker.hpp, Firm.hpp
 class Worker;
+class Firm;
 
 class Project {
         friend class Firm;
 
     private:
         Society * society;
+        Firm * firm;
 
         std::vector<Worker *> workers;
 

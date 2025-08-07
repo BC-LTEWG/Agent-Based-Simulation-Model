@@ -77,7 +77,7 @@ void Distributor::take_from_new_projects(Good * good, double remaining) {
     }
 }
 
-std::pair<double, double> Distributor::purchase(Worker * worker, Good * good, double amount) {
+std::pair<double, double> Distributor::purchase(Good * good, double amount) {
     if (!inventory.count(good) || total_inventory(good) <= 0) {
         return {0, 0};
     }
@@ -85,6 +85,13 @@ std::pair<double, double> Distributor::purchase(Worker * worker, Good * good, do
     double available_amount = total_inventory(good);
     double purchase_amount = std::min(available_amount, amount);
     double cost = purchase_amount * good->value;
+
+    // Ensure deficit_history vector is properly sized before accessing
+    auto & deficit_history = inventory[good].deficit_history;
+    size_t needed = society->plan_cycle + 1;
+    if (deficit_history.size() < needed) {
+        deficit_history.resize(needed, 0.0);
+    }
 
     inventory[good].deficit_history[society->plan_cycle] += (amount - purchase_amount);
 
@@ -128,9 +135,10 @@ double Distributor::get_production_deficit(Good * good, int plan_cycle) {
     return deficit_history[plan_cycle];
 }
 
-void Distributor::simulate_need(Good* good, double amount) {
+void Distributor::simulate_need(Good * good, double amount) {
     if (inventory.count(good) == 0) {
-        inventory[good] = InventoryItem{robin_hood::unordered_map<Project *, double>(), std::vector<double>()};
+        inventory[good] =
+            InventoryItem{robin_hood::unordered_map<Project *, double>(), std::vector<double>()};
         // Fill deficit history with zeros up to society plan cycle
         inventory[good].deficit_history.resize(society->plan_cycle + 1, 0.0);
     }

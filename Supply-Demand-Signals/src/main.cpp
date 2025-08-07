@@ -1,18 +1,15 @@
 #include <cassert>
 #include <chrono>
 #include <cstdio>
-#include <map>
 #include <vector>
 
-#include "../extern/matplotlib-cpp/matplotlibcpp.h"
-#include "../include/Distributor.hpp"
-#include "../include/Firm.hpp"
-#include "../include/Plan.hpp"
-#include "../include/Society.hpp"
-#include "../include/Worker.hpp"
+#include "Distributor.hpp"
+#include "Firm.hpp"
+#include "Plan.hpp"
+#include "PlotHandler.hpp"
+#include "Society.hpp"
+#include "Worker.hpp"
 #include "randomizer.hpp"
-
-namespace plt = matplotlibcpp;
 
 int main(int argc, char * argv[]) {
     auto arg_present = [&argc, &argv](const char * arg) {
@@ -28,11 +25,15 @@ int main(int argc, char * argv[]) {
     Society * society =
         new Society(Config{.plan_cycle_duration = 90, .fic = .8, .workday_length = 8.0});
 
-    Good * good = new Good{.name = "Apples", .value = 4, .target_surplus = 0};
+    Good * means = new Good("Flour", 5e3, {}, 1);
+    Good * good = new Good("Bread", 5e3, {{means, 1}}, 1);
+    society->add_good(means);
     society->add_good(good);
 
-    Firm * firm = new Firm(society);
-    society->add_firm(firm);
+    Firm * means_firm = new Firm(society);
+    Firm * good_firm = new Firm(society);
+    society->add_firm(means_firm);
+    society->add_firm(good_firm);
 
     Distributor * distributor = new Distributor(society);
     society->distributors.push_back(distributor);
@@ -40,8 +41,13 @@ int main(int argc, char * argv[]) {
 
     const int population_size = 100;
 
-    firm->add_project(new Project(society,
-        Plan::from(good, society->config.plan_cycle_duration * population_size)));
+    auto good_project = good_firm->add_project(new Project(society,
+        Plan::from(good,
+            society->config.plan_cycle_duration * population_size + good->target_surplus)));
+
+    means_firm->add_project(new Project(society,
+        Plan::from(means,
+            good_project->plan.quantity * good->means[means] + means->target_surplus)));
 
     for (int i = 0; i < population_size; i++) {
         Worker * worker = new Worker(distributor,
@@ -59,37 +65,28 @@ int main(int argc, char * argv[]) {
                 })},
             1e4);
         society->add_worker(worker);
-        firm->employ(worker);
+        society->distribute_worker(worker, i, population_size);
     }
 
-    std::vector<double> x;
-    std::vector<double> y1;
-    std::vector<double> y2;
-    std::vector<double> y3;
-    std::vector<double> y4;
-    std::vector<double> y5;
-    std::vector<double> y6;
-    std::vector<double> y7;
+    auto plot =
+        PlotHandler(1200, 900, "Economic statistics over time", "Plan cycle count", "Quantity");
+    plot.define("Bread Inventory", "blue");
+    plot.define("Flour Inventory", "cyan");
+    plot.define("Bread Production Deficit", "red");
+    plot.define("Flour Production Deficit", "magenta");
+    plot.define("Bread Planned Production", "green");
+    plot.define("Flour Planned Production", "yellow");
+    plot.define("Bread Actual Production", "black");
+    plot.define("Flour Actual Production", "white");
+    plot.define("Bread Ideal Workers", "blue")->hide();
+    plot.define("Flour Ideal Workers", "cyan")->hide();
+    plot.define("Median Worker Wealth", "magenta")->hide();
+    plot.define("Society Reserve", "black")->hide();
 
     std::vector<double> tick_times;
 
-    for (int i = 0; i < 1e4; i++) {
+    for (int i = 0; i < 1e3; i++) {
         printf("\n ------- Tick cycle %d -------\n", i + 1);
-
-        // for (auto & worker : society->workers) {
-        //     worker->change_needs({randomizer::need_cycle({good},
-        //         1.0,
-        //         {
-        //             randomizer::DistributionType::UNIFORM,
-        //             1,
-        //             0,
-        //         },
-        //         {
-        //             randomizer::DistributionType::NORMAL,
-        //             2 - static_cast<double>(i) / 10000,
-        //             .5,
-        //         })});
-        // }
 
         auto start_time = std::chrono::high_resolution_clock::now();
         society->tick_cycle(i == 0);
@@ -101,11 +98,17 @@ int main(int argc, char * argv[]) {
 
         distributor->head();
 
-        x.push_back(i);
-        y1.push_back(distributor->total_inventory(good));
-        y2.push_back(distributor->get_production_deficit(good, i));
-        y3.push_back(firm->all_projects()[0]->plan.quantity);
-        y4.push_back(firm->all_projects()[0]->goods_produced);
+        plot.add_x(i);
+        plot.add("Bread Inventory", distributor->total_inventory(good));
+        plot.add("Flour Inventory", distributor->total_inventory(means));
+        plot.add("Bread Production Deficit", distributor->get_production_deficit(good, i));
+        plot.add("Flour Production Deficit", distributor->get_production_deficit(means, i));
+        plot.add("Bread Planned Production", good_firm->all_projects()[0]->plan.quantity);
+        plot.add("Flour Planned Production", means_firm->all_projects()[0]->plan.quantity);
+        plot.add("Bread Actual Production", good_firm->all_projects()[0]->goods_produced);
+        plot.add("Flour Actual Production", means_firm->all_projects()[0]->goods_produced);
+        plot.add("Bread Ideal Workers", good_firm->all_projects()[0]->ideal_workers * 1000);
+        plot.add("Flour Ideal Workers", means_firm->all_projects()[0]->ideal_workers * 1000);
 
         double median_worker_wealth = 0;
         std::vector<double> worker_wealths;
@@ -122,10 +125,9 @@ int main(int argc, char * argv[]) {
             median_worker_wealth = worker_wealths[worker_wealths.size() / 2];
         }
 
-        y5.push_back(median_worker_wealth);
-        y7.push_back(worker_wealths.back());
+        plot.add("Median Worker Wealth", median_worker_wealth);
 
-        y6.push_back(society->reserve);
+        plot.add("Society Reserve", society->reserve);
 
         printf("Median worker wealth: %.2f\n", median_worker_wealth);
 
@@ -135,6 +137,7 @@ int main(int argc, char * argv[]) {
         }
         avg_worker_needs /= society->workers.size();
         printf("Average worker needs: %.2f\n", avg_worker_needs);
+        // plot.add("Average Worker Needs", avg_worker_needs * 1e5);
     }
 
     double total_tick_time = 0.0;
@@ -152,30 +155,13 @@ int main(int argc, char * argv[]) {
         return 0;
     }
 
-    plt::figure_size(800, 600);
-    plt::plot(x, y1, {{"label", "Inventory"}, {"color", "blue"}});
-    plt::plot(x, y2, {{"label", "Production Deficit"}, {"color", "red"}});
-    plt::plot(x, y3, {{"label", "Planned Production"}, {"color", "green"}});
-    plt::plot(x, y4, {{"label", "Actual Production"}, {"color", "orange"}});
-    plt::plot(x, y5, {{"label", "Median Worker Wealth"}, {"color", "purple"}});
-    plt::plot(x, y6, {{"label", "Society Reserve"}, {"color", "brown"}});
-    // plt::plot(x, y7, {{"label", "Max Worker Wealth"}, {"color", "pink"}});
-    plt::title("Inventory and Production Deficit of Apples Over Time");
-    plt::xlabel("Time (cycles)");
-    plt::ylabel("Quantity");
-    plt::legend();
-
-    plt::grid(true);
-
-    for (int i = 0; i < argc; i++) {
-        printf("%s ", argv[i]);
-    }
-    printf("\n");
+    plot.plot();
 
     if (arg_present("--save")) {
-        plt::save("img/output.png");
-    } else if (arg_present("--show")) {
-        plt::show();
+        plot.save("img/output.png");
+    }
+    if (arg_present("--show")) {
+        plot.show();
     }
 
     return 0;

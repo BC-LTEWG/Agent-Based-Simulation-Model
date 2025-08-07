@@ -39,6 +39,9 @@ class Society {
         void add_firm(Firm * f);
         void add_good(Good * g);
 
+        /* For worker index/total, add them to a firm (forced) distributed by firm total workers needed */
+        void distribute_worker(Worker * worker, int index, int total);
+
         void pay(Worker * worker, double amount);
 
         void tick_cycle(bool is_first = false);

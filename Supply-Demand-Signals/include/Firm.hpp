@@ -1,9 +1,8 @@
 #pragma once
 
-#include "../extern/robin_hood/robin_hood.h"
-
 #include <vector>
 
+#include "../extern/robin_hood/robin_hood.h"
 #include "Good.hpp"
 #include "Project.hpp"
 
@@ -39,13 +38,15 @@ class Firm {
 
         std::vector<Project *> all_projects();
 
-        void add_project(Project * p);
+        Project * add_project(Project * p);
 
         // Attempts to employ a worker, returns true if successful
         // false if there are no open positions
-        bool employ(Worker * w);
+        bool employ(Worker * w, bool force = false);
 
         void add_stock(Good * good, Project * project, double amount);
+        /** Precondition: there is enough in the inventory */
+        void take_from_inventory(Good * good, double amount);
         double total_inventory(Good * good);
 
         // Runs one day of production for all projects

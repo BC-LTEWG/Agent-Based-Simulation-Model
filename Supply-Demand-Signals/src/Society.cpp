@@ -11,6 +11,25 @@ void Society::add_firm(Firm * f) { firms.push_back(f); }
 
 void Society::add_good(Good * g) { goods.push_back(g); }
 
+void Society::distribute_worker(Worker * worker, int index, int total) {
+    double frac = (index + 1) / static_cast<double>(total);
+
+    int total_jobs = 0;
+    for (auto & firm : firms) {
+        total_jobs += firm->total_ideal_jobs();
+    }
+
+    double running = 0;
+    int firm_idx = 0;
+    while (running < frac) {
+        double firm_share = firms[firm_idx]->total_ideal_jobs() / static_cast<double>(total_jobs);
+        running += firm_share;
+        firm_idx++;
+    }
+
+    firms[firm_idx - 1]->employ(worker, true);
+}
+
 void Society::pay(Worker * worker, double amount) {
     double earned = amount * config.fic;
     worker->pay(earned);

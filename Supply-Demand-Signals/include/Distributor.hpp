@@ -29,7 +29,7 @@ class Distributor : public Firm {
         Distributor(Society * society);
 
         // Returns <quantity purchased, credits spent>
-        std::pair<double, double> purchase(Worker * worker, Good * good, double amount);
+        std::pair<double, double> purchase(Good * good, double amount);
 
         // Get the remaining inventory for a given project
         double get_project_inventory(Project * project);

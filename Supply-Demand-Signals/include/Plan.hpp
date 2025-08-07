@@ -3,8 +3,8 @@
 #include "Good.hpp"
 
 struct Plan {
+        double fixed_capital;
         double means;
-        double resources;
         double labor;
 
         Good * good;
