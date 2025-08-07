@@ -1,6 +1,6 @@
 #include "PlotHandler.hpp"
+#include <initializer_list>
 
-#include <utility>
 
 #include "matplot/freestanding/axes_functions.h"
 #include "matplot/util/keywords.h"
@@ -16,7 +16,7 @@ PlotHandler::PlotHandler(int width, int height, std::string title, std::string x
 
 void PlotHandler::add_x(double x) { this->x.push_back(x); }
 
-PlotItem * PlotHandler::define(std::string key, std::string color) {
+PlotItem * PlotHandler::define(std::string key, std::initializer_list<float> color) {
     y[key] = PlotItem{
         .key = key,
         .color = color,

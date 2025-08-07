@@ -2,14 +2,11 @@
 
 #include <matplot/matplot.h>
 
-#include <string>
-#include <vector>
-
 #include "../extern/robin_hood/robin_hood.h"
 
 struct PlotItem {
         std::string key;
-        std::string color;
+        std::initializer_list<float> color;
 
         bool hidden;
 
@@ -36,7 +33,7 @@ class PlotHandler {
             std::string ylabel);
 
         void add_x(double x);
-        PlotItem * define(std::string key, std::string color);
+        PlotItem * define(std::string key, std::initializer_list<float> color);
         void add(std::string key, double y);
         void plot();
         void save(std::string path);

@@ -70,18 +70,18 @@ int main(int argc, char * argv[]) {
 
     auto plot =
         PlotHandler(1200, 900, "Economic statistics over time", "Plan cycle count", "Quantity");
-    plot.define("Bread Inventory", "blue");
-    plot.define("Flour Inventory", "cyan");
-    plot.define("Bread Production Deficit", "red");
-    plot.define("Flour Production Deficit", "magenta");
-    plot.define("Bread Planned Production", "green");
-    plot.define("Flour Planned Production", "yellow");
-    plot.define("Bread Actual Production", "black");
-    plot.define("Flour Actual Production", "white");
-    plot.define("Bread Ideal Workers", "blue")->hide();
-    plot.define("Flour Ideal Workers", "cyan")->hide();
-    plot.define("Median Worker Wealth", "magenta")->hide();
-    plot.define("Society Reserve", "black")->hide();
+    plot.define("Bread Inventory", {0.1f, 0.1f, 0.8f});                   // Dark Blue
+    plot.define("Flour Inventory", {0.1f, 0.8f, 0.8f})->hide();           // Cyan
+    plot.define("Bread Production Deficit", {0.8f, 0.1f, 0.1f});          // Dark Red
+    plot.define("Flour Production Deficit", {0.8f, 0.1f, 0.8f})->hide();  // Magenta
+    plot.define("Bread Planned Production", {0.1f, 0.8f, 0.1f});          // Green
+    plot.define("Flour Planned Production", {0.8f, 0.8f, 0.1f})->hide();  // Yellow
+    plot.define("Bread Actual Production", {0.2f, 0.2f, 0.2f});           // Dark Gray
+    plot.define("Flour Actual Production", {0.8f, 0.8f, 0.8f})->hide();   // Light Gray
+    plot.define("Bread Ideal Workers", {0.1f, 0.1f, 0.8f})->hide();       // Dark Blue
+    plot.define("Flour Ideal Workers", {0.1f, 0.8f, 0.8f})->hide();       // Cyan
+    plot.define("Median Worker Wealth", {0.8f, 0.1f, 0.8f})->hide();      // Magenta
+    plot.define("Society Reserve", {0.2f, 0.2f, 0.2f})->hide();           // Dark Gray
 
     std::vector<double> tick_times;
 
