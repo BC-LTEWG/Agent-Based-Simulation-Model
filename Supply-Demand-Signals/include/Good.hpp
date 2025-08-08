@@ -4,6 +4,12 @@
 
 #include "../extern/robin_hood/robin_hood.h"
 
+struct AggregateGoodStats {
+        double planned_quantity;
+        double produced;
+        double ideal_workers;
+};
+
 struct Good {
         std::string name;
         double target_surplus;
@@ -17,7 +23,7 @@ struct Good {
         double value;
 
         Good(std::string name, double target_surplus = 0.0,
-            robin_hood::unordered_map<Good*, double> means = {}, double labor_required = 0.0,
+            robin_hood::unordered_map<Good *, double> means = {}, double labor_required = 0.0,
             bool discrete = false);
 
         double means_value();

@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <vector>
+
+#include "Good.hpp"
 
 Society::Society(Config config) : config(config), accountant(new Accountant()) {}
 
@@ -97,4 +100,23 @@ void Society::tick() {
         worker->update_needs();
         worker->fulfill_needs();
     }
+}
+
+AggregateGoodStats Society::aggregate_good_stats(Good * good) {
+    std::vector<Project *> all_projects;
+    for (auto & firm : firms) {
+        for (auto & project : firm->all_projects()) {
+            if (project->plan.good == good) {
+                all_projects.push_back(project);
+            }
+        }
+    }
+
+    AggregateGoodStats stats = {0.0, 0.0, 0.0};
+    for (auto & project : all_projects) {
+        stats.planned_quantity += project->plan.quantity;
+        stats.produced += project->goods_produced;
+        stats.ideal_workers += project->ideal_workers;
+    }
+    return stats;
 }

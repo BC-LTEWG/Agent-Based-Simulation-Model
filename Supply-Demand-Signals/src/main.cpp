@@ -68,20 +68,31 @@ int main(int argc, char * argv[]) {
         society->distribute_worker(worker, i, population_size);
     }
 
-    auto plot =
-        PlotHandler(1200, 900, "Economic statistics over time", "Plan cycle count", "Quantity");
-    plot.define("Bread Inventory", {0.1f, 0.1f, 0.8f});                   // Dark Blue
-    plot.define("Flour Inventory", {0.1f, 0.8f, 0.8f})->hide();           // Cyan
-    plot.define("Bread Production Deficit", {0.8f, 0.1f, 0.1f});          // Dark Red
-    plot.define("Flour Production Deficit", {0.8f, 0.1f, 0.8f})->hide();  // Magenta
-    plot.define("Bread Planned Production", {0.1f, 0.8f, 0.1f});          // Green
-    plot.define("Flour Planned Production", {0.8f, 0.8f, 0.1f})->hide();  // Yellow
-    plot.define("Bread Actual Production", {0.2f, 0.2f, 0.2f});           // Dark Gray
-    plot.define("Flour Actual Production", {0.8f, 0.8f, 0.8f})->hide();   // Light Gray
-    plot.define("Bread Ideal Workers", {0.1f, 0.1f, 0.8f})->hide();       // Dark Blue
-    plot.define("Flour Ideal Workers", {0.1f, 0.8f, 0.8f})->hide();       // Cyan
-    plot.define("Median Worker Wealth", {0.8f, 0.1f, 0.8f})->hide();      // Magenta
-    plot.define("Society Reserve", {0.2f, 0.2f, 0.2f})->hide();           // Dark Gray
+    auto plot_handler = PlotHandler(1200, 900);
+    auto main_plot = plot_handler.create_plot("main",
+        "Economic statistics over time",
+        "Plan cycle count",
+        "Quantity");
+    main_plot->define_line("Median Worker Wealth", {0.8f, 0.1f, 0.8f});  // Magenta
+    main_plot->define_line("Society Reserve", {0.2f, 0.2f, 0.2f});       // Dark Gray
+
+    robin_hood::unordered_map<Good *, Plot *> good_plots;
+    for (auto & good : society->goods) {
+        good_plots[good] = plot_handler.create_plot(good->name,
+            good->name + " over time",
+            "Plan cycle count",
+            "Quantity");
+
+        // Define the lines for this good's plot
+        good_plots[good]->define_line("Inventory", {0.2f, 0.6f, 0.9f});           // Blue
+        good_plots[good]->define_line("Production Deficit", {0.9f, 0.2f, 0.2f});  // Red
+        good_plots[good]->define_line("Planned Production", {0.2f, 0.9f, 0.2f});  // Green
+        good_plots[good]->define_line("Actual Production", {0.9f, 0.7f, 0.2f});   // Orange
+        good_plots[good]->define_line("Ideal Workers", {0.6f, 0.2f, 0.9f});       // Purple
+    }
+
+    main_plot->hide();
+    good_plots[good]->hide();
 
     std::vector<double> tick_times;
 
@@ -98,17 +109,19 @@ int main(int argc, char * argv[]) {
 
         distributor->head();
 
-        plot.add_x(i);
-        plot.add("Bread Inventory", distributor->total_inventory(good));
-        plot.add("Flour Inventory", distributor->total_inventory(means));
-        plot.add("Bread Production Deficit", distributor->get_production_deficit(good, i));
-        plot.add("Flour Production Deficit", distributor->get_production_deficit(means, i));
-        plot.add("Bread Planned Production", good_firm->all_projects()[0]->plan.quantity);
-        plot.add("Flour Planned Production", means_firm->all_projects()[0]->plan.quantity);
-        plot.add("Bread Actual Production", good_firm->all_projects()[0]->goods_produced);
-        plot.add("Flour Actual Production", means_firm->all_projects()[0]->goods_produced);
-        plot.add("Bread Ideal Workers", good_firm->all_projects()[0]->ideal_workers * 1000);
-        plot.add("Flour Ideal Workers", means_firm->all_projects()[0]->ideal_workers * 1000);
+        main_plot->add_x(i);
+
+        for (auto & [good, plot] : good_plots) {
+            plot->add_x(i);
+            plot->add_y("Inventory", distributor->total_inventory(good));
+            plot->add_y("Production Deficit", distributor->get_production_deficit(good, i));
+
+            auto stats = society->aggregate_good_stats(good);
+
+            plot->add_y("Planned Production", stats.planned_quantity);
+            plot->add_y("Actual Production", stats.produced);
+            plot->add_y("Ideal Workers", stats.ideal_workers * 1000);
+        }
 
         double median_worker_wealth = 0;
         std::vector<double> worker_wealths;
@@ -125,9 +138,9 @@ int main(int argc, char * argv[]) {
             median_worker_wealth = worker_wealths[worker_wealths.size() / 2];
         }
 
-        plot.add("Median Worker Wealth", median_worker_wealth);
+        main_plot->add_y("Median Worker Wealth", median_worker_wealth);
 
-        plot.add("Society Reserve", society->reserve);
+        main_plot->add_y("Society Reserve", society->reserve);
 
         printf("Median worker wealth: %.2f\n", median_worker_wealth);
 
@@ -155,13 +168,13 @@ int main(int argc, char * argv[]) {
         return 0;
     }
 
-    plot.plot();
+    plot_handler.plot();
 
     if (arg_present("--save")) {
-        plot.save("img/output.png");
+        plot_handler.save("img/output.png");
     }
     if (arg_present("--show")) {
-        plot.show();
+        plot_handler.show();
     }
 
     return 0;

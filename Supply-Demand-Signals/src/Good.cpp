@@ -1,7 +1,7 @@
 #include "Good.hpp"
 
-Good::Good(std::string name, double target_surplus,
-    robin_hood::unordered_map<Good*, double> means, double labor_required, bool discrete)
+Good::Good(std::string name, double target_surplus, robin_hood::unordered_map<Good *, double> means,
+    double labor_required, bool discrete)
     : name(std::move(name)),
       target_surplus(target_surplus),
       means(std::move(means)),
@@ -18,6 +18,4 @@ double Good::means_value() {
     return total;
 }
 
-void Good::recompute_value() {
-    value = labor_required + means_value();
-}
+void Good::recompute_value() { value = labor_required + means_value(); }

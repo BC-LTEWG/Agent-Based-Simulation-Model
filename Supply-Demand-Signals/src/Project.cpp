@@ -1,9 +1,9 @@
 #include "Project.hpp"
-#include "Firm.hpp"
 
 #include <cmath>
 
 #include "../include/Society.hpp"
+#include "Firm.hpp"
 
 Project::Project(Society * society, Plan plan)
     : society(society),
@@ -46,8 +46,7 @@ void Project::tick() {
             available += purchased;
         }
 
-        max_production_fraction =
-            std::min(max_production_fraction, available / total_needed);
+        max_production_fraction = std::min(max_production_fraction, available / total_needed);
     }
 
     amount_to_produce *= max_production_fraction;
@@ -55,7 +54,7 @@ void Project::tick() {
     // extract from inventory the means we need
     for (auto [good, quantity] : plan.good->means) {
         firm->take_from_inventory(good, quantity * amount_to_produce);
-    }   
+    }
 
     double hours_worked = amount_to_produce * plan.good->labor_required / num_workers();
 

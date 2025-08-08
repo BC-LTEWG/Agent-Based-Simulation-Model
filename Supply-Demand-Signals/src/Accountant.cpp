@@ -2,6 +2,4 @@
 
 Accountant::Accountant() {}
 
-bool Accountant::approve_plan(Plan p, Project previous) {
-	return true;
-}
+bool Accountant::approve_plan(Plan p, Project previous) { return true; }

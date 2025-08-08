@@ -1,62 +1,108 @@
-#include "PlotHandler.hpp"
-#include <initializer_list>
+#include "../include/PlotHandler.hpp"
 
+#include <matplot/freestanding/axes_functions.h>
 
-#include "matplot/freestanding/axes_functions.h"
-#include "matplot/util/keywords.h"
-
-PlotItem * PlotItem::hide() {
-    hidden = true;
+PlotLine * PlotLine::hide() {
+    this->hidden = true;
     return this;
 }
 
-PlotHandler::PlotHandler(int width, int height, std::string title, std::string xlabel,
-    std::string ylabel)
-    : width(width), height(height), title(title), xlabel(xlabel), ylabel(ylabel) {}
-
-void PlotHandler::add_x(double x) { this->x.push_back(x); }
-
-PlotItem * PlotHandler::define(std::string key, std::initializer_list<float> color) {
-    y[key] = PlotItem{
-        .key = key,
-        .color = color,
-        .hidden = false,
-        .data = std::vector<double>(),
-    };
-
-    return &y[key];
+Plot::Plot(std::string title, std::string xlabel, std::string ylabel) {
+    this->title = title;
+    this->xlabel = xlabel;
+    this->ylabel = ylabel;
 }
 
-void PlotHandler::add(std::string key, double y) {
-    if (this->y.count(key) == 0) {
-        throw "Key " + key + " not registered. Use define() to create it first.";
-    }
+void Plot::add_x(double x_val) { x_data.push_back(x_val); }
 
-    this->y[key].data.push_back(y);
+PlotLine * Plot::define_line(std::string key, std::initializer_list<float> color) {
+    lines[key] = {key, color, false, {}};
+    return &lines[key];
+}
+
+void Plot::add_y(std::string key, double y_val) {
+    if (lines.contains(key)) {
+        lines.at(key).y_data.push_back(y_val);
+    }
+}
+
+Plot * Plot::hide() {
+    this->hidden = true;
+    return this;
+}
+
+PlotHandler::PlotHandler(int width, int height) {
+    this->width = width;
+    this->height = height;
+    this->figure = matplot::figure(true);
+}
+
+Plot * PlotHandler::create_plot(std::string name, std::string title, std::string xlabel,
+    std::string ylabel) {
+    plots[name] = Plot(title, xlabel, ylabel);
+    return &plots[name];
+}
+
+Plot * PlotHandler::get_plot(std::string name) {
+    if (plots.contains(name)) {
+        return &plots.at(name);
+    }
+    return nullptr;
 }
 
 void PlotHandler::plot() {
-    figure = matplot::figure(true);
+    matplot::figure(this->figure);
+    matplot::cla();  // Clear the entire figure
     figure->size(width, height);
 
-    matplot::hold(matplot::on);
-
-    for (auto [key, val] : y) {
-        if (val.hidden) continue;
-
-        auto plot = matplot::plot(x, val.data);
-        plot->display_name(key);
-        plot->color(val.color);
-        plot->line_width(3);
+    // Count only visible plots
+    size_t num_visible_plots = 0;
+    for (auto const & [name, plot] : plots) {
+        if (!plot.hidden) {
+            num_visible_plots++;
+        }
     }
 
-    matplot::xlabel(xlabel);
-    matplot::ylabel(ylabel);
-    matplot::title(title);
-    matplot::grid(matplot::on);
-    matplot::legend(true)->location(matplot::legend::general_alignment::topright);
+    if (num_visible_plots == 0) {
+        return;
+    }
+
+    size_t grid_dim = static_cast<size_t>(ceil(sqrt(num_visible_plots)));
+
+    size_t current_plot_idx = 0;
+    for (auto const & [name, plot] : plots) {
+        // Skip hidden plots
+        if (plot.hidden) {
+            continue;
+        }
+
+        matplot::subplot(grid_dim, grid_dim, current_plot_idx);
+        matplot::cla();  // Clear this specific subplot
+        matplot::hold(matplot::on);
+
+        for (auto const & [key, line] : plot.lines) {
+            if (!line.hidden) {
+                auto p = matplot::plot(plot.x_data, line.y_data);
+                p->color(line.color);
+                p->display_name(line.key);
+                p->line_width(2);
+            }
+        }
+        matplot::title(plot.title);
+        matplot::xlabel(plot.xlabel);
+        matplot::ylabel(plot.ylabel);
+        matplot::legend(matplot::on);
+
+        current_plot_idx++;
+    }
 }
 
-void PlotHandler::save(std::string path) { figure->save(path); }
+void PlotHandler::save(std::string path) {
+    plot();
+    matplot::save(path);
+}
 
-void PlotHandler::show() { figure->show(); }
+void PlotHandler::show() {
+    plot();
+    matplot::show();
+}
