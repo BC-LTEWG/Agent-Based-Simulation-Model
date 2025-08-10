@@ -1,18 +1,18 @@
 #include "Project.hpp"
 
 #include <cmath>
+#include <cstdio>
 
 #include "../include/Society.hpp"
 #include "Firm.hpp"
 
 Project::Project(Society * society, Plan plan)
     : society(society),
+      hours_left(plan.means + plan.labor + plan.fixed_capital),
       plan_cycle(society->plan_cycle),
       plan(plan),
       ideal_workers(std::ceil(
-          plan.labor / society->config.workday_length / society->config.plan_cycle_duration)) {
-    hours_left = plan.means + plan.labor + plan.fixed_capital;
-}
+          plan.labor / society->config.workday_length / society->config.plan_cycle_duration)) {}
 
 void Project::add_worker(Worker * w) { workers.push_back(w); }
 
@@ -27,9 +27,8 @@ void Project::tick() {
 
     double production_cost_per = plan.good->value;
 
-    double amount_to_produce =
-        std::min(hours_left, workday_length * std::min(ideal_workers, num_workers())) /
-        production_cost_per;
+    double amount_to_produce = std::min(hours_left / production_cost_per,
+        workday_length * std::min(ideal_workers, num_workers()) / plan.good->labor_required);
 
     if (amount_to_produce <= 0) return;
 
@@ -51,6 +50,11 @@ void Project::tick() {
 
     amount_to_produce *= max_production_fraction;
 
+    // printf("[%s] producing %.2f/%.2f\n",
+    //     plan.good->name.c_str(),
+    //     amount_to_produce,
+    //     plan.quantity / society->config.plan_cycle_duration);
+
     // extract from inventory the means we need
     for (auto [good, quantity] : plan.good->means) {
         firm->take_from_inventory(good, quantity * amount_to_produce);
@@ -66,11 +70,9 @@ void Project::tick() {
         society->pay(worker, workday_length);
     }
 
-    // produce goods proportional to labor done against total required labor
-    double produced = (labor_done / plan.labor) * plan.quantity;
-    goods_produced += produced;
+    goods_produced += amount_to_produce;
 
-    double per_dist = produced / society->distributors.size();
+    double per_dist = amount_to_produce / society->distributors.size();
 
     for (auto & distributor : society->distributors) {
         distributor->add_stock(plan.good, this, per_dist);

@@ -2,12 +2,11 @@
 Plan Plan::from(Good * good, double quantity) {
     return Plan{
         .fixed_capital = 0,
-        .means = good->means_value(),
-        .labor = good->value * quantity,
+        .means = good->means_value() * quantity,
+        .labor = good->labor_required * quantity,
 
         .good = good,
 
         .quantity = quantity,
-        .product = 0 + 0 + good->value * quantity,
     };
 }

@@ -173,11 +173,6 @@ void Firm::new_plans() {
         auto new_project = new Project(society, new_plan);
         new_project->firm = this;
 
-        printf("New worker count for %s: %d for %.2f labor hours\n",
-            new_plan.good->name.c_str(),
-            new_project->ideal_workers,
-            new_plan.labor);
-
         while (
             new_project->num_workers() < new_project->ideal_workers && project->num_workers() > 0) {
             // transfer workers to new project
@@ -248,10 +243,6 @@ void Firm::new_plans() {
         }
     }
 
-    for (auto project : new_projects) {
-        printf("Ideal: %d, actual: %d\n", project->ideal_workers, project->num_workers());
-    }
-
     projects = std::move(new_projects);
 }
 
@@ -259,6 +250,12 @@ Plan Firm::generate_plan(Project * project) {
     if (project->plan_cycle < 2) {
         // for the first two cycles, we don't have enough data to make a new plan
         // so just return the existing plan
+        printf("Duplicating %s, details:\n", project->plan.good->name.c_str());
+        printf("  Target: %.2f, Actual: %.2f\n", project->plan.quantity, project->goods_produced);
+        printf("Hours alloted: %.2f, left: %.2f\n",
+            project->plan.labor + project->plan.fixed_capital + project->plan.means,
+            project->hours_left);
+
         return project->plan;
     }
 
@@ -268,7 +265,7 @@ Plan Firm::generate_plan(Project * project) {
         society->distributors[0]->get_production_deficit(project->plan.good, project->plan_cycle);
 
     // How much people actually consume
-    const double consumption = project->goods_produced - remaining_inventory + deficit;
+    const double consumption = std::max(0.0, project->goods_produced - remaining_inventory + deficit);
 
     printf("Estimated consumption for %s: %.2f (remaining: %.2f, deficit: %.2f)\n",
         project->plan.good->name.c_str(),
@@ -276,8 +273,10 @@ Plan Firm::generate_plan(Project * project) {
         remaining_inventory,
         deficit);
 
-    double estimated_necessity =
-        std::max(0.0, consumption - remaining_inventory + project->plan.good->target_surplus);
+    const double surplus_needed =
+        std::max(0.0, project->plan.good->target_surplus - remaining_inventory);
+
+    const double estimated_necessity = std::max(0.0, consumption + surplus_needed);
 
     printf("Produced: %.2f, Planned: %.2f, Estimated necessity: %.2f\n",
         project->goods_produced,
@@ -286,9 +285,9 @@ Plan Firm::generate_plan(Project * project) {
 
     const double quantity = estimated_necessity;
 
-    const double means = 0;
+    const double means = project->plan.good->means_value() * quantity;
     const double fixed_capital = 0;
-    const double labor = project->plan.good->value * quantity;
+    const double labor = project->plan.good->labor_required * quantity;
 
     const Plan new_plan = {
         .fixed_capital = fixed_capital,
@@ -297,8 +296,6 @@ Plan Firm::generate_plan(Project * project) {
 
         .good = project->plan.good,
         .quantity = quantity,
-
-        .product = means + fixed_capital + labor,
     };
 
     return new_plan;

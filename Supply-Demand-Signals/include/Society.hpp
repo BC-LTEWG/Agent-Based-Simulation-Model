@@ -45,7 +45,7 @@ class Society {
 
         void pay(Worker * worker, double amount);
 
-        void tick_cycle(bool is_first = false);
+        void tick_cycle();
 
         AggregateGoodStats aggregate_good_stats(Good *);
 };

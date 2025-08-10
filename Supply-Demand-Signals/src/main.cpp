@@ -68,6 +68,7 @@ int main(int argc, char * argv[]) {
         society->distribute_worker(worker, i, population_size);
     }
 
+
     auto plot_handler = PlotHandler(1200, 900);
     auto main_plot = plot_handler.create_plot("main",
         "Economic statistics over time",
@@ -91,16 +92,14 @@ int main(int argc, char * argv[]) {
         good_plots[good]->define_line("Ideal Workers", {0.6f, 0.2f, 0.9f});       // Purple
     }
 
-    main_plot->hide();
-    good_plots[good]->hide();
-
     std::vector<double> tick_times;
 
     for (int i = 0; i < 1e3; i++) {
+    // for (int i = 0; i < 8; i++) {
         printf("\n ------- Tick cycle %d -------\n", i + 1);
 
         auto start_time = std::chrono::high_resolution_clock::now();
-        society->tick_cycle(i == 0);
+        society->tick_cycle();
         auto end_time = std::chrono::high_resolution_clock::now();
 
         auto duration =

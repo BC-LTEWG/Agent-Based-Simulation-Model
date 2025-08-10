@@ -10,7 +10,5 @@ struct Plan {
         Good * good;
         double quantity;
 
-        double product;
-
         static Plan from(Good * good, double quantity);
 };
