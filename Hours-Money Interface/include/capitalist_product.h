@@ -10,7 +10,7 @@ struct CapitalistProduct
     double price;
 
     void generate_name();
-    void new_price();
+    void new_desired_price();
 
     // How much it would sell
     double sell_factor;

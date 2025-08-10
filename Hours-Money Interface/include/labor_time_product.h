@@ -22,7 +22,7 @@ struct LaborTimeProduct
     void new_sell_factor();
     void new_total_amount();
 
-    // How much surplus value will be charged by the labor time company
+    // How much surplus value will be charged by the labor time company when exporting
     // Assume that there is no market price available so this will be factor times labor_time times melt
     double surplus_factor;
 

@@ -40,7 +40,10 @@ void CapitalistEconomy::new_melt()
 void CapitalistEconomy::add_product(CapitalistProduct &product)
 {
     static std::mt19937 gen(std::random_device{}());
-    product.price *= std::uniform_real_distribution<>(0.8, 1.2)(gen); // 0.8 to 1.2 is a random range, it can change
+    double market_factor = std::uniform_real_distribution<>(0, 1)(gen); // random value for adjusted price
+    double original_cost = product.price - (product.price * product.surplus_factor);
+    product.price -= product.price * product.surplus_factor * market_factor; // desired price adjusted to market price
+    product.surplus_factor = 1 - (original_cost / product.price);
     market.push_back(product);
 }
 

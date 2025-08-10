@@ -28,7 +28,7 @@ void CapitalistProduct::generate_name()
 
 // assign a random price between 10 and 100
 // This value can be changed!
-void CapitalistProduct::new_price()
+void CapitalistProduct::new_desired_price()
 {
     static std::mt19937 gen(std::random_device{}());
     price = std::uniform_real_distribution<>(10, 100)(gen);
