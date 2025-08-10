@@ -20,6 +20,8 @@ struct CapitalistProduct
     void new_total_amount();
 
     // How much of the price is surplus value charged by the capitalist company
+    // Note that we are assuming the same surplus factor for the capitalist market and
+    // the export to the labor time economy
     double surplus_factor;
 
     void new_surplus_factor();
