@@ -26,13 +26,17 @@ int main(int argc, char * argv[]) {
         new Society(Config{.plan_cycle_duration = 90, .fic = .8, .workday_length = 8.0});
 
     Good * means = new Good("Flour", 5e3, {}, 1);
-    Good * good = new Good("Bread", 5e3, {{means, 1}}, 1);
+    Good * universal_good = new Good("Water", 5e3, {}, 1);
+    Good * good = new Good("Bread", 5e3, {{means, 1}, {universal_good, 1}}, 1);
     society->add_good(means);
+    society->add_good(universal_good);
     society->add_good(good);
 
     Firm * means_firm = new Firm(society);
+    Firm * universal_firm = new Firm(society);
     Firm * good_firm = new Firm(society);
     society->add_firm(means_firm);
+    society->add_firm(universal_firm);
     society->add_firm(good_firm);
 
     Distributor * distributor = new Distributor(society);
@@ -48,26 +52,42 @@ int main(int argc, char * argv[]) {
     means_firm->add_project(new Project(society,
         Plan::from(means,
             good_project->plan.quantity * good->means[means] + means->target_surplus)));
+    universal_firm->add_project(new Project(society,
+        Plan::from(universal_good,
+            good_project->plan.quantity * good->means[universal_good] +
+                society->config.plan_cycle_duration * population_size +
+                universal_good->target_surplus)));
 
     for (int i = 0; i < population_size; i++) {
         Worker * worker = new Worker(distributor,
             {randomizer::need_cycle({good},
-                1.0,
-                {
-                    randomizer::DistributionType::UNIFORM,
-                    1,
-                    0,
-                },
-                {
-                    randomizer::DistributionType::NORMAL,
-                    1,
-                    0,
-                })},
+                 1.0,
+                 {
+                     randomizer::DistributionType::UNIFORM,
+                     1,
+                     0,
+                 },
+                 {
+                     randomizer::DistributionType::NORMAL,
+                     1,
+                     0,
+                 }),
+                randomizer::need_cycle({universal_good},
+                    1.0,
+                    {
+                        randomizer::DistributionType::UNIFORM,
+                        1,
+                        0,
+                    },
+                    {
+                        randomizer::DistributionType::NORMAL,
+                        1,
+                        0,
+                    })},
             1e4);
         society->add_worker(worker);
         society->distribute_worker(worker, i, population_size);
     }
-
 
     auto plot_handler = PlotHandler(1200, 900);
     auto main_plot = plot_handler.create_plot("main",
@@ -95,7 +115,7 @@ int main(int argc, char * argv[]) {
     std::vector<double> tick_times;
 
     for (int i = 0; i < 1e3; i++) {
-    // for (int i = 0; i < 8; i++) {
+        // for (int i = 0; i < 100; i++) {
         printf("\n ------- Tick cycle %d -------\n", i + 1);
 
         auto start_time = std::chrono::high_resolution_clock::now();
