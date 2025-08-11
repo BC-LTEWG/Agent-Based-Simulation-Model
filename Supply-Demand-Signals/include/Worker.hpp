@@ -14,11 +14,11 @@ struct WorkerNeed {
 };
 
 struct WorkerNeedCycle {
-    WorkerNeed * need;
-    // the number of ticks until the worker needs this again
-    int clock;
-    // the number of ticks it takes for this need to replenish
-    int cycles;
+        WorkerNeed * need;
+        // the number of ticks until the worker needs this again
+        int clock;
+        // the number of ticks it takes for this need to replenish
+        int cycles;
 };
 
 class Worker {
@@ -32,12 +32,13 @@ class Worker {
 
         std::vector<WorkerNeedCycle> need_cycles;
 
-        std::vector<WorkerNeed*> cycle_needs();
-    public:
+        std::vector<WorkerNeed *> cycle_needs();
 
+    public:
         bool employed = false;
 
-        Worker(Distributor * distributor, std::vector<WorkerNeedCycle> need_cycles, double initial_credits);
+        Worker(Distributor * distributor, std::vector<WorkerNeedCycle> need_cycles,
+            double initial_credits);
 
         double wealth();
 
@@ -46,10 +47,34 @@ class Worker {
         bool spend(double amount);
 
         int need_count();
-        
+
         void update_needs();
         // Fulfill needs in order of priority
         void fulfill_needs();
 
-        void change_needs(std::vector<WorkerNeedCycle> new_need_cycles);
+        // Must stay in worker.hpp
+        template <typename Func>
+        typename std::enable_if<std::is_same<decltype(std::declval<Func>()(
+                                                 std::declval<std::vector<WorkerNeedCycle>>())),
+                                    std::vector<WorkerNeedCycle>>::value,
+            std::vector<WorkerNeedCycle>>::type
+        change_needs(Func f) {
+            auto new_need_cycles = f(need_cycles);
+
+            // Delete old needs
+            for (auto * need : needs) {
+                delete need;
+            }
+            needs.clear();
+
+            // Set new need cycles
+            need_cycles = std::move(new_need_cycles);
+
+            // Reset clocks
+            for (auto & cycle : need_cycles) {
+                cycle.clock = cycle.cycles;
+            }
+
+            return new_need_cycles;
+        }
 };

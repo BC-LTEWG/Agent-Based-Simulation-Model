@@ -1,47 +1,44 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 project(SupplyDemandSignals)
 
-set(CMAKE_CXX_STANDARD 17)
+# Try to find installed matplot++ first
+find_package(Matplot++ QUIET)
+
+if(NOT Matplot++_FOUND)
+    message(STATUS "Matplot++ not found system-wide, using external version")
+    add_subdirectory(extern/matplotplusplus)
+else()
+    message(STATUS "Using system-installed Matplot++")
+endif()
+
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
 add_compile_options(-Wall -Wno-deprecated-declarations)
 
-
-# Uncomment the following line to enable Address Sanitizer
-# set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -g")
-
-# Uncomment the following line when using profiling/flamegraph
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -g")
-
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 
 set(SOURCES
     src/main.cpp
     src/Accountant.cpp
     src/Distributor.cpp
     src/Firm.cpp
+    src/Good.cpp
     src/Plan.cpp
+    src/PlotHandler.cpp
     src/Project.cpp
     src/randomizer.cpp
     src/Society.cpp
     src/Worker.cpp
 )
 
-include_directories(
-    include
-    extern/matplotlib-cpp
-    ${Python3_INCLUDE_DIRS}
-)
-
-execute_process(
-  COMMAND ${Python3_EXECUTABLE} -c "import numpy; print(numpy.get_include())"
-  OUTPUT_VARIABLE NUMPY_INCLUDE_DIR
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-include_directories(${NUMPY_INCLUDE_DIR})
-
 add_executable(SupplyDemandSignals ${SOURCES})
 
-target_link_libraries(SupplyDemandSignals PRIVATE ${Python3_LIBRARIES})
+# Link against matplot++ - use different target names depending on source
+if(Matplot++_FOUND)
+    target_link_libraries(SupplyDemandSignals PUBLIC Matplot++::matplot)
+else()
+    target_link_libraries(SupplyDemandSignals PUBLIC matplot)
+endif()
+
+target_include_directories(SupplyDemandSignals PRIVATE ${CMAKE_SOURCE_DIR}/include)

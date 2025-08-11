@@ -1,10 +1,12 @@
 #include "../include/Firm.hpp"
 
+#include <cmath>
 #include <cstdio>
 #include <stdexcept>
 #include <vector>
 
 #include "../include/Society.hpp"
+#include "Project.hpp"
 
 Firm::Firm(Society * society) : society(society) {}
 
@@ -38,7 +40,11 @@ int Firm::total_ideal_jobs() {
     return total_ideal;
 }
 
-void Firm::add_project(Project * p) { projects.push_back(p); }
+Project * Firm::add_project(Project * p) {
+    p->firm = this;
+    projects.push_back(p);
+    return p;
+}
 
 std::vector<Project *> Firm::all_projects() { return projects; }
 
@@ -55,7 +61,7 @@ Project * Firm::least_staffed_project() {
     return least;
 }
 
-bool Firm::employ(Worker * w) {
+bool Firm::employ(Worker * w, bool force) {
     // find best project to assign worker to
     Project * best_project = nullptr;
 
@@ -63,6 +69,12 @@ bool Firm::employ(Worker * w) {
 
     if (best_project) {
         best_project->add_worker(w);
+        w->employed = true;
+        return true;
+    }
+
+    if (force && projects.size() > 0) {
+        projects[0]->add_worker(w);
         w->employed = true;
         return true;
     }
@@ -75,7 +87,11 @@ void Firm::add_stock(Good * good, Project * project, double amount) {
         inventory[good] =
             InventoryItem{robin_hood::unordered_map<Project *, double>(), std::vector<double>()};
         // Fill deficit history with zeros up to society plan cycle
-        inventory[good].deficit_history.resize(society->plan_cycle + 1, 0.0);
+        auto & hist = inventory[good].deficit_history;
+        size_t needed = society->plan_cycle + 1;
+        if (hist.size() < needed) {
+            hist.resize(needed, 0.0);
+        }
     }
 
     if (!inventory[good].projects.count(project)) {
@@ -83,6 +99,27 @@ void Firm::add_stock(Good * good, Project * project, double amount) {
     }
 
     inventory[good].projects[project] += amount;
+}
+
+void Firm::take_from_inventory(Good * good, double amount) {
+    while (inventory.count(good) && amount > 0) {
+        auto & item = inventory[good];
+        if (item.projects.empty()) {
+            inventory.erase(good);
+            break;
+        }
+
+        // Take from the last project
+        auto & key = item.projects.begin()->first;
+        auto & last_project = item.projects[key];
+        double taken = std::min(last_project, amount);
+        last_project -= taken;
+        amount -= taken;
+
+        if (last_project <= 0) {
+            item.projects.erase(key);
+        }
+    }
 }
 
 double Firm::total_inventory(Good * good) {
@@ -104,6 +141,8 @@ void Firm::tick() {
 }
 
 void Firm::new_plans() {
+    if (projects.empty()) return;
+
     for (auto & good_pair : inventory) {
         // Shift deficit history to the right
         auto & deficit_history = good_pair.second.deficit_history;
@@ -132,11 +171,7 @@ void Firm::new_plans() {
 
         // Create the new project and assign as many workers as possible
         auto new_project = new Project(society, new_plan);
-
-        printf("New worker count for %s: %d for %.2f labor hours\n",
-            new_plan.good->name.c_str(),
-            new_project->ideal_workers,
-            new_plan.labor);
+        new_project->firm = this;
 
         while (
             new_project->num_workers() < new_project->ideal_workers && project->num_workers() > 0) {
@@ -164,12 +199,50 @@ void Firm::new_plans() {
             project->workers.end());
     }
 
-    // tell all the unassigned workers they are unemployed
-    for (auto & worker : unassigned_workers) {
-        worker->employed = false;
+    // Reallocate the rest of the workers to projects weighted by ideal workers
+    std::vector<int> weighted_projects;
+    int total_ideal = 0;
+    for (auto project : new_projects) {
+        total_ideal += project->ideal_workers;
     }
 
-    // Replace old projects with new projects
+    // If no projects need workers, spread evenly
+    if (total_ideal == 0) {
+        int workers_per_project = unassigned_workers.size() / new_projects.size();
+        for (auto project : new_projects) {
+            for (int i = 0; i < workers_per_project && !unassigned_workers.empty(); i++) {
+                project->add_worker(unassigned_workers.back());
+                unassigned_workers.pop_back();
+            }
+        }
+
+        // put the rest of the workers on the first project
+        while (!unassigned_workers.empty()) {
+            new_projects[0]->add_worker(unassigned_workers.back());
+            unassigned_workers.pop_back();
+        }
+    } else {
+        for (auto project : new_projects) {
+            double weight = static_cast<double>(project->ideal_workers) / total_ideal;
+            weighted_projects.push_back(
+                static_cast<int>(std::round(weight * unassigned_workers.size())));
+        }
+
+        int index = 0;
+        for (auto worker : unassigned_workers) {
+            // Find next project that can accept workers
+            while (index + 1 < static_cast<int>(weighted_projects.size()) &&
+                   weighted_projects[index] <= 0) {
+                index++;
+            }
+
+            new_projects[index]->add_worker(worker);
+            worker->employed = true;
+
+            weighted_projects[index]--;
+        }
+    }
+
     projects = std::move(new_projects);
 }
 
@@ -177,6 +250,12 @@ Plan Firm::generate_plan(Project * project) {
     if (project->plan_cycle < 2) {
         // for the first two cycles, we don't have enough data to make a new plan
         // so just return the existing plan
+        printf("Duplicating %s, details:\n", project->plan.good->name.c_str());
+        printf("  Target: %.2f, Actual: %.2f\n", project->plan.quantity, project->goods_produced);
+        printf("Hours alloted: %.2f, left: %.2f\n",
+            project->plan.labor + project->plan.fixed_capital + project->plan.means,
+            project->hours_left);
+
         return project->plan;
     }
 
@@ -186,12 +265,7 @@ Plan Firm::generate_plan(Project * project) {
         society->distributors[0]->get_production_deficit(project->plan.good, project->plan_cycle);
 
     // How much people actually consume
-    const double consumption = project->goods_produced - remaining_inventory + deficit;
-
-    const double surplus_needed =
-        std::max(project->plan.good->target_surplus -
-                     society->distributors[0]->total_inventory(project->plan.good),
-            0.0);
+    const double consumption = std::max(0.0, project->goods_produced - remaining_inventory + deficit);
 
     printf("Estimated consumption for %s: %.2f (remaining: %.2f, deficit: %.2f)\n",
         project->plan.good->name.c_str(),
@@ -199,7 +273,10 @@ Plan Firm::generate_plan(Project * project) {
         remaining_inventory,
         deficit);
 
-    double estimated_necessity = std::max(0.0, consumption - remaining_inventory) + surplus_needed;
+    const double surplus_needed =
+        std::max(0.0, project->plan.good->target_surplus - remaining_inventory);
+
+    const double estimated_necessity = std::max(0.0, consumption + surplus_needed);
 
     printf("Produced: %.2f, Planned: %.2f, Estimated necessity: %.2f\n",
         project->goods_produced,
@@ -208,19 +285,17 @@ Plan Firm::generate_plan(Project * project) {
 
     const double quantity = estimated_necessity;
 
-    const double means = 0;
-    const double resources = 0;
-    const double labor = project->plan.good->value * quantity;
+    const double means = project->plan.good->means_value() * quantity;
+    const double fixed_capital = 0;
+    const double labor = project->plan.good->labor_required * quantity;
 
     const Plan new_plan = {
+        .fixed_capital = fixed_capital,
         .means = means,
-        .resources = resources,
         .labor = labor,
 
         .good = project->plan.good,
         .quantity = quantity,
-
-        .product = means + resources + labor,
     };
 
     return new_plan;

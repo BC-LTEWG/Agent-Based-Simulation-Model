@@ -1,13 +1,12 @@
 #include "Plan.hpp"
 Plan Plan::from(Good * good, double quantity) {
     return Plan{
-        .means = 0,
-        .resources = 0,
-        .labor = good->value * quantity,
+        .fixed_capital = 0,
+        .means = good->means_value() * quantity,
+        .labor = good->labor_required * quantity,
 
         .good = good,
 
         .quantity = quantity,
-        .product = 0 + 0 + good->value * quantity,
     };
 }

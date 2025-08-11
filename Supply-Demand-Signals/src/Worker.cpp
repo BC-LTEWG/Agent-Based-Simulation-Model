@@ -1,17 +1,12 @@
 #include "../include/Worker.hpp"
 
-#include <algorithm>
-#include <cstdio>
-#include <iterator>
-
-Worker::Worker(Distributor * distributor, std::vector<WorkerNeedCycle> need_cycles, double initial_credits)
+Worker::Worker(Distributor * distributor, std::vector<WorkerNeedCycle> need_cycles,
+    double initial_credits)
     : distributor(distributor), credits(initial_credits), need_cycles(need_cycles) {
     // filter out zeroed cycles
-    need_cycles.erase(
-        std::remove_if(need_cycles.begin(), need_cycles.end(),
-            [](const WorkerNeedCycle & cycle) {
-                return cycle.need->amount <= 0;
-            }),
+    need_cycles.erase(std::remove_if(need_cycles.begin(),
+                          need_cycles.end(),
+                          [](const WorkerNeedCycle & cycle) { return cycle.need->amount <= 0; }),
         need_cycles.end());
 
     for (auto & need_cycle : need_cycles) {
@@ -19,9 +14,7 @@ Worker::Worker(Distributor * distributor, std::vector<WorkerNeedCycle> need_cycl
     }
 }
 
-double Worker::wealth() {
-    return credits;
-}
+double Worker::wealth() { return credits; }
 
 void Worker::pay(double amount) { credits += amount; }
 
@@ -79,7 +72,7 @@ void Worker::update_needs() {
         needs.end(),
         std::back_inserter(merged),
         [](WorkerNeed * a, WorkerNeed * b) { return a->priority < b->priority; });
-    
+
     needs.swap(merged);
 }
 
@@ -92,16 +85,15 @@ void Worker::fulfill_needs() {
         // double purchaseable_amount = need->amount;
         const double amount_to_buy = std::min(purchaseable_amount, need->amount);
 
-        const double amount_cant_buy = need->amount - amount_to_buy;
-
-        distributor->simulate_need(need->good, amount_cant_buy);
+        // const double amount_cant_buy = need->amount - amount_to_buy;
+        // distributor->simulate_need(need->good, amount_cant_buy);
 
         if (amount_to_buy <= 0) {
             // cannot buy more, preserve remaining needs and exit
             kept.insert(kept.end(), needs.begin() + i, needs.end());
             break;
         }
-        auto [purchased_amount, cost] = distributor->purchase(this, need->good, amount_to_buy);
+        auto [purchased_amount, cost] = distributor->purchase(need->good, amount_to_buy);
         if (!spend(cost)) {
             kept.insert(kept.end(), needs.begin() + i, needs.end());
             break;  // Not enough credits
@@ -114,20 +106,4 @@ void Worker::fulfill_needs() {
         }
     }
     needs.swap(kept);
-}
-
-void Worker::change_needs(std::vector<WorkerNeedCycle> new_need_cycles) {
-    // Delete old needs
-    for (auto * need : needs) {
-        delete need;
-    }
-    needs.clear();
-
-    // Set new need cycles
-    need_cycles = std::move(new_need_cycles);
-
-    // Reset clocks
-    for (auto & cycle : need_cycles) {
-        cycle.clock = cycle.cycles;
-    }
 }

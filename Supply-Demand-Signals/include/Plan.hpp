@@ -3,14 +3,12 @@
 #include "Good.hpp"
 
 struct Plan {
+        double fixed_capital;
         double means;
-        double resources;
         double labor;
 
         Good * good;
         double quantity;
-
-        double product;
 
         static Plan from(Good * good, double quantity);
 };

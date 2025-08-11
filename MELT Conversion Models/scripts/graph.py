@@ -18,20 +18,26 @@ columns_to_plot = [
 # Output folder
 os.makedirs("graphs", exist_ok=True)
 
-# Create bar charts
+# Create graphs 
 for idx, column in enumerate(columns_to_plot, start=1):
     for i in range(2):  # First 10, Next 10
         subset = df.iloc[i*10:(i+1)*10]
         countries = subset["country_name"]
         values = subset[column]
 
-        plt.figure(figsize=(12, 6))
-        bars = plt.bar(countries, values)
+        # Compute stats
+        std_dev = values.std(skipna=True)
+        mean_val = values.mean(skipna=True)
+        var_val = values.var(skipna=True)
 
-        # Add value labels on top of each bar
+        # Create plot
+        fig, ax = plt.subplots(figsize=(12, 6))
+        bars = ax.bar(countries, values)
+
+        # Add value labels on top of bars
         for bar in bars:
             height = bar.get_height()
-            plt.text(
+            ax.text(
                 bar.get_x() + bar.get_width() / 2,
                 height,
                 f"{height:.2f}",
@@ -41,10 +47,22 @@ for idx, column in enumerate(columns_to_plot, start=1):
                 fontweight='bold'
             )
 
-        plt.xlabel("Country")
-        plt.ylabel("Value")
-        plt.title(f"Graph {idx*2 - 1 + i}: {column}")
-        plt.xticks(rotation=45, ha="right")
-        plt.tight_layout()
+        # Add stats text 
+        fig.text(
+            0.01, 0.98,
+            f"Mean: {mean_val:.2f}\nStd Dev: {std_dev:.2f}\nVariance: {var_val:.2f}",
+            ha='left',
+            va='top',
+            fontsize=11,
+            color='black',
+            fontweight='bold'
+        )
+
+        ax.set_xlabel("Country")
+        ax.set_ylabel("Value")
+        ax.set_title(f"Graph {idx*2 - 1 + i}: {column}")
+        ax.tick_params(axis='x', rotation=45)
+        fig.tight_layout(rect=[0, 0, 1, 0.95])  # Leave space at top for text
+
         plt.savefig(f"graphs/graph_{idx*2 - 1 + i}.png")
         plt.close()
