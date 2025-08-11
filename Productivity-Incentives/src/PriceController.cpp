@@ -21,35 +21,55 @@ void PriceController::updateCurrentCosts(const std::vector<Project>& allProjects
 }
 
 void PriceController::updateOfficialPrices(double thresholdPercentageFirms, double thresholdPercentageProducts) {
-   
+    // Track productivity improvements for fixed threshold
+    trackProductivityImprovements(thresholdPercentageFirms);
+    
     int numFirmPriceChanges = 0;
+    int numProductsMetFixedThreshold = 0;
+    
     for (auto & [product, currentCost] : current_prices) {
         if (official_prices.find(product) != official_prices.end()) {
             double officialPrice = official_prices[product];
             double percentageDiff = ((officialPrice - currentCost) / officialPrice) * 100.0;
+            
+            // Check immediate threshold
             if (percentageDiff >= thresholdPercentageFirms) {
                 numFirmPriceChanges++;
             }
-
+            
+            // Check fixed threshold (consecutive cycles)
+            if (hasMetFixedThreshold(product, thresholdPercentageFirms)) {
+                numProductsMetFixedThreshold++;
+            }
         }
     }
 
     double percentageOfProductsImproved = (numFirmPriceChanges / static_cast<double>(official_prices.size())) * 100.0;
-    std::cout << "Price update check: " << numFirmPriceChanges << "/" << official_prices.size() 
-              << " products improved (" << percentageOfProductsImproved << "%)\n";
-    std::cout << "Threshold needed: " << thresholdPercentageProducts << "%\n";
+    double percentageMetFixedThreshold = (numProductsMetFixedThreshold / static_cast<double>(official_prices.size())) * 100.0;
     
-    if (percentageOfProductsImproved >= thresholdPercentageProducts) {
-        std::cout << "UPDATING OFFICIAL PRICES based on current costs:\n";
+    std::cout << "Price update check:\n";
+    std::cout << "  Immediate improvements: " << numFirmPriceChanges << "/" << official_prices.size() 
+              << " products (" << percentageOfProductsImproved << "%)\n";
+    std::cout << "  Fixed threshold met: " << numProductsMetFixedThreshold << "/" << official_prices.size() 
+              << " products (" << percentageMetFixedThreshold << "%)\n";
+    std::cout << "  Threshold needed: " << thresholdPercentageProducts << "%\n";
+    
+    // Use fixed threshold for more stable price updates
+    if (percentageMetFixedThreshold >= thresholdPercentageProducts) {
+        std::cout << "UPDATING OFFICIAL PRICES based on fixed productivity threshold:\n";
         for (auto & [product, currentCost] : current_prices) {
-            double oldPrice = official_prices[product];
-            official_prices[product] = currentCost;
-            std::cout << "  " << product << ": " << oldPrice << " -> " << currentCost << "\n";
+            if (hasMetFixedThreshold(product, thresholdPercentageFirms)) {
+                double oldPrice = official_prices[product];
+                official_prices[product] = currentCost;
+                std::cout << "  " << product << ": " << oldPrice << " -> " << currentCost 
+                         << " (sustained improvement)\n";
+            }
         }
+        // Reset counters after successful update
+        resetProductivityCounters();
     } else {
-        std::cout << "Official prices remain unchanged.\n";
+        std::cout << "Official prices remain unchanged (fixed threshold not met).\n";
     }
-
 }
 
 double PriceController::getOfficialPrice(const std::string& productName) {
@@ -92,4 +112,52 @@ void PriceController::recomputeAverageCosts(const std::vector<Project>& allProje
 // Instance methods for compatibility
 double PriceController::getAvgPriceOfProduct(const Project& project) {
     return getCurrentCost(project.productName);
+}
+
+// Fixed productivity threshold methods
+void PriceController::resetProductivityCounters() {
+    productivity_improvement_cycles.clear();
+    best_productivity_achieved.clear();
+    std::cout << "Productivity counters reset after official price update.\n";
+}
+
+bool PriceController::hasMetFixedThreshold(const std::string& productName, double /*fixedThreshold*/) {
+    auto cycleIt = productivity_improvement_cycles.find(productName);
+    if (cycleIt == productivity_improvement_cycles.end()) {
+        return false;
+    }
+    
+    // Check if this product has met the threshold for required consecutive cycles
+    return cycleIt->second >= REQUIRED_CONSECUTIVE_CYCLES;
+}
+
+void PriceController::trackProductivityImprovements(double fixedThreshold) {
+    for (auto & [product, currentCost] : current_prices) {
+        if (official_prices.find(product) != official_prices.end()) {
+            double officialPrice = official_prices[product];
+            double percentageDiff = ((officialPrice - currentCost) / officialPrice) * 100.0;
+            
+            // Check if this cycle shows improvement
+            if (percentageDiff >= fixedThreshold) {
+                // Track best productivity achieved
+                auto bestIt = best_productivity_achieved.find(product);
+                if (bestIt == best_productivity_achieved.end() || currentCost < bestIt->second) {
+                    best_productivity_achieved[product] = currentCost;
+                }
+                
+                // Increment consecutive improvement cycles
+                productivity_improvement_cycles[product]++;
+                std::cout << "  " << product << ": improvement cycle " 
+                         << productivity_improvement_cycles[product] << "/" 
+                         << REQUIRED_CONSECUTIVE_CYCLES << " (savings: " 
+                         << percentageDiff << "%)\n";
+            } else {
+                // Reset counter if improvement is not sustained
+                if (productivity_improvement_cycles.find(product) != productivity_improvement_cycles.end()) {
+                    std::cout << "  " << product << ": improvement cycle reset (insufficient improvement)\n";
+                    productivity_improvement_cycles[product] = 0;
+                }
+            }
+        }
+    }
 }

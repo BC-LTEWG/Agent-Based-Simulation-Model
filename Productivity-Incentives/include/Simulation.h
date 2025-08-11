@@ -43,6 +43,11 @@ private:
     std::vector<std::string> firmNames = {"Alpha Corp", "Beta Industries", "Gamma Works", "Delta Manufacturing", 
                                          "Epsilon Enterprises", "Zeta Production", "Eta Systems", "Theta Co",
                                          "Iota Labs", "Kappa Industries"};
+    
+    // Economic shock tracking
+    std::vector<std::pair<int, std::string>> economicShockHistory; // cycle, shock type
+    double shockProbabilityPerCycle = 0.15; // 15% chance per cycle
+    int cyclesSinceLastShock = 0;
 
 public:
     Simulation();
@@ -62,4 +67,11 @@ public:
     void trackPricesAndWorkDay(int cycle);
     void generatePlots();
     double calculateAverageWorkDay();
+    
+    // Economic shock methods
+    void triggerEconomicShock(int cycleNumber);
+    bool shouldTriggerShock(int cycleNumber);
+    void applyProductivityShock(double severity);
+    void applyDemandShock(double severity);
+    void applySupplyChainShock(double severity);
 }; 

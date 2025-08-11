@@ -10,7 +10,7 @@
 
 // Firm implementation
 Firm::Firm(int id, std::string name, PriceController& priceController) 
-    : id(id), name(name), laborTimeHoursSpent(0.0), priceController(priceController) {}
+    : id(id), name(name), laborTimeHoursSpent(0.0), priceController(priceController), currentCycleLaborTime(0.0) {}
 
 void Firm::addWorker(std::shared_ptr<Worker> worker) {
     workers.push_back(worker);
@@ -130,6 +130,10 @@ void Firm::execute_projects(const std::vector<std::shared_ptr<Firm>>& allFirms) 
                 }
                 
                 laborTimeHoursSpent += project.actualCost;
+                currentCycleLaborTime += project.actualCost;
+                
+                // Track labor time by product
+                laborTimeByProduct[project.productName] += project.actualCost;
             }
         }
     }
@@ -213,6 +217,32 @@ std::vector<Project>& Firm::getProjectsForProduct(const std::string& productName
 bool Firm::hasProjectsForProduct(const std::string& productName) const {
     auto it = project_history.find(productName);
     return it != project_history.end() && !it->second.empty();
+}
+
+// Enhanced labor time tracking methods
+double Firm::getLaborTimeForCycle(int cycle) const {
+    if (cycle >= 0 && cycle < static_cast<int>(laborTimeHistory.size())) {
+        return laborTimeHistory[cycle];
+    }
+    return 0.0;
+}
+
+double Firm::getLaborTimeForProduct(const std::string& productName) const {
+    auto it = laborTimeByProduct.find(productName);
+    return (it != laborTimeByProduct.end()) ? it->second : 0.0;
+}
+
+const std::vector<double>& Firm::getLaborTimeHistory() const {
+    return laborTimeHistory;
+}
+
+void Firm::recordLaborTimeForCycle(double hours) {
+    laborTimeHistory.push_back(hours);
+    currentCycleLaborTime = 0.0; // Reset for next cycle
+}
+
+void Firm::resetCycleLaborTime() {
+    currentCycleLaborTime = 0.0;
 }
 
 

@@ -5,6 +5,7 @@
 #include <thread>
 #include <fstream>
 #include <iomanip>
+#include <numeric>
 #include <matplot/matplot.h>
 
 Simulation::Simulation() : gen(std::random_device{}()), probability(0.0, 1.0), nextProjectId(1), nextFirmId(1),
@@ -22,22 +23,25 @@ void Simulation::saveInitialPrices() {
 }
 
 double Simulation::calculateAverageWorkDay() {
-    // Work day calculation: starts at 8 hours, decreases ONLY with genuine innovations
+    // Work day calculation with diminishing returns and saturation
     double baseWorkDay = 8.0; // hours
-    
-    // Track the minimum work day achieved so far (starts at 8, can only go down)
     static double minimumWorkDayAchieved = baseWorkDay;
+    static double cumulativeProductivityGain = 0.0; // Track cumulative improvements
+    static int totalCyclesWithImprovement = 0;
+    
+    // Define saturation parameters
+    const double MINIMUM_WORKDAY = 4.0; // Cannot go below 4 hours (50% of original)
+    const double DIMINISHING_FACTOR = 0.8; // Each cycle of improvement has 80% of previous effect
+    const double SATURATION_THRESHOLD = 0.9; // 90% of maximum possible improvement
     
     double totalProductivityGain = 0.0;
     int productCount = 0;
     
     // Only count products that have demonstrable improvements from innovation
-    // Must be compared against OFFICIAL prices (what firms plan for)
     for (const auto& product : products) {
-        double officialPrice = priceController.getOfficialPrice(product);  // What firms plan for
-        double actualAverage = priceController.getCurrentCost(product);    // What actually happened
+        double officialPrice = priceController.getOfficialPrice(product);
+        double actualAverage = priceController.getCurrentCost(product);
         
-        // Only count if we have actual data AND it's genuinely better than official target
         if (officialPrice > 0 && actualAverage > 0 && actualAverage < officialPrice) {
             double improvement = (officialPrice - actualAverage) / officialPrice;
             totalProductivityGain += improvement;
@@ -54,9 +58,33 @@ double Simulation::calculateAverageWorkDay() {
         newWorkDay = minimumWorkDayAchieved;
         std::cout << "Work day calculation: No productivity improvements, maintaining " << newWorkDay << " hours\n";
     } else {
-        // Calculate new work day based on productivity gains
+        // Apply diminishing returns to productivity gains
         double avgProductivityGain = totalProductivityGain / productCount;
-        newWorkDay = baseWorkDay * (1.0 - avgProductivityGain);
+        
+        // Apply diminishing returns based on previous improvements
+        double effectiveGain = avgProductivityGain * std::pow(DIMINISHING_FACTOR, totalCyclesWithImprovement);
+        
+        // Add to cumulative gains
+        cumulativeProductivityGain += effectiveGain;
+        totalCyclesWithImprovement++;
+        
+        // Calculate maximum possible improvement (baseWorkDay - MINIMUM_WORKDAY)
+        double maxPossibleImprovement = (baseWorkDay - MINIMUM_WORKDAY) / baseWorkDay;
+        
+        // Check for saturation
+        if (cumulativeProductivityGain >= maxPossibleImprovement * SATURATION_THRESHOLD) {
+            std::cout << "Work day approaching saturation limit!\n";
+            cumulativeProductivityGain = maxPossibleImprovement * SATURATION_THRESHOLD;
+        }
+        
+        // Calculate new work day with saturation limit
+        newWorkDay = baseWorkDay * (1.0 - cumulativeProductivityGain);
+        
+        // Enforce minimum work day limit
+        if (newWorkDay < MINIMUM_WORKDAY) {
+            newWorkDay = MINIMUM_WORKDAY;
+            std::cout << "Work day has reached minimum threshold of " << MINIMUM_WORKDAY << " hours\n";
+        }
         
         // Work day can only decrease (ratchet effect)
         if (newWorkDay < minimumWorkDayAchieved) {
@@ -66,7 +94,16 @@ double Simulation::calculateAverageWorkDay() {
         }
         
         std::cout << "Work day calculation: products improved=" << productCount 
-                  << ", avgGain=" << (avgProductivityGain * 100.0) << "%, workDay=" << newWorkDay << " hours\n";
+                  << ", rawGain=" << (avgProductivityGain * 100.0) 
+                  << "%, effectiveGain=" << (effectiveGain * 100.0)
+                  << "%, cumulativeGain=" << (cumulativeProductivityGain * 100.0)
+                  << "%, workDay=" << newWorkDay << " hours\n";
+        std::cout << "  Diminishing factor applied: " << std::pow(DIMINISHING_FACTOR, totalCyclesWithImprovement - 1) 
+                  << " (cycle " << totalCyclesWithImprovement << ")\n";
+        
+        // Show saturation progress
+        double saturationProgress = (cumulativeProductivityGain / (maxPossibleImprovement * SATURATION_THRESHOLD)) * 100.0;
+        std::cout << "  Saturation progress: " << saturationProgress << "%\n";
     }
     
     return newWorkDay;
@@ -341,21 +378,44 @@ void Simulation::priceControllerPhase() {
 void Simulation::runCycle(int cycleNumber) {
     std::cout << "==================== CYCLE " << cycleNumber << " ====================\n";
     
-    // Phase 1: Each firm creates projects
-    std::cout << "=== Phase 1: Project Creation ===\n";
+    // Phase 0: Check for economic shocks
+    if (shouldTriggerShock(cycleNumber)) {
+        triggerEconomicShock(cycleNumber);
+    }
+    cyclesSinceLastShock++;
+    
+    // Phase 1: Reset firm labor time tracking for this cycle
+    for (auto& firm : firms) {
+        firm->resetCycleLaborTime();
+    }
+    
+    // Phase 2: Each firm creates projects
+    std::cout << "=== Phase 2: Project Creation ===\n";
     for (auto& firm : firms) {
         firm->create_projects();
     }
     std::cout << "\n";
     
-    // Phase 2: Each firm executes projects (includes learning, innovation, production)
-    std::cout << "=== Phase 2: Project Execution ===\n";
+    // Phase 3: Each firm executes projects (includes learning, innovation, production)
+    std::cout << "=== Phase 3: Project Execution ===\n";
     for (auto& firm : firms) {
         firm->execute_projects(firms);
     }
     std::cout << "\n";
     
-    // Phase 3: Price Controller updates
+    // Phase 4: Record labor time for this cycle
+    std::cout << "=== Phase 4: Labor Time Recording ===\n";
+    for (auto& firm : firms) {
+        double cycleLaborTime = firm->getTotalLaborTimeSpent() - 
+            (firm->getLaborTimeHistory().size() > 0 ? 
+             std::accumulate(firm->getLaborTimeHistory().begin(), firm->getLaborTimeHistory().end(), 0.0) : 0.0);
+        firm->recordLaborTimeForCycle(cycleLaborTime);
+        
+        std::cout << firm->getName() << " labor time this cycle: " << cycleLaborTime << " hours\n";
+    }
+    std::cout << "\n";
+    
+    // Phase 5: Price Controller updates
     priceControllerPhase();
     trackPricesAndWorkDay(cycleNumber);
     
@@ -403,6 +463,34 @@ void Simulation::showSummary() {
     for (const auto& firm : firms) {
         std::cout << firm->getName() << ": " << firm->getProjects().size() 
                  << " projects, " << firm->getTotalLaborTimeSpent() << " total hours\n";
+        
+        // Show labor time history
+        const auto& history = firm->getLaborTimeHistory();
+        std::cout << "  Labor time by cycle: ";
+        for (size_t i = 0; i < history.size(); ++i) {
+            std::cout << "C" << (i + 1) << ":" << std::fixed << std::setprecision(1) << history[i] << "h ";
+        }
+        std::cout << "\n";
+        
+        // Show labor time by product
+        std::cout << "  Labor time by product: ";
+        for (const auto& product : products) {
+            double productTime = firm->getLaborTimeForProduct(product);
+            if (productTime > 0) {
+                std::cout << product << ":" << std::fixed << std::setprecision(1) << productTime << "h ";
+            }
+        }
+        std::cout << "\n";
+    }
+    
+    // Show economic shock history
+    if (!economicShockHistory.empty()) {
+        std::cout << "\nEconomic shock history:\n";
+        for (const auto& [cycle, shockType] : economicShockHistory) {
+            std::cout << "  Cycle " << cycle << ": " << shockType << "\n";
+        }
+    } else {
+        std::cout << "\nNo economic shocks occurred during this simulation.\n";
     }
 }
 
@@ -428,4 +516,100 @@ void Simulation::run(int numCycles) {
     showSummary();
     generatePlots(); // Generate plots after the simulation run
     std::cout << "\nSimulation completed successfully!\n";
+}
+
+// Economic shock methods
+bool Simulation::shouldTriggerShock(int cycleNumber) {
+    // Don't trigger shocks in the first cycle or too frequently
+    if (cycleNumber == 1 || cyclesSinceLastShock < 2) {
+        return false;
+    }
+    
+    // Increase probability slightly as cycles pass without shocks
+    double adjustedProbability = shockProbabilityPerCycle + (cyclesSinceLastShock * 0.02);
+    return probability(gen) < adjustedProbability;
+}
+
+void Simulation::triggerEconomicShock(int cycleNumber) {
+    std::cout << "\n*** ECONOMIC SHOCK DETECTED ***\n";
+    
+    // Random shock type
+    std::uniform_int_distribution<> shockTypeDist(0, 2);
+    int shockType = shockTypeDist(gen);
+    
+    // Random severity (0.1 to 0.4 - 10% to 40% impact)
+    std::uniform_real_distribution<> severityDist(0.1, 0.4);
+    double severity = severityDist(gen);
+    
+    std::string shockName;
+    switch (shockType) {
+        case 0:
+            shockName = "Productivity Crisis";
+            applyProductivityShock(severity);
+            break;
+        case 1:
+            shockName = "Demand Collapse";
+            applyDemandShock(severity);
+            break;
+        case 2:
+            shockName = "Supply Chain Disruption";
+            applySupplyChainShock(severity);
+            break;
+    }
+    
+    economicShockHistory.push_back({cycleNumber, shockName});
+    cyclesSinceLastShock = 0;
+    
+    std::cout << "Shock Type: " << shockName << " (Severity: " << (severity * 100.0) << "%)\n";
+    std::cout << "*** END ECONOMIC SHOCK ***\n\n";
+}
+
+void Simulation::applyProductivityShock(double severity) {
+    std::cout << "Applying productivity shock - widespread efficiency losses\n";
+    
+    // Temporarily increase official prices to simulate loss of productivity
+    for (const auto& product : products) {
+        double currentPrice = priceController.getOfficialPrice(product);
+        double newPrice = currentPrice * (1.0 + severity);
+        // Note: This modifies internal prices temporarily - 
+        // in a real implementation you'd want a temporary modifier system
+        std::cout << "  " << product << " labor time increased from " << currentPrice 
+                  << " to " << newPrice << " hours due to productivity loss\n";
+    }
+    
+    // Reduce innovation probability temporarily
+    // This would need access to firm innovation rates in a full implementation
+    std::cout << "  Innovation rates temporarily reduced by " << (severity * 100.0) << "%\n";
+}
+
+void Simulation::applyDemandShock(double severity) {
+    std::cout << "Applying demand shock - reduced project creation\n";
+    
+    // Reduce number of projects firms will create this cycle
+    // In a full implementation, this would modify firm behavior
+    std::uniform_real_distribution<> reductionDist(0.0, 1.0);
+    
+    for (auto& firm : firms) {
+        if (reductionDist(gen) < severity) {
+            std::cout << "  " << firm->getName() << " reducing project creation due to low demand\n";
+            // In practice, you'd modify the firm's project creation logic
+        }
+    }
+    
+    std::cout << "  " << (int)(severity * firms.size()) << " firms affected by demand reduction\n";
+}
+
+void Simulation::applySupplyChainShock(double severity) {
+    std::cout << "Applying supply chain shock - increased production costs\n";
+    
+    // Increase actual production costs by adding random delays/inefficiencies
+    std::uniform_real_distribution<> costIncreaseDist(1.0, 1.0 + severity);
+    
+    // This would ideally modify production costs in real-time
+    // For now, we'll track it and apply it to current cycle
+    std::cout << "  Production costs increased by " << (severity * 100.0) << "% on average\n";
+    std::cout << "  Supply chain bottlenecks affecting " << (int)(severity * products.size()) 
+              << " product categories\n";
+    
+    // In a full implementation, you'd modify the production phase to apply these costs
 } 

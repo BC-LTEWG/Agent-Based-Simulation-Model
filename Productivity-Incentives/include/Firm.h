@@ -46,6 +46,13 @@ public:
     double getTotalLaborTimeValueOfProject(const Project& project) const;
     double getTotalLaborTimeSpent() const;
     
+    // Enhanced labor time tracking
+    double getLaborTimeForCycle(int cycle) const;
+    double getLaborTimeForProduct(const std::string& productName) const;
+    const std::vector<double>& getLaborTimeHistory() const;
+    void recordLaborTimeForCycle(double hours);
+    void resetCycleLaborTime(); // Call at start of each cycle
+    
     // New methods for project history
     const std::unordered_map<std::string, std::vector<Project>>& getProjectHistory() const;
     std::vector<Project> getProjectsForProduct(const std::string& productName) const;
@@ -59,5 +66,10 @@ private:
     std::vector<std::shared_ptr<Worker>> workers;
     std::unordered_map<std::string, std::vector<Project>> project_history;
     PriceController & priceController;
+    
+    // Enhanced labor time tracking
+    std::vector<double> laborTimeHistory; // Labor time per cycle
+    double currentCycleLaborTime;         // Labor time for current cycle
+    std::map<std::string, double> laborTimeByProduct; // Labor time by product type
 
 };
