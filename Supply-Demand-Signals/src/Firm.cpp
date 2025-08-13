@@ -259,13 +259,21 @@ Plan Firm::generate_plan(Project * project) {
         return project->plan;
     }
 
-    // Step 1: estimate the acutal necessity of the good
-    const double remaining_inventory = society->distributors[0]->get_project_inventory(project);
+    // const double remaining_inventory =
+    //     society->distributors[0]->total_inventory(project->plan.good) -
+    //     project->plan.good->target_surplus;
+    const double remaining_inventory =
+        society->distributors[0]->get_project_inventory(project) -
+        (project->plan.good->target_surplus -
+            (society->distributors[0]->total_inventory(project->plan.good) -
+                society->distributors[0]->get_project_inventory(project)));
+
     const double deficit =
         society->distributors[0]->get_production_deficit(project->plan.good, project->plan_cycle);
 
     // How much people actually consume
-    const double consumption = std::max(0.0, project->goods_produced - remaining_inventory + deficit);
+    const double consumption =
+        std::max(0.0, project->goods_produced - remaining_inventory + deficit);
 
     printf("Estimated consumption for %s: %.2f (remaining: %.2f, deficit: %.2f)\n",
         project->plan.good->name.c_str(),
@@ -273,8 +281,9 @@ Plan Firm::generate_plan(Project * project) {
         remaining_inventory,
         deficit);
 
-    const double surplus_needed =
-        std::max(0.0, project->plan.good->target_surplus - remaining_inventory);
+    const double surplus_needed = std::max(0.0,
+        project->plan.good->target_surplus -
+            society->distributors[0]->total_inventory(project->plan.good));
 
     const double estimated_necessity = std::max(0.0, consumption + surplus_needed);
 

@@ -1,0 +1,47 @@
+site_name: Matplot++
+site_url: https://alandefreitas.github.io/matplotplusplus/
+repo_url: https://github.com/alandefreitas/matplotplusplus
+repo_name: alandefreitas/matplotplusplus
+
+site_description: "Matplot++: A C++ Graphics Library for Data Visualization"
+
+theme:
+  name: material
+  custom_dir: docs/overrides
+  palette:
+    scheme: preference
+  icon:
+    repo: fontawesome/brands/git-alt
+    logo: fontawesome/solid/code
+
+edit_uri: ""
+
+plugins:
+  - search
+  - awesome-pages
+
+google_analytics:
+  - UA-109858331-2
+  - auto
+
+copyright: Copyright &copy; Alan Freitas
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight:
+      use_pygments: true
+      linenums: true
+      linenums_style: pymdownx.inline
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.snippets
+  - pymdownx.arithmatex:
+      generic: true
+  - meta
+
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - https://media.ethicalads.io/media/client/ethicalads.min.js
