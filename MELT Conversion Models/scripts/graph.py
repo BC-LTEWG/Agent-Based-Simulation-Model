@@ -47,17 +47,6 @@ for idx, column in enumerate(columns_to_plot, start=1):
                 fontweight='bold'
             )
 
-        # Add stats text 
-        fig.text(
-            0.01, 0.98,
-            f"Mean: {mean_val:.2f}\nStd Dev: {std_dev:.2f}\nVariance: {var_val:.2f}",
-            ha='left',
-            va='top',
-            fontsize=11,
-            color='black',
-            fontweight='bold'
-        )
-
         ax.set_xlabel("Country")
         ax.set_ylabel("Value")
         ax.set_title(f"Graph {idx*2 - 1 + i}: {column}")
