@@ -250,7 +250,7 @@ void Simulation::innovationDiscoveryPhase() {
     
     // Some firms discover innovations from others
     for (auto& firm : firms) {
-        if (probability(gen) < discovery_probability) {
+        if (probability(gen) < innovation_discovery_rate) {
             // Pick a random firm that might have an innovation
             auto otherFirm = firms[firmSelector(gen)];
             if (otherFirm != firm) {
@@ -291,11 +291,11 @@ void Simulation::innovationDiscoveryPhase() {
 }
 
 void Simulation::randomInnovationPhase() {
-    std::cout << "=== Phase 3: Random Innovations ===\n";
+    std::cout << "=== Phase 3: Worker-Driven Innovations ===\n";
     
-    // Random firms get innovations
+    // Worker-driven innovations based on research (15% per worker rate)
     for (auto& firm : firms) {
-        if (probability(gen) < innovation_probability) {
+        if (probability(gen) < employee_suggestion_rate) {
             auto& projects = firm->getProjects();
             if (!projects.empty()) {
                 // Pick a random project to innovate on
