@@ -8,10 +8,12 @@ struct LaborTimeProduct
 {
     std::string name;
     std::string company;
+    char product_type;
     double labor_time;
     double sell_price;
 
     void generate_name();
+    void generate_product_type();
     void new_labor_time();
     void calculate_sell_price(CapitalistEconomy economy);
 

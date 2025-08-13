@@ -22,6 +22,8 @@ struct CapitalistEconomy
     void add_product(CapitalistProduct &product);
     void remove_product(const std::string &name);
 
+    void adjust_market();
+
     // How likely is an economy is going to create a new company
     // or remove an existing company at the end of the cycle
     double create_factor;

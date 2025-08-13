@@ -28,6 +28,15 @@ void LaborTimeProduct::generate_name()
     name = id;
 }
 
+// assign a product type out of the 26 available types
+void LaborTimeProduct::generate_product_type()
+{
+    static std::mt19937 gen(std::random_device{}());
+    std::uniform_int_distribution<> dist(0, 25);
+
+    product_type = 'A' + dist(gen);
+}
+
 // assign a random labor time between 10 and 40
 // This value can be changed!
 void LaborTimeProduct::new_labor_time()

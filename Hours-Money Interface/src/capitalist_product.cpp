@@ -26,6 +26,15 @@ void CapitalistProduct::generate_name()
     name = id;
 }
 
+// assign a product type out of the 26 available types
+void CapitalistProduct::generate_product_type()
+{
+    static std::mt19937 gen(std::random_device{}());
+    std::uniform_int_distribution<> dist(0, 25);
+
+    product_type = 'A' + dist(gen);
+}
+
 // assign a random price between 10 and 100
 // This value can be changed!
 void CapitalistProduct::new_desired_price()
