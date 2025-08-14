@@ -9,6 +9,7 @@ struct Plan {
 
         Good * good;
         double quantity;
+        double for_surplus;
 
-        static Plan from(Good * good, double quantity);
+        static Plan from(Good * good, double raw_quantity, double for_surplus);
 };

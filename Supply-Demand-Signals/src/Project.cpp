@@ -9,6 +9,7 @@
 Project::Project(Society * society, Plan plan)
     : society(society),
       hours_left(plan.means + plan.labor + plan.fixed_capital),
+      surplus_delta(society->distributors[0]->total_inventory(plan.good)),
       plan_cycle(society->plan_cycle),
       plan(plan),
       ideal_workers(std::ceil(

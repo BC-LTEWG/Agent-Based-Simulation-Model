@@ -14,7 +14,7 @@ Distributor::Distributor(Society * society) : Firm(society) {}
 std::vector<Project *> Distributor::old_projects(Good * good) {
     std::vector<Project *> old_projects;
     for (auto & [project, qty] : inventory[good].projects) {
-        if (project->plan_cycle < society->plan_cycle - 1) {
+        if (project->plan_cycle < society->plan_cycle) {
             old_projects.push_back(project);
         }
     }

@@ -21,6 +21,8 @@ class Project {
 
         double hours_left;
 
+        double surplus_delta;
+
     public:
         int plan_cycle;
 

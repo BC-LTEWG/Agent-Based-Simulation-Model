@@ -52,11 +52,13 @@ int main(int argc, char * argv[]) {
 
     auto good_project = good_firm->add_project(new Project(society,
         Plan::from(good,
-            society->config.plan_cycle_duration * population_size + good->target_surplus)));
+            society->config.plan_cycle_duration * population_size,
+            good->target_surplus / 2)));
 
     means_firm->add_project(new Project(society,
         Plan::from(means,
-            good_project->plan.quantity * good->means[means] + means->target_surplus)));
+            good_project->plan.quantity * good->means[means],
+            means->target_surplus / 2)));
     // universal_firm->add_project(new Project(society,
     //     Plan::from(universal_good,
     //         good_project->plan.quantity * good->means[universal_good] +
@@ -76,7 +78,7 @@ int main(int argc, char * argv[]) {
                     {
                         randomizer::DistributionType::NORMAL,
                         1,
-                        0,
+                        .5,
                     }),
                 // randomizer::need_cycle({universal_good},
                 //     1.0,
@@ -112,18 +114,25 @@ int main(int argc, char * argv[]) {
             "Quantity");
 
         // Define the lines for this good's plot
-        good_plots[good]->define_line("Inventory", {0.2f, 0.6f, 0.9f});              // Blue
-        good_plots[good]->define_line("Production Deficit", {0.9f, 0.2f, 0.2f});     // Red
-        good_plots[good]->define_line("Planned Production", {0.2f, 0.9f, 0.2f});     // Green
-        good_plots[good]->define_line("Actual Production", {0.9f, 0.7f, 0.2f});      // Orange
-        good_plots[good]->define_line("Ideal Workers", {0.6f, 0.2f, 0.9f})->hide();  // Purple
+        good_plots[good]->define_line("Inventory", {0.2f, 0.6f, 0.9f});                   // Blue
+        good_plots[good]->define_line("Production Deficit", {0.9f, 0.2f, 0.2f})->hide();  // Red
+        good_plots[good]->define_line("Planned Production", {0.2f, 0.9f, 0.2f})->hide();  // Green
+        good_plots[good]->define_line("Actual Production", {0.9f, 0.7f, 0.2f})->hide();   // Orange
+        good_plots[good]->define_line("Ideal Workers", {0.6f, 0.2f, 0.9f})->hide();       // Purple
     }
 
     std::vector<double> tick_times;
 
-    // for (int i = 0; i < 1e3; i++) {
-    for (int i = 0; i < 350; i++) {
-        printf("\n ------- Tick cycle %d -------\n", i + 1);
+    for (int i = 0; i < 1e3; i++) {
+    // for (int i = 0; i < 100; i++) {
+        printf("\n\n\n ------- Tick cycle %d -------\n", i + 1);
+
+        for (auto worker : society->workers) {
+            worker->change_needs([i](std::vector<WorkerNeedCycle> cycles) {
+                if (i == 300) cycles[0].need->amount += 1;
+                return cycles;
+            });
+        }
 
         auto start_time = std::chrono::high_resolution_clock::now();
         society->tick_cycle();
@@ -133,12 +142,13 @@ int main(int argc, char * argv[]) {
             std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
         tick_times.push_back(duration.count() / 1000.0);
 
+        printf("\nDistributor state:\n");
         distributor->head();
 
-        main_plot->add_x(i);
+        main_plot->add_x(i + 1);
 
         for (auto & [good, plot] : good_plots) {
-            plot->add_x(i);
+            plot->add_x(i + 1);
             plot->add_y("Inventory", distributor->total_inventory(good));
             plot->add_y("Production Deficit", distributor->get_production_deficit(good, i));
 
