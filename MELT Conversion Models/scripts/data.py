@@ -35,7 +35,7 @@ indicators = {
 # Load CPI data for 2023 and 2024 from US_CPI.xlsx for deflator 
 try:
     # Get data from file 
-    cpi_df = pd.read_excel("US_CPI.xlsx", engine="openpyxl", skiprows=11)
+    cpi_df = pd.read_excel("../data/US_CPI.xlsx", engine="openpyxl", skiprows=11)
 
     # Extract 2023 and 2024 rows
     cpi_2023 = cpi_df[cpi_df["Year"] == 2023].iloc[0]
@@ -52,7 +52,7 @@ except Exception as e:
 
 # Load average annual wages (2023, measured in USD PPP converted 2024)
 # Converted to USD PPP converted 2023 with deflator 
-wage_df = pd.read_csv("OECD_mean_income.csv", skiprows=1, header=None)
+wage_df = pd.read_csv("../data/OECD_mean_income.csv", skiprows=1, header=None)
 wage_map = {}
 adjusted_wage_map = {}
 for country in countries:
@@ -67,7 +67,7 @@ for country in countries:
         adjusted_wage_map[country] = "Missing"
 
 # Load average hours worked (2023)
-hours_df = pd.read_csv("OECD_average_hours_worked_2023.csv")
+hours_df = pd.read_csv("../data/OECD_average_hours_worked_2023.csv")
 hours_map = dict(zip(hours_df["Country"], hours_df["Average hours worked per year"]))
 
 # Compile results
@@ -85,7 +85,7 @@ for name, iso3 in countries.items():
     results.append(row)
 
 # Save results to CSV
-with open("data.csv", "w", newline="", encoding="utf-8") as f:
+with open("../data/data.csv", "w", newline="", encoding="utf-8") as f:
     fieldnames = ["Country"] + list(indicators.keys()) + [
     "Avg_Annual_Wage_USD_PPP_2023",
     "Average_Hours_Worked_2023"
