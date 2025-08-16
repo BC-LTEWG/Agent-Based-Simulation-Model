@@ -115,21 +115,21 @@ int main(int argc, char * argv[]) {
 
         // Define the lines for this good's plot
         good_plots[good]->define_line("Inventory", {0.2f, 0.6f, 0.9f});                   // Blue
-        good_plots[good]->define_line("Production Deficit", {0.9f, 0.2f, 0.2f})->hide();  // Red
-        good_plots[good]->define_line("Planned Production", {0.2f, 0.9f, 0.2f})->hide();  // Green
-        good_plots[good]->define_line("Actual Production", {0.9f, 0.7f, 0.2f})->hide();   // Orange
+        good_plots[good]->define_line("Production Deficit", {0.9f, 0.2f, 0.2f});  // Red
+        good_plots[good]->define_line("Planned Production", {0.2f, 0.9f, 0.2f});  // Green
+        good_plots[good]->define_line("Actual Production", {0.9f, 0.7f, 0.2f});   // Orange
         good_plots[good]->define_line("Ideal Workers", {0.6f, 0.2f, 0.9f})->hide();       // Purple
     }
 
     std::vector<double> tick_times;
 
-    for (int i = 0; i < 1e3; i++) {
-    // for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 20; i++) {
+        // for (int i = 0; i < 100; i++) {
         printf("\n\n\n ------- Tick cycle %d -------\n", i + 1);
 
         for (auto worker : society->workers) {
             worker->change_needs([i](std::vector<WorkerNeedCycle> cycles) {
-                if (i == 300) cycles[0].need->amount += 1;
+                if (i == 10) cycles[0].need->amount += 1;
                 return cycles;
             });
         }

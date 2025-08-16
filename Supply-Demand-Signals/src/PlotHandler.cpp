@@ -1,5 +1,6 @@
 #include "../include/PlotHandler.hpp"
 
+#include <matplot/core/legend.h>
 #include <matplot/freestanding/axes_functions.h>
 
 PlotLine * PlotLine::hide() {
@@ -91,8 +92,9 @@ void PlotHandler::plot() {
         matplot::title(plot.title);
         matplot::xlabel(plot.xlabel);
         matplot::ylabel(plot.ylabel);
-        matplot::legend(matplot::on);
-
+        auto legend = matplot::legend(matplot::on);
+        legend->location(matplot::legend::general_alignment::topleft);
+        legend->opaque(false);
         current_plot_idx++;
     }
 }
