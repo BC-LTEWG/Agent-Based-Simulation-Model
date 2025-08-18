@@ -120,6 +120,9 @@ void Simulation::trackPricesAndWorkDay(int cycle) {
     
     // Track average work day hours
     workDayHours.push_back(calculateAverageWorkDay());
+    
+    // Generate pie chart for this cycle's productivity gains
+    generateProductivityPieChartForCycle(cycle);
 }
 
 void Simulation::generatePlots() {
@@ -661,8 +664,8 @@ void Simulation::generateProductWorkdayPlot(const std::string& productName) {
     p1->line_width(2);
     p1->marker_size(6);
     xlabel("Cycle");
-    ylabel(productName + " Price (Labor Hours)");
-    title("Price vs Work Day: " + productName);
+    ylabel("Labor Hours");
+    title(productName + " Labor Time vs Work Day");
     
     // Add work day as second line (scaled for visibility)
     hold(on);
@@ -670,11 +673,11 @@ void Simulation::generateProductWorkdayPlot(const std::string& productName) {
     p2->line_width(2);
     p2->marker_size(6);
     
-    legend({productName + " Price", "Work Day Hours"});
+    legend({productName + " Labor Time", "Work Day Hours"});
     grid(on);
     save(productName + "_vs_workday.png");
     
-    std::cout << "Generated plot: " << productName << " price vs work day\n";
+    std::cout << "Generated plot: " << productName << " labor time vs work day\n";
 }
 
 // Generate plot of average price vs workday
@@ -707,8 +710,8 @@ void Simulation::generateAveragePriceWorkdayPlot() {
     p1->line_width(3);
     p1->marker_size(8);
     xlabel("Cycle");
-    ylabel("Average Price (Labor Hours)");
-    title("Average Price vs Work Day");
+    ylabel("Labor Hours");
+    title("Average Labor Time vs Work Day");
     
     // Add work day as second line
     hold(on);
@@ -716,11 +719,11 @@ void Simulation::generateAveragePriceWorkdayPlot() {
     p2->line_width(3);
     p2->marker_size(8);
     
-    legend({"Average Price", "Work Day Hours"});
+    legend({"Average Labor Time per Product", "Work Day Hours"});
     grid(on);
-    save("average_price_vs_workday.png");
+    save("average_labortime_vs_workday.png");
     
-    std::cout << "Generated plot: Average price vs work day\n";
+    std::cout << "Generated plot: Average labor time vs work day\n";
 }
 
 // Generate pie chart showing productivity changes by sector
@@ -775,5 +778,73 @@ void Simulation::generateProductivityPieChart() {
             std::cout << product << " ";
         }
         std::cout << "\n\n";
+    }
+}
+
+// Generate pie chart for a specific cycle's productivity gains
+void Simulation::generateProductivityPieChartForCycle(int cycle) {
+    // Calculate productivity gains by sector for this specific cycle
+    std::map<std::string, double> cycleProductivityGains;
+    
+    for (const auto& [sector, productList] : productSectors) {
+        double totalGain = 0.0;
+        int productCount = 0;
+        
+        for (const auto& product : productList) {
+            double initialPrice = initialPrices[product];
+            double currentPrice = priceController.getCurrentCost(product);
+            
+            if (initialPrice > 0 && currentPrice > 0 && currentPrice < initialPrice) {
+                double gain = (initialPrice - currentPrice) / initialPrice;
+                // Adjust for labor intensity
+                gain /= sectorLaborIntensity[sector];
+                totalGain += gain;
+                productCount++;
+            }
+        }
+        
+        cycleProductivityGains[sector] = productCount > 0 ? (totalGain / productCount) * 100.0 : 0.0;
+    }
+    
+    // Only generate chart if there are meaningful gains
+    double totalGains = 0.0;
+    for (const auto& [sector, gain] : cycleProductivityGains) {
+        totalGains += gain;
+    }
+    
+    if (totalGains > 0.1) { // Only if total gains > 0.1%
+        using namespace matplot;
+        
+        std::vector<double> gains;
+        std::vector<std::string> labels;
+        
+        for (const auto& [sector, gain] : cycleProductivityGains) {
+            if (gain > 0.05) { // Only include sectors with >0.05% gain
+                gains.push_back(gain);
+                labels.push_back(sector + " (" + std::to_string(int(gain)) + "%)");
+            }
+        }
+        
+        if (!gains.empty()) {
+            auto fig = figure(true);
+            fig->size(800, 600);
+            
+            pie(gains, labels);
+            title("Productivity Gains by Sector - Cycle " + std::to_string(cycle));
+            
+            std::string filename = "productivity_cycle_" + std::to_string(cycle) + ".png";
+            save(filename);
+            
+            std::cout << "Generated pie chart for cycle " << cycle << ": " << filename << "\n";
+            
+            // Console output for this cycle
+            std::cout << "=== CYCLE " << cycle << " PRODUCTIVITY GAINS BY SECTOR ===\n";
+            for (const auto& [sector, gain] : cycleProductivityGains) {
+                if (gain > 0.05) {
+                    std::cout << sector << ": " << std::fixed << std::setprecision(1) << gain << "% improvement\n";
+                }
+            }
+            std::cout << "\n";
+        }
     }
 } 

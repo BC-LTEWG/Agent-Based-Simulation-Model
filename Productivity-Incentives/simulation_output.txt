@@ -1,0 +1,891 @@
+Initialized official prices for 7 products
+Created 20 firms with workers
+
+Starting Economic Simulation with Labor Time Value
+================================================
+
+Cycle 0 (Baseline): Work day = 8.0 hours
+
+==================== CYCLE 1 ====================
+=== Phase 2: Project Creation ===
+Alpha Corp created project for bread: 43 units (expected: 2 hours/unit)
+Alpha Corp created project for shirts: 83 units (expected: 5 hours/unit)
+Beta Industries created project for chairs: 19 units (expected: 12 hours/unit)
+Gamma Works created project for chairs: 25 units (expected: 12 hours/unit)
+Delta Manufacturing created project for chairs: 66 units (expected: 12 hours/unit)
+Delta Manufacturing created project for shoes: 14 units (expected: 8 hours/unit)
+Epsilon Enterprises created project for shirts: 62 units (expected: 5 hours/unit)
+Zeta Production created project for shoes: 52 units (expected: 8 hours/unit)
+Eta Systems created project for bread: 74 units (expected: 2 hours/unit)
+Eta Systems created project for chairs: 66 units (expected: 12 hours/unit)
+Theta Co created project for chairs: 51 units (expected: 12 hours/unit)
+Theta Co created project for shoes: 92 units (expected: 8 hours/unit)
+Iota Labs created project for apples: 57 units (expected: 1 hours/unit)
+Iota Labs created project for bread: 81 units (expected: 2 hours/unit)
+Kappa Industries created project for bread: 64 units (expected: 2 hours/unit)
+Lambda Services created project for bread: 76 units (expected: 2 hours/unit)
+Mu Healthcare created project for shoes: 43 units (expected: 8 hours/unit)
+Nu Logistics created project for bread: 93 units (expected: 2 hours/unit)
+Xi Technologies created project for shorts: 89 units (expected: 3 hours/unit)
+Omicron Foods created project for shorts: 99 units (expected: 3 hours/unit)
+Pi Construction created project for chairs: 49 units (expected: 12 hours/unit)
+Rho Textiles created project for chairs: 15 units (expected: 12 hours/unit)
+Sigma Energy created project for chairs: 20 units (expected: 12 hours/unit)
+Tau Transport created project for apples: 63 units (expected: 1 hours/unit)
+Tau Transport created project for bread: 42 units (expected: 2 hours/unit)
+Upsilon Care created project for chairs: 27 units (expected: 12 hours/unit)
+
+=== Phase 3: Project Execution ===
+Alpha Corp produced 83 shirts using 368.036 hours (4.43417 hours/unit)
+Innovation at Alpha Corp! worker suggestion implementation for bread (2.19716% productivity gain)
+Innovation at Beta Industries! worker suggestion implementation for chairs (1.82425% productivity gain)
+Workers at Gamma Works resisted innovation for chairs (job security concerns)
+Gamma Works produced 25 chairs using 314.918 hours (12.5967 hours/unit)
+Delta Manufacturing produced 14 shoes using 131.329 hours (9.38063 hours/unit)
+Delta Manufacturing learned from Beta Industries's innovation for chairs (cost: 11.7811 hours/unit)
+Epsilon Enterprises produced 62 shirts using 339.307 hours (5.47269 hours/unit)
+Zeta Production produced 52 shoes using 421.569 hours (8.1071 hours/unit)
+Eta Systems learned from Beta Industries's innovation for chairs (cost: 11.7811 hours/unit)
+Eta Systems learned from Delta Manufacturing's innovation for chairs (cost: 11.7811 hours/unit)
+Eta Systems produced 74 bread using 132.747 hours (1.79388 hours/unit)
+Theta Co produced 92 shoes using 663.145 hours (7.2081 hours/unit)
+Theta Co learned from Beta Industries's innovation for chairs (cost: 11.7811 hours/unit)
+Theta Co learned from Delta Manufacturing's innovation for chairs (cost: 11.7811 hours/unit)
+Theta Co learned from Eta Systems's innovation for chairs (cost: 11.7811 hours/unit)
+Iota Labs produced 81 bread using 130.049 hours (1.60554 hours/unit)
+Iota Labs produced 57 apples using 66.4237 hours (1.16533 hours/unit)
+Kappa Industries learned from Alpha Corp's innovation for bread (cost: 1.95606 hours/unit)
+Kappa Industries learned from Eta Systems's innovation for bread (cost: 1.79388 hours/unit)
+Kappa Industries learned from Iota Labs's innovation for bread (cost: 1.60554 hours/unit)
+Lambda Services learned from Alpha Corp's innovation for bread (cost: 1.95606 hours/unit)
+Lambda Services learned from Eta Systems's innovation for bread (cost: 1.79388 hours/unit)
+Lambda Services learned from Iota Labs's innovation for bread (cost: 1.60554 hours/unit)
+Lambda Services learned from Kappa Industries's innovation for bread (cost: 1.60554 hours/unit)
+Workers at Mu Healthcare resisted innovation for shoes (job security concerns)
+Mu Healthcare produced 43 shoes using 378.046 hours (8.79176 hours/unit)
+Innovation at Nu Logistics! worker suggestion implementation for bread (2.1348% productivity gain)
+Xi Technologies produced 89 shorts using 226.494 hours (2.54488 hours/unit)
+Omicron Foods produced 99 shorts using 240.632 hours (2.43062 hours/unit)
+Pi Construction learned from Beta Industries's innovation for chairs (cost: 11.7811 hours/unit)
+Pi Construction learned from Delta Manufacturing's innovation for chairs (cost: 11.7811 hours/unit)
+Pi Construction learned from Eta Systems's innovation for chairs (cost: 11.7811 hours/unit)
+Pi Construction learned from Theta Co's innovation for chairs (cost: 11.7811 hours/unit)
+Innovation at Rho Textiles! worker suggestion implementation for chairs (1.32059% productivity gain)
+Sigma Energy learned from Beta Industries's innovation for chairs (cost: 11.7811 hours/unit)
+Sigma Energy learned from Delta Manufacturing's innovation for chairs (cost: 11.7811 hours/unit)
+Sigma Energy learned from Eta Systems's innovation for chairs (cost: 11.7811 hours/unit)
+Sigma Energy learned from Theta Co's innovation for chairs (cost: 11.7811 hours/unit)
+Sigma Energy learned from Pi Construction's innovation for chairs (cost: 11.7811 hours/unit)
+Sigma Energy learned from Rho Textiles's innovation for chairs (cost: 11.8415 hours/unit)
+Tau Transport learned from Alpha Corp's innovation for bread (cost: 1.95606 hours/unit)
+Tau Transport learned from Eta Systems's innovation for bread (cost: 1.79388 hours/unit)
+Tau Transport learned from Iota Labs's innovation for bread (cost: 1.60554 hours/unit)
+Tau Transport learned from Kappa Industries's innovation for bread (cost: 1.60554 hours/unit)
+Tau Transport learned from Lambda Services's innovation for bread (cost: 1.60554 hours/unit)
+Tau Transport learned from Nu Logistics's innovation for bread (cost: 1.9573 hours/unit)
+Tau Transport produced 63 apples using 53.8499 hours (0.85476 hours/unit)
+Upsilon Care learned from Beta Industries's innovation for chairs (cost: 11.7811 hours/unit)
+Upsilon Care learned from Delta Manufacturing's innovation for chairs (cost: 11.7811 hours/unit)
+Upsilon Care learned from Eta Systems's innovation for chairs (cost: 11.7811 hours/unit)
+Upsilon Care learned from Theta Co's innovation for chairs (cost: 11.7811 hours/unit)
+Upsilon Care learned from Pi Construction's innovation for chairs (cost: 11.7811 hours/unit)
+Upsilon Care learned from Rho Textiles's innovation for chairs (cost: 11.8415 hours/unit)
+Upsilon Care learned from Sigma Energy's innovation for chairs (cost: 11.8415 hours/unit)
+
+=== Phase 4: Labor Time Recording ===
+Alpha Corp labor time this cycle: 452.146 hours
+Beta Industries labor time this cycle: 223.841 hours
+Gamma Works labor time this cycle: 314.918 hours
+Delta Manufacturing labor time this cycle: 908.881 hours
+Epsilon Enterprises labor time this cycle: 339.307 hours
+Zeta Production labor time this cycle: 421.569 hours
+Eta Systems labor time this cycle: 910.299 hours
+Theta Co labor time this cycle: 1263.98 hours
+Iota Labs labor time this cycle: 196.472 hours
+Kappa Industries labor time this cycle: 102.755 hours
+Lambda Services labor time this cycle: 122.021 hours
+Mu Healthcare labor time this cycle: 378.046 hours
+Nu Logistics labor time this cycle: 182.029 hours
+Xi Technologies labor time this cycle: 226.494 hours
+Omicron Foods labor time this cycle: 240.632 hours
+Pi Construction labor time this cycle: 577.273 hours
+Rho Textiles labor time this cycle: 177.623 hours
+Sigma Energy labor time this cycle: 236.831 hours
+Tau Transport labor time this cycle: 136.057 hours
+Upsilon Care labor time this cycle: 319.721 hours
+
+=== Phase 5: Price Controller Update ===
+Analyzing 26 completed projects...
+
+Current costs vs Official prices:
+shirts: Official=5, Current=4.95343 (savings: 0.046569 hours, 0.931381%)
+shoes: Official=8, Current=8.3719 (savings: -0.371896 hours, -4.6487%)
+shorts: Official=3, Current=2.48775 (savings: 0.512249 hours, 17.075%)
+apples: Official=1, Current=1.01004 (savings: -0.0100442 hours, -1.00442%)
+bread: Official=2, Current=1.78302 (savings: 0.216976 hours, 10.8488%)
+chairs: Official=12, Current=11.8919 (savings: 0.108139 hours, 0.90116%)
+tables: Official=20, Current=20 (savings: 0 hours, 0%)
+
+Checking for price updates...
+  shorts: improvement cycle 1/3 (savings: 17.075%)
+Price update check:
+  Immediate improvements: 1/7 products (14.2857%)
+  Fixed threshold met: 0/7 products (0%)
+  Threshold needed: 20%
+Official prices remain unchanged (fixed threshold not met).
+
+Product shirts: official=5, actual=4.95343, improvement=0.931381%
+Product shorts: official=3, actual=2.48775, improvement=17.075%
+Product bread: official=2, actual=1.78302, improvement=10.8488%
+Product chairs: official=12, actual=11.8919, improvement=0.90116%
+Work day calculation: products improved=4, rawGain=7.43909%, effectiveGain=7.43909%, cumulativeGain=7.43909%, workDay=7.40487 hours
+  Diminishing factor applied: 1 (cycle 1)
+  Saturation progress: 16.5313%
+Generated pie chart for cycle 1: productivity_cycle_1.png
+=== CYCLE 1 PRODUCTIVITY GAINS BY SECTOR ===
+Food Production: 9.0% improvement
+Furniture/Construction: 1.1% improvement
+Manufacturing: 9.0% improvement
+
+Cycle 1 completed.
+
+==================== CYCLE 2 ====================
+=== Phase 2: Project Creation ===
+Alpha Corp created project for shirts: 52 units (expected: 5.0 hours/unit)
+Beta Industries created project for apples: 95 units (expected: 1.0 hours/unit)
+Beta Industries created project for chairs: 78 units (expected: 12.0 hours/unit)
+Gamma Works created project for bread: 15 units (expected: 2.0 hours/unit)
+Delta Manufacturing created project for chairs: 77 units (expected: 12.0 hours/unit)
+Epsilon Enterprises created project for shorts: 43 units (expected: 3.0 hours/unit)
+Epsilon Enterprises created project for shorts: 72 units (expected: 3.0 hours/unit)
+Zeta Production created project for apples: 18 units (expected: 1.0 hours/unit)
+Zeta Production created project for apples: 39 units (expected: 1.0 hours/unit)
+Eta Systems created project for bread: 41 units (expected: 2.0 hours/unit)
+Eta Systems created project for bread: 32 units (expected: 2.0 hours/unit)
+Theta Co created project for tables: 75 units (expected: 20.0 hours/unit)
+Theta Co created project for apples: 42 units (expected: 1.0 hours/unit)
+Iota Labs created project for shirts: 48 units (expected: 5.0 hours/unit)
+Kappa Industries created project for shoes: 25 units (expected: 8.0 hours/unit)
+Lambda Services created project for shoes: 83 units (expected: 8.0 hours/unit)
+Lambda Services created project for shirts: 77 units (expected: 5.0 hours/unit)
+Mu Healthcare created project for shoes: 12 units (expected: 8.0 hours/unit)
+Nu Logistics created project for shoes: 45 units (expected: 8.0 hours/unit)
+Nu Logistics created project for bread: 84 units (expected: 2.0 hours/unit)
+Xi Technologies created project for shoes: 60 units (expected: 8.0 hours/unit)
+Xi Technologies created project for shoes: 75 units (expected: 8.0 hours/unit)
+Omicron Foods created project for tables: 47 units (expected: 20.0 hours/unit)
+Pi Construction created project for shirts: 62 units (expected: 5.0 hours/unit)
+Rho Textiles created project for shirts: 35 units (expected: 5.0 hours/unit)
+Rho Textiles created project for chairs: 94 units (expected: 12.0 hours/unit)
+Sigma Energy created project for chairs: 46 units (expected: 12.0 hours/unit)
+Tau Transport created project for apples: 68 units (expected: 1.0 hours/unit)
+Tau Transport created project for bread: 22 units (expected: 2.0 hours/unit)
+Upsilon Care created project for chairs: 36 units (expected: 12.0 hours/unit)
+
+=== Phase 3: Project Execution ===
+Alpha Corp produced 52 shirts using 234.4 hours (4.5 hours/unit)
+Beta Industries produced 95 apples using 106.3 hours (1.1 hours/unit)
+Beta Industries produced 78 chairs using 957.6 hours (12.3 hours/unit)
+Gamma Works produced 15 bread using 34.1 hours (2.3 hours/unit)
+Delta Manufacturing learned from Eta Systems's innovation for chairs (cost: 11.8 hours/unit)
+Delta Manufacturing learned from Theta Co's innovation for chairs (cost: 11.8 hours/unit)
+Delta Manufacturing learned from Pi Construction's innovation for chairs (cost: 11.8 hours/unit)
+Epsilon Enterprises produced 43 shorts using 144.6 hours (3.4 hours/unit)
+Innovation at Epsilon Enterprises! worker suggestion (not implemented) for shorts (0.0% productivity gain)
+Innovation at Zeta Production! worker suggestion (not implemented) for apples (0.0% productivity gain)
+Innovation at Zeta Production! worker suggestion implementation for apples (0.9% productivity gain)
+Eta Systems produced 41 bread using 93.6 hours (2.3 hours/unit)
+Eta Systems produced 32 bread using 70.4 hours (2.2 hours/unit)
+Theta Co produced 42 apples using 43.2 hours (1.0 hours/unit)
+Innovation at Theta Co! worker suggestion implementation for tables (1.3% productivity gain)
+Iota Labs produced 48 shirts using 238.1 hours (5.0 hours/unit)
+Kappa Industries produced 25 shoes using 208.5 hours (8.3 hours/unit)
+Innovation at Lambda Services! worker suggestion implementation for shirts (1.5% productivity gain)
+Lambda Services produced 83 shoes using 545.1 hours (6.6 hours/unit)
+Mu Healthcare learned from Theta Co's innovation for shoes (cost: 7.2 hours/unit)
+Mu Healthcare learned from Lambda Services's innovation for shoes (cost: 6.6 hours/unit)
+Nu Logistics learned from Theta Co's innovation for shoes (cost: 7.2 hours/unit)
+Nu Logistics learned from Lambda Services's innovation for shoes (cost: 6.6 hours/unit)
+Nu Logistics learned from Mu Healthcare's innovation for shoes (cost: 6.6 hours/unit)
+Nu Logistics learned from Alpha Corp's innovation for bread (cost: 2.0 hours/unit)
+Nu Logistics learned from Iota Labs's innovation for bread (cost: 1.6 hours/unit)
+Nu Logistics learned from Kappa Industries's innovation for bread (cost: 1.6 hours/unit)
+Nu Logistics learned from Lambda Services's innovation for bread (cost: 1.6 hours/unit)
+Xi Technologies produced 60 shoes using 544.9 hours (9.1 hours/unit)
+Xi Technologies learned from Theta Co's innovation for shoes (cost: 7.2 hours/unit)
+Xi Technologies learned from Lambda Services's innovation for shoes (cost: 6.6 hours/unit)
+Xi Technologies learned from Mu Healthcare's innovation for shoes (cost: 6.6 hours/unit)
+Xi Technologies learned from Nu Logistics's innovation for shoes (cost: 6.6 hours/unit)
+Omicron Foods learned from Theta Co's innovation for tables (cost: 19.7 hours/unit)
+Pi Construction produced 62 shirts using 257.9 hours (4.2 hours/unit)
+Rho Textiles produced 35 shirts using 159.1 hours (4.5 hours/unit)
+Rho Textiles produced 94 chairs using 1039.6 hours (11.1 hours/unit)
+Sigma Energy learned from Delta Manufacturing's innovation for chairs (cost: 11.8 hours/unit)
+Sigma Energy learned from Eta Systems's innovation for chairs (cost: 11.8 hours/unit)
+Sigma Energy learned from Theta Co's innovation for chairs (cost: 11.8 hours/unit)
+Sigma Energy learned from Pi Construction's innovation for chairs (cost: 11.8 hours/unit)
+Sigma Energy learned from Rho Textiles's innovation for chairs (cost: 11.1 hours/unit)
+Tau Transport produced 22 bread using 50.0 hours (2.3 hours/unit)
+Innovation at Tau Transport! worker suggestion implementation for apples (2.4% productivity gain)
+Upsilon Care learned from Delta Manufacturing's innovation for chairs (cost: 11.8 hours/unit)
+Upsilon Care learned from Eta Systems's innovation for chairs (cost: 11.8 hours/unit)
+Upsilon Care learned from Theta Co's innovation for chairs (cost: 11.8 hours/unit)
+Upsilon Care learned from Pi Construction's innovation for chairs (cost: 11.8 hours/unit)
+Upsilon Care learned from Rho Textiles's innovation for chairs (cost: 11.1 hours/unit)
+Upsilon Care learned from Sigma Energy's innovation for chairs (cost: 11.1 hours/unit)
+
+=== Phase 4: Labor Time Recording ===
+Alpha Corp labor time this cycle: 234.4 hours
+Beta Industries labor time this cycle: 1063.9 hours
+Gamma Works labor time this cycle: 34.1 hours
+Delta Manufacturing labor time this cycle: 907.1 hours
+Epsilon Enterprises labor time this cycle: 360.6 hours
+Zeta Production labor time this cycle: 56.6 hours
+Eta Systems labor time this cycle: 164.0 hours
+Theta Co labor time this cycle: 1523.7 hours
+Iota Labs labor time this cycle: 238.1 hours
+Kappa Industries labor time this cycle: 208.5 hours
+Lambda Services labor time this cycle: 924.5 hours
+Mu Healthcare labor time this cycle: 78.8 hours
+Nu Logistics labor time this cycle: 430.4 hours
+Xi Technologies labor time this cycle: 1037.4 hours
+Omicron Foods labor time this cycle: 927.8 hours
+Pi Construction labor time this cycle: 257.9 hours
+Rho Textiles labor time this cycle: 1198.8 hours
+Sigma Energy labor time this cycle: 508.8 hours
+Tau Transport labor time this cycle: 116.3 hours
+Upsilon Care labor time this cycle: 398.2 hours
+
+=== Phase 5: Price Controller Update ===
+Analyzing 56 completed projects...
+
+Current costs vs Official prices:
+shirts: Official=5.0, Current=4.7 (savings: 0.3 hours, 5.7%)
+shoes: Official=8.0, Current=7.7 (savings: 0.3 hours, 3.5%)
+shorts: Official=3.0, Current=2.8 (savings: 0.2 hours, 5.5%)
+apples: Official=1.0, Current=1.0 (savings: -0.0 hours, -1.9%)
+bread: Official=2.0, Current=1.9 (savings: 0.1 hours, 3.7%)
+chairs: Official=12.0, Current=11.7 (savings: 0.3 hours, 2.2%)
+tables: Official=20.0, Current=19.7 (savings: 0.3 hours, 1.3%)
+
+Checking for price updates...
+  shorts: improvement cycle reset (insufficient improvement)
+Price update check:
+  Immediate improvements: 0/7 products (0.0%)
+  Fixed threshold met: 0/7 products (0.0%)
+  Threshold needed: 20.0%
+Official prices remain unchanged (fixed threshold not met).
+
+Product shirts: official=5.0, actual=4.7, improvement=5.7%
+Product shoes: official=8.0, actual=7.7, improvement=3.5%
+Product shorts: official=3.0, actual=2.8, improvement=5.5%
+Product bread: official=2.0, actual=1.9, improvement=3.7%
+Product chairs: official=12.0, actual=11.7, improvement=2.2%
+Product tables: official=20.0, actual=19.7, improvement=1.3%
+Work day calculation: products improved=6, rawGain=3.7%, effectiveGain=2.9%, cumulativeGain=10.4%, workDay=7.2 hours
+  Diminishing factor applied: 0.8 (cycle 2)
+  Saturation progress: 23.0%
+Generated pie chart for cycle 2: productivity_cycle_2.png
+=== CYCLE 2 PRODUCTIVITY GAINS BY SECTOR ===
+Food Production: 3.1% improvement
+Furniture/Construction: 2.2% improvement
+Manufacturing: 4.9% improvement
+
+Cycle 2 completed.
+
+==================== CYCLE 3 ====================
+=== Phase 2: Project Creation ===
+Alpha Corp created project for tables: 28 units (expected: 20.0 hours/unit)
+Alpha Corp created project for bread: 93 units (expected: 2.0 hours/unit)
+Beta Industries created project for shorts: 49 units (expected: 3.0 hours/unit)
+Gamma Works created project for bread: 86 units (expected: 2.0 hours/unit)
+Gamma Works created project for apples: 91 units (expected: 1.0 hours/unit)
+Delta Manufacturing created project for shirts: 15 units (expected: 5.0 hours/unit)
+Delta Manufacturing created project for shirts: 19 units (expected: 5.0 hours/unit)
+Epsilon Enterprises created project for shoes: 77 units (expected: 8.0 hours/unit)
+Zeta Production created project for shoes: 85 units (expected: 8.0 hours/unit)
+Zeta Production created project for apples: 57 units (expected: 1.0 hours/unit)
+Eta Systems created project for bread: 40 units (expected: 2.0 hours/unit)
+Theta Co created project for chairs: 62 units (expected: 12.0 hours/unit)
+Theta Co created project for chairs: 50 units (expected: 12.0 hours/unit)
+Iota Labs created project for shorts: 39 units (expected: 3.0 hours/unit)
+Kappa Industries created project for apples: 97 units (expected: 1.0 hours/unit)
+Lambda Services created project for shoes: 21 units (expected: 8.0 hours/unit)
+Mu Healthcare created project for tables: 75 units (expected: 20.0 hours/unit)
+Nu Logistics created project for shorts: 38 units (expected: 3.0 hours/unit)
+Xi Technologies created project for apples: 80 units (expected: 1.0 hours/unit)
+Omicron Foods created project for tables: 24 units (expected: 20.0 hours/unit)
+Omicron Foods created project for bread: 17 units (expected: 2.0 hours/unit)
+Pi Construction created project for bread: 48 units (expected: 2.0 hours/unit)
+Rho Textiles created project for shorts: 34 units (expected: 3.0 hours/unit)
+Rho Textiles created project for chairs: 37 units (expected: 12.0 hours/unit)
+Sigma Energy created project for chairs: 61 units (expected: 12.0 hours/unit)
+Sigma Energy created project for chairs: 98 units (expected: 12.0 hours/unit)
+Tau Transport created project for shirts: 75 units (expected: 5.0 hours/unit)
+Tau Transport created project for apples: 34 units (expected: 1.0 hours/unit)
+Upsilon Care created project for bread: 72 units (expected: 2.0 hours/unit)
+
+=== Phase 3: Project Execution ===
+Innovation at Alpha Corp! worker suggestion implementation for tables (2.3% productivity gain)
+Innovation at Alpha Corp! worker suggestion implementation for bread (2.6% productivity gain)
+Beta Industries learned from Xi Technologies's innovation for shorts (cost: 2.5 hours/unit)
+Beta Industries learned from Omicron Foods's innovation for shorts (cost: 2.4 hours/unit)
+Gamma Works produced 91 apples using 105.5 hours (1.2 hours/unit)
+Gamma Works learned from Alpha Corp's innovation for bread (cost: 1.9 hours/unit)
+Gamma Works learned from Iota Labs's innovation for bread (cost: 1.6 hours/unit)
+Gamma Works learned from Kappa Industries's innovation for bread (cost: 1.6 hours/unit)
+Gamma Works learned from Lambda Services's innovation for bread (cost: 1.6 hours/unit)
+Gamma Works learned from Nu Logistics's innovation for bread (cost: 1.6 hours/unit)
+Delta Manufacturing learned from Alpha Corp's innovation for shirts (cost: 4.5 hours/unit)
+Delta Manufacturing learned from Iota Labs's innovation for shirts (cost: 5.0 hours/unit)
+Delta Manufacturing learned from Lambda Services's innovation for shirts (cost: 4.9 hours/unit)
+Delta Manufacturing learned from Pi Construction's innovation for shirts (cost: 4.2 hours/unit)
+Delta Manufacturing learned from Rho Textiles's innovation for shirts (cost: 4.5 hours/unit)
+Innovation at Delta Manufacturing! worker suggestion implementation for shirts (0.9% productivity gain)
+Epsilon Enterprises learned from Theta Co's innovation for shoes (cost: 7.2 hours/unit)
+Epsilon Enterprises learned from Mu Healthcare's innovation for shoes (cost: 6.6 hours/unit)
+Epsilon Enterprises learned from Nu Logistics's innovation for shoes (cost: 6.6 hours/unit)
+Epsilon Enterprises learned from Xi Technologies's innovation for shoes (cost: 6.6 hours/unit)
+Zeta Production produced 57 apples using 51.5 hours (0.9 hours/unit)
+Zeta Production learned from Epsilon Enterprises's innovation for shoes (cost: 6.6 hours/unit)
+Zeta Production learned from Theta Co's innovation for shoes (cost: 7.2 hours/unit)
+Zeta Production learned from Mu Healthcare's innovation for shoes (cost: 6.6 hours/unit)
+Zeta Production learned from Nu Logistics's innovation for shoes (cost: 6.6 hours/unit)
+Zeta Production learned from Xi Technologies's innovation for shoes (cost: 6.6 hours/unit)
+Innovation at Eta Systems! breakthrough process redesign for bread (25.0% productivity gain)
+Innovation at Theta Co! worker suggestion (not implemented) for chairs (0.0% productivity gain)
+Theta Co produced 50 chairs using 596.4 hours (11.9 hours/unit)
+Iota Labs learned from Beta Industries's innovation for shorts (cost: 2.4 hours/unit)
+Iota Labs learned from Xi Technologies's innovation for shorts (cost: 2.5 hours/unit)
+Iota Labs learned from Omicron Foods's innovation for shorts (cost: 2.4 hours/unit)
+Kappa Industries produced 97 apples using 79.0 hours (0.8 hours/unit)
+Lambda Services produced 21 shoes using 169.3 hours (8.1 hours/unit)
+Innovation at Mu Healthcare! worker suggestion implementation for tables (1.5% productivity gain)
+Nu Logistics produced 38 shorts using 134.1 hours (3.5 hours/unit)
+Xi Technologies produced 80 apples using 89.2 hours (1.1 hours/unit)
+Omicron Foods learned from Alpha Corp's innovation for tables (cost: 19.5 hours/unit)
+Omicron Foods learned from Theta Co's innovation for tables (cost: 19.7 hours/unit)
+Omicron Foods learned from Mu Healthcare's innovation for tables (cost: 19.7 hours/unit)
+Omicron Foods learned from Alpha Corp's innovation for bread (cost: 1.9 hours/unit)
+Omicron Foods learned from Gamma Works's innovation for bread (cost: 1.6 hours/unit)
+Omicron Foods learned from Eta Systems's innovation for bread (cost: 1.5 hours/unit)
+Omicron Foods learned from Iota Labs's innovation for bread (cost: 1.6 hours/unit)
+Omicron Foods learned from Kappa Industries's innovation for bread (cost: 1.6 hours/unit)
+Omicron Foods learned from Lambda Services's innovation for bread (cost: 1.6 hours/unit)
+Omicron Foods learned from Nu Logistics's innovation for bread (cost: 1.6 hours/unit)
+Pi Construction produced 48 bread using 112.6 hours (2.3 hours/unit)
+Rho Textiles learned from Beta Industries's innovation for shorts (cost: 2.4 hours/unit)
+Rho Textiles learned from Iota Labs's innovation for shorts (cost: 2.4 hours/unit)
+Rho Textiles learned from Xi Technologies's innovation for shorts (cost: 2.5 hours/unit)
+Rho Textiles learned from Omicron Foods's innovation for shorts (cost: 2.4 hours/unit)
+Rho Textiles learned from Delta Manufacturing's innovation for chairs (cost: 11.8 hours/unit)
+Rho Textiles learned from Eta Systems's innovation for chairs (cost: 11.8 hours/unit)
+Rho Textiles learned from Theta Co's innovation for chairs (cost: 11.9 hours/unit)
+Rho Textiles learned from Pi Construction's innovation for chairs (cost: 11.8 hours/unit)
+Rho Textiles learned from Upsilon Care's innovation for chairs (cost: 11.1 hours/unit)
+Sigma Energy produced 61 chairs using 735.4 hours (12.1 hours/unit)
+Innovation at Sigma Energy! worker suggestion implementation for chairs (2.1% productivity gain)
+Tau Transport produced 75 shirts using 364.3 hours (4.9 hours/unit)
+Tau Transport produced 34 apples using 37.8 hours (1.1 hours/unit)
+Upsilon Care learned from Alpha Corp's innovation for bread (cost: 1.9 hours/unit)
+Upsilon Care learned from Gamma Works's innovation for bread (cost: 1.6 hours/unit)
+Upsilon Care learned from Eta Systems's innovation for bread (cost: 1.5 hours/unit)
+Upsilon Care learned from Iota Labs's innovation for bread (cost: 1.6 hours/unit)
+Upsilon Care learned from Kappa Industries's innovation for bread (cost: 1.6 hours/unit)
+Upsilon Care learned from Lambda Services's innovation for bread (cost: 1.6 hours/unit)
+Upsilon Care learned from Nu Logistics's innovation for bread (cost: 1.6 hours/unit)
+Upsilon Care learned from Omicron Foods's innovation for bread (cost: 1.6 hours/unit)
+
+=== Phase 4: Labor Time Recording ===
+Alpha Corp labor time this cycle: 728.2 hours
+Beta Industries labor time this cycle: 119.1 hours
+Gamma Works labor time this cycle: 243.6 hours
+Delta Manufacturing labor time this cycle: 162.3 hours
+Epsilon Enterprises labor time this cycle: 505.7 hours
+Zeta Production labor time this cycle: 609.7 hours
+Eta Systems labor time this cycle: 60.0 hours
+Theta Co labor time this cycle: 1340.4 hours
+Iota Labs labor time this cycle: 94.8 hours
+Kappa Industries labor time this cycle: 79.0 hours
+Lambda Services labor time this cycle: 169.3 hours
+Mu Healthcare labor time this cycle: 1477.0 hours
+Nu Logistics labor time this cycle: 134.1 hours
+Xi Technologies labor time this cycle: 89.2 hours
+Omicron Foods labor time this cycle: 499.9 hours
+Pi Construction labor time this cycle: 112.6 hours
+Rho Textiles labor time this cycle: 491.9 hours
+Sigma Energy labor time this cycle: 1886.4 hours
+Tau Transport labor time this cycle: 402.1 hours
+Upsilon Care labor time this cycle: 115.6 hours
+
+=== Phase 5: Price Controller Update ===
+Analyzing 85 completed projects...
+
+Current costs vs Official prices:
+shirts: Official=5.0, Current=4.7 (savings: 0.3 hours, 5.3%)
+shoes: Official=8.0, Current=7.6 (savings: 0.4 hours, 5.4%)
+shorts: Official=3.0, Current=2.8 (savings: 0.2 hours, 7.7%)
+apples: Official=1.0, Current=1.0 (savings: -0.0 hours, -2.0%)
+bread: Official=2.0, Current=1.9 (savings: 0.1 hours, 6.3%)
+chairs: Official=12.0, Current=11.7 (savings: 0.3 hours, 2.2%)
+tables: Official=20.0, Current=19.7 (savings: 0.3 hours, 1.6%)
+
+Checking for price updates...
+  shorts: improvement cycle reset (insufficient improvement)
+Price update check:
+  Immediate improvements: 0/7 products (0.0%)
+  Fixed threshold met: 0/7 products (0.0%)
+  Threshold needed: 20.0%
+Official prices remain unchanged (fixed threshold not met).
+
+Product shirts: official=5.0, actual=4.7, improvement=5.3%
+Product shoes: official=8.0, actual=7.6, improvement=5.4%
+Product shorts: official=3.0, actual=2.8, improvement=7.7%
+Product bread: official=2.0, actual=1.9, improvement=6.3%
+Product chairs: official=12.0, actual=11.7, improvement=2.2%
+Product tables: official=20.0, actual=19.7, improvement=1.6%
+Work day calculation: products improved=6, rawGain=4.7%, effectiveGain=3.0%, cumulativeGain=13.4%, workDay=6.9 hours
+  Diminishing factor applied: 0.6 (cycle 3)
+  Saturation progress: 29.8%
+Generated pie chart for cycle 3: productivity_cycle_3.png
+=== CYCLE 3 PRODUCTIVITY GAINS BY SECTOR ===
+Food Production: 5.3% improvement
+Furniture/Construction: 2.4% improvement
+Manufacturing: 6.1% improvement
+
+Cycle 3 completed.
+
+==================== CYCLE 4 ====================
+=== Phase 2: Project Creation ===
+Alpha Corp created project for shoes: 48 units (expected: 8.0 hours/unit)
+Beta Industries created project for chairs: 79 units (expected: 12.0 hours/unit)
+Gamma Works created project for chairs: 30 units (expected: 12.0 hours/unit)
+Gamma Works created project for shorts: 35 units (expected: 3.0 hours/unit)
+Delta Manufacturing created project for shirts: 26 units (expected: 5.0 hours/unit)
+Epsilon Enterprises created project for tables: 79 units (expected: 20.0 hours/unit)
+Zeta Production created project for bread: 49 units (expected: 2.0 hours/unit)
+Zeta Production created project for bread: 54 units (expected: 2.0 hours/unit)
+Eta Systems created project for shoes: 99 units (expected: 8.0 hours/unit)
+Theta Co created project for chairs: 54 units (expected: 12.0 hours/unit)
+Iota Labs created project for tables: 37 units (expected: 20.0 hours/unit)
+Iota Labs created project for chairs: 28 units (expected: 12.0 hours/unit)
+Kappa Industries created project for shirts: 44 units (expected: 5.0 hours/unit)
+Lambda Services created project for shirts: 54 units (expected: 5.0 hours/unit)
+Lambda Services created project for shorts: 40 units (expected: 3.0 hours/unit)
+Mu Healthcare created project for shorts: 94 units (expected: 3.0 hours/unit)
+Nu Logistics created project for apples: 39 units (expected: 1.0 hours/unit)
+Xi Technologies created project for shirts: 15 units (expected: 5.0 hours/unit)
+Xi Technologies created project for shorts: 66 units (expected: 3.0 hours/unit)
+Omicron Foods created project for shorts: 84 units (expected: 3.0 hours/unit)
+Omicron Foods created project for tables: 26 units (expected: 20.0 hours/unit)
+Pi Construction created project for chairs: 85 units (expected: 12.0 hours/unit)
+Pi Construction created project for apples: 75 units (expected: 1.0 hours/unit)
+Rho Textiles created project for bread: 15 units (expected: 2.0 hours/unit)
+Sigma Energy created project for chairs: 90 units (expected: 12.0 hours/unit)
+Tau Transport created project for tables: 77 units (expected: 20.0 hours/unit)
+Tau Transport created project for shirts: 79 units (expected: 5.0 hours/unit)
+Upsilon Care created project for tables: 48 units (expected: 20.0 hours/unit)
+
+=== Phase 3: Project Execution ===
+Innovation at Alpha Corp! worker suggestion implementation for shoes (2.6% productivity gain)
+Beta Industries produced 79 chairs using 814.6 hours (10.3 hours/unit)
+Gamma Works produced 35 shorts using 110.2 hours (3.1 hours/unit)
+Innovation at Gamma Works! worker suggestion implementation for chairs (1.9% productivity gain)
+Delta Manufacturing learned from Alpha Corp's innovation for shirts (cost: 4.5 hours/unit)
+Delta Manufacturing learned from Iota Labs's innovation for shirts (cost: 5.0 hours/unit)
+Delta Manufacturing learned from Pi Construction's innovation for shirts (cost: 4.2 hours/unit)
+Delta Manufacturing learned from Rho Textiles's innovation for shirts (cost: 4.5 hours/unit)
+Epsilon Enterprises produced 79 tables using 1420.1 hours (18.0 hours/unit)
+Zeta Production produced 49 bread using 108.2 hours (2.2 hours/unit)
+Innovation at Zeta Production! worker suggestion implementation for bread (2.1% productivity gain)
+Eta Systems learned from Alpha Corp's innovation for shoes (cost: 7.8 hours/unit)
+Eta Systems learned from Epsilon Enterprises's innovation for shoes (cost: 6.6 hours/unit)
+Eta Systems learned from Zeta Production's innovation for shoes (cost: 6.6 hours/unit)
+Eta Systems learned from Theta Co's innovation for shoes (cost: 7.2 hours/unit)
+Eta Systems learned from Mu Healthcare's innovation for shoes (cost: 6.6 hours/unit)
+Eta Systems learned from Nu Logistics's innovation for shoes (cost: 6.6 hours/unit)
+Eta Systems learned from Xi Technologies's innovation for shoes (cost: 6.6 hours/unit)
+Theta Co produced 54 chairs using 628.0 hours (11.6 hours/unit)
+Innovation at Iota Labs! worker suggestion implementation for chairs (1.0% productivity gain)
+Innovation at Iota Labs! worker suggestion implementation for tables (2.7% productivity gain)
+Kappa Industries produced 44 shirts using 192.0 hours (4.4 hours/unit)
+Innovation at Lambda Services! worker suggestion implementation for shirts (1.6% productivity gain)
+Lambda Services produced 40 shorts using 108.3 hours (2.7 hours/unit)
+Mu Healthcare produced 94 shorts using 251.6 hours (2.7 hours/unit)
+Nu Logistics learned from Zeta Production's innovation for apples (cost: 0.9 hours/unit)
+Nu Logistics learned from Kappa Industries's innovation for apples (cost: 0.8 hours/unit)
+Innovation at Xi Technologies! worker suggestion implementation for shirts (2.8% productivity gain)
+Xi Technologies produced 66 shorts using 168.8 hours (2.6 hours/unit)
+Omicron Foods learned from Alpha Corp's innovation for tables (cost: 19.5 hours/unit)
+Omicron Foods learned from Epsilon Enterprises's innovation for tables (cost: 18.0 hours/unit)
+Omicron Foods learned from Theta Co's innovation for tables (cost: 19.7 hours/unit)
+Omicron Foods learned from Iota Labs's innovation for tables (cost: 19.5 hours/unit)
+Omicron Foods learned from Mu Healthcare's innovation for tables (cost: 19.7 hours/unit)
+Omicron Foods produced 84 shorts using 264.2 hours (3.1 hours/unit)
+Pi Construction learned from Zeta Production's innovation for apples (cost: 0.9 hours/unit)
+Pi Construction learned from Kappa Industries's innovation for apples (cost: 0.8 hours/unit)
+Pi Construction learned from Nu Logistics's innovation for apples (cost: 0.8 hours/unit)
+Innovation at Pi Construction! worker suggestion (not implemented) for chairs (0.0% productivity gain)
+Rho Textiles learned from Alpha Corp's innovation for bread (cost: 1.9 hours/unit)
+Rho Textiles learned from Gamma Works's innovation for bread (cost: 1.6 hours/unit)
+Rho Textiles learned from Zeta Production's innovation for bread (cost: 2.0 hours/unit)
+Rho Textiles learned from Eta Systems's innovation for bread (cost: 1.5 hours/unit)
+Rho Textiles learned from Iota Labs's innovation for bread (cost: 1.6 hours/unit)
+Rho Textiles learned from Kappa Industries's innovation for bread (cost: 1.6 hours/unit)
+Rho Textiles learned from Lambda Services's innovation for bread (cost: 1.6 hours/unit)
+Rho Textiles learned from Nu Logistics's innovation for bread (cost: 1.6 hours/unit)
+Rho Textiles learned from Omicron Foods's innovation for bread (cost: 1.6 hours/unit)
+Rho Textiles learned from Upsilon Care's innovation for bread (cost: 1.6 hours/unit)
+Sigma Energy produced 90 chairs using 950.4 hours (10.6 hours/unit)
+Innovation at Tau Transport! worker suggestion (not implemented) for tables (0.0% productivity gain)
+Tau Transport learned from Alpha Corp's innovation for shirts (cost: 4.5 hours/unit)
+Tau Transport learned from Delta Manufacturing's innovation for shirts (cost: 4.5 hours/unit)
+Tau Transport learned from Iota Labs's innovation for shirts (cost: 5.0 hours/unit)
+Tau Transport learned from Kappa Industries's innovation for shirts (cost: 4.4 hours/unit)
+Tau Transport learned from Lambda Services's innovation for shirts (cost: 4.9 hours/unit)
+Tau Transport learned from Xi Technologies's innovation for shirts (cost: 4.9 hours/unit)
+Tau Transport learned from Pi Construction's innovation for shirts (cost: 4.2 hours/unit)
+Tau Transport learned from Rho Textiles's innovation for shirts (cost: 4.5 hours/unit)
+Upsilon Care produced 48 tables using 784.9 hours (16.4 hours/unit)
+
+=== Phase 4: Labor Time Recording ===
+Alpha Corp labor time this cycle: 374.0 hours
+Beta Industries labor time this cycle: 814.6 hours
+Gamma Works labor time this cycle: 463.3 hours
+Delta Manufacturing labor time this cycle: 118.2 hours
+Epsilon Enterprises labor time this cycle: 1420.1 hours
+Zeta Production labor time this cycle: 213.9 hours
+Eta Systems labor time this cycle: 650.2 hours
+Theta Co labor time this cycle: 628.0 hours
+Iota Labs labor time this cycle: 1052.5 hours
+Kappa Industries labor time this cycle: 192.0 hours
+Lambda Services labor time this cycle: 373.9 hours
+Mu Healthcare labor time this cycle: 251.6 hours
+Nu Logistics labor time this cycle: 31.8 hours
+Xi Technologies labor time this cycle: 241.8 hours
+Omicron Foods labor time this cycle: 776.2 hours
+Pi Construction labor time this cycle: 1081.1 hours
+Rho Textiles labor time this cycle: 24.1 hours
+Sigma Energy labor time this cycle: 950.4 hours
+Tau Transport labor time this cycle: 1899.2 hours
+Upsilon Care labor time this cycle: 784.9 hours
+
+=== Phase 5: Price Controller Update ===
+Analyzing 113 completed projects...
+
+Current costs vs Official prices:
+shirts: Official=5.0, Current=4.7 (savings: 0.3 hours, 5.9%)
+shoes: Official=8.0, Current=7.5 (savings: 0.5 hours, 6.1%)
+shorts: Official=3.0, Current=2.8 (savings: 0.2 hours, 6.7%)
+apples: Official=1.0, Current=1.0 (savings: 0.0 hours, 1.0%)
+bread: Official=2.0, Current=1.9 (savings: 0.1 hours, 6.0%)
+chairs: Official=12.0, Current=11.6 (savings: 0.4 hours, 2.9%)
+tables: Official=20.0, Current=19.2 (savings: 0.8 hours, 4.1%)
+
+Checking for price updates...
+  shorts: improvement cycle reset (insufficient improvement)
+Price update check:
+  Immediate improvements: 0/7 products (0.0%)
+  Fixed threshold met: 0/7 products (0.0%)
+  Threshold needed: 20.0%
+Official prices remain unchanged (fixed threshold not met).
+
+Product shirts: official=5.0, actual=4.7, improvement=5.9%
+Product shoes: official=8.0, actual=7.5, improvement=6.1%
+Product shorts: official=3.0, actual=2.8, improvement=6.7%
+Product apples: official=1.0, actual=1.0, improvement=1.0%
+Product bread: official=2.0, actual=1.9, improvement=6.0%
+Product chairs: official=12.0, actual=11.6, improvement=2.9%
+Product tables: official=20.0, actual=19.2, improvement=4.1%
+Work day calculation: products improved=7, rawGain=4.6%, effectiveGain=2.4%, cumulativeGain=15.8%, workDay=6.7 hours
+  Diminishing factor applied: 0.5 (cycle 4)
+  Saturation progress: 35.1%
+Generated pie chart for cycle 4: productivity_cycle_4.png
+=== CYCLE 4 PRODUCTIVITY GAINS BY SECTOR ===
+Food Production: 2.9% improvement
+Furniture/Construction: 4.4% improvement
+Manufacturing: 6.2% improvement
+
+Cycle 4 completed.
+
+==================== CYCLE 5 ====================
+
+*** ECONOMIC SHOCK DETECTED ***
+Applying demand shock - reduced project creation
+  Rho Textiles reducing project creation due to low demand
+  2 firms affected by demand reduction
+Shock Type: Demand Collapse (Severity: 14.2%)
+*** END ECONOMIC SHOCK ***
+
+=== Phase 2: Project Creation ===
+Alpha Corp created project for bread: 33 units (expected: 2.0 hours/unit)
+Alpha Corp created project for shirts: 10 units (expected: 5.0 hours/unit)
+Beta Industries created project for tables: 86 units (expected: 20.0 hours/unit)
+Gamma Works created project for apples: 94 units (expected: 1.0 hours/unit)
+Delta Manufacturing created project for shoes: 83 units (expected: 8.0 hours/unit)
+Epsilon Enterprises created project for shirts: 62 units (expected: 5.0 hours/unit)
+Zeta Production created project for tables: 23 units (expected: 20.0 hours/unit)
+Zeta Production created project for chairs: 68 units (expected: 12.0 hours/unit)
+Eta Systems created project for apples: 80 units (expected: 1.0 hours/unit)
+Theta Co created project for bread: 21 units (expected: 2.0 hours/unit)
+Iota Labs created project for apples: 35 units (expected: 1.0 hours/unit)
+Kappa Industries created project for bread: 36 units (expected: 2.0 hours/unit)
+Lambda Services created project for tables: 12 units (expected: 20.0 hours/unit)
+Mu Healthcare created project for shoes: 67 units (expected: 8.0 hours/unit)
+Nu Logistics created project for tables: 49 units (expected: 20.0 hours/unit)
+Xi Technologies created project for bread: 46 units (expected: 2.0 hours/unit)
+Omicron Foods created project for shoes: 59 units (expected: 8.0 hours/unit)
+Pi Construction created project for apples: 92 units (expected: 1.0 hours/unit)
+Rho Textiles created project for tables: 58 units (expected: 20.0 hours/unit)
+Sigma Energy created project for apples: 50 units (expected: 1.0 hours/unit)
+Sigma Energy created project for shoes: 57 units (expected: 8.0 hours/unit)
+Tau Transport created project for bread: 90 units (expected: 2.0 hours/unit)
+Upsilon Care created project for tables: 94 units (expected: 20.0 hours/unit)
+Upsilon Care created project for tables: 95 units (expected: 20.0 hours/unit)
+
+=== Phase 3: Project Execution ===
+Alpha Corp produced 10 shirts using 53.1 hours (5.3 hours/unit)
+Alpha Corp produced 33 bread using 67.0 hours (2.0 hours/unit)
+Beta Industries produced 86 tables using 1915.8 hours (22.3 hours/unit)
+Gamma Works learned from Zeta Production's innovation for apples (cost: 0.9 hours/unit)
+Gamma Works learned from Kappa Industries's innovation for apples (cost: 0.8 hours/unit)
+Gamma Works learned from Nu Logistics's innovation for apples (cost: 0.8 hours/unit)
+Innovation at Delta Manufacturing! worker suggestion implementation for shoes (1.8% productivity gain)
+Epsilon Enterprises produced 62 shirts using 281.4 hours (4.5 hours/unit)
+Zeta Production produced 68 chairs using 753.9 hours (11.1 hours/unit)
+Zeta Production produced 23 tables using 405.9 hours (17.6 hours/unit)
+Eta Systems produced 80 apples using 78.0 hours (1.0 hours/unit)
+Innovation at Theta Co! worker suggestion implementation for bread (2.3% productivity gain)
+Innovation at Iota Labs! breakthrough process redesign for apples (25.2% productivity gain)
+Kappa Industries learned from Gamma Works's innovation for bread (cost: 1.6 hours/unit)
+Kappa Industries learned from Zeta Production's innovation for bread (cost: 2.0 hours/unit)
+Kappa Industries learned from Eta Systems's innovation for bread (cost: 1.5 hours/unit)
+Kappa Industries learned from Theta Co's innovation for bread (cost: 2.0 hours/unit)
+Kappa Industries learned from Iota Labs's innovation for bread (cost: 1.6 hours/unit)
+Kappa Industries learned from Lambda Services's innovation for bread (cost: 1.6 hours/unit)
+Kappa Industries learned from Nu Logistics's innovation for bread (cost: 1.6 hours/unit)
+Kappa Industries learned from Omicron Foods's innovation for bread (cost: 1.6 hours/unit)
+Kappa Industries learned from Rho Textiles's innovation for bread (cost: 1.6 hours/unit)
+Kappa Industries learned from Upsilon Care's innovation for bread (cost: 1.6 hours/unit)
+Lambda Services learned from Alpha Corp's innovation for tables (cost: 19.5 hours/unit)
+Lambda Services learned from Epsilon Enterprises's innovation for tables (cost: 18.0 hours/unit)
+Lambda Services learned from Zeta Production's innovation for tables (cost: 17.6 hours/unit)
+Lambda Services learned from Theta Co's innovation for tables (cost: 19.7 hours/unit)
+Lambda Services learned from Iota Labs's innovation for tables (cost: 19.5 hours/unit)
+Lambda Services learned from Mu Healthcare's innovation for tables (cost: 19.7 hours/unit)
+Lambda Services learned from Omicron Foods's innovation for tables (cost: 19.7 hours/unit)
+Workers at Mu Healthcare resisted innovation for shoes (job security concerns)
+Mu Healthcare produced 67 shoes using 641.2 hours (9.6 hours/unit)
+Innovation at Nu Logistics! worker suggestion (not implemented) for tables (0.0% productivity gain)
+Xi Technologies produced 46 bread using 90.5 hours (2.0 hours/unit)
+Omicron Foods produced 59 shoes using 475.7 hours (8.1 hours/unit)
+Pi Construction produced 92 apples using 104.8 hours (1.1 hours/unit)
+Rho Textiles produced 58 tables using 1236.4 hours (21.3 hours/unit)
+Sigma Energy learned from Alpha Corp's innovation for shoes (cost: 7.8 hours/unit)
+Sigma Energy learned from Delta Manufacturing's innovation for shoes (cost: 7.9 hours/unit)
+Sigma Energy learned from Epsilon Enterprises's innovation for shoes (cost: 6.6 hours/unit)
+Sigma Energy learned from Zeta Production's innovation for shoes (cost: 6.6 hours/unit)
+Sigma Energy learned from Eta Systems's innovation for shoes (cost: 6.6 hours/unit)
+Sigma Energy learned from Theta Co's innovation for shoes (cost: 7.2 hours/unit)
+Sigma Energy learned from Nu Logistics's innovation for shoes (cost: 6.6 hours/unit)
+Sigma Energy learned from Xi Technologies's innovation for shoes (cost: 6.6 hours/unit)
+Sigma Energy produced 50 apples using 56.8 hours (1.1 hours/unit)
+Tau Transport produced 90 bread using 182.5 hours (2.0 hours/unit)
+Innovation at Upsilon Care! worker suggestion (not implemented) for tables (0.0% productivity gain)
+Upsilon Care learned from Alpha Corp's innovation for tables (cost: 19.5 hours/unit)
+Upsilon Care learned from Epsilon Enterprises's innovation for tables (cost: 18.0 hours/unit)
+Upsilon Care learned from Zeta Production's innovation for tables (cost: 17.6 hours/unit)
+Upsilon Care learned from Theta Co's innovation for tables (cost: 19.7 hours/unit)
+Upsilon Care learned from Iota Labs's innovation for tables (cost: 19.5 hours/unit)
+Upsilon Care learned from Lambda Services's innovation for tables (cost: 19.7 hours/unit)
+Upsilon Care learned from Mu Healthcare's innovation for tables (cost: 19.7 hours/unit)
+Upsilon Care learned from Omicron Foods's innovation for tables (cost: 19.7 hours/unit)
+
+=== Phase 4: Labor Time Recording ===
+Alpha Corp labor time this cycle: 120.1 hours
+Beta Industries labor time this cycle: 1915.8 hours
+Gamma Works labor time this cycle: 76.5 hours
+Delta Manufacturing labor time this cycle: 652.1 hours
+Epsilon Enterprises labor time this cycle: 281.4 hours
+Zeta Production labor time this cycle: 1159.8 hours
+Eta Systems labor time this cycle: 78.0 hours
+Theta Co labor time this cycle: 41.0 hours
+Iota Labs labor time this cycle: 26.2 hours
+Kappa Industries labor time this cycle: 57.8 hours
+Lambda Services labor time this cycle: 236.3 hours
+Mu Healthcare labor time this cycle: 641.2 hours
+Nu Logistics labor time this cycle: 980.0 hours
+Xi Technologies labor time this cycle: 90.5 hours
+Omicron Foods labor time this cycle: 475.7 hours
+Pi Construction labor time this cycle: 104.8 hours
+Rho Textiles labor time this cycle: 1236.4 hours
+Sigma Energy labor time this cycle: 431.1 hours
+Tau Transport labor time this cycle: 182.5 hours
+Upsilon Care labor time this cycle: 3750.8 hours
+
+=== Phase 5: Price Controller Update ===
+Analyzing 137 completed projects...
+
+Current costs vs Official prices:
+shirts: Official=5.0, Current=4.7 (savings: 0.3 hours, 5.3%)
+shoes: Official=8.0, Current=7.6 (savings: 0.4 hours, 4.7%)
+shorts: Official=3.0, Current=2.8 (savings: 0.2 hours, 6.7%)
+apples: Official=1.0, Current=1.0 (savings: 0.0 hours, 1.7%)
+bread: Official=2.0, Current=1.9 (savings: 0.1 hours, 5.6%)
+chairs: Official=12.0, Current=11.6 (savings: 0.4 hours, 3.1%)
+tables: Official=20.0, Current=19.6 (savings: 0.4 hours, 2.2%)
+
+Checking for price updates...
+  shorts: improvement cycle reset (insufficient improvement)
+Price update check:
+  Immediate improvements: 0/7 products (0.0%)
+  Fixed threshold met: 0/7 products (0.0%)
+  Threshold needed: 20.0%
+Official prices remain unchanged (fixed threshold not met).
+
+Product shirts: official=5.0, actual=4.7, improvement=5.3%
+Product shoes: official=8.0, actual=7.6, improvement=4.7%
+Product shorts: official=3.0, actual=2.8, improvement=6.7%
+Product apples: official=1.0, actual=1.0, improvement=1.7%
+Product bread: official=2.0, actual=1.9, improvement=5.6%
+Product chairs: official=12.0, actual=11.6, improvement=3.1%
+Product tables: official=20.0, actual=19.6, improvement=2.2%
+Work day calculation: products improved=7, rawGain=4.2%, effectiveGain=1.7%, cumulativeGain=17.5%, workDay=6.6 hours
+  Diminishing factor applied: 0.4 (cycle 5)
+  Saturation progress: 38.9%
+Generated pie chart for cycle 5: productivity_cycle_5.png
+=== CYCLE 5 PRODUCTIVITY GAINS BY SECTOR ===
+Food Production: 3.1% improvement
+Furniture/Construction: 3.3% improvement
+Manufacturing: 5.6% improvement
+
+Cycle 5 completed.
+
+=== SIMULATION SUMMARY ===
+Total firms: 20
+Total projects created: 0
+
+Initial official prices:
+shirts: 5.0 hours
+shoes: 8.0 hours
+shorts: 3.0 hours
+apples: 1.0 hours
+bread: 2.0 hours
+chairs: 12.0 hours
+tables: 20.0 hours
+
+Final official prices:
+shirts: 5.0 hours (delta: +0.0 hours, +0.0%)
+shoes: 8.0 hours (delta: +0.0 hours, +0.0%)
+shorts: 3.0 hours (delta: +0.0 hours, +0.0%)
+apples: 1.0 hours (delta: +0.0 hours, +0.0%)
+bread: 2.0 hours (delta: +0.0 hours, +0.0%)
+chairs: 12.0 hours (delta: +0.0 hours, +0.0%)
+tables: 20.0 hours (delta: +0.0 hours, +0.0%)
+
+Final current costs (actual productivity):
+shirts: 4.7 hours (delta: -0.3 hours, -5.3%)
+shoes: 7.6 hours (delta: -0.4 hours, -4.7%)
+shorts: 2.8 hours (delta: -0.2 hours, -6.7%)
+apples: 1.0 hours (delta: -0.0 hours, -1.7%)
+bread: 1.9 hours (delta: -0.1 hours, -5.6%)
+chairs: 11.6 hours (delta: -0.4 hours, -3.1%)
+tables: 19.6 hours (delta: -0.4 hours, -2.2%)
+
+Firm production summary:
+Alpha Corp: 8 projects, 1908.8 total hours
+  Labor time by cycle: C1:452.1h C2:234.4h C3:728.2h C4:374.0h C5:120.1h 
+  Labor time by product: shirts:655.5h shoes:374.0h bread:332.2h tables:547.0h 
+Beta Industries: 6 projects, 4137.3 total hours
+  Labor time by cycle: C1:223.8h C2:1063.9h C3:119.1h C4:814.6h C5:1915.8h 
+  Labor time by product: shorts:119.1h apples:106.3h chairs:1996.1h tables:1915.8h 
+Gamma Works: 7 projects, 1132.5 total hours
+  Labor time by cycle: C1:314.9h C2:34.1h C3:243.6h C4:463.3h C5:76.5h 
+  Labor time by product: shorts:110.2h apples:182.1h bread:172.2h chairs:668.0h 
+Delta Manufacturing: 7 projects, 2748.7 total hours
+  Labor time by cycle: C1:908.9h C2:907.1h C3:162.3h C4:118.2h C5:652.1h 
+  Labor time by product: shirts:280.5h shoes:783.5h chairs:1684.7h 
+Epsilon Enterprises: 6 projects, 2907.1 total hours
+  Labor time by cycle: C1:339.3h C2:360.6h C3:505.7h C4:1420.1h C5:281.4h 
+  Labor time by product: shirts:620.7h shoes:505.7h shorts:360.6h tables:1420.1h 
+Zeta Production: 9 projects, 2461.7 total hours
+  Labor time by cycle: C1:421.6h C2:56.6h C3:609.7h C4:213.9h C5:1159.8h 
+  Labor time by product: shoes:979.8h apples:108.1h bread:213.9h chairs:753.9h tables:405.9h 
+Eta Systems: 7 projects, 1862.5 total hours
+  Labor time by cycle: C1:910.3h C2:164.0h C3:60.0h C4:650.2h C5:78.0h 
+  Labor time by product: shoes:650.2h apples:78.0h bread:356.8h chairs:777.6h 
+Theta Co: 8 projects, 4797.1 total hours
+  Labor time by cycle: C1:1264.0h C2:1523.7h C3:1340.4h C4:628.0h C5:41.0h 
+  Labor time by product: shoes:663.1h apples:43.2h bread:41.0h chairs:2569.2h tables:1480.5h 
+Iota Labs: 7 projects, 1608.1 total hours
+  Labor time by cycle: C1:196.5h C2:238.1h C3:94.8h C4:1052.5h C5:26.2h 
+  Labor time by product: shirts:238.1h shorts:94.8h apples:92.6h bread:130.0h chairs:332.6h tables:719.9h 
+Kappa Industries: 5 projects, 640.0 total hours
+  Labor time by cycle: C1:102.8h C2:208.5h C3:79.0h C4:192.0h C5:57.8h 
+  Labor time by product: shirts:192.0h shoes:208.5h apples:79.0h bread:160.6h 
+Lambda Services: 7 projects, 1826.0 total hours
+  Labor time by cycle: C1:122.0h C2:924.5h C3:169.3h C4:373.9h C5:236.3h 
+  Labor time by product: shirts:645.0h shoes:714.4h shorts:108.3h bread:122.0h tables:236.3h 
+Mu Healthcare: 5 projects, 2826.6 total hours
+  Labor time by cycle: C1:378.0h C2:78.8h C3:1477.0h C4:251.6h C5:641.2h 
+  Labor time by product: shoes:1098.1h shorts:251.6h tables:1477.0h 
+Nu Logistics: 6 projects, 1758.3 total hours
+  Labor time by cycle: C1:182.0h C2:430.4h C3:134.1h C4:31.8h C5:980.0h 
+  Labor time by product: shoes:295.5h shorts:134.1h apples:31.8h bread:316.9h tables:980.0h 
+Xi Technologies: 7 projects, 1685.3 total hours
+  Labor time by cycle: C1:226.5h C2:1037.4h C3:89.2h C4:241.8h C5:90.5h 
+  Labor time by product: shirts:72.9h shoes:1037.4h shorts:395.3h apples:89.2h bread:90.5h 
+Omicron Foods: 7 projects, 2920.2 total hours
+  Labor time by cycle: C1:240.6h C2:927.8h C3:499.9h C4:776.2h C5:475.7h 
+  Labor time by product: shoes:475.7h shorts:504.8h bread:27.3h tables:1912.4h 
+Pi Construction: 6 projects, 2133.6 total hours
+  Labor time by cycle: C1:577.3h C2:257.9h C3:112.6h C4:1081.1h C5:104.8h 
+  Labor time by product: shirts:257.9h apples:165.8h bread:112.6h chairs:1597.3h 
+Rho Textiles: 7 projects, 3128.8 total hours
+  Labor time by cycle: C1:177.6h C2:1198.8h C3:491.9h C4:24.1h C5:1236.4h 
+  Labor time by product: shirts:159.1h shorts:82.6h bread:24.1h chairs:1626.5h tables:1236.4h 
+Sigma Energy: 7 projects, 4013.5 total hours
+  Labor time by cycle: C1:236.8h C2:508.8h C3:1886.4h C4:950.4h C5:431.1h 
+  Labor time by product: shoes:374.4h apples:56.8h chairs:3582.4h 
+Tau Transport: 9 projects, 2736.1 total hours
+  Labor time by cycle: C1:136.1h C2:116.3h C3:402.1h C4:1899.2h C5:182.5h 
+  Labor time by product: shirts:723.5h apples:158.0h bread:314.6h tables:1540.0h 
+Upsilon Care: 6 projects, 5369.2 total hours
+  Labor time by cycle: C1:319.7h C2:398.2h C3:115.6h C4:784.9h C5:3750.8h 
+  Labor time by product: bread:115.6h chairs:717.9h tables:4535.7h 
+
+Economic shock history:
+  Cycle 5: Demand Collapse
+Press ENTER to continue...QStandardPaths: wrong permissions on runtime directory /run/user/0/, 0755 instead of 0700
+
+=== WORK DAY TREND (ASCII) ===
+Cycle | Work Day Hours | Trend
+------|-----------------|------
+    0 |           8.00 | ████████████████████ (8.0h)
+    1 |           7.40 | ██████████████████ (7.4h)
+    2 |           7.17 | █████████████████ (7.2h)
+    3 |           6.93 | █████████████████ (6.9h)
+    4 |           6.74 | ████████████████ (6.7h)
+    5 |           6.60 | ████████████████ (6.6h)
+
+Plots saved as 'simulation_results.png' and displayed using matplot++
+Data also exported to 'simulation_data.csv' for external analysis
+Generated plot: shirts labor time vs work day
+Generated plot: Average labor time vs work day
+Generated pie chart: Productivity gains by sector
+
+=== PRODUCTIVITY GAINS BY SECTOR ===
+Food Production: 3.1% improvement
+  Labor Intensity Factor: 1.2
+  Products: apples bread 
+
+Furniture/Construction: 3.3% improvement
+  Labor Intensity Factor: 0.8
+  Products: chairs tables 
+
+Manufacturing: 5.6% improvement
+  Labor Intensity Factor: 1.0
+  Products: shirts shoes shorts 
+
+
+Simulation completed successfully!

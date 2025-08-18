@@ -107,5 +107,6 @@ public:
     void generateProductWorkdayPlot(const std::string& productName);
     void generateAveragePriceWorkdayPlot();
     void generateProductivityPieChart();
+    void generateProductivityPieChartForCycle(int cycle);
     void categorizeProductsByLaborIntensity();
 }; 
