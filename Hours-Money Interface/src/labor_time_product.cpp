@@ -38,12 +38,13 @@ void LaborTimeProduct::set_product_type()
     product_type = 'A' + dist(gen);
 }
 
-// assign a random labor time between 10 and 40
-// This value can be changed!
+// assign a random labor time between 9 and 18
+// Arbitrary value
+// The value is set to 9 and 18 so the max and min price range are the same as the capitalist product
 void LaborTimeProduct::set_labor_time()
 {
     static std::mt19937 gen(std::random_device{}());
-    labor_time = std::uniform_real_distribution<>(10, 40)(gen);
+    labor_time = std::uniform_real_distribution<>(9, 18)(gen);
 }
 
 // how much will be product be in the destined country
@@ -70,7 +71,7 @@ void CapitalistProduct::set_portion_sold_in_export()
 }
 
 // total amount producted between 100 and 1000
-// This value can be changed!
+// Arbitrary value
 void CapitalistProduct::set_quantity_produced_for_export()
 {
     static std::mt19937 gen(std::random_device{}());
@@ -78,7 +79,7 @@ void CapitalistProduct::set_quantity_produced_for_export()
 }
 
 // Of the converted price, we can add 10 percent to 90 percent of the value to be surplus
-// This value can be changed!
+// Arbitrary value
 void LaborTimeProduct::set_surplus_factor()
 {
     static std::mt19937 gen(std::random_device{}());

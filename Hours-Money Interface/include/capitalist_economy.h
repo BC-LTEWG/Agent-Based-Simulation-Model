@@ -10,10 +10,10 @@
 struct CapitalistEconomy
 {
     std::string name;
-    double curreny_amount;             // how much money is currently being held
-    double economic_indicator;         // value used in melt calculation
-    double work_hours = INITIAL_HOURS; // how many hours worked on average in a year
-    double melt;                       // what would the new melt be in a new cycle
+    double curreny_amount;                                  // how much money is currently being held
+    double economic_indicator = INITIAL_ECONOMIC_INDICATOR; // value used in melt calculation
+    double work_hours = INITIAL_HOURS;                      // how many hours worked on average in a year
+    double melt;                                            // what would the new melt be in a new cycle
     std::vector<CapitalistCompany> companies;
     std::vector<CapitalistProduct> market; // each new product will be added to the market with its market price determined
     std::map<char, double> market_price;   // each type of product has its own average market price

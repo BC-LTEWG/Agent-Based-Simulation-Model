@@ -35,12 +35,12 @@ void CapitalistProduct::set_product_type()
     product_type = 'A' + dist(gen);
 }
 
-// assign a random price between 10 and 100
-// This value can be changed!
+// assign a random price between 500 and 9000
+// Arbitrary Value
 void CapitalistProduct::set_desired_price()
 {
     static std::mt19937 gen(std::random_device{}());
-    price = std::uniform_real_distribution<>(10, 100)(gen);
+    price = std::uniform_real_distribution<>(500, 9000)(gen);
 }
 
 // new portion sold
@@ -51,7 +51,7 @@ void CapitalistProduct::set_portion_sold_in_export()
 }
 
 // total amount producted between 100 and 1000
-// This value can be changed!
+// Arbitrary value
 void CapitalistProduct::set_quantity_produced_for_export()
 {
     static std::mt19937 gen(std::random_device{}());
@@ -59,7 +59,7 @@ void CapitalistProduct::set_quantity_produced_for_export()
 }
 
 // Of the price, 10 percent to 90 percent can be surplus
-// 0.1 to 0.9 is an arbitrary value.
+// Arbitrary value
 void CapitalistProduct::set_surplus_factor()
 {
     static std::mt19937 gen(std::random_device{}());
