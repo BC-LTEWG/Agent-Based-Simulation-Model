@@ -24,7 +24,9 @@ struct CapitalistEconomy
     void add_product(CapitalistProduct &product);
     void remove_product(const std::string &name);
 
-    void adjust_market();
+    // This should be the last thing to do every cycle
+    // It updates the market price of every type of product
+    void adjust_market_price();
 
     // How likely is an economy is going to create a new company
     // or remove an existing company at the end of the cycle

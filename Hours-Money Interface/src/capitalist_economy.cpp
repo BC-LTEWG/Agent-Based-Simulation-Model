@@ -89,7 +89,7 @@ void CapitalistEconomy::add_product(CapitalistProduct &product)
 }
 
 // Adjusts the market price of all product types that's available
-void CapitalistEconomy::adjust_market()
+void CapitalistEconomy::adjust_market_price()
 {
     for (int i = 0; i < 26; i++)
     {
