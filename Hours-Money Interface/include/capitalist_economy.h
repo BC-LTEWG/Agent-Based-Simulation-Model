@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include "capitalist_company.h"
 #include "capitalist_product.h"
 #include "values.h"
@@ -14,7 +15,8 @@ struct CapitalistEconomy
     double work_hours = INITIAL_HOURS; // how many hours worked on average in a year
     double melt;                       // what would the new melt be in a new cycle
     std::vector<CapitalistCompany> companies;
-    std::vector<CapitalistProduct> market; // each new product will be added to the market with market price determined
+    std::vector<CapitalistProduct> market; // each new product will be added to the market with its market price determined
+    std::map<char, double> market_price;   // each type of product has its own average market price
 
     void new_indicator();
     void new_work_hours();

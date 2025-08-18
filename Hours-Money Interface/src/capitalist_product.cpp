@@ -43,7 +43,7 @@ void CapitalistProduct::set_desired_price()
     price = std::uniform_real_distribution<>(10, 100)(gen);
 }
 
-// new sell factor
+// new portion sold
 void CapitalistProduct::set_portion_sold_in_export()
 {
     static std::mt19937 gen(std::random_device{}());

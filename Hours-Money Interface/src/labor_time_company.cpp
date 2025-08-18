@@ -7,7 +7,7 @@ std::string LaborTimeCompany::print_products()
     std::string product_names;
     for (const auto &product : products)
     {
-        product_names += product.name;
+        product_names += product.product_name;
         product_names += " ";
     }
     return product_names;

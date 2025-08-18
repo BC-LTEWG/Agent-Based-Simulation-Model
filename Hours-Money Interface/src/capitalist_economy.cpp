@@ -68,11 +68,15 @@ void CapitalistEconomy::add_product(CapitalistProduct &product)
     std::uniform_real_distribution<double> dist(0, 1);
     double market_factor = dist(gen);
 
+    // To calculate the average market price for the entire product type
+    double total_market_price = 0;
+
     // Adjust all same-type products together
     for (CapitalistProduct &p : same_type)
     {
         double original_cost = p.price - (p.price * p.surplus_factor);
         p.price -= p.price * p.surplus_factor * market_factor;
+        total_market_price += p.price;
         p.surplus_factor = 1.0 - (original_cost / p.price);
     }
 
@@ -80,6 +84,8 @@ void CapitalistEconomy::add_product(CapitalistProduct &product)
     market.insert(market.end(),
                   std::make_move_iterator(same_type.begin()),
                   std::make_move_iterator(same_type.end()));
+
+    market_price[product.product_type] = (total_market_price / same_type.size());
 }
 
 // Adjusts the market price of all product types that's available
@@ -108,6 +114,7 @@ void CapitalistEconomy::adjust_market()
         }
         else
         {
+            double total_market_price = 0;
             static std::mt19937 gen(std::random_device{}());
             std::uniform_real_distribution<double> dist(0.5, 1.5); // Randomly adjusts the market price, this range can change.
             double market_adjustment = dist(gen);
@@ -115,8 +122,10 @@ void CapitalistEconomy::adjust_market()
             // Adjust all same-type products together
             for (CapitalistProduct &p : type_list)
             {
-                double original_cost = p.price - (p.price * p.surplus_factor);
-                p.price += p.price * p.surplus_factor * market_adjustment;
+                double surplus = p.price * p.surplus_factor;
+                double original_cost = p.price - surplus;
+                p.price = original_cost + surplus * market_adjustment;
+                total_market_price += p.price;
                 p.surplus_factor = 1.0 - (original_cost / p.price);
             }
 
@@ -124,6 +133,8 @@ void CapitalistEconomy::adjust_market()
             market.insert(market.end(),
                           std::make_move_iterator(type_list.begin()),
                           std::make_move_iterator(type_list.end()));
+
+            market_price[type] = (total_market_price / type_list.size());
         }
     }
 }
@@ -133,7 +144,7 @@ void CapitalistEconomy::remove_product(const std::string &name)
 {
     for (auto it = market.begin(); it != market.end(); ++it)
     {
-        if (it->name == name)
+        if (it->product_name == name)
         {
             market.erase(it);
             break;
