@@ -8,9 +8,8 @@
 #include <string>
 #include <map>
 
-#define NUM_FIRMS 10
+#define NUM_FIRMS 20
 
-// CONCRETE RESEARCH-BASED INNOVATION PARAMETERS
 // Source: Toyota Production System Data (250,000 suggestions/year, 43,000 employees)
 #define TOYOTA_SUGGESTIONS_PER_EMPLOYEE_YEAR 5.8    // 250,000 ÷ 43,000 = 5.8
 #define TOYOTA_PARTICIPATION_RATE 0.70              // 70% of workforce participates
@@ -64,12 +63,19 @@ private:
     std::vector<int> cycleNumbers; // cycle numbers for x-axis
     std::vector<std::string> firmNames = {"Alpha Corp", "Beta Industries", "Gamma Works", "Delta Manufacturing", 
                                          "Epsilon Enterprises", "Zeta Production", "Eta Systems", "Theta Co",
-                                         "Iota Labs", "Kappa Industries"};
+                                         "Iota Labs", "Kappa Industries", "Lambda Services", "Mu Healthcare",
+                                         "Nu Logistics", "Xi Technologies", "Omicron Foods", "Pi Construction",
+                                         "Rho Textiles", "Sigma Energy", "Tau Transport", "Upsilon Care"};
     
     // Economic shock tracking
     std::vector<std::pair<int, std::string>> economicShockHistory; // cycle, shock type
     double shockProbabilityPerCycle = 0.15; // 15% chance per cycle
     int cyclesSinceLastShock = 0;
+    
+    // Productivity tracking by sector
+    std::map<std::string, double> sectorProductivityGains; // sector -> total productivity gain
+    std::map<std::string, std::vector<std::string>> productSectors; // sector -> products
+    std::map<std::string, double> sectorLaborIntensity; // sector -> labor intensity factor
 
 public:
     Simulation();
@@ -96,4 +102,10 @@ public:
     void applyProductivityShock(double severity);
     void applyDemandShock(double severity);
     void applySupplyChainShock(double severity);
+    
+    // New plotting methods
+    void generateProductWorkdayPlot(const std::string& productName);
+    void generateAveragePriceWorkdayPlot();
+    void generateProductivityPieChart();
+    void categorizeProductsByLaborIntensity();
 }; 
