@@ -74,11 +74,11 @@ void Firm::findInnovation(Project& project) {
 void Firm::create_projects() {
     static std::random_device rd;
     static std::mt19937 gen(rd());
-    static std::uniform_int_distribution<> productSelector(0, 6);  // 7 products: 0-6
+    static std::uniform_int_distribution<> productSelector(0, 7);  // 8 products: 0-7
     static std::uniform_int_distribution<> quantityDist(10, 100);
     static std::uniform_real_distribution<> probability(0.0, 1.0);
     
-    static std::vector<std::string> products = {"shirts", "shoes", "shorts", "apples", "bread", "chairs", "tables"};
+    static std::vector<std::string> products = {"shirts", "shoes", "shorts", "apples", "bread", "chairs", "tables", "healthcare"};
     
     // Each firm gets 1-2 projects this cycle
     int numProjects = (probability(gen) < 0.6) ? 1 : 2;

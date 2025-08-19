@@ -9,8 +9,8 @@
 #include <matplot/matplot.h>
 
 Simulation::Simulation() : gen(std::random_device{}()), probability(0.0, 1.0), nextProjectId(1), nextFirmId(1),
-    priceController({{"shirts", 5.0}, {"shoes", 8.0}, {"shorts", 3.0}, {"apples", 1.0}, {"bread", 2.0}, {"chairs", 12.0}, {"tables", 20.0}}, 
-                    {{"shirts", "units"}, {"shoes", "pairs"}, {"shorts", "units"}, {"apples", "kg"}, {"bread", "loaves"}, {"chairs", "units"}, {"tables", "units"}}) {
+    priceController({{"shirts", 5.0}, {"shoes", 8.0}, {"shorts", 3.0}, {"apples", 1.0}, {"bread", 2.0}, {"chairs", 12.0}, {"tables", 20.0}, {"healthcare", 15.0}}, 
+                    {{"shirts", "units"}, {"shoes", "pairs"}, {"shorts", "units"}, {"apples", "kg"}, {"bread", "loaves"}, {"chairs", "units"}, {"tables", "units"}, {"healthcare", "hours"}}) {
     saveInitialPrices();
     categorizeProductsByLaborIntensity();
     createFirms();
@@ -121,8 +121,8 @@ void Simulation::trackPricesAndWorkDay(int cycle) {
     // Track average work day hours
     workDayHours.push_back(calculateAverageWorkDay());
     
-    // Generate pie chart for this cycle's productivity gains
-    generateProductivityPieChartForCycle(cycle);
+    // Generate worker budget allocation pie chart (products, not sectors)
+    generateWorkerBudgetPieChart(cycle);
 }
 
 void Simulation::generatePlots() {
@@ -523,7 +523,6 @@ void Simulation::run(int numCycles) {
     // Generate new specialized plots
     generateProductWorkdayPlot("shirts");  // Example: shirts vs workday
     generateAveragePriceWorkdayPlot();     // Average price vs workday
-    generateProductivityPieChart();        // Productivity by sector pie chart
     
     std::cout << "\nSimulation completed successfully!\n";
 }
@@ -626,20 +625,9 @@ void Simulation::applySupplyChainShock(double severity) {
 
 // Categorize products by labor intensity (healthcare = high, manufacturing = medium, etc.)
 void Simulation::categorizeProductsByLaborIntensity() {
-    // Define sectors and their labor intensity (1.0 = baseline, >1.0 = more labor intensive)
-    sectorLaborIntensity["Manufacturing"] = 1.0;     // Baseline - shirts, shoes, shorts
-    sectorLaborIntensity["Food Production"] = 1.2;   // Moderate labor intensity - apples, bread
-    sectorLaborIntensity["Furniture/Construction"] = 0.8; // Lower labor intensity (more automated) - chairs, tables
-    
-    // Categorize products by sector
-    productSectors["Manufacturing"] = {"shirts", "shoes", "shorts"};
-    productSectors["Food Production"] = {"apples", "bread"};
-    productSectors["Furniture/Construction"] = {"chairs", "tables"};
-    
-    // Initialize productivity gains tracking
-    for (const auto& [sector, products] : productSectors) {
-        sectorProductivityGains[sector] = 0.0;
-    }
+    // We're now focusing on individual products rather than sectors
+    // This function kept for compatibility but simplified
+    std::cout << "Products categorized by individual labor requirements\n";
 }
 
 // Generate plot of specific product price vs workday
@@ -726,125 +714,82 @@ void Simulation::generateAveragePriceWorkdayPlot() {
     std::cout << "Generated plot: Average labor time vs work day\n";
 }
 
-// Generate pie chart showing productivity changes by sector
-void Simulation::generateProductivityPieChart() {
-    // Calculate productivity gains by sector
-    for (const auto& [sector, productList] : productSectors) {
-        double totalGain = 0.0;
-        int productCount = 0;
-        
-        for (const auto& product : productList) {
-            double initialPrice = initialPrices[product];
-            double currentPrice = priceController.getCurrentCost(product);
-            
-            if (initialPrice > 0 && currentPrice > 0 && currentPrice < initialPrice) {
-                double gain = (initialPrice - currentPrice) / initialPrice;
-                // Adjust for labor intensity
-                gain /= sectorLaborIntensity[sector];
-                totalGain += gain;
-                productCount++;
-            }
-        }
-        
-        sectorProductivityGains[sector] = productCount > 0 ? (totalGain / productCount) * 100.0 : 0.0;
-    }
-    
+
+
+// Generate pie chart showing how much of a worker's budget goes to each product
+void Simulation::generateWorkerBudgetPieChart(int cycle) {
     using namespace matplot;
     
-    std::vector<double> gains;
-    std::vector<std::string> labels;
+    // Calculate current costs for each product
+    std::vector<double> productCosts;
+    std::vector<std::string> productLabels;
+    double totalCost = 0.0;
     
-    for (const auto& [sector, gain] : sectorProductivityGains) {
-        gains.push_back(gain);
-        labels.push_back(sector + " (" + std::to_string(int(gain)) + "%)");
+    // Assume a worker needs 1 unit of each product per cycle (basic consumption basket)
+    for (const auto& product : products) {
+        double cost = priceController.getCurrentCost(product);
+        if (cost <= 0) cost = priceController.getOfficialPrice(product); // fallback to official price
+        productCosts.push_back(cost);
+        totalCost += cost;
+    }
+    
+    // Convert to percentages of total worker budget
+    std::vector<double> percentages;
+    for (size_t i = 0; i < productCosts.size(); ++i) {
+        double percentage = (productCosts[i] / totalCost) * 100.0;
+        percentages.push_back(percentage);
+        
+        // Show both percentage and actual labor hours for each product
+        productLabels.push_back(products[i] + " (" + std::to_string(int(percentage)) + "%, " + 
+                               std::to_string((int)(productCosts[i] * 10) / 10.0) + "h)");
     }
     
     auto fig = figure(true);
-    fig->size(800, 600);
+    fig->size(1000, 700);
     
-    pie(gains, labels);
-    title("Productivity Gains by Sector");
-    save("productivity_pie_chart.png");
+    pie(percentages, productLabels);
+    title("Worker Budget Allocation - Cycle " + std::to_string(cycle) + 
+          "\nTotal Monthly Budget: " + std::to_string((int)(totalCost * 10) / 10.0) + " labor hours");
     
-    std::cout << "Generated pie chart: Productivity gains by sector\n";
+    std::string filename = "worker_budget_cycle_" + std::to_string(cycle) + ".png";
+    save(filename);
     
-    // Console output
-    std::cout << "\n=== PRODUCTIVITY GAINS BY SECTOR ===\n";
-    for (const auto& [sector, gain] : sectorProductivityGains) {
-        std::cout << sector << ": " << std::fixed << std::setprecision(1) << gain << "% improvement\n";
-        std::cout << "  Labor Intensity Factor: " << sectorLaborIntensity[sector] << "\n";
-        std::cout << "  Products: ";
-        for (const auto& product : productSectors[sector]) {
-            std::cout << product << " ";
-        }
-        std::cout << "\n\n";
+    std::cout << "Generated worker budget pie chart for cycle " << cycle << ": " << filename << "\n";
+    
+    // Console output showing detailed budget breakdown
+    std::cout << "=== WORKER BUDGET BREAKDOWN - CYCLE " << cycle << " ===\n";
+    std::cout << "Total monthly budget: " << std::fixed << std::setprecision(1) << totalCost << " labor hours\n";
+    
+    // Show changes from initial prices
+    double initialTotal = 0.0;
+    for (const auto& product : products) {
+        initialTotal += initialPrices[product];
     }
-}
-
-// Generate pie chart for a specific cycle's productivity gains
-void Simulation::generateProductivityPieChartForCycle(int cycle) {
-    // Calculate productivity gains by sector for this specific cycle
-    std::map<std::string, double> cycleProductivityGains;
+    double savings = initialTotal - totalCost;
+    double savingsPercent = (savings / initialTotal) * 100.0;
     
-    for (const auto& [sector, productList] : productSectors) {
-        double totalGain = 0.0;
-        int productCount = 0;
-        
-        for (const auto& product : productList) {
-            double initialPrice = initialPrices[product];
-            double currentPrice = priceController.getCurrentCost(product);
-            
-            if (initialPrice > 0 && currentPrice > 0 && currentPrice < initialPrice) {
-                double gain = (initialPrice - currentPrice) / initialPrice;
-                // Adjust for labor intensity
-                gain /= sectorLaborIntensity[sector];
-                totalGain += gain;
-                productCount++;
-            }
-        }
-        
-        cycleProductivityGains[sector] = productCount > 0 ? (totalGain / productCount) * 100.0 : 0.0;
-    }
+    std::cout << "Initial budget would have been: " << std::fixed << std::setprecision(1) << initialTotal << " hours\n";
+    std::cout << "Total savings from productivity: " << std::fixed << std::setprecision(1) << savings 
+              << " hours (" << std::setprecision(1) << savingsPercent << "%)\n\n";
     
-    // Only generate chart if there are meaningful gains
-    double totalGains = 0.0;
-    for (const auto& [sector, gain] : cycleProductivityGains) {
-        totalGains += gain;
-    }
-    
-    if (totalGains > 0.1) { // Only if total gains > 0.1%
-        using namespace matplot;
+    // Individual product breakdown
+    std::cout << "Product breakdown:\n";
+    for (size_t i = 0; i < products.size(); ++i) {
+        double initialPrice = initialPrices[products[i]];
+        double currentPrice = productCosts[i];
+        double productSavings = initialPrice - currentPrice;
+        double productSavingsPercent = (productSavings / initialPrice) * 100.0;
         
-        std::vector<double> gains;
-        std::vector<std::string> labels;
+        std::cout << "  " << products[i] << ": " << std::fixed << std::setprecision(1) 
+                  << currentPrice << "h (" << int(percentages[i]) << "% of budget)";
         
-        for (const auto& [sector, gain] : cycleProductivityGains) {
-            if (gain > 0.05) { // Only include sectors with >0.05% gain
-                gains.push_back(gain);
-                labels.push_back(sector + " (" + std::to_string(int(gain)) + "%)");
-            }
+        if (productSavings > 0) {
+            std::cout << " [SAVED " << std::setprecision(1) << productSavings << "h, " 
+                      << std::setprecision(1) << productSavingsPercent << "%]";
+        } else if (productSavings < 0) {
+            std::cout << " [INCREASED " << std::setprecision(1) << -productSavings << "h]";
         }
-        
-        if (!gains.empty()) {
-            auto fig = figure(true);
-            fig->size(800, 600);
-            
-            pie(gains, labels);
-            title("Productivity Gains by Sector - Cycle " + std::to_string(cycle));
-            
-            std::string filename = "productivity_cycle_" + std::to_string(cycle) + ".png";
-            save(filename);
-            
-            std::cout << "Generated pie chart for cycle " << cycle << ": " << filename << "\n";
-            
-            // Console output for this cycle
-            std::cout << "=== CYCLE " << cycle << " PRODUCTIVITY GAINS BY SECTOR ===\n";
-            for (const auto& [sector, gain] : cycleProductivityGains) {
-                if (gain > 0.05) {
-                    std::cout << sector << ": " << std::fixed << std::setprecision(1) << gain << "% improvement\n";
-                }
-            }
-            std::cout << "\n";
-        }
+        std::cout << "\n";
     }
+    std::cout << "\n";
 } 

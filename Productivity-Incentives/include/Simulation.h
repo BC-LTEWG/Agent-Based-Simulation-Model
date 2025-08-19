@@ -45,7 +45,7 @@ private:
     int nextFirmId;
     
     // Products vector must be declared before PriceController for initialization
-    std::vector<std::string> products = {"shirts", "shoes", "shorts", "apples", "bread", "chairs", "tables"};
+    std::vector<std::string> products = {"shirts", "shoes", "shorts", "apples", "bread", "chairs", "tables", "healthcare"};
     PriceController priceController;
     
     // Research-based simulation parameters using concrete Toyota and academic data
@@ -106,7 +106,6 @@ public:
     // New plotting methods
     void generateProductWorkdayPlot(const std::string& productName);
     void generateAveragePriceWorkdayPlot();
-    void generateProductivityPieChart();
-    void generateProductivityPieChartForCycle(int cycle);
+    void generateWorkerBudgetPieChart(int cycle);
     void categorizeProductsByLaborIntensity();
 }; 
