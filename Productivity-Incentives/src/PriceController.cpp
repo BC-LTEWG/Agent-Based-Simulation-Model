@@ -61,8 +61,8 @@ void PriceController::updateOfficialPrices(double thresholdPercentageFirms, doub
             if (hasMetFixedThreshold(product, thresholdPercentageFirms)) {
                 double oldPrice = official_prices[product];
                 official_prices[product] = currentCost;
-                std::cout << "  " << product << ": " << oldPrice << " -> " << currentCost 
-                         << " (sustained improvement)\n";
+                std::cout << "  " << product << ": " << oldPrice << "h -> " << currentCost 
+                         << "h (sustained improvement)\n";
             }
         }
         // Reset counters after successful update
@@ -84,6 +84,10 @@ double PriceController::getCurrentCost(const std::string& productName) {
     }
     // If no actual cost data, return the official price (initial assumption)
     return getOfficialPrice(productName);
+}
+
+void PriceController::updateCurrentPrice(const std::string& productName, double newPrice) {
+    current_prices[productName] = newPrice;
 }
 
 void PriceController::recomputeAverageCosts(const std::vector<Project>& allProjects) {
@@ -161,3 +165,59 @@ void PriceController::trackProductivityImprovements(double fixedThreshold) {
         }
     }
 }
+
+// Fixed productivity threshold methods
+void PriceController::resetProductivityCounters() {
+    productivity_improvement_cycles.clear();
+    best_productivity_achieved.clear();
+    std::cout << "Productivity counters reset after official price update.\n";
+}
+
+bool PriceController::hasMetFixedThreshold(const std::string& productName, double /*fixedThreshold*/) {
+    auto cycleIt = productivity_improvement_cycles.find(productName);
+    if (cycleIt == productivity_improvement_cycles.end()) {
+        return false;
+    }
+    
+    // Check if this product has met the threshold for required consecutive cycles
+    return cycleIt->second >= REQUIRED_CONSECUTIVE_CYCLES;
+}
+
+void PriceController::trackProductivityImprovements(double fixedThreshold) {
+    for (auto & [product, currentCost] : current_prices) {
+        if (official_prices.find(product) != official_prices.end()) {
+            double officialPrice = official_prices[product];
+            double percentageDiff = ((officialPrice - currentCost) / officialPrice) * 100.0;
+            
+            // Check if this cycle shows improvement
+            if (percentageDiff >= fixedThreshold) {
+                // Track best productivity achieved
+                auto bestIt = best_productivity_achieved.find(product);
+                if (bestIt == best_productivity_achieved.end() || currentCost < bestIt->second) {
+                    best_productivity_achieved[product] = currentCost;
+                }
+                
+                // Increment consecutive improvement cycles
+                productivity_improvement_cycles[product]++;
+                std::cout << "  " << product << ": improvement cycle " 
+                         << productivity_improvement_cycles[product] << "/" 
+                         << REQUIRED_CONSECUTIVE_CYCLES << " (savings: " 
+                         << percentageDiff << "%)\n";
+            } else {
+                // Reset counter if improvement is not sustained
+                if (productivity_improvement_cycles.find(product) != productivity_improvement_cycles.end()) {
+                    std::cout << "  " << product << ": improvement cycle reset (insufficient improvement)\n";
+                    productivity_improvement_cycles[product] = 0;
+                }
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+

@@ -7,13 +7,61 @@
 #include <iomanip>
 #include <numeric>
 #include <matplot/matplot.h>
+#include <sstream>
 
-Simulation::Simulation() : gen(std::random_device{}()), probability(0.0, 1.0), nextProjectId(1), nextFirmId(1),
-    priceController({{"shirts", 5.0}, {"shoes", 8.0}, {"shorts", 3.0}, {"apples", 1.0}, {"bread", 2.0}, {"chairs", 12.0}, {"tables", 20.0}, {"healthcare", 15.0}}, 
+Simulation::Simulation() : gen(std::random_device{}()), probability(0.0, 1.0), nextProjectId(1), nextFirmId(1), planCycle(0), innerCycle(0),
+    // Initial official prices (hours) sum to 8.0
+    priceController({{"shirts", 0.6}, {"shoes", 0.9}, {"shorts", 0.5}, {"apples", 0.8}, {"bread", 1.0}, {"chairs", 1.2}, {"tables", 1.3}, {"healthcare", 1.7}}, 
                     {{"shirts", "units"}, {"shoes", "pairs"}, {"shorts", "units"}, {"apples", "kg"}, {"bread", "loaves"}, {"chairs", "units"}, {"tables", "units"}, {"healthcare", "hours"}}) {
     saveInitialPrices();
     categorizeProductsByLaborIntensity();
     createFirms();
+
+    // currentProductCosts removed - using PriceController's current_prices instead
+
+    // Initialize labor intensity bias (research-based values)
+    // Higher values = more labor-intensive = harder to innovate/automate
+    for (const auto& product : products) {
+        double intensity = 0.5; // default medium
+        
+        // Healthcare: Highly labor-intensive (personal care, skilled professionals)
+        if (product == "healthcare") {
+            intensity = 0.85; // Very high - difficult to automate personal care
+        }
+        
+        // Food/Agriculture: High labor-intensity (delicate handling, perishable)
+        else if (product == "apples" || product == "bread") {
+            intensity = 0.65; // High - fruit picking, baking require manual work
+        }
+        
+        // Textiles/Apparel: Medium-high labor-intensity (cutting, sewing)
+        else if (product == "shirts" || product == "shorts") {
+            intensity = 0.55; // Medium-high - sewing still requires significant manual work
+        }
+        
+        // Furniture: Medium labor-intensity (some automation possible)
+        else if (product == "chairs" || product == "tables") {
+            intensity = 0.45; // Medium - woodworking can be partially automated
+        }
+        
+        // Footwear: Medium labor-intensity (similar to textiles but more automated)
+        else if (product == "shoes") {
+            intensity = 0.50; // Medium - shoe manufacturing has some automation
+        }
+        
+        productLaborIntensity[product] = intensity;
+        std::cout << "Labor intensity for " << product << ": " << intensity << std::endl;
+    }
+    
+    // Initialize workday tracking with initial value
+    double initialWorkday = 0.0;
+    for (const auto& product : products) {
+        initialWorkday += priceController.getCurrentCost(product);
+    }
+    workDayAtInnerCycle.push_back(initialWorkday);
+    
+    // Generate initial pie chart showing baseline prices
+    generateWorkerBudgetPieChart(0);
 }
 
 void Simulation::saveInitialPrices() {
@@ -21,93 +69,6 @@ void Simulation::saveInitialPrices() {
         initialPrices[product] = priceController.getOfficialPrice(product);
         priceHistory[product] = std::vector<double>();
     }
-}
-
-double Simulation::calculateAverageWorkDay() {
-    // Work day calculation with diminishing returns and saturation
-    double baseWorkDay = 8.0; // hours
-    static double minimumWorkDayAchieved = baseWorkDay;
-    static double cumulativeProductivityGain = 0.0; // Track cumulative improvements
-    static int totalCyclesWithImprovement = 0;
-    
-    // Define saturation parameters
-    const double MINIMUM_WORKDAY = 4.0; // Cannot go below 4 hours (50% of original)
-    const double DIMINISHING_FACTOR = 0.8; // Each cycle of improvement has 80% of previous effect
-    const double SATURATION_THRESHOLD = 0.9; // 90% of maximum possible improvement
-    
-    double totalProductivityGain = 0.0;
-    int productCount = 0;
-    
-    // Only count products that have demonstrable improvements from innovation
-    for (const auto& product : products) {
-        double officialPrice = priceController.getOfficialPrice(product);
-        double actualAverage = priceController.getCurrentCost(product);
-        
-        if (officialPrice > 0 && actualAverage > 0 && actualAverage < officialPrice) {
-            double improvement = (officialPrice - actualAverage) / officialPrice;
-            totalProductivityGain += improvement;
-            productCount++;
-            
-            std::cout << "Product " << product << ": official=" << officialPrice 
-                      << ", actual=" << actualAverage << ", improvement=" << (improvement * 100.0) << "%\n";
-        }
-    }
-    
-    double newWorkDay;
-    if (productCount == 0) {
-        // No improvements detected, keep current minimum
-        newWorkDay = minimumWorkDayAchieved;
-        std::cout << "Work day calculation: No productivity improvements, maintaining " << newWorkDay << " hours\n";
-    } else {
-        // Apply diminishing returns to productivity gains
-        double avgProductivityGain = totalProductivityGain / productCount;
-        
-        // Apply diminishing returns based on previous improvements
-        double effectiveGain = avgProductivityGain * std::pow(DIMINISHING_FACTOR, totalCyclesWithImprovement);
-        
-        // Add to cumulative gains
-        cumulativeProductivityGain += effectiveGain;
-        totalCyclesWithImprovement++;
-        
-        // Calculate maximum possible improvement (baseWorkDay - MINIMUM_WORKDAY)
-        double maxPossibleImprovement = (baseWorkDay - MINIMUM_WORKDAY) / baseWorkDay;
-        
-        // Check for saturation
-        if (cumulativeProductivityGain >= maxPossibleImprovement * SATURATION_THRESHOLD) {
-            std::cout << "Work day approaching saturation limit!\n";
-            cumulativeProductivityGain = maxPossibleImprovement * SATURATION_THRESHOLD;
-        }
-        
-        // Calculate new work day with saturation limit
-        newWorkDay = baseWorkDay * (1.0 - cumulativeProductivityGain);
-        
-        // Enforce minimum work day limit
-        if (newWorkDay < MINIMUM_WORKDAY) {
-            newWorkDay = MINIMUM_WORKDAY;
-            std::cout << "Work day has reached minimum threshold of " << MINIMUM_WORKDAY << " hours\n";
-        }
-        
-        // Work day can only decrease (ratchet effect)
-        if (newWorkDay < minimumWorkDayAchieved) {
-            minimumWorkDayAchieved = newWorkDay;
-        } else {
-            newWorkDay = minimumWorkDayAchieved;
-        }
-        
-        std::cout << "Work day calculation: products improved=" << productCount 
-                  << ", rawGain=" << (avgProductivityGain * 100.0) 
-                  << "%, effectiveGain=" << (effectiveGain * 100.0)
-                  << "%, cumulativeGain=" << (cumulativeProductivityGain * 100.0)
-                  << "%, workDay=" << newWorkDay << " hours\n";
-        std::cout << "  Diminishing factor applied: " << std::pow(DIMINISHING_FACTOR, totalCyclesWithImprovement - 1) 
-                  << " (cycle " << totalCyclesWithImprovement << ")\n";
-        
-        // Show saturation progress
-        double saturationProgress = (cumulativeProductivityGain / (maxPossibleImprovement * SATURATION_THRESHOLD)) * 100.0;
-        std::cout << "  Saturation progress: " << saturationProgress << "%\n";
-    }
-    
-    return newWorkDay;
 }
 
 void Simulation::trackPricesAndWorkDay(int cycle) {
@@ -118,91 +79,13 @@ void Simulation::trackPricesAndWorkDay(int cycle) {
         priceHistory[product].push_back(priceController.getCurrentCost(product));
     }
     
-    // Track average work day hours
-    workDayHours.push_back(calculateAverageWorkDay());
+    // Track work day hours as sum of basket costs (stepwise)
+    double sumBasket = 0.0;
+    for (const auto& product : products) sumBasket += priceController.getCurrentCost(product);
+    workDayHours.push_back(sumBasket);
     
-    // Generate worker budget allocation pie chart (products, not sectors)
-    generateWorkerBudgetPieChart(cycle);
-}
-
-void Simulation::generatePlots() {
-    using namespace matplot;
-    
-    // Convert cycle numbers to double for plotting
-    std::vector<double> cycles;
-    for (int cycle : cycleNumbers) {
-        cycles.push_back(static_cast<double>(cycle));
-    }
-    
-    // Create figure with subplots
-    auto fig = figure(true);
-    fig->size(1200, 800);
-    
-    // First subplot: Commodity prices
-    subplot(2, 1, 1);
-    
-    // Plot each product price history
-    for (const auto& product : products) {
-        const auto& prices = priceHistory[product];
-        auto p = plot(cycles, prices, "-s");
-        p->color("red");
-        p->display_name(product);
-        p->line_width(2);
-        xlabel("Cycle");
-        ylabel("Labor Hours per Unit");
-        title("Commodity Prices Over Time");
-        legend();
-        grid(on);
-    }    
-    
-    auto p2 = plot(cycles, workDayHours, "-s");
-    p2->color("red");
-    p2->line_width(2);
-    
-    xlabel("Cycle");
-    ylabel("Average Work Day (Hours)");
-    title("Average Work Day Duration Over Time");
-    grid(on);
-    
-    // Save and show the plot
-    save("simulation_results.png");
-    show();
-    
-    // Generate CSV file for external analysis
-    std::ofstream csvFile("simulation_data.csv");
-    csvFile << "Cycle,";
-    for (const auto& product : products) {
-        csvFile << product << "_price,";
-    }
-    csvFile << "work_day_hours\n";
-    
-    for (size_t i = 0; i < cycleNumbers.size(); ++i) {
-        csvFile << cycleNumbers[i] << ",";
-        for (const auto& product : products) {
-            csvFile << std::fixed << std::setprecision(4) << priceHistory[product][i] << ",";
-        }
-        csvFile << std::fixed << std::setprecision(4) << workDayHours[i] << "\n";
-    }
-    csvFile.close();
-    
-    // Create simple ASCII visualization for work day trends
-    std::cout << "\n=== WORK DAY TREND (ASCII) ===\n";
-    std::cout << "Cycle | Work Day Hours | Trend\n";
-    std::cout << "------|-----------------|------\n";
-    
-    for (size_t i = 0; i < cycleNumbers.size(); ++i) {
-        double hours = workDayHours[i];
-        int barLength = static_cast<int>((hours / 8.0) * 20); // Scale to 20 chars max
-        
-        std::cout << std::setw(5) << cycleNumbers[i] << " | " 
-                 << std::setw(14) << std::fixed << std::setprecision(2) << hours << " | ";
-        
-        for (int j = 0; j < barLength; ++j) std::cout << "█";
-        std::cout << " (" << std::setprecision(1) << hours << "h)\n";
-    }
-    
-    std::cout << "\nPlots saved as 'simulation_results.png' and displayed using matplot++\n";
-    std::cout << "Data also exported to 'simulation_data.csv' for external analysis\n";
+    // Only generate pie chart when we have a price cycle (not every inner cycle)
+    // This will be called separately when price cycles advance
 }
 
 void Simulation::createFirms() {
@@ -223,125 +106,7 @@ void Simulation::createFirms() {
     std::cout << "Created " << firms.size() << " firms with workers\n\n";
 }
 
-void Simulation::setProjectsPhase() {
-    std::cout << "=== Phase 1: Companies Set Projects ===\n";
-    
-    std::uniform_int_distribution<> productSelector(0, products.size() - 1);
-    std::uniform_int_distribution<> quantityDist(10, 100);
-    
-    // Each firm gets 1-2 projects this cycle
-    for (auto& firm : firms) {
-        int numProjects = (probability(gen) < 0.6) ? 1 : 2;
-        
-        for (int i = 0; i < numProjects; ++i) {
-            std::string product = products[productSelector(gen)];
-            int quantity = quantityDist(gen);
-            
-            Project project(product, quantity);
-            firm->addProject(project);
-            allProjects.push_back(project);
-            
-            std::cout << firm->getName() << " started project for " << product 
-                     << ": " << quantity << " units (expected: " 
-                     << firm->getProjectPrice(project) << " hours/unit)\n";
-        }
-    }
-    std::cout << "\n";
-}
-
-void Simulation::innovationDiscoveryPhase() {
-    std::cout << "=== Phase 2: Innovation Discovery ===\n";
-    
-    // Some firms discover innovations from others
-    for (auto& firm : firms) {
-        if (probability(gen) < innovation_discovery_rate) {
-            // Pick a random firm that might have an innovation
-            auto otherFirm = firms[firmSelector(gen)];
-            if (otherFirm != firm) {
-                // Pick a random product that we might discover innovations for
-                std::uniform_int_distribution<> productSelector(0, products.size() - 1);
-                std::string product = products[productSelector(gen)];
-                
-                // Check if the other firm has projects for this product and we do too
-                if (otherFirm->hasProjectsForProduct(product) && firm->hasProjectsForProduct(product)) {
-                    // Get most recent project costs for comparison
-                    auto otherProjects = otherFirm->getProjectsForProduct(product);
-                    auto& ourProjects = firm->getProjectsForProduct(product);
-                    
-                    if (!otherProjects.empty() && !ourProjects.empty()) {
-                        const Project& otherProject = otherProjects.back();
-                        Project& ourProject = ourProjects.back();
-                        
-                        if (otherProject.quantity > 0 && ourProject.quantity > 0) {
-                            double otherCostPerUnit = otherProject.actualCost / otherProject.quantity;
-                            double ourCostPerUnit = ourProject.actualCost / ourProject.quantity;
-                            
-                            if (otherCostPerUnit < ourCostPerUnit && otherProject.actualCost > 0) {
-                                // Apply the innovation to our project
-                                double newCost = otherCostPerUnit * ourProject.quantity;
-                                ourProject.actualCost = newCost;
-                                
-                                std::cout << firm->getName() << " discovered " << otherFirm->getName() 
-                                            << "'s innovation for " << product 
-                                            << " (reduced from " << ourCostPerUnit << " to " << otherCostPerUnit << " hours/unit)\n";
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    std::cout << "\n";
-}
-
-void Simulation::randomInnovationPhase() {
-    std::cout << "=== Phase 3: Worker-Driven Innovations ===\n";
-    
-    // Worker-driven innovations based on research (15% per worker rate)
-    for (auto& firm : firms) {
-        if (probability(gen) < employee_suggestion_rate) {
-            auto& projects = firm->getProjects();
-            if (!projects.empty()) {
-                // Pick a random project to innovate on
-                std::uniform_int_distribution<> projectSelector(0, projects.size() - 1);
-                auto& project = projects[projectSelector(gen)];
-                firm->findInnovation(project);
-            }
-        }
-    }
-    std::cout << "\n";
-}
-
-void Simulation::productionPhase() {
-    std::cout << "=== Phase 4: Production ===\n";
-    
-    // Simulate actual production - use the firm's assumed labor time with some variation
-    std::uniform_real_distribution<> variationDist(0.8, 1.2); // ±20% variation
-    
-    for (auto& firm : firms) {
-        // Work directly with the firm's project history to avoid copy issues
-        auto& projectHistory = const_cast<std::unordered_map<std::string, std::vector<Project>>&>(firm->getProjectHistory());
-        
-        for (auto& [productName, projects] : projectHistory) {
-            for (auto& project : projects) {
-                if (project.actualCost == 0) { // Only work on new projects
-                    double expectedHoursPerUnit = firm->getProjectPrice(project);
-                    double actualHoursPerUnit = expectedHoursPerUnit * variationDist(gen);
-                    double totalHours = actualHoursPerUnit * project.quantity;
-                    
-                    project.actualCost = totalHours;  // Set actualCost directly
-                    
-                    std::cout << firm->getName() << " produced " << project.quantity 
-                             << " " << project.productName << " using " << totalHours 
-                             << " hours (" << actualHoursPerUnit << " hours/unit)\n";
-                }
-            }
-        }
-    }
-    std::cout << "\n";
-}
-
-void Simulation::priceControllerPhase() {
+bool Simulation::priceControllerPhase() {
     std::cout << "=== Phase 5: Price Controller Update ===\n";
     
     // Collect all completed projects
@@ -360,6 +125,8 @@ void Simulation::priceControllerPhase() {
     // Update current costs based on actual production data
     priceController.updateCurrentCosts(completedProjects);
     
+    // currentProductCosts removed - using PriceController's current_prices directly
+    
     // Show current vs official prices
     std::cout << "\nCurrent costs vs Official prices:\n";
     for (const auto& product : products) {
@@ -375,19 +142,33 @@ void Simulation::priceControllerPhase() {
     
     // Update official prices if conditions are met
     std::cout << "\nChecking for price updates...\n";
+    double beforeSum = 0.0; for (const auto& p : products) beforeSum += priceController.getOfficialPrice(p);
     priceController.updateOfficialPrices(threshold_percentage_firms, threshold_percentage_products);
-    std::cout << "\n";
+    double afterSum = 0.0; for (const auto& p : products) afterSum += priceController.getOfficialPrice(p);
+    if (afterSum < beforeSum) {
+        // Price cycle increment - this is when we generate pie charts
+        int nextPriceCycle = priceCycleNumbers.empty() ? 1 : (priceCycleNumbers.back() + 1);
+        priceCycleNumbers.push_back(nextPriceCycle);
+        double workday = 0.0; for (const auto& p : products) workday += priceController.getCurrentCost(p);
+        workDayAtPriceCycle.push_back(workday);
+        
+        std::cout << "\n*** PRICE CYCLE " << nextPriceCycle << " ***\n";
+        std::cout << "Official prices updated! New workday: " << workday << " hours\n";
+        
+        // Generate pie chart for this price cycle
+        generateWorkerBudgetPieChart(nextPriceCycle);
+        
+        return true; // Signal that prices were updated
+    }
+    return false; // No price update
 }
 
-void Simulation::runCycle(int cycleNumber) {
+bool Simulation::runCycle(int cycleNumber) {
     std::cout << "==================== CYCLE " << cycleNumber << " ====================\n";
     
-    // Phase 0: Check for economic shocks
-    if (shouldTriggerShock(cycleNumber)) {
-        triggerEconomicShock(cycleNumber);
-    }
-    cyclesSinceLastShock++;
-    
+    // Plan-cycle: apply stochastic innovations to basket costs
+    applyPlanCycleInnovations();
+
     // Phase 1: Reset firm labor time tracking for this cycle
     for (auto& firm : firms) {
         firm->resetCycleLaborTime();
@@ -420,13 +201,15 @@ void Simulation::runCycle(int cycleNumber) {
     std::cout << "\n";
     
     // Phase 5: Price Controller updates
-    priceControllerPhase();
+    bool priceUpdated = priceControllerPhase();
     trackPricesAndWorkDay(cycleNumber);
     
     std::cout << "Cycle " << cycleNumber << " completed.\n\n";
     
     // Brief pause for readability
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    
+    return priceUpdated;
 }
 
 void Simulation::showSummary() {
@@ -487,15 +270,6 @@ void Simulation::showSummary() {
         std::cout << "\n";
     }
     
-    // Show economic shock history
-    if (!economicShockHistory.empty()) {
-        std::cout << "\nEconomic shock history:\n";
-        for (const auto& [cycle, shockType] : economicShockHistory) {
-            std::cout << "  Cycle " << cycle << ": " << shockType << "\n";
-        }
-    } else {
-        std::cout << "\nNo economic shocks occurred during this simulation.\n";
-    }
 }
 
 void Simulation::run(int numCycles) {
@@ -504,124 +278,50 @@ void Simulation::run(int numCycles) {
     
     // Add cycle 0 to show the baseline of 8 hours before any simulation
     cycleNumbers.push_back(0);
-    workDayHours.push_back(8.0);  // Baseline work day
+    {
+        double baseline = 0.0;
+        for (const auto& product : products) baseline += priceController.getCurrentCost(product);
+        workDayHours.push_back(baseline);
+    }
+    priceCycleNumbers.clear();
+    workDayAtPriceCycle.clear();
+    priceCycleNumbers.push_back(0);
+    workDayAtPriceCycle.push_back(workDayHours.back());
     
     // Track initial prices for cycle 0
     for (const auto& product : products) {
         priceHistory[product].push_back(initialPrices[product]);
     }
     
-    std::cout << "Cycle 0 (Baseline): Work day = 8.0 hours\n\n";
+    std::cout << "Cycle 0 (Baseline): Work day = " << workDayHours.back() << " hours\n\n";
+    // Run for exactly 3000 plan cycles, tracking when outer cycles (price recomputations) occur
+    int priceCyclesAchieved = 0;
     
-    for (int cycle = 1; cycle <= numCycles; ++cycle) {
-        runCycle(cycle);
-    }
-    
-    showSummary();
-    generatePlots(); // Generate original plots
-    
-    // Generate new specialized plots
-    generateProductWorkdayPlot("shirts");  // Example: shirts vs workday
-    generateAveragePriceWorkdayPlot();     // Average price vs workday
-    
-    std::cout << "\nSimulation completed successfully!\n";
-}
-
-// Economic shock methods
-bool Simulation::shouldTriggerShock(int cycleNumber) {
-    // Don't trigger shocks in the first cycle or too frequently
-    if (cycleNumber == 1 || cyclesSinceLastShock < 2) {
-        return false;
-    }
-    
-    // Increase probability slightly as cycles pass without shocks
-    double adjustedProbability = shockProbabilityPerCycle + (cyclesSinceLastShock * 0.02);
-    return probability(gen) < adjustedProbability;
-}
-
-void Simulation::triggerEconomicShock(int cycleNumber) {
-    std::cout << "\n*** ECONOMIC SHOCK DETECTED ***\n";
-    
-    // Random shock type
-    std::uniform_int_distribution<> shockTypeDist(0, 2);
-    int shockType = shockTypeDist(gen);
-    
-    // Random severity (0.1 to 0.4 - 10% to 40% impact)
-    std::uniform_real_distribution<> severityDist(0.1, 0.4);
-    double severity = severityDist(gen);
-    
-    std::string shockName;
-    switch (shockType) {
-        case 0:
-            shockName = "Productivity Crisis";
-            applyProductivityShock(severity);
-            break;
-        case 1:
-            shockName = "Demand Collapse";
-            applyDemandShock(severity);
-            break;
-        case 2:
-            shockName = "Supply Chain Disruption";
-            applySupplyChainShock(severity);
-            break;
-    }
-    
-    economicShockHistory.push_back({cycleNumber, shockName});
-    cyclesSinceLastShock = 0;
-    
-    std::cout << "Shock Type: " << shockName << " (Severity: " << (severity * 100.0) << "%)\n";
-    std::cout << "*** END ECONOMIC SHOCK ***\n\n";
-}
-
-void Simulation::applyProductivityShock(double severity) {
-    std::cout << "Applying productivity shock - widespread efficiency losses\n";
-    
-    // Temporarily increase official prices to simulate loss of productivity
-    for (const auto& product : products) {
-        double currentPrice = priceController.getOfficialPrice(product);
-        double newPrice = currentPrice * (1.0 + severity);
-        // Note: This modifies internal prices temporarily - 
-        // in a real implementation you'd want a temporary modifier system
-        std::cout << "  " << product << " labor time increased from " << currentPrice 
-                  << " to " << newPrice << " hours due to productivity loss\n";
-    }
-    
-    // Reduce innovation probability temporarily
-    // This would need access to firm innovation rates in a full implementation
-    std::cout << "  Innovation rates temporarily reduced by " << (severity * 100.0) << "%\n";
-}
-
-void Simulation::applyDemandShock(double severity) {
-    std::cout << "Applying demand shock - reduced project creation\n";
-    
-    // Reduce number of projects firms will create this cycle
-    // In a full implementation, this would modify firm behavior
-    std::uniform_real_distribution<> reductionDist(0.0, 1.0);
-    
-    for (auto& firm : firms) {
-        if (reductionDist(gen) < severity) {
-            std::cout << "  " << firm->getName() << " reducing project creation due to low demand\n";
-            // In practice, you'd modify the firm's project creation logic
+    for (int cycle = 1; cycle <= numCycles; cycle++) {
+        planCycle = cycle;
+        bool priceUpdated = runCycle(planCycle);
+        
+        if (priceUpdated) {
+            priceCyclesAchieved++;
+            std::cout << "\n=== OUTER CYCLE " << priceCyclesAchieved << " ACHIEVED at plan cycle " << cycle << " ===\n\n";
+        }
+        
+        // Show progress every 500 cycles
+        if (cycle % 500 == 0) {
+            std::cout << "Progress: " << cycle << "/" << numCycles << " plan cycles completed\n";
         }
     }
     
-    std::cout << "  " << (int)(severity * firms.size()) << " firms affected by demand reduction\n";
+    showSummary();
+    generateWorkDayPlot();
+    
+    std::cout << "\nSimulation completed successfully!\n";
+    std::cout << "Total plan cycles: " << numCycles << "\n";
+    std::cout << "Total inner cycles (innovations): " << innerCycle << "\n";
+    std::cout << "Total outer cycles (price recomputations): " << priceCyclesAchieved << "\n";
 }
 
-void Simulation::applySupplyChainShock(double severity) {
-    std::cout << "Applying supply chain shock - increased production costs\n";
-    
-    // Increase actual production costs by adding random delays/inefficiencies
-    std::uniform_real_distribution<> costIncreaseDist(1.0, 1.0 + severity);
-    
-    // This would ideally modify production costs in real-time
-    // For now, we'll track it and apply it to current cycle
-    std::cout << "  Production costs increased by " << (severity * 100.0) << "% on average\n";
-    std::cout << "  Supply chain bottlenecks affecting " << (int)(severity * products.size()) 
-              << " product categories\n";
-    
-    // In a full implementation, you'd modify the production phase to apply these costs
-}
+// Economic shock methods removed
 
 // Categorize products by labor intensity (healthcare = high, manufacturing = medium, etc.)
 void Simulation::categorizeProductsByLaborIntensity() {
@@ -709,7 +409,7 @@ void Simulation::generateAveragePriceWorkdayPlot() {
     
     legend({"Average Labor Time per Product", "Work Day Hours"});
     grid(on);
-    save("average_labortime_vs_workday.png");
+    save("graphs/average_labortime_vs_workday.png");
     
     std::cout << "Generated plot: Average labor time vs work day\n";
 }
@@ -725,13 +425,14 @@ void Simulation::generateWorkerBudgetPieChart(int cycle) {
     std::vector<std::string> productLabels;
     double totalCost = 0.0;
     
-    // Assume a worker needs 1 unit of each product per cycle (basic consumption basket)
+    // Use the PriceController's current prices (which are reduced by innovations)
     for (const auto& product : products) {
         double cost = priceController.getCurrentCost(product);
-        if (cost <= 0) cost = priceController.getOfficialPrice(product); // fallback to official price
         productCosts.push_back(cost);
         totalCost += cost;
     }
+    
+    std::cout << "Current basket total: " << std::fixed << std::setprecision(3) << totalCost << " hours\n";
     
     // Convert to percentages of total worker budget
     std::vector<double> percentages;
@@ -739,17 +440,23 @@ void Simulation::generateWorkerBudgetPieChart(int cycle) {
         double percentage = (productCosts[i] / totalCost) * 100.0;
         percentages.push_back(percentage);
         
-        // Show both percentage and actual labor hours for each product
+        // Show both percentage and actual labor hours for each product (3 decimal places)
+        std::ostringstream oss;
+        oss << std::fixed << std::setprecision(3) << productCosts[i];
         productLabels.push_back(products[i] + " (" + std::to_string(int(percentage)) + "%, " + 
-                               std::to_string((int)(productCosts[i] * 10) / 10.0) + "h)");
+                               oss.str() + "h)");
     }
     
     auto fig = figure(true);
     fig->size(1000, 700);
     
     pie(percentages, productLabels);
-    title("Worker Budget Allocation - Cycle " + std::to_string(cycle) + 
-          "\nTotal Monthly Budget: " + std::to_string((int)(totalCost * 10) / 10.0) + " labor hours");
+    {
+        std::ostringstream tss;
+        tss << std::fixed << std::setprecision(3) << totalCost;
+        title("Worker Budget Allocation - Cycle " + std::to_string(cycle) + 
+              "\nTotal Budget: " + tss.str() + " labor hours");
+    }
     
     std::string filename = "worker_budget_cycle_" + std::to_string(cycle) + ".png";
     save(filename);
@@ -780,16 +487,109 @@ void Simulation::generateWorkerBudgetPieChart(int cycle) {
         double productSavings = initialPrice - currentPrice;
         double productSavingsPercent = (productSavings / initialPrice) * 100.0;
         
-        std::cout << "  " << products[i] << ": " << std::fixed << std::setprecision(1) 
+        std::cout << "  " << products[i] << ": " << std::fixed << std::setprecision(3) 
                   << currentPrice << "h (" << int(percentages[i]) << "% of budget)";
         
         if (productSavings > 0) {
-            std::cout << " [SAVED " << std::setprecision(1) << productSavings << "h, " 
-                      << std::setprecision(1) << productSavingsPercent << "%]";
+            std::cout << " [SAVED " << std::setprecision(3) << productSavings << "h, " 
+                      << std::fixed << std::setprecision(1) << productSavingsPercent << "%]";
         } else if (productSavings < 0) {
-            std::cout << " [INCREASED " << std::setprecision(1) << -productSavings << "h]";
+            std::cout << " [INCREASED " << std::fixed << std::setprecision(3) << -productSavings << "h]";
         }
         std::cout << "\n";
     }
     std::cout << "\n";
 } 
+
+void Simulation::applyPlanCycleInnovations() {
+    // Random innovations based on research data - only some products get innovations randomly
+    // Base probability per inner cycle: research-based rates
+    const double LAMBDABASEPROBABIILITY = WORKER_PARTICIPATION_RATE * EMPLOYEE_SUGGESTION_RATE * SUGGESTION_IMPLEMENTATION_RATE;
+    std::poisson_distribution<int> poissonDist(LAMBDABASEPROBABIILITY);
+    const double meanReduction = 0.25; // 25% average productivity gain per innovation (much more impactful)
+    const double stdReduction = 0.08; // moderate variance for realistic variation
+    std::normal_distribution<double> reductionDist(meanReduction, stdReduction);
+
+    bool anyInnovation = false;
+    int numInnovations = poissonDist(gen);
+    // Using Poisson distribution to generate the number of innovations
+
+    std::vector<double> weights;
+    weights.reserve(products.size());
+    for (const auto& product : products) {
+        auto it = productLaborIntensity.find(product);
+        double intensity = (it == productLaborIntensity.end() ? 0.5 : it->second);
+        weights.push_back(std::max(0.01, 1.0 - intensity));
+    }     
+    std::discrete_distribution<int> weightedDist(weights.begin(), weights.end());   
+
+    // Check if innovations should happen this cycle (3% chance - less frequent but more impactful)
+    std::uniform_real_distribution<double> innovationChance(0.0, 1.0);
+    if (innovationChance(gen) <= 0.03) {
+        for (int i = 0; i < numInnovations; i++) {
+            double reduction = std::clamp(reductionDist(gen), 0.10, 0.40);
+            const std::string &product = products[weightedDist(gen)];
+            double oldCost = priceController.getCurrentCost(product);
+            double newCost = oldCost * (1 - reduction);
+            // Directly update the PriceController's current prices
+            priceController.updateCurrentPrice(product, newCost);
+            std::cout << "Innovation in " << product << ": " << std::fixed << std::setprecision(3) 
+                                             << oldCost << "h -> " << newCost << "h (" 
+                       << (reduction * 100.0) << "% reduction)\n";
+        }
+        anyInnovation = true;
+    }
+    
+    // Only increment inner cycle when innovations actually happen
+    if (anyInnovation) {
+        innerCycle++;
+        double currentWorkday = 0.0;
+        for (const auto& product : products) {
+            currentWorkday += priceController.getCurrentCost(product);
+        }
+        workDayAtInnerCycle.push_back(currentWorkday);
+        std::cout << "Workday after innovations: " << std::fixed << std::setprecision(3) << currentWorkday << " hours\n";
+    } else {
+        std::cout << "No innovations this inner cycle.\n";
+    }
+}
+
+void Simulation::generateWorkDayPlot() {
+    using namespace matplot;
+    auto fig = figure(true);
+    fig->size(1000, 600);
+
+    // Plot workday as a true step function - only when innovations occur
+    std::vector<double> outerCyclesD;
+    std::vector<double> workDayValues;
+    
+    // Create step function data: each innovation creates a horizontal line until the next innovation
+    for (size_t i = 0; i < workDayAtInnerCycle.size(); i++) {
+        outerCyclesD.push_back(static_cast<double>(i));
+        workDayValues.push_back(workDayAtInnerCycle[i]);
+        
+        // If this isn't the last point, add the next cycle with the same value to create horizontal steps
+        if (i < workDayAtInnerCycle.size() - 1) {
+            outerCyclesD.push_back(static_cast<double>(i + 1));
+            workDayValues.push_back(workDayAtInnerCycle[i]);
+        }
+    }
+    
+    auto p = plot(outerCyclesD, workDayValues);
+    p->line_width(3);
+    p->color("blue");
+    xlabel("Outer Plan Cycle");
+    ylabel("Hours in Work Day");
+    title("Work Day Over Time - Inner Plan Cycles (Step Function)");
+    grid(on);
+    
+    // Set reasonable axis limits
+    ylim({4.0, 8.5}); // Workday should stay between 4-8.5 hours
+    
+    save("graphs/workday_over_time.png");
+    
+    std::cout << "Generated workday plot: workday_over_time.png\n";
+    std::cout << "Inner plan cycles completed: " << innerCycle << "\n";
+} 
+
+

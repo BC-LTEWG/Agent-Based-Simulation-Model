@@ -7,6 +7,7 @@
 #include <random>
 #include <string>
 #include <map>
+#include <chrono>
 
 #define NUM_FIRMS 20
 
@@ -29,9 +30,16 @@
 #define HIGH_INNOVATOR_PERCENTAGE 0.20              // 20% of workers generate 80% of innovations
 #define INNOVATION_DISCOVERY_RATE 0.25              // Inter-firm knowledge transfer rate
 
-// Economic thresholds for price updates
-#define THRESHOLD_PERCENTAGE_FIRMS 12.0      // 12% improvement needed (research-based)
-#define THRESHOLD_PERCENTAGE_PRODUCTS 20.0   // 20% of products must improve consistently
+// Economic thresholds for price updates (lowered for more frequent updates)
+#define THRESHOLD_PERCENTAGE_FIRMS 2.0       // 2% improvement needed (more realistic)
+#define THRESHOLD_PERCENTAGE_PRODUCTS 12.5   // 12.5% of products must improve consistently (1 out of 8)
+
+static std::mt19937_64 generator(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+static std::uniform_real_distribution<double> dist(0.0, 1.0);
+
+
+
+// Innovation chance is now handled directly in applyPlanCycleInnovations()
 
 class Simulation {
 private:
@@ -43,6 +51,7 @@ private:
     std::uniform_int_distribution<> projectSelector;
     int nextProjectId;
     int nextFirmId;
+
     
     // Products vector must be declared before PriceController for initialization
     std::vector<std::string> products = {"shirts", "shoes", "shorts", "apples", "bread", "chairs", "tables", "healthcare"};
@@ -67,15 +76,30 @@ private:
                                          "Nu Logistics", "Xi Technologies", "Omicron Foods", "Pi Construction",
                                          "Rho Textiles", "Sigma Energy", "Tau Transport", "Upsilon Care"};
     
-    // Economic shock tracking
-    std::vector<std::pair<int, std::string>> economicShockHistory; // cycle, shock type
-    double shockProbabilityPerCycle = 0.15; // 15% chance per cycle
-    int cyclesSinceLastShock = 0;
-    
     // Productivity tracking by sector
     std::map<std::string, double> sectorProductivityGains; // sector -> total productivity gain
     std::map<std::string, std::vector<std::string>> productSectors; // sector -> products
     std::map<std::string, double> sectorLaborIntensity; // sector -> labor intensity factor
+
+    // Plan-cycle innovation model (basket costs)
+    std::map<std::string, double> currentProductCosts; // hours required per product in daily basket
+    const double plan_innovation_probability = 0.05;   // x: 5% chance per plan cycle per product
+    const double plan_innovation_mean = 0.08;          // y: mean reduction 8%
+    const double plan_innovation_stddev = 0.02;        // small variance around mean
+
+    // Labor intensity per product (0=low, 1=high) used to bias innovations toward less labor-intensive goods
+    std::map<std::string, double> productLaborIntensity;
+
+    // Price-cycle tracking (increments only when official prices are updated)
+    std::vector<int> priceCycleNumbers;
+    std::vector<double> workDayAtPriceCycle;
+    
+    // Global cycle tracking
+    int planCycle;
+    int innerCycle;
+    
+    // Track workday at each inner cycle for plotting
+    std::vector<double> workDayAtInnerCycle;
 
 public:
     Simulation();
@@ -85,8 +109,8 @@ public:
     void innovationDiscoveryPhase();
     void randomInnovationPhase();
     void productionPhase();
-    void priceControllerPhase();
-    void runCycle(int cycleNumber);
+    bool priceControllerPhase();
+    bool runCycle(int cycleNumber);
     void showSummary();
     void run(int numCycles = 5);
     
@@ -94,18 +118,19 @@ public:
     void saveInitialPrices();
     void trackPricesAndWorkDay(int cycle);
     void generatePlots();
-    double calculateAverageWorkDay();
-    
-    // Economic shock methods
-    void triggerEconomicShock(int cycleNumber);
-    bool shouldTriggerShock(int cycleNumber);
-    void applyProductivityShock(double severity);
-    void applyDemandShock(double severity);
-    void applySupplyChainShock(double severity);
+    void applyPlanCycleInnovations();
+    void generateWorkDayPlot();
     
     // New plotting methods
     void generateProductWorkdayPlot(const std::string& productName);
     void generateAveragePriceWorkdayPlot();
     void generateWorkerBudgetPieChart(int cycle);
     void categorizeProductsByLaborIntensity();
+    
+    // Economic shock methods (if still needed)
+    bool shouldTriggerShock(int cycleNumber);
+    void triggerEconomicShock(int cycleNumber);
+    void applyProductivityShock(double severity);
+    void applyDemandShock(double severity);
+    void applySupplyChainShock(double severity);
 }; 

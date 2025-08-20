@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#define REQUIRED_CONSECUTIVE_CYCLES 2 // The sim requires products to "prove" they can maintain productivity improvements over multiple cycles before officially reducing prices. It's like saying "don't just improve once, show you can keep improving."
+
 
 
 // Forward declaration
@@ -16,6 +18,7 @@ class PriceController {
         void updateOfficialPrices(double thresholdPercentageFirms, double thresholdPercentageProducts);
         double getOfficialPrice(const std::string& productName);
         double getCurrentCost(const std::string& productName);
+        void updateCurrentPrice(const std::string& productName, double newPrice);
         void recomputeAverageCosts(const std::vector<Project>& allProjects);
         
         // Instance methods for compatibility with existing code
@@ -25,7 +28,8 @@ class PriceController {
         // New methods for fixed productivity threshold
         void resetProductivityCounters();
         bool hasMetFixedThreshold(const std::string& productName, double fixedThreshold);
-        void trackProductivityImprovements(double fixedThreshold);
+        void trackProductivityImprovements(double fixedThreshold); 
+
 
     private:
         std::map<std::string, double> official_prices;
@@ -35,6 +39,7 @@ class PriceController {
         // Fixed productivity threshold tracking
         std::map<std::string, int> productivity_improvement_cycles; // Track consecutive cycles of improvement
         std::map<std::string, double> best_productivity_achieved;   // Track best productivity per product
-        static const int REQUIRED_CONSECUTIVE_CYCLES = 3;          // Require 3 consecutive cycles of improvement
+        
+
 
 }; 
