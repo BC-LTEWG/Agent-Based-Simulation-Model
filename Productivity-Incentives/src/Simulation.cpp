@@ -9,7 +9,7 @@
 #include <matplot/matplot.h>
 #include <sstream>
 
-Simulation::Simulation() : gen(std::random_device{}()), probability(0.0, 1.0), nextProjectId(1), nextFirmId(1), planCycle(0), innerCycle(0),
+Simulation::Simulation() : gen(std::random_device{}()), probability(0.0, 1.0), nextProjectId(1), nextFirmId(1), planCycle(0), innerCycle(0), outerCycle(0),
     // Initial official prices (hours) sum to 8.0
     priceController({{"shirts", 0.6}, {"shoes", 0.9}, {"shorts", 0.5}, {"apples", 0.8}, {"bread", 1.0}, {"chairs", 1.2}, {"tables", 1.3}, {"healthcare", 1.7}}, 
                     {{"shirts", "units"}, {"shoes", "pairs"}, {"shorts", "units"}, {"apples", "kg"}, {"bread", "loaves"}, {"chairs", "units"}, {"tables", "units"}, {"healthcare", "hours"}}) {
@@ -123,7 +123,7 @@ bool Simulation::priceControllerPhase() {
     std::cout << "Analyzing " << completedProjects.size() << " completed projects...\n";
     
     // Update current costs based on actual production data
-    priceController.updateCurrentCosts(completedProjects);
+    // updateCurrentCosts removed - not needed for innovation-based price updates
     
     // currentProductCosts removed - using PriceController's current_prices directly
     
@@ -143,7 +143,7 @@ bool Simulation::priceControllerPhase() {
     // Update official prices if conditions are met
     std::cout << "\nChecking for price updates...\n";
     double beforeSum = 0.0; for (const auto& p : products) beforeSum += priceController.getOfficialPrice(p);
-    priceController.updateOfficialPrices(threshold_percentage_firms, threshold_percentage_products);
+    // updateOfficialPrices removed - no longer using official price system
     double afterSum = 0.0; for (const auto& p : products) afterSum += priceController.getOfficialPrice(p);
     if (afterSum < beforeSum) {
         // Price cycle increment - this is when we generate pie charts
@@ -506,12 +506,12 @@ void Simulation::applyPlanCycleInnovations() {
     // Base probability per inner cycle: research-based rates
     const double LAMBDABASEPROBABIILITY = WORKER_PARTICIPATION_RATE * EMPLOYEE_SUGGESTION_RATE * SUGGESTION_IMPLEMENTATION_RATE;
     std::poisson_distribution<int> poissonDist(LAMBDABASEPROBABIILITY);
-    const double meanReduction = 0.25; // 25% average productivity gain per innovation (much more impactful)
-    const double stdReduction = 0.08; // moderate variance for realistic variation
+    const double meanReduction = 0.20; // 20% average productivity gain per innovation (more aggressive for testing)
+    const double stdReduction = 0.06; // moderate variance for realistic variation
     std::normal_distribution<double> reductionDist(meanReduction, stdReduction);
 
     bool anyInnovation = false;
-    int numInnovations = poissonDist(gen);
+    // numInnovations will be set inside the innovation block
     // Using Poisson distribution to generate the number of innovations
 
     std::vector<double> weights;
@@ -523,19 +523,18 @@ void Simulation::applyPlanCycleInnovations() {
     }     
     std::discrete_distribution<int> weightedDist(weights.begin(), weights.end());   
 
-    // Check if innovations should happen this cycle (3% chance - less frequent but more impactful)
+    // Check if innovations should happen this cycle (15% chance per cycle - more aggressive for testing)
     std::uniform_real_distribution<double> innovationChance(0.0, 1.0);
-    if (innovationChance(gen) <= 0.03) {
+    if (innovationChance(gen) <= 0.45) {
+        // When innovation happens, ensure at least 1 product gets improved
+        int numInnovations = std::max(1, poissonDist(gen));
         for (int i = 0; i < numInnovations; i++) {
-            double reduction = std::clamp(reductionDist(gen), 0.10, 0.40);
+            double innovation = std::clamp(reductionDist(gen), 0.08, 0.60);
             const std::string &product = products[weightedDist(gen)];
-            double oldCost = priceController.getCurrentCost(product);
-            double newCost = oldCost * (1 - reduction);
+            products_innovation_rates[product] += innovation;
             // Directly update the PriceController's current prices
-            priceController.updateCurrentPrice(product, newCost);
-            std::cout << "Innovation in " << product << ": " << std::fixed << std::setprecision(3) 
-                                             << oldCost << "h -> " << newCost << "h (" 
-                       << (reduction * 100.0) << "% reduction)\n";
+            // priceController.updateCurrentPrice(product, newCost);
+            std::cout << "Innovation in " << product << " by: " << std::fixed << std::setprecision(3) << innovation << "\n";
         }
         anyInnovation = true;
     }
@@ -544,6 +543,24 @@ void Simulation::applyPlanCycleInnovations() {
     if (anyInnovation) {
         innerCycle++;
         double currentWorkday = 0.0;
+        
+        int num_firms_innovated = 0;
+        for (auto& [product, innovation_rate] : products_innovation_rates) {
+            if (innovation_rate > threshold_percentage_products) {
+                num_firms_innovated++;
+            }
+
+            if (num_firms_innovated >= threshold_percentage_firms) {
+                priceController.updateCurrentPrice();
+                for (auto& product : products_innovation_rates) {
+                    product.second = 0;
+                }
+                outerCycle++;
+                generateWorkerBudgetPieChart(outerCycle);
+                break;
+            }
+        }
+
         for (const auto& product : products) {
             currentWorkday += priceController.getCurrentCost(product);
         }

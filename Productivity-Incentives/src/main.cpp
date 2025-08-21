@@ -2,6 +2,6 @@
 
 int main() {
     Simulation sim;
-    sim.run(20);  // Run until 5 price cycles for testing
+    sim.run(200);  // Run for 200 plan cycles for testing
     return 0;
 }

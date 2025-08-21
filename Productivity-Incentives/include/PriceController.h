@@ -2,8 +2,8 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <random>
 
-#define REQUIRED_CONSECUTIVE_CYCLES 2 // The sim requires products to "prove" they can maintain productivity improvements over multiple cycles before officially reducing prices. It's like saying "don't just improve once, show you can keep improving."
 
 
 
@@ -14,31 +14,25 @@ class PriceController {
     public:
         PriceController(std::map<std::string, double> initialOfficialPrices, std::map<std::string, std::string> units);
         
-        void updateCurrentCosts(const std::vector<Project>& allProjects);
-        void updateOfficialPrices(double thresholdPercentageFirms, double thresholdPercentageProducts);
+
+
         double getOfficialPrice(const std::string& productName);
         double getCurrentCost(const std::string& productName);
-        void updateCurrentPrice(const std::string& productName, double newPrice);
-        void recomputeAverageCosts(const std::vector<Project>& allProjects);
-        
+        void updateCurrentPrice();
         // Instance methods for compatibility with existing code
         double getAvgPriceOfProduct(const Project& project);
-        void updateAvgPriceOfProject(const Project& project);
         
-        // New methods for fixed productivity threshold
-        void resetProductivityCounters();
-        bool hasMetFixedThreshold(const std::string& productName, double fixedThreshold);
-        void trackProductivityImprovements(double fixedThreshold); 
+ 
 
 
     private:
         std::map<std::string, double> official_prices;
         std::map<std::string, double> current_prices;
         std::map<std::string, std::string> unit;
+        std::mt19937 gen;
+        std::normal_distribution<double> reductionDist;
         
-        // Fixed productivity threshold tracking
-        std::map<std::string, int> productivity_improvement_cycles; // Track consecutive cycles of improvement
-        std::map<std::string, double> best_productivity_achieved;   // Track best productivity per product
+
         
 
 
