@@ -1,0 +1,2 @@
+SimulationType,TotalFirms,TotalCycles,TotalInnerCycles,TotalOuterCycles,FinalWorkDay,InitialWorkDay,WorkDayReduction
+SimulationA,20,10000,499,0,4.777,8.000,3.223

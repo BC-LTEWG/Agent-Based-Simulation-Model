@@ -29,9 +29,9 @@
 #define HIGH_INNOVATOR_PERCENTAGE 0.20              // 20% of workers generate 80% of innovations
 #define INNOVATION_DISCOVERY_RATE 0.25              // Inter-firm knowledge transfer rate
 
-// Economic thresholds for price updates (lowered for more frequent updates)
-#define THRESHOLD_INNOVATION_AMONGST_PRODUCTS 1     // 1% improvement needed per simulation cycle
-#define THRESHOLD_PERCENTAGE_PRODUCTS 1.5   // 1.5% of products must improve per simulation cycle
+// Economic thresholds for price updates (balanced - not too strict, not too aggressive)
+#define THRESHOLD_INNOVATION_AMONGST_PRODUCTS 2    // Only 2 products need to improve before price update (easier to trigger)
+#define THRESHOLD_PERCENTAGE_PRODUCTS 2.0    // Reduced threshold - easier to trigger pie charts
 
 static std::mt19937_64 generator(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 static std::uniform_real_distribution<double> dist(0.0, 1.0);
@@ -41,7 +41,7 @@ static std::uniform_real_distribution<double> dist(0.0, 1.0);
 // Innovation chance is now handled directly in applyPlanCycleInnovations()
 
 class Simulation {
-private:
+protected:  // Change from private to protected so derived classes can access
     std::vector<std::shared_ptr<Firm>> firms;
     std::vector<Project> allProjects;
     std::mt19937 gen;
@@ -101,6 +101,15 @@ private:
     
     // Track workday at each inner cycle for plotting
     std::vector<double> workDayAtInnerCycle;
+    
+        // Track general cycle numbers when outer cycles increment
+    std::vector<int> workDayAtOuterCycle;
+    
+    // Track workday values when outer cycles increment
+    std::vector<double> workDayValuesAtOuterCycle;
+
+    // Track general cycle numbers when inner cycles increment (for SimulationB)
+    std::vector<int> workDayAtInnerCycleGeneral;
 
 public:
     Simulation();
@@ -113,20 +122,23 @@ public:
     bool priceControllerPhase();
     bool runCycle(int cycleNumber);
     void showSummary();
-    void run(int numCycles = 5);
+    void run(int numCycle);
     
     // New methods for tracking and plotting
     void saveInitialPrices();
     void trackPricesAndWorkDay(int cycle);
     void generatePlots();
-    void applyPlanCycleInnovations();
-    void generateWorkDayPlot();
+    virtual void applyPlanCycleInnovations(int cycleNumber);
+    virtual void generateWorkDayPlot();
     
     // New plotting methods
     void generateProductWorkdayPlot(const std::string& productName);
     void generateAveragePriceWorkdayPlot();
-    void generateWorkerBudgetPieChart(int cycle);
+    virtual void generateWorkerBudgetPieChart(int cycle, const std::map<std::string, double>& customCosts = {});
     void categorizeProductsByLaborIntensity();
+    void saveResultsToCSV();
+    void saveSummaryStatistics();
+    void fixWorkDayPlotXAxis(); // New function to fix x-axis range
     
     // Economic shock methods (if still needed)
     bool shouldTriggerShock(int cycleNumber);
@@ -134,4 +146,12 @@ public:
     void applyProductivityShock(double severity);
     void applyDemandShock(double severity);
     void applySupplyChainShock(double severity);
+}; 
+
+class SimulationB : public Simulation {
+public:
+    SimulationB(); // Constructor declaration
+    void applyPlanCycleInnovations(int cycleNumber) override;
+    void generateWorkerBudgetPieChart(int cycle, const std::map<std::string, double>& customCosts = {}) override;
+    void generateWorkDayPlot() override;
 }; 

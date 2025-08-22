@@ -13,6 +13,7 @@ Simulation::Simulation() : gen(std::random_device{}()), probability(0.0, 1.0), n
     // Initial official prices (hours) sum to 8.0
     priceController({{"shirts", 0.6}, {"shoes", 0.9}, {"shorts", 0.5}, {"apples", 0.8}, {"bread", 1.0}, {"chairs", 1.2}, {"tables", 1.3}, {"healthcare", 1.7}}, 
                     {{"shirts", "units"}, {"shoes", "pairs"}, {"shorts", "units"}, {"apples", "kg"}, {"bread", "loaves"}, {"chairs", "units"}, {"tables", "units"}, {"healthcare", "hours"}}) {
+    
     saveInitialPrices();
     categorizeProductsByLaborIntensity();
     createFirms();
@@ -50,7 +51,7 @@ Simulation::Simulation() : gen(std::random_device{}()), probability(0.0, 1.0), n
         }
         
         productLaborIntensity[product] = intensity;
-        std::cout << "Labor intensity for " << product << ": " << intensity << std::endl;
+        // Removed output for speed: Labor intensity info
     }
     
     // Initialize workday tracking with initial value
@@ -60,8 +61,21 @@ Simulation::Simulation() : gen(std::random_device{}()), probability(0.0, 1.0), n
     }
     workDayAtInnerCycle.push_back(initialWorkday);
     
-    // Generate initial pie chart showing baseline prices
-    generateWorkerBudgetPieChart(0);
+    // Save initial state for cycle 0 before any modifications
+    // Store the initial current costs for cycle 0 pie chart
+    std::map<std::string, double> cycle0Costs;
+    for (const auto& product : products) {
+        cycle0Costs[product] = priceController.getCurrentCost(product);
+    }
+    
+    // Generate initial pie chart showing baseline prices using saved cycle 0 data
+    generateWorkerBudgetPieChart(0, cycle0Costs);
+    
+    // Add initial workday tracking for cycle 0
+    workDayAtOuterCycle.push_back(0);
+    workDayValuesAtOuterCycle.push_back(8.0); // Initial workday value
+    
+    // Removed output for speed: Constructor completed
 }
 
 void Simulation::saveInitialPrices() {
@@ -88,6 +102,69 @@ void Simulation::trackPricesAndWorkDay(int cycle) {
     // This will be called separately when price cycles advance
 }
 
+void Simulation::saveResultsToCSV() {
+    std::ofstream csvFile("simulation_results.csv");
+    
+    // Header
+    csvFile << "Cycle,OuterCycle,InnerCycle,WorkDayHours,EventType,Product,OldPrice,NewPrice,InnovationAmount\n";
+    
+    // Track all events
+    for (int cycle = 0; cycle <= cycleNumbers.back(); ++cycle) {
+        // Find if this cycle had an outer cycle increment
+        bool hadOuterCycle = false;
+        int outerCycleNum = 0;
+        for (size_t i = 0; i < workDayAtOuterCycle.size(); ++i) {
+            if (workDayAtOuterCycle[i] == cycle) {
+                hadOuterCycle = true;
+                outerCycleNum = i + 1;
+                break;
+            }
+        }
+        
+        // Find if this cycle had an inner cycle increment
+        bool hadInnerCycle = false;
+        int innerCycleNum = 0;
+        for (size_t i = 0; i < workDayAtInnerCycleGeneral.size(); ++i) {
+            if (workDayAtInnerCycleGeneral[i] == cycle) {
+                hadInnerCycle = true;
+                innerCycleNum = i + 1;
+                break;
+            }
+        }
+        
+        // Get workday value for this cycle
+        double workdayValue = 8.0; // Default starting value
+        if (hadOuterCycle && outerCycleNum <= workDayAtInnerCycle.size()) {
+            workdayValue = workDayAtInnerCycle[outerCycleNum - 1];
+        } else if (hadInnerCycle && innerCycleNum <= workDayAtInnerCycle.size()) {
+            workdayValue = workDayAtInnerCycle[innerCycleNum - 1];
+        }
+        
+        // Write cycle data
+        csvFile << cycle << "," 
+                << (hadOuterCycle ? outerCycleNum : 0) << ","
+                << (hadInnerCycle ? innerCycleNum : 0) << ","
+                << std::fixed << std::setprecision(3) << workdayValue << ","
+                << (hadOuterCycle ? "OUTER_CYCLE" : (hadInnerCycle ? "INNER_CYCLE" : "NO_CHANGE")) << ","
+                << "N/A" << ","  // Product
+                << "N/A" << ","  // OldPrice
+                << "N/A" << ","  // NewPrice
+                << "N/A" << "\n"; // InnovationAmount
+    }
+    
+    csvFile.close();
+    // Results saved to simulation_results.csv
+    
+    // Also save detailed innovation tracking
+    std::ofstream innovationFile("innovation_details.csv");
+    innovationFile << "Cycle,SimulationType,EventType,Product,OldPrice,NewPrice,InnovationAmount,WorkDayBefore,WorkDayAfter\n";
+    
+    // Track innovations from both simulations
+    // This would need to be enhanced to capture actual innovation data during runtime
+    innovationFile.close();
+    // Innovation details saved to innovation_details.csv
+}
+
 void Simulation::createFirms() {
     // Create NUM_FIRMS firms
     for (int i = 0; i < NUM_FIRMS; ++i) {
@@ -103,13 +180,11 @@ void Simulation::createFirms() {
     }
     
     firmSelector = std::uniform_int_distribution<>(0, firms.size() - 1);
-    std::cout << "Created " << firms.size() << " firms with workers\n\n";
+    // Removed output for speed: Created firms with workers
 }
 
 bool Simulation::priceControllerPhase() {
-    std::cout << "=== Phase 5: Price Controller Update ===\n";
-    
-    // Collect all completed projects
+    // Collect all completed projects (no output)
     std::vector<Project> completedProjects;
     for (const auto& firm : firms) {
         const auto& projects = firm->getProjects();
@@ -120,28 +195,7 @@ bool Simulation::priceControllerPhase() {
         }
     }
     
-    std::cout << "Analyzing " << completedProjects.size() << " completed projects...\n";
-    
-    // Update current costs based on actual production data
-    // updateCurrentCosts removed - not needed for innovation-based price updates
-    
-    // currentProductCosts removed - using PriceController's current_prices directly
-    
-    // Show current vs official prices
-    std::cout << "\nCurrent costs vs Official prices:\n";
-    for (const auto& product : products) {
-        double official = priceController.getOfficialPrice(product);
-        double current = priceController.getCurrentCost(product);
-        double savings = official - current;
-        double percentage = (savings / official) * 100.0;
-        
-        std::cout << product << ": Official=" << official 
-                 << ", Current=" << current 
-                 << " (savings: " << savings << " hours, " << percentage << "%)\n";
-    }
-    
-    // Update official prices if conditions are met
-    std::cout << "\nChecking for price updates...\n";
+    // Update official prices if conditions are met (no output)
     double beforeSum = 0.0; for (const auto& p : products) beforeSum += priceController.getOfficialPrice(p);
     // updateOfficialPrices removed - no longer using official price system
     double afterSum = 0.0; for (const auto& p : products) afterSum += priceController.getOfficialPrice(p);
@@ -152,10 +206,7 @@ bool Simulation::priceControllerPhase() {
         double workday = 0.0; for (const auto& p : products) workday += priceController.getCurrentCost(p);
         workDayAtPriceCycle.push_back(workday);
         
-        std::cout << "\n*** PRICE CYCLE " << nextPriceCycle << " ***\n";
-        std::cout << "Official prices updated! New workday: " << workday << " hours\n";
-        
-        // Generate pie chart for this price cycle
+        // Generate pie chart for this price cycle (no console output)
         generateWorkerBudgetPieChart(nextPriceCycle);
         
         return true; // Signal that prices were updated
@@ -164,50 +215,42 @@ bool Simulation::priceControllerPhase() {
 }
 
 bool Simulation::runCycle(int cycleNumber) {
-    std::cout << "==================== CYCLE " << cycleNumber << " ====================\n";
+    // Minimal output - only show every 500th cycle
+    if (cycleNumber % 500 == 0) {
+        std::cout << "Cycle " << cycleNumber << std::endl;
+    }
     
     // Plan-cycle: apply stochastic innovations to basket costs
-    applyPlanCycleInnovations();
+    applyPlanCycleInnovations(cycleNumber);
 
     // Phase 1: Reset firm labor time tracking for this cycle
     for (auto& firm : firms) {
         firm->resetCycleLaborTime();
     }
     
-    // Phase 2: Each firm creates projects
-    std::cout << "=== Phase 2: Project Creation ===\n";
+    // Phase 2: Each firm creates projects (no output)
     for (auto& firm : firms) {
         firm->create_projects();
     }
-    std::cout << "\n";
     
-    // Phase 3: Each firm executes projects (includes learning, innovation, production)
-    std::cout << "=== Phase 3: Project Execution ===\n";
+    // Phase 3: Each firm executes projects (no output)
     for (auto& firm : firms) {
         firm->execute_projects(firms);
     }
-    std::cout << "\n";
     
-    // Phase 4: Record labor time for this cycle
-    std::cout << "=== Phase 4: Labor Time Recording ===\n";
+    // Phase 4: Record labor time for this cycle (no output)
     for (auto& firm : firms) {
         double cycleLaborTime = firm->getTotalLaborTimeSpent() - 
             (firm->getLaborTimeHistory().size() > 0 ? 
              std::accumulate(firm->getLaborTimeHistory().begin(), firm->getLaborTimeHistory().end(), 0.0) : 0.0);
         firm->recordLaborTimeForCycle(cycleLaborTime);
-        
-        std::cout << firm->getName() << " labor time this cycle: " << cycleLaborTime << " hours\n";
     }
-    std::cout << "\n";
     
-    // Phase 5: Price Controller updates
+    // Phase 5: Price Controller updates (minimal output)
     bool priceUpdated = priceControllerPhase();
     trackPricesAndWorkDay(cycleNumber);
     
-    std::cout << "Cycle " << cycleNumber << " completed.\n\n";
-    
-    // Brief pause for readability
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    // No delay for speed
     
     return priceUpdated;
 }
@@ -417,7 +460,7 @@ void Simulation::generateAveragePriceWorkdayPlot() {
 
 
 // Generate pie chart showing how much of a worker's budget goes to each product
-void Simulation::generateWorkerBudgetPieChart(int cycle) {
+void Simulation::generateWorkerBudgetPieChart(int cycle, const std::map<std::string, double>& customCosts) {
     using namespace matplot;
     
     // Calculate current costs for each product
@@ -425,11 +468,20 @@ void Simulation::generateWorkerBudgetPieChart(int cycle) {
     std::vector<std::string> productLabels;
     double totalCost = 0.0;
     
-    // Use the PriceController's current prices (which are reduced by innovations)
-    for (const auto& product : products) {
-        double cost = priceController.getCurrentCost(product);
-        productCosts.push_back(cost);
-        totalCost += cost;
+    // Use custom costs if provided (for cycle 0), otherwise use current prices
+    if (!customCosts.empty()) {
+        for (const auto& product : products) {
+            double cost = customCosts.at(product);
+            productCosts.push_back(cost);
+            totalCost += cost;
+        }
+    } else {
+        // Use the PriceController's current prices (which are reduced by innovations)
+        for (const auto& product : products) {
+            double cost = priceController.getCurrentCost(product);
+            productCosts.push_back(cost);
+            totalCost += cost;
+        }
     }
     
     std::cout << "Current basket total: " << std::fixed << std::setprecision(3) << totalCost << " hours\n";
@@ -454,12 +506,15 @@ void Simulation::generateWorkerBudgetPieChart(int cycle) {
     {
         std::ostringstream tss;
         tss << std::fixed << std::setprecision(3) << totalCost;
-        title("Worker Budget Allocation - Cycle " + std::to_string(cycle) + 
+        title("Worker Budget Allocation - Outer Cycle " + std::to_string(cycle) + 
               "\nTotal Budget: " + tss.str() + " labor hours");
+        // Move legend to the right side of the pie chart, not in the middle
+        legend()->position({0.85, 0.5});
+        legend()->title("Sum of basket costs: " + tss.str() + " labor hours");
     }
     
     std::string filename = "worker_budget_cycle_" + std::to_string(cycle) + ".png";
-    save(filename);
+    save("graphs/" + filename);
     
     std::cout << "Generated worker budget pie chart for cycle " << cycle << ": " << filename << "\n";
     
@@ -501,13 +556,13 @@ void Simulation::generateWorkerBudgetPieChart(int cycle) {
     std::cout << "\n";
 } 
 
-void Simulation::applyPlanCycleInnovations() {
-    // Random innovations based on research data - only some products get innovations randomly
+void Simulation::applyPlanCycleInnovations(int cycleNumber) {
+    // Random innovations based on research data - more realistic and conservative parameters
     // Base probability per inner cycle: research-based rates
     const double LAMBDABASEPROBABIILITY = WORKER_PARTICIPATION_RATE * EMPLOYEE_SUGGESTION_RATE * SUGGESTION_IMPLEMENTATION_RATE;
     std::poisson_distribution<int> poissonDist(LAMBDABASEPROBABIILITY);
-    const double meanReduction = 0.20; // 20% average productivity gain per innovation (more aggressive for testing)
-    const double stdReduction = 0.06; // moderate variance for realistic variation
+    const double meanReduction = 0.15; // 15% average productivity gain per innovation (balanced)
+    const double stdReduction = 0.06; // 6% standard deviation for reasonable variance
     std::normal_distribution<double> reductionDist(meanReduction, stdReduction);
 
     bool anyInnovation = false;
@@ -523,18 +578,19 @@ void Simulation::applyPlanCycleInnovations() {
     }     
     std::discrete_distribution<int> weightedDist(weights.begin(), weights.end());   
 
-    // Check if innovations should happen this cycle (15% chance per cycle - more aggressive for testing)
+    // Check if innovations should happen this cycle (15% chance per cycle - more aggressive)
     std::uniform_real_distribution<double> innovationChance(0.0, 1.0);
-    if (innovationChance(gen) <= 0.45) {
+    if (innovationChance(gen) <= 0.15) {
         // When innovation happens, ensure at least 1 product gets improved
         int numInnovations = std::max(1, poissonDist(gen));
         for (int i = 0; i < numInnovations; i++) {
-            double innovation = std::clamp(reductionDist(gen), 0.08, 0.60);
+                    double innovation = std::clamp(reductionDist(gen), 0.01, 0.20); // Range: 1% to 20%
             const std::string &product = products[weightedDist(gen)];
             products_innovation_rates[product] += innovation;
+            
             // Directly update the PriceController's current prices
             // priceController.updateCurrentPrice(product, newCost);
-            std::cout << "Innovation in " << product << " by: " << std::fixed << std::setprecision(3) << innovation << "\n";
+            // Removed output for speed: Innovation in product by amount
         }
         anyInnovation = true;
     }
@@ -546,16 +602,27 @@ void Simulation::applyPlanCycleInnovations() {
         
         int num_firms_innovated = 0;
         for (auto& [product, innovation_rate] : products_innovation_rates) {
-            if (innovation_rate > threshold_percentage_products) {
+            if (innovation_rate > THRESHOLD_PERCENTAGE_PRODUCTS) {
                 num_firms_innovated++;
             }
 
-            if (num_firms_innovated >= threshold_percentage_firms) {
+            if (num_firms_innovated >= THRESHOLD_INNOVATION_AMONGST_PRODUCTS) {
                 priceController.updateCurrentPrice();
                 for (auto& product : products_innovation_rates) {
                     product.second = 0;
                 }
                 outerCycle++;
+                
+                // Track the general cycle number when outer cycle increments
+                workDayAtOuterCycle.push_back(cycleNumber);
+                
+                // Calculate and store the workday value at this outer cycle increment
+                double currentWorkday = 0.0;
+                for (const auto& product : products) {
+                    currentWorkday += priceController.getCurrentCost(product);
+                }
+                workDayValuesAtOuterCycle.push_back(currentWorkday);
+                
                 generateWorkerBudgetPieChart(outerCycle);
                 break;
             }
@@ -565,9 +632,9 @@ void Simulation::applyPlanCycleInnovations() {
             currentWorkday += priceController.getCurrentCost(product);
         }
         workDayAtInnerCycle.push_back(currentWorkday);
-        std::cout << "Workday after innovations: " << std::fixed << std::setprecision(3) << currentWorkday << " hours\n";
+        // Removed output for speed: Workday after innovations
     } else {
-        std::cout << "No innovations this inner cycle.\n";
+        // Removed output for speed: No innovations this inner cycle
     }
 }
 
@@ -575,38 +642,328 @@ void Simulation::generateWorkDayPlot() {
     using namespace matplot;
     auto fig = figure(true);
     fig->size(1000, 600);
+    
+    std::vector<double> x_tick;
+    for(int i = 0; i <= 10000; i += 1000) {
+        x_tick.push_back(static_cast<double>(i));
+    }
 
-    // Plot workday as a true step function - only when innovations occur
+    // Plot workday as a step function - use general cycle numbers when outer cycles increment
+    std::vector<double> generalCyclesD;
+    std::vector<double> workDayValues;
+    
+    // Create step function data: each outer cycle increment creates a horizontal line until the next outer cycle
+    if (workDayAtOuterCycle.empty()) {
+        // No outer cycles yet, just show initial workday at 8.0 for full range
+        generalCyclesD.push_back(0.0);
+        generalCyclesD.push_back(10000.0);
+        workDayValues.push_back(8.0);
+        workDayValues.push_back(8.0);
+    } else {
+        for (size_t i = 0; i < workDayAtOuterCycle.size(); ++i) {
+            // Add the outer cycle point
+            generalCyclesD.push_back(static_cast<double>(workDayAtOuterCycle[i]));
+            
+            // Use the stored workday value at this outer cycle increment
+            double workdayValue = workDayValuesAtOuterCycle[i];
+            workDayValues.push_back(workdayValue);
+            
+            // If this isn't the last point, add the next outer cycle with the same value to create horizontal steps
+            if (i < workDayAtOuterCycle.size() - 1) {
+                generalCyclesD.push_back(static_cast<double>(workDayAtOuterCycle[i + 1]));
+                workDayValues.push_back(workdayValue);
+            } else {
+                // For the last outer cycle, extend the line to the end of simulation
+                generalCyclesD.push_back(10000.0);
+                workDayValues.push_back(workdayValue);
+            }
+        }
+    }
+
+    auto p = plot(generalCyclesD, workDayValues);
+    matplot::xticks(x_tick);
+    p->line_width(3);
+    p->color("blue");
+    xlabel("General Simulation Cycle");
+    ylabel("Hours in Work Day");
+    title("Work Day Over Time - Outer Cycle Increments (Step Function)");
+    grid(on);
+    
+    
+    // Set reasonable axis limits
+    ylim({4.0, 8.5}); // Workday should stay between 4-8.5 hours
+    xlim({0.0, 10000.0}); // Force x-axis to go from 0 to 10000
+    
+    save("graphs/workday_over_time.png");
+    
+    // Removed output for speed: Generated workday plot and cycle info
+} 
+
+
+
+// SimulationB method implementations
+
+SimulationB::SimulationB() : Simulation() {
+    // Generate initial pie chart for SimulationB in graphs2 directory
+    std::map<std::string, double> cycle0Costs;
+    for (const auto& product : products) {
+        cycle0Costs[product] = priceController.getCurrentCost(product);
+    }
+    
+    // Generate cycle 0 pie chart in graphs2 directory
+    generateWorkerBudgetPieChart(0, cycle0Costs);
+    
+    // Add initial workday tracking for cycle 0
+    workDayAtInnerCycleGeneral.push_back(0);
+    
+    // Removed output for speed: SimulationB constructor completed
+}
+
+void SimulationB::applyPlanCycleInnovations(int cycleNumber) {
+    // Random innovations based on research data - more realistic and conservative parameters
+    // Base probability per inner cycle: research-based rates
+    const double LAMBDABASEPROBABIILITY = WORKER_PARTICIPATION_RATE * EMPLOYEE_SUGGESTION_RATE * SUGGESTION_IMPLEMENTATION_RATE;
+    std::poisson_distribution<int> poissonDist(LAMBDABASEPROBABIILITY);
+    const double meanReduction = 0.02; // 2% average productivity gain per innovation (much smaller)
+    const double stdReduction = 0.01; // small variance for realistic variation
+    std::normal_distribution<double> reductionDist(meanReduction, stdReduction);
+
+    bool anyInnovation = false;
+    // numInnovations will be set inside the innovation block
+    // Using Poisson distribution to generate the number of innovations
+
+    std::vector<double> weights;
+    weights.reserve(products.size());
+    for (const auto& product : products) {
+        auto it = productLaborIntensity.find(product);
+        double intensity = (it == productLaborIntensity.end() ? 0.5 : it->second);
+        weights.push_back(std::max(0.01, 1.0 - intensity));
+    }     
+    std::discrete_distribution<int> weightedDist(weights.begin(), weights.end());   
+
+    // Check if innovations should happen this cycle (5% chance per cycle - less frequent)
+    std::uniform_real_distribution<double> innovationChance(0.0, 1.0);
+    if (innovationChance(gen) <= 0.05) {
+        // When innovation happens, ensure at least 1 product gets improved
+        int numInnovations = std::max(1, poissonDist(gen));
+        for (int i = 0; i < numInnovations; i++) {
+            double innovation = std::clamp(reductionDist(gen), 0.001, 0.01); // Very small: 0.1% to 1%
+            const std::string &product = products[weightedDist(gen)];
+            products_innovation_rates[product] += innovation;
+            priceController.updateCurrentPriceForSimulationB(product, priceController.getCurrentCost(product) * (1.0 - innovation));
+            // Directly update the PriceController's current prices
+            // priceController.updateCurrentPrice(product, newCost);
+            // Removed output for speed: Innovation in product by amount
+        }
+        anyInnovation = true;
+    }
+    
+    // Only increment inner cycle when innovations actually happen
+    if (anyInnovation) {
+        innerCycle++;
+        double currentWorkday = 0.0;
+        
+        // Track the general cycle number when inner cycle increments
+        workDayAtInnerCycleGeneral.push_back(cycleNumber);
+            
+        // Calculate current costs after innovations
+        std::map<std::string, double> currentCosts;
+        for (const auto& product : products) {
+            currentCosts[product] = priceController.getCurrentCost(product);
+        }
+            
+        generateWorkerBudgetPieChart(innerCycle, currentCosts);
+
+        for (const auto& product : products) {
+            currentWorkday += priceController.getCurrentCost(product);
+        }
+        workDayAtInnerCycle.push_back(currentWorkday);
+        // Removed output for speed: Workday after innovations
+    } else {
+        // Removed output for speed: No innovations this inner cycle
+    }    
+
+
+}
+
+void SimulationB::generateWorkerBudgetPieChart(int cycle, const std::map<std::string, double>& customCosts) {
+    // Don't call base class method - only generate charts in graphs2 directory
+    
+    // Create the pie chart for SimulationB
+    using namespace matplot;
+    
+    // Calculate current costs for each product (same logic as base class)
+    std::vector<double> productCosts;
+    std::vector<std::string> productLabels;
+    double totalCost = 0.0;
+    
+    // Use custom costs if provided (for cycle 0), otherwise use current prices
+    if (!customCosts.empty()) {
+        for (const auto& product : products) {
+            double cost = customCosts.at(product);
+            productCosts.push_back(cost);
+            totalCost += cost;
+        }
+    } else {
+        for (const auto& product : products) {
+            double cost = priceController.getCurrentCost(product);
+            productCosts.push_back(cost);
+            totalCost += cost;
+        }
+    }
+    
+    // Convert to percentages
+    std::vector<double> percentages;
+    for (size_t i = 0; i < productCosts.size(); ++i) {
+        double percentage = (productCosts[i] / totalCost) * 100.0;
+        percentages.push_back(percentage);
+        
+        std::ostringstream oss;
+        oss << std::fixed << std::setprecision(3) << productCosts[i];
+        productLabels.push_back(products[i] + " (" + std::to_string(int(percentage)) + "%, " + 
+                               oss.str() + "h)");
+    }
+    
+    auto fig = figure(true);
+    fig->size(1000, 700);
+    
+    pie(percentages, productLabels);
+    std::ostringstream tss;
+    tss << std::fixed << std::setprecision(3) << totalCost;
+    title("SimulationB - Worker Budget Allocation - Outer Cycle " + std::to_string(cycle) + 
+          "\nTotal Budget: " + tss.str() + " labor hours");
+    // Move legend to the right side of the pie chart, not in the middle
+    legend()->position({0.85, 0.5});
+    legend()->title("Sum of basket costs: " + tss.str() + " labor hours");
+    
+    save("graphs2/worker_budget_cycle_" + std::to_string(cycle) + "_B.png");
+    // Removed output for speed: Generated pie chart
+}
+
+void SimulationB::generateWorkDayPlot() {
+    // Don't call base class method - only generate charts in graphs2 directory
+    
+    std::string newFilename = "graphs2/workday_over_time_B.png";
+    
+    // Create the workday plot for SimulationB
+    using namespace matplot;
+    auto fig = figure(true);
+    fig->size(1000, 600);
+    
+    // Create x-axis ticks that go up to 10000
+    std::vector<double> x_tick;
+    for(int i = 0; i <= 10000; i += 1000) {
+        x_tick.push_back(static_cast<double>(i));
+    }
+
+    // Plot workday as a step function - use general cycle numbers when inner cycles increment
+    std::vector<double> generalCyclesD;
+    std::vector<double> workDayValues;
+    
+    // Create step function data: each inner cycle increment creates a horizontal line until the next inner cycle
+    if (workDayAtInnerCycleGeneral.empty()) {
+        // No inner cycles yet, just show initial workday at 8.0 for full range
+        generalCyclesD.push_back(0.0);
+        generalCyclesD.push_back(10000.0);
+        workDayValues.push_back(8.0);
+        workDayValues.push_back(8.0);
+    } else {
+        for (size_t i = 0; i < workDayAtInnerCycleGeneral.size(); ++i) {
+            // Add the inner cycle point
+            generalCyclesD.push_back(static_cast<double>(workDayAtInnerCycleGeneral[i]));
+            
+            // Get the corresponding workday value (ensure we don't go out of bounds)
+            double workdayValue = 8.0; // Default to initial workday
+            if (i < workDayAtInnerCycle.size()) {
+                workdayValue = workDayAtInnerCycle[i];
+            }
+            workDayValues.push_back(workdayValue);
+            
+            // If this isn't the last point, add the next inner cycle with the same value to create horizontal steps
+            if (i < workDayAtInnerCycleGeneral.size() - 1) {
+                generalCyclesD.push_back(static_cast<double>(workDayAtInnerCycleGeneral[i + 1]));
+                workDayValues.push_back(workdayValue);
+            } else {
+                // For the last inner cycle, extend the line to the end of simulation
+                generalCyclesD.push_back(10000.0);
+                workDayValues.push_back(workdayValue);
+            }
+        }
+    }
+
+    auto p = plot(generalCyclesD, workDayValues);
+    xticks(x_tick);
+    p->line_width(3);
+    p->color("red");  // Different color to distinguish from base simulation
+    xlabel("General Simulation Cycle");
+    ylabel("Hours in Work Day");
+    title("SimulationB - Work Day Over Time - Inner Cycle Increments (Step Function)");
+    grid(on);
+    
+    // Set x-axis limits to go from 0 to 10000
+    xlim({0.0, 10000.0});
+    ylim({4.0, 8.5});
+    
+    save(newFilename);
+    // Removed output for speed: Generated workday plot
+}
+
+void Simulation::fixWorkDayPlotXAxis() {
+    using namespace matplot;
+    
+    // Load the existing plot data
+    auto fig = figure(true);
+    fig->size(1000, 600);
+    
+    // Create x-axis ticks that go up to 10000
+    std::vector<double> x_tick;
+    for(int i = 0; i <= 10000; i += 1000) {
+        x_tick.push_back(static_cast<double>(i));
+    }
+
+    // Plot workday as a step function
     std::vector<double> outerCyclesD;
     std::vector<double> workDayValues;
     
-    // Create step function data: each innovation creates a horizontal line until the next innovation
-    for (size_t i = 0; i < workDayAtInnerCycle.size(); i++) {
+    for (size_t i = 0; i < workDayAtInnerCycle.size(); ++i) {
         outerCyclesD.push_back(static_cast<double>(i));
         workDayValues.push_back(workDayAtInnerCycle[i]);
         
-        // If this isn't the last point, add the next cycle with the same value to create horizontal steps
         if (i < workDayAtInnerCycle.size() - 1) {
             outerCyclesD.push_back(static_cast<double>(i + 1));
             workDayValues.push_back(workDayAtInnerCycle[i]);
         }
     }
-    
+
     auto p = plot(outerCyclesD, workDayValues);
+    xticks(x_tick);
     p->line_width(3);
     p->color("blue");
-    xlabel("Outer Plan Cycle");
+    xlabel("Inner Plan Cycle");
     ylabel("Hours in Work Day");
     title("Work Day Over Time - Inner Plan Cycles (Step Function)");
     grid(on);
     
-    // Set reasonable axis limits
-    ylim({4.0, 8.5}); // Workday should stay between 4-8.5 hours
+    // Force x-axis to go from 0 to 10000
+    xlim({0.0, 10000.0});
+    ylim({4.0, 8.5});
     
-    save("graphs/workday_over_time.png");
+    save("graphs/workday_over_time_fixed.png");
+    std::cout << "Generated fixed workday plot with x-axis 0-3000: graphs/workday_over_time_fixed.png" << std::endl;
+}
+
+void Simulation::saveSummaryStatistics() {
+    std::ofstream summaryFile("simulation_summary.csv");
+    summaryFile << "SimulationType,TotalFirms,TotalCycles,TotalInnerCycles,TotalOuterCycles,FinalWorkDay,InitialWorkDay,WorkDayReduction\n";
     
-    std::cout << "Generated workday plot: workday_over_time.png\n";
-    std::cout << "Inner plan cycles completed: " << innerCycle << "\n";
-} 
-
-
+    summaryFile << "SimulationA," << firms.size() << "," << cycleNumbers.back() << "," << innerCycle << "," << outerCycle << ",";
+    if (!workDayAtInnerCycle.empty()) {
+        summaryFile << std::fixed << std::setprecision(3) << workDayAtInnerCycle.back() << ",8.000,";
+        summaryFile << std::fixed << std::setprecision(3) << (8.0 - workDayAtInnerCycle.back()) << "\n";
+    } else {
+        summaryFile << "8.000,8.000,0.000\n";
+    }
+    
+    summaryFile.close();
+    // Summary statistics saved to simulation_summary.csv
+}
