@@ -10,19 +10,19 @@
 struct CapitalistEconomy
 {
     std::string name;
-    double curreny_amount;                                  // how much money is currently being held
-    double economic_indicator = INITIAL_ECONOMIC_INDICATOR; // value used in melt calculation
-    double work_hours = INITIAL_HOURS;                      // how many hours worked on average in a year
-    double melt;                                            // what would the new melt be in a new cycle
+    double curreny_amount = 0;                                // how much money is currently being held
+    double earnings_per_capita = INITIAL_EARNINGS_PER_CAPITA; // value used in melt calculation
+    double work_hours = INITIAL_HOURS;                        // how many hours worked on average in a year
+    double melt;                                              // what would the new melt be in a new cycle
     std::vector<CapitalistCompany> companies;
     std::vector<CapitalistProduct> market; // each new product will be added to the market with its market price determined
     std::map<char, double> market_price;   // each type of product has its own average market price
 
-    void new_indicator();
+    void new_earnings_per_capita();
     void new_work_hours();
     void new_melt();
     void add_product(CapitalistProduct &product);
-    void remove_product(const std::string &name);
+    void remove_product(CapitalistProduct &product);
 
     // This should be the last thing to do every cycle
     // It updates the market price of every type of product

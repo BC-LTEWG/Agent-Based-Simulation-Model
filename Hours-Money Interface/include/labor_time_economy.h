@@ -7,7 +7,7 @@
 struct LaborTimeEconomy
 {
     std::string name;
-    double currency_amount; // how much money is currently being held
+    double currency_amount = 0; // how much money is currently being held
     std::vector<LaborTimeCompany> companies;
 
     // How likely is an economy is going to create a new company

@@ -65,3 +65,9 @@ void CapitalistProduct::set_surplus_factor()
     static std::mt19937 gen(std::random_device{}());
     surplus_factor = std::uniform_real_distribution<>(0.1, 0.9)(gen);
 }
+
+void CapitalistProduct::export_to_destined_economy(const LaborTimeEconomy &lte)
+{
+    set_portion_sold_in_export();
+    set_quantity_produced_for_export();
+}

@@ -48,7 +48,7 @@ void LaborTimeProduct::set_labor_time()
 }
 
 // how much will be product be in the destined country
-void LaborTimeProduct::calculate_sell_price(const CapitalistEconomy &economy)
+void LaborTimeProduct::calculate_sale_price(const CapitalistEconomy &economy)
 {
     // I am checking if the product type exists in the market
     // If the product doesn't exist, then we use melt
@@ -56,15 +56,15 @@ void LaborTimeProduct::calculate_sell_price(const CapitalistEconomy &economy)
     {
         if (product.first == product_type)
         {
-            sell_price = product.second * 0.9; // 0.9 of the market price?
+            sale_price = product.second * 0.9; // 0.9 of the market price?
             return;
         }
     }
-    sell_price = labor_time * economy.melt + (labor_time * economy.melt) / (1 - surplus_factor);
+    sale_price = labor_time * economy.melt + (labor_time * economy.melt) / (1 - surplus_factor);
 }
 
 // new portion sold
-void CapitalistProduct::set_portion_sold_in_export()
+void LaborTimeProduct::set_portion_sold_in_export()
 {
     static std::mt19937 gen(std::random_device{}());
     portion_sold_in_export = std::uniform_real_distribution<>(0, 1)(gen);
@@ -72,7 +72,7 @@ void CapitalistProduct::set_portion_sold_in_export()
 
 // total amount producted between 100 and 1000
 // Arbitrary value
-void CapitalistProduct::set_quantity_produced_for_export()
+void LaborTimeProduct::set_quantity_produced_for_export()
 {
     static std::mt19937 gen(std::random_device{}());
     quantity_produced_for_export = std::uniform_real_distribution<>(100, 1000)(gen);
@@ -84,4 +84,12 @@ void LaborTimeProduct::set_surplus_factor()
 {
     static std::mt19937 gen(std::random_device{}());
     surplus_factor = std::uniform_real_distribution<>(0.1, 0.9)(gen);
+}
+
+void LaborTimeProduct::export_to_destined_economy(const CapitalistEconomy &ce)
+{
+    set_portion_sold_in_export();
+    set_quantity_produced_for_export();
+    set_surplus_factor();
+    calculate_sale_price(ce);
 }

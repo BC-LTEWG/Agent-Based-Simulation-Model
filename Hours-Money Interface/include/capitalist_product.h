@@ -2,17 +2,21 @@
 
 #include <string>
 #include <vector>
+#include "labor_time_economy.h"
+
+struct CapitalistCompany;
 
 struct CapitalistProduct
 {
     std::string product_name;
-    std::string company;
-    char product_type;
+    CapitalistCompany *company = nullptr;
+    char product_type; // product type can be car or laptop in reality, an example will be cars produced by different firms currently in the market
     double price;
 
     void set_product_name();
     void set_product_type();
     void set_desired_price();
+    void export_to_destined_economy(const LaborTimeEconomy &lte);
 
     double portion_sold_in_export;
     double quantity_produced_for_export;

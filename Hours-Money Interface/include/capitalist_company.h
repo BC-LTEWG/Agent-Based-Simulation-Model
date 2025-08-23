@@ -4,12 +4,16 @@
 #include <vector>
 #include "capitalist_product.h"
 
+struct CapitalistEconomy;
+
 struct CapitalistCompany
 {
-    std::string name;
-    std::string economy;
+    std::string company_name;
+    CapitalistEconomy *economy = nullptr;
     std::vector<CapitalistProduct> products;
 
+    void set_company_name();
+    void create_product();
     std::string print_products();
 
     // How likely is a company going to create a new product
@@ -19,4 +23,6 @@ struct CapitalistCompany
 
     void new_create_factor();
     void new_remove_factor();
+
+    CapitalistCompany(CapitalistEconomy *ce);
 };
