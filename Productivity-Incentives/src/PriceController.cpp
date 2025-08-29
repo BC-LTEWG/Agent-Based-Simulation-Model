@@ -40,10 +40,14 @@ double PriceController::getCurrentCost(const std::string& productName) {
     return officialPrice;
 }
 
+const std::map<std::string, double>& PriceController::getCurrentPrices() const {
+    return current_prices;
+}
+
 void PriceController::updateCurrentPrice() {
     // This function should be called with the accumulated innovation rates
     // For now, just do a small reduction to avoid being too aggressive
-    double price_reduction = std::clamp(reductionDist(gen), 0.005, 0.02); // Reduced: 0.5% to 2%
+    double price_reduction = std::clamp(reductionDist(gen), 0.002, 0.01); // Reduced: 0.2% to 1%
     for (auto& [product, price] : current_prices) {
         price = price * (1.0 - price_reduction);
     }

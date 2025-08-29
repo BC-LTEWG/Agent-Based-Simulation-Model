@@ -18,6 +18,7 @@ class PriceController {
 
         double getOfficialPrice(const std::string& productName);
         double getCurrentCost(const std::string& productName);
+        const std::map<std::string, double>& getCurrentPrices() const;
         void updateCurrentPrice();
         void updateCurrentPriceForSimulationB(const std::string& productName, double newCost);
         // Instance methods for compatibility with existing code

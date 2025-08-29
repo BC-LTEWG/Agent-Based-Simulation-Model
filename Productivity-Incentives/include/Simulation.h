@@ -11,6 +11,7 @@
 
 #define NUM_FIRMS 20
 
+
 // Source: Toyota Production System Data (250,000 suggestions/year, 43,000 employees)
 #define TOYOTA_SUGGESTIONS_PER_EMPLOYEE_YEAR 5.8    // 250,000 ÷ 43,000 = 5.8
 #define TOYOTA_PARTICIPATION_RATE 0.70              // 70% of workforce participates
@@ -30,8 +31,8 @@
 #define INNOVATION_DISCOVERY_RATE 0.25              // Inter-firm knowledge transfer rate
 
 // Economic thresholds for price updates (balanced - not too strict, not too aggressive)
-#define THRESHOLD_INNOVATION_AMONGST_PRODUCTS 2    // Only 2 products need to improve before price update (easier to trigger)
-#define THRESHOLD_PERCENTAGE_PRODUCTS 2.0    // Reduced threshold - easier to trigger pie charts
+#define THRESHOLD_INNOVATION_AMONGST_PRODUCTS 3    // Need 3 products to improve before price update (more strict)
+#define THRESHOLD_PERCENTAGE_PRODUCTS 0.15    // Need 15% improvement before triggering (more strict)
 
 static std::mt19937_64 generator(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 static std::uniform_real_distribution<double> dist(0.0, 1.0);
@@ -53,8 +54,39 @@ protected:  // Change from private to protected so derived classes can access
 
     
     // Products vector must be declared before PriceController for initialization
-    std::vector<std::string> products = {"shirts", "shoes", "shorts", "apples", "bread", "chairs", "tables", "healthcare"};
-    std::unordered_map<std::string, double> products_innovation_rates = {{"shirts", 0.00}, {"shoes", 0.00}, {"shorts", 0.00}, {"apples", 0.00}, {"bread", 0.00}, {"chairs", 0.00}, {"tables", 0.00}, {"healthcare", 0.05}};
+    std::unordered_map<std::string, std::tuple<std::vector<std::string>, double, bool>> products = {
+        {"shirts", {{"Alpha Corp", "Beta Industries", "Gamma Works", "Delta Manufacturing", "Epsilon Enterprises"}, 0.6, false}},
+        {"shoes", {{"Zeta Production", "Eta Systems", "Theta Co", "Iota Labs", "Kappa Industries"}, 0.9, false}},
+        {"shorts", {{"Lambda Services", "Mu Healthcare", "Nu Logistics", "Xi Technologies", "Omicron Foods"}, 0.5, false}},
+        {"apples", {{"Pi Construction", "Rho Textiles", "Sigma Energy", "Tau Transport", "Upsilon Care"}, 0.8, false}},
+        {"bread", {{"Phi Manufacturing", "Chi Industries", "Psi Systems", "Omega Corp", "Alpha Prime"}, 1.0, false}},
+        {"chairs", {{"Beta Prime", "Gamma Prime", "Delta Prime", "Epsilon Prime", "Zeta Prime"}, 1.2, false}},
+        {"tables", {{"Eta Prime", "Theta Prime", "Iota Prime", "Kappa Prime", "Lambda Prime"}, 1.3, false}},
+        {"healthcare", {{"Mu Prime", "Nu Prime", "Xi Prime", "Omicron Prime", "Pi Prime"}, 1.7, false}}
+    };
+    
+    // Individual firm prices - each firm has their own price for their product
+    std::unordered_map<std::string, double> firmPrices = {
+        // Shirts firms - all start at 0.6
+        {"Alpha Corp", 0.6}, {"Beta Industries", 0.6}, {"Gamma Works", 0.6}, {"Delta Manufacturing", 0.6}, {"Epsilon Enterprises", 0.6},
+        // Shoes firms - all start at 0.9
+        {"Zeta Production", 0.9}, {"Eta Systems", 0.9}, {"Theta Co", 0.9}, {"Iota Labs", 0.9}, {"Kappa Industries", 0.9},
+        // Shorts firms - all start at 0.5
+        {"Lambda Services", 0.5}, {"Mu Healthcare", 0.5}, {"Nu Logistics", 0.5}, {"Xi Technologies", 0.5}, {"Omicron Foods", 0.5},
+        // Apples firms - all start at 0.8
+        {"Pi Construction", 0.8}, {"Rho Textiles", 0.8}, {"Sigma Energy", 0.8}, {"Tau Transport", 0.8}, {"Upsilon Care", 0.8},
+        // Bread firms - all start at 1.0
+        {"Phi Manufacturing", 1.0}, {"Chi Industries", 1.0}, {"Psi Systems", 1.0}, {"Omega Corp", 1.0}, {"Alpha Prime", 1.0},
+        // Chairs firms - all start at 1.2
+        {"Beta Prime", 1.2}, {"Gamma Prime", 1.2}, {"Delta Prime", 1.2}, {"Epsilon Prime", 1.2}, {"Zeta Prime", 1.2},
+        // Tables firms - all start at 1.3
+        {"Eta Prime", 1.3}, {"Theta Prime", 1.3}, {"Iota Prime", 1.3}, {"Kappa Prime", 1.3}, {"Lambda Prime", 1.3},
+        // Healthcare firms - all start at 1.7
+        {"Mu Prime", 1.7}, {"Nu Prime", 1.7}, {"Xi Prime", 1.7}, {"Omicron Prime", 1.7}, {"Pi Prime", 1.7}
+    };
+    std::unordered_map<std::string, double> products_innovation_rates = {
+        {"shirts", 0.00}, {"shoes", 0.00}, {"shorts", 0.00}, {"apples", 0.00}, {"bread", 0.00}, {"chairs", 0.00}, {"tables", 0.00}, {"healthcare", 0.05}
+    };
     PriceController priceController;
     
     // Research-based simulation parameters using concrete Toyota and academic data
@@ -74,7 +106,12 @@ protected:  // Change from private to protected so derived classes can access
                                          "Epsilon Enterprises", "Zeta Production", "Eta Systems", "Theta Co",
                                          "Iota Labs", "Kappa Industries", "Lambda Services", "Mu Healthcare",
                                          "Nu Logistics", "Xi Technologies", "Omicron Foods", "Pi Construction",
-                                         "Rho Textiles", "Sigma Energy", "Tau Transport", "Upsilon Care"};
+                                         "Rho Textiles", "Sigma Energy", "Tau Transport", "Upsilon Care",
+                                         "Phi Manufacturing", "Chi Industries", "Psi Systems", "Omega Corp",
+                                         "Alpha Prime", "Beta Prime", "Gamma Prime", "Delta Prime",
+                                         "Epsilon Prime", "Zeta Prime", "Eta Prime", "Theta Prime",
+                                         "Iota Prime", "Kappa Prime", "Lambda Prime", "Mu Prime",
+                                         "Nu Prime", "Xi Prime", "Omicron Prime", "Pi Prime"};
     
     // Productivity tracking by sector
     std::map<std::string, double> sectorProductivityGains; // sector -> total productivity gain

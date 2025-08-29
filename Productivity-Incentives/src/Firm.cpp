@@ -74,7 +74,7 @@ void Firm::findInnovation(Project& project) {
 void Firm::create_projects() {
     static std::random_device rd;
     static std::mt19937 gen(rd());
-    static std::uniform_int_distribution<> productSelector(0, 7);  // 8 products: 0-7
+    static std::uniform_int_distribution<> productSelector(0, 7);  // 8 products: 0-7 (but each has 5 firms)
     static std::uniform_int_distribution<> quantityDist(10, 100);
     static std::uniform_real_distribution<> probability(0.0, 1.0);
     
