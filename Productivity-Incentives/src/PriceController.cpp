@@ -1,4 +1,5 @@
 #include "../include/PriceController.h"
+#include "../include/Simulation.h"
 #include "../include/Firm.h" // Need this for Project struct
 #include <iostream>
 #include <algorithm>
@@ -17,9 +18,9 @@ PriceController::PriceController(std::map<std::string, double> initialOfficialPr
 
 
 // method to update for SimulationB
-void PriceController::updateCurrentPriceForSimulationB(const std::string& productName, double newCost) {
-    double oldCost = current_prices[productName];
-    current_prices[productName] = newCost;
+void PriceController::updateCurrentPriceForSimulationB(const std::string& productName, const std::string& firm_name, double newCost) {
+    double old_cost = Simulation::products[productName]
+    Simulation::current_costs[firm_name] = newCost;
     // Debug output removed for speed
 }
 

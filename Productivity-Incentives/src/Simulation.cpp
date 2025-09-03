@@ -404,7 +404,7 @@ void Simulation::run(int numCycles) {
     std::cout << "\nSimulation completed successfully!\n";
     std::cout << "Total plan cycles: " << numCycles << "\n";
     std::cout << "Total inner cycles (innovations): " << innerCycle << "\n";
-    std::cout << "Total outer cycles (price recomputations): " << priceCyclesAchieved << "\n";
+    std::cout << "Total outer cycles (price recomputations): " << outerCycle << "\n";
 }
 
 // Economic shock methods removed
@@ -832,7 +832,7 @@ void SimulationB::applyPlanCycleInnovations(int cycleNumber) {
             std::advance(it, weightedDist(gen) % products.size());
             const std::string &productName = it->first;
             products_innovation_rates[productName] += innovation;
-            priceController.updateCurrentPriceForSimulationB(productName, priceController.getCurrentCost(productName) * (1.0 - innovation));
+            priceController.updateCurrentPriceForSimulationB(firm_name, priceController.getCurrentCost(productName) * (1.0 - innovation));
             // Directly update the PriceController's current prices
             // priceController.updateCurrentPrice(product, newCost);
             // Removed output for speed: Innovation in product by amount
