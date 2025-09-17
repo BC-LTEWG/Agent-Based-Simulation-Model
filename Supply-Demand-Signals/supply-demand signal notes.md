@@ -1,8 +1,4 @@
-# Supply-Demand Signals Codebase Manual
-**Complete Line-by-Line Analysis and Rewriting Guide**
-
-## Project Overview
-This is a C++ economic simulation system that models supply and demand dynamics using cybernetic signals and automatic responses. The system simulates a society with workers, firms, goods, and a distributor, running through plan cycles to balance production and consumption.
+# Supply-Demand Signals Codebase Notes
 
 ## Build System
 - **CMakeLists.txt**: Uses CMake 3.14+, C++20 standard, depends on Matplot++ for visualization
@@ -15,22 +11,6 @@ This is a C++ economic simulation system that models supply and demand dynamics 
 
 ### Main Entry Point: `src/main.cpp`
 
-#### Lines 1-13: Includes and Setup
-```cpp
-#include <cassert>
-#include <chrono>
-#include <cstdio>
-#include <vector>
-
-#include "Distributor.hpp"
-#include "Firm.hpp"
-#include "Plan.hpp"
-#include "PlotHandler.hpp"
-#include "Society.hpp"
-#include "Worker.hpp"
-#include "randomizer.hpp"
-```
-**Purpose**: Standard includes plus all custom headers for the economic simulation.
 
 #### Lines 14-22: Argument Parser Lambda
 ```cpp
@@ -696,4 +676,4 @@ Main Loop → Collect Stats → Plot Updates → Final Rendering
 - Plan cycles for temporal coordination
 - Deficit history for demand tracking
 
-This manual provides the complete blueprint for recreating the economic simulation system with all critical implementation details preserved.
+
