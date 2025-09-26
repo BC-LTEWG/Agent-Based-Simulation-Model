@@ -114,15 +114,16 @@ Iterate the four boxed recurrences each cycle.
 
 ---
 
-## Sketch 
+## Flow Diagram
 
 ```mermaid
 flowchart LR
-  F[Firm<br/>c: F_c(i), l: F_l(i)] ---|produce u_i| D[Distributor<br/>c: D_c(i), l: D_l(i)]
-  D -- when F_c(i)=0, ship S_i --> F
-  F -- pay P_i = a_l * u_i --> D
-  subgraph Cycle i
+  F[Firm: (F_c, F_l)] ---|produces u_i| D[Distributor: (D_c, D_l)]
+  D -- "ships S_i when F_c=0" --> F
+  F -- "pays P_i = a_l * u_i" --> D
+
+  subgraph Cycle
     direction LR
-    F -->|"consume a_c u_i, a_l u_i"| F
-    D -->|"receive u_i; send S_i"| D
+    F -->|"consumes a_c*u_i and a_l*u_i"| F
+    D -->|"receives u_i; sends S_i"| D
   end
