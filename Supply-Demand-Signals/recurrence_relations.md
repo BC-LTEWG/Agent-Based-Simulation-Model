@@ -14,14 +14,14 @@ Time is indexed by cycles $i=0,1,2,\dots$.
 
 - Firm state: $(F_c(i), F_l(i))$
 - Distributor state: $(D_c(i), D_l(i))$
-- Indicator function:
-  $$
-  \mathbf{1}[\text{statement}] =
-  \begin{cases}
-  1, & \text{if the statement is true} \\
-  0, & \text{otherwise}
-  \end{cases}
-  $$
+- **Indicator function:**
+
+$$
+\mathbf{1}[\text{statement}] = \begin{cases}
+1, & \text{if the statement is true} \\
+0, & \text{otherwise}
+\end{cases}
+$$
 
 - **The proportions for making materials**:
   - $a_c>0$: materials units required per unit of output
@@ -91,16 +91,15 @@ All conditionals are encoded with indicators in $S_i$; no piecewise blocks neede
 
 ## Optional variants
 
-- **Ship "everything" on restock**: set $b=\infty$ to get
-  $$
-  S_i = D_c(i) \cdot \mathbf{1}[F_c(i)=0]
-  $$
-- **Price materials on restock (pre-payment)**:
-  If you want labor to transfer **when** materials are shipped instead of when output is produced,
-  replace $P_i = a_l \cdot u_i$ with
-  $$
-  P_i = p_c \cdot S_i
-  $$
+- **Ship "everything" on restock:** set $b=\infty$ to get:
+
+  $$S_i = D_c(i) \cdot \mathbf{1}[F_c(i)=0]$$
+- **Price materials on restock (pre-payment):**
+
+  If you want labor to transfer **when** materials are shipped instead of when output is produced, replace $P_i = a_l \cdot u_i$ with:
+  
+  $$P_i = p_c \cdot S_i$$
+  
   where $p_c$ is the labor-per-material price. The system still stays well-posed.
 
 ---
