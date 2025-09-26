@@ -23,7 +23,7 @@ Time is indexed by cycles \(i=0,1,2,\dots\).
   \end{cases}
   \]
 
-- **Recipe coefficients (Leontief/fixed proportions)**:
+- **The proportions for making materials**:
   - \(a_c>0\): materials units required per unit of output
   - \(a_l>0\): labor-hours (certificates) required per unit of output
 
@@ -48,7 +48,7 @@ These definitions guarantee \(0 \le M_i \le F_c(i)\) and \(0 \le L_i \le F_l(i)\
 
 ---
 
-## Trade/Payment rules
+## Exchange Between Firm and Distributor
 
 - The **firm restocks materials only when empty**:
   \[
@@ -62,7 +62,7 @@ These definitions guarantee \(0 \le M_i \le F_c(i)\) and \(0 \le L_i \le F_l(i)\
   \]
   This ties payment to both \(F_c(i)\) and \(F_l(i)\) via \(u_i\).
 
-> **Why this is “logical”:** With a fixed recipe, each unit of output embodies \(a_l\) labor-hours. Producing \(u_i\) units uses \(a_l u_i\) hours, so the firm transfers exactly that amount of labor-time certificates to the distributor.
+> **Why this should work:** With a fixed recipe, each unit of output embodies \(a_l\) labor-hours. Producing \(u_i\) units uses \(a_l u_i\) hours, so the firm transfers exactly that amount of labor-time certificates to the distributor.
 
 ---
 
@@ -114,7 +114,7 @@ Iterate the four boxed recurrences each cycle.
 
 ---
 
-## Mermaid sketch (GitHub-renderable)
+## Sketch 
 
 ```mermaid
 flowchart LR
