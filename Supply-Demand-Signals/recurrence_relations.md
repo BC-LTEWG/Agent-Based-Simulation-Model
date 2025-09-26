@@ -18,7 +18,7 @@ Time is indexed by cycles $i=0,1,2,\dots$.
   $$
   \mathbf{1}[\text{statement}] =
   \begin{cases}
-  1, & \text{if the statement is true}\\
+  1, & \text{if the statement is true} \\
   0, & \text{otherwise}
   \end{cases}
   $$
@@ -97,7 +97,7 @@ All conditionals are encoded with indicators in $S_i$; no piecewise blocks neede
   $$
 - **Price materials on restock (pre-payment)**:
   If you want labor to transfer **when** materials are shipped instead of when output is produced,
-  replace $P_i=a_l \cdot u_i$ with
+  replace $P_i = a_l \cdot u_i$ with
   $$
   P_i = p_c \cdot S_i
   $$
@@ -110,7 +110,9 @@ All conditionals are encoded with indicators in $S_i$; no piecewise blocks neede
 $$
 F_c(0)=0, \quad F_l(0)=100, \qquad D_c(0)=100, \quad D_l(0)=100
 $$
+
 with $(a_c,a_l)=(1,1)$ and $b=50$.
+
 Iterate the four recurrence relations each cycle.
 
 ---
