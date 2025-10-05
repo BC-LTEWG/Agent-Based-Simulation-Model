@@ -37,6 +37,7 @@ class Firm {
     std::vector<Machine&> getMachines() {};
     std::vector<Worker&> getWorkers() {};
     std::vector<Plan&> getPlans() {};
+    float getAvgProductivity() {};
 
 
 

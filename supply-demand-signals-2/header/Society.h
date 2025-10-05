@@ -3,6 +3,8 @@
 #include "Worker.h"
 #include "Machine.h"
 
+const double productivityThreshold = 60.0; // threshold for productivity before lowering working hours
+
 class Society{
   public:
     std::vector<Worker&> workers;
@@ -15,6 +17,7 @@ class Society{
     
     Society& numWorkers() {};
     Society& numFirms() {};
+    bool meetsStandardForLowerWorkingHours() {};
     Society& setWorkHoursDaily(int hours) {};
     
 
