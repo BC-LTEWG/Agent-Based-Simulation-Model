@@ -3,14 +3,12 @@
 #include <vector>
 
 
-struct Machine {
+class Machine {
     public:
-        const std::string name;
-        const int lifetime_hours;
-        int hopurs_used;
+        std::string name;
+        int lifetime;
         Machine(const std::string& name, int lifetime) : name(name), lifetime(lifetime) {}
-
-        Machine& machineUsage(std::string machingName) {};
-
-
+        std::vector<Firm&> addMachinetoFirm(Firm& f, std::vector<Machine&> machines);
 };
+
+

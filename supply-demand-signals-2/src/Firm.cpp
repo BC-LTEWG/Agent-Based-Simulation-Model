@@ -1,35 +1,54 @@
 #include "Firm.h"
 #include <string>
 #include <vector>
+#include <numeric>
 
 
-std::vector<Plan&> Firm::addPlan(Firm& f, std::vector<Plans&> newPlans) {
-  for(const auto& plan: newPlans) {
-    f.plans.push_back(plan);
+std::vector<Plan&> Firm::addPlan(std::vector<Plan&> newPlans) {
+  for(auto& plan: newPlans) {
+    this->plans.push_back(plan);
   }
-  return f.plans;
+  return this->plans;
 }
 
-std::vector<Plan&> Firm::addPlan(Firm& f, std::vector<Plans&> newMachines) {
-  for(const auto& machine: newMachines) {
-    f.machines.push_back(machines);
+std::vector<Machine&> Firm::addMachine(std::vector<Machine&> newMachines) {
+  for(auto& machine: newMachines) {
+    this->machines.push_back(machine);
   }
-  return f.plans;
+  return this->machines;
 }
 
-std::vector<Plan&> Firm::addWorkers(Firm& f, std::vector<Workers&> newWorkers) {
-  for(const auto& workers: newWorkers) {
-    f.workers.push_back(workers);
+std::vector<Worker&> Firm::addWorkers(std::vector<Worker&> newWorkers) {
+  for(auto& worker: newWorkers) {
+    this->workers.push_back(worker);
   }
-  return f.plans;
+  return this->workers;
 }
 
-std::vector<double> firm::avgingPlanMetrics(Firm& f, std::string planName) {
-  if(f.planHistory.find(planName) != f.planHistory.end()) {
-    avgRawMaterialCost = std::reduce(f.planHistory[planName].rawMaterials.begin(), f.planHistory[planName].rawMaterials.end(), 0.0) / f.planHistory[planName].size();
-    avgLaborCost = std::reduce(f.planHistory[planName].laborHours.begin(), f.planHistory[planName].laborHours.end(), 0.0) / f.planHistory[planName].size();
-    std::vector<Machine&> machines = f.planHistory[planName].machines;
+std::vector<double> Firm::avgingPlanMetrics(std::string planName) {
+  double avgRawMaterialCost = 0.0;
+  double avgLaborCost = 0.0;
+  double avgMachineCost = 0.0;
+  
+  if(this->planHistory.find(planName) != this->planHistory.end()) {
+    std::vector<Plan&>& plans = this->planHistory[planName];
+    avgRawMaterialCost = std::reduce(plans.begin(), plans.end(), 0.0, [](double sum, const Plan& p){ return sum + p.rawMaterials; }) / plans.size();
+    avgLaborCost = std::reduce(plans.begin(), plans.end(), 0.0, [](double sum, const Plan& p){ return sum + p.laborHours; }) / plans.size();
+    std::vector<Machine> machines = plans[0].machines;
     avgMachineCost = std::reduce(machines.begin(), machines.end(), 0.0) / machines.size();
   }
-  return {avgRawMaterialCost, avgLaborCost, avgRawMaterialCost};
+  return {avgRawMaterialCost, avgLaborCost, avgMachineCost};
 }
+
+std::vector<Machine&> Firm::getMachines() {
+  return this->machines;
+}
+
+std::vector<Worker&> Firm::getWorkers() {
+  return this->workers;
+}
+
+std::vector<Plan&> Firm::getPlans() {
+  return this->plans;
+}
+

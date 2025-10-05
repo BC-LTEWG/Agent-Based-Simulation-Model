@@ -3,6 +3,7 @@
 #include <vector>
 #include "Worker.h"
 #include "Machine.h"
+#include <unordered_map>
 
 struct Plan {
   std::string planName;
@@ -19,20 +20,23 @@ class Firm {
     std::vector<Machine&> machines;
     std::vector<Worker&> workers;
     std::vector<Plan&> plans;
-    std::unordered_map<std::string, Plan&> planHistory;
+    std::unordered_map<std::string, std::vector<Plan&>> planHistory;
 
-    Firm(int workerCount, std::vector<Machine&> machines, std::vector<Worker&> workers, std::vector<Plan&> plans) : workerCount(workerCount), machines(machines), workers(workers), plan(plan) {}
+    Firm(int workerCount, std::vector<Machine&> machines, std::vector<Worker&> workers, std::vector<Plan&> plans) : workerCount(workerCount), machines(machines), workers(workers), plans(plans) {}
     
-    std::vector<Plan&> addPlan(std::vector<Plans&> newPlans) {};
-    std::vector<Machine&> addMachine(std::vector<Machine&> machines) {};
-    std::vector<Workers&> addWorkers(std::vector<Workers&> workers) {};
-    std::vector<double> avgingPlanMetrics() {};
+    std::vector<Plan&> addPlan(std::vector<Plan&> newPlans) {};
+    std::vector<Machine&> addMachine(std::vector<Machine&> newMachines) {};
+    std::vector<Worker&> addWorkers(std::vector<Worker&> newWorkers) {};
+    std::vector<double> avgingPlanMetrics(std::string planName) {};
 
-    Machine& getMachine(std::strting machineName) {};
+    Machine& getMachine(std::string machineName) {};
     Plan& getPlan(std::string planName) {};
 
     std::size_t getWorkerCount() {};
     std::size_t getMachineCount() {};
+    std::vector<Machine&> getMachines() {};
+    std::vector<Worker&> getWorkers() {};
+    std::vector<Plan&> getPlans() {};
 
 
 
