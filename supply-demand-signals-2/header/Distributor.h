@@ -16,7 +16,7 @@ class Distributor {
         int laborHours;
         int machineHours;
         std::unordered_map<std::string, int> finishedGoods;
-        std::unordered_map<std::string, std::tuple<std::vector<Worker&>, std::vector<int>>> workerNeeds;
+        std::unordered_map<std::string, std::tuple<std::vector<Worker&>, std::vector<int>>> personNeeds;
 
         Distributor(std::vector<Worker&> workers, std::vector<Firm&> firms, std::size_t workerCount, std::size_t firmCount, int rawMaterials, int laborHours, int machineHours) : workers(workers), firms(firms), workerCount(workerCount), firmCount(firmCount), rawMaterials(rawMaterials), laborHours(laborHours), machineHours(machineHours) {}
 
@@ -25,9 +25,7 @@ class Distributor {
         std::size_t getWorkerCount() {};
         std::size_t getFirmCount() {};
 
-        std::vector<Firm&> firmswithMissingMaterials() {}; 
         void distributeMaterialsToFirms(int rawMaterials, int machineHours, Firm& firm) {};
         void restockInventory() {};
-        void distributeFinishedGoodsToWorkers() {};
 
 };

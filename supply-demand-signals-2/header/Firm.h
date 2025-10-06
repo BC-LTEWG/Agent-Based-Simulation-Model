@@ -7,6 +7,7 @@
 
 struct Plan {
   std::string planName;
+  std::string productName;
   std::vector<Machine> machines;
   int laborHours;
   int rawMaterials;
@@ -16,7 +17,7 @@ struct Plan {
 
 class Firm {
   public:
-    int workerCount;
+    std::size_t workerCount;
     std::vector<Machine&> machines;
     std::vector<Worker&> workers;
     std::vector<Plan&> plans;
@@ -27,7 +28,7 @@ class Firm {
     std::vector<Plan&> addPlan(std::vector<Plan&> newPlans) {};
     std::vector<Machine&> addMachine(std::vector<Machine&> newMachines) {};
     std::vector<Worker&> addWorkers(std::vector<Worker&> newWorkers) {};
-    std::vector<double> avgingPlanMetrics(std::string planName) {};
+    std::tuple<double, double, double> avgingPlanMetrics(std::string planName) {};
 
     Machine& getMachine(std::string machineName) {};
     Plan& getPlan(std::string planName) {};
