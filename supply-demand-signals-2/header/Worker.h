@@ -1,6 +1,8 @@
 #pragma once 
 #include <string>
 #include <vector>
+#include <unordered_map>
+#include <random>
 
 enum HEALTH_STATUS { HEALTHY, UNHEALTHY, RECOVERING };
 
@@ -10,11 +12,14 @@ struct Worker {
   int age;
   HEALTH_STATUS healthStatus;
   std::vector<std::string> needs;
+
   
-  Worker(const std::string& expertise, int age, HEALTH_STATUS healthStatus, std::vector<std::string> interests, std::vector<std::string> needs) : expertise(expertise), age(age), healthStatus(healthStatus), interests(interests), needs(needs) {}
+  Worker(const std::unordered_map<std::string, int>& expertise, int age, HEALTH_STATUS healthStatus, std::vector<std::string> needs) : expertise(expertise), age(age), healthStatus(healthStatus), needs(needs) {}
   
-  Worker& getWorkerNeeds() {return this->needs;};
-  Worker& getHealthStatus() {};
+  std::vector<std::string>& getWorkerNeeds() {return this->needs;};
+  HEALTH_STATUS getHealthStatus() {return this->healthStatus;};
+
+  float getCurrentProductivity();
   
-  Worker& avgProoducitivtyOverTimeStep(std::string prodcutName) {};
+  float avgProductivityOverTimeStep(std::string productName) {};
 };

@@ -9,4 +9,6 @@ std::vector<Firm&> Machine::addMachinetoFirm(Firm& f, std::vector<Machine&> mach
   return f.machines;
 }
 
-
+Machine& machine : getHoursUsed() {
+  return this->hoursUsed;
+}

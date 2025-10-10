@@ -8,8 +8,8 @@ class Machine {
         std::string name;
         const int lifetime;
         int hoursUsed; 
-        Machine(const std::string& name, int lifetime) : name(name), lifetime(lifetime) {}
-        int getHoursUsed() {};
+        Machine(const std::string& name, int lifetime) : name(name), lifetime(lifetime), hoursUsed(0) {}
+        int getHoursUsed() {return hoursUsed;};
 
 };
 

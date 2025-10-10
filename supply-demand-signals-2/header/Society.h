@@ -2,6 +2,7 @@
 #include "Firm.h"
 #include "Worker.h"
 #include "Machine.h"
+#include <unordered_map>
 
 const double productivityThreshold = 60.0; // threshold for productivity before lowering working hours
 
@@ -15,10 +16,10 @@ class Society{
 
     Society(std::vector<Worker&> Workers, std::vector<Firm&> firms, std::unordered_map<Firm&, double> prices) : workers(Workers), firms(firms), prices(prices) {}
     
-    Society& numWorkers() {};
-    Society& numFirms() {};
+    std::size_t numWorkers() {return workers.size()};
+    std::size_t numFirms() {return firms.size()};
     bool meetsStandardForLowerWorkingHours() {};
-    Society& setWorkHoursDaily(int hours) {};
+    void setWorkHoursDaily(int hours) {current_work_hours_daily = hours;};
     
 
 

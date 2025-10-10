@@ -3,11 +3,12 @@
 #include <vector>
 #include "Worker.h"
 #include "Machine.h"
+#include "Product.h"
 #include <unordered_map>
+#include <tuple>
 
 struct Plan {
-  std::string planName;
-  std::string productName;
+  Product& product;
   std::vector<Machine> machines;
   int laborHours;
   int rawMaterials;
@@ -28,7 +29,7 @@ class Firm {
     std::vector<Plan&> addPlan(std::vector<Plan&> newPlans) {};
     std::vector<Machine&> addMachine(std::vector<Machine&> newMachines) {};
     std::vector<Worker&> addWorkers(std::vector<Worker&> newWorkers) {};
-    std::tuple<double, double, double> avgingPlanMetrics(std::string planName) {};
+    std::vector<double> avgingPlanMetrics(std::string planName) {};
 
     Machine& getMachine(std::string machineName) {};
     Plan& getPlan(std::string planName) {};

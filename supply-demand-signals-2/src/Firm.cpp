@@ -52,3 +52,36 @@ std::vector<Plan&> Firm::getPlans() {
   return this->plans;
 }
 
+float Firm::getAvgProductivity() {
+  float sum = 0.0;
+  for(auto& worker: workers) {
+    sum += worker.getCurrentProductivity();
+  }
+  return sum / workers.size();
+}
+
+Machine& Firm::getMachine(std::string machineName) {
+  for(auto& machine : machines) {
+    if(machine.name == machineName) {
+      return machine;
+    }
+  }
+  return machines[0];
+}
+
+Plan& Firm::getPlan(std::string planName) {
+  for(auto& plan : plans) {
+    if(plan.product.productName == planName) {
+      return plan;
+    }
+  }
+  return plans[0];
+}
+
+std::size_t Firm::getWorkerCount() {
+  return workers.size();
+}
+
+std::size_t Firm::getMachineCount() {
+  return machines.size();
+}
