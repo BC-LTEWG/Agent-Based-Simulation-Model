@@ -2,8 +2,9 @@
 #include <vector>
 #include <string>
 #include "Society.h"
+#include <chrono>
 
-public Sim {
+class Sim {
   public:
     Sim(): timeStep(0) {};
     void advanceTimeStep() {};
