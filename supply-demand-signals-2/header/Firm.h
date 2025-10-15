@@ -29,7 +29,7 @@ class Firm {
 
   public:
     Firm() : machines({}), workers({}), plans({}) {}
-    Firm(std::vector<Person&> workforce) : machines({}), workers(workforce), plans({}) {}
+    Firm(std::vector<Machine*> machines, std::vector<Person*> workforce, std::vector<Plan*> plans) : machines(machines), workers(workforce), plans(plans) {}
 
 
 

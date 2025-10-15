@@ -8,7 +8,7 @@ class Product {
     double pricePerUnit;
     int orderSize;
   
-    Product(const std::string& name, double price, int order) : productName(name), pricePerUnit(price), orderSize(order), laborHoursRemaining(0), rawMaterialsRemaining(0) {};
+    Product(const std::string name, double price, int order) : productName(name), pricePerUnit(price), orderSize(order), laborHoursRemaining(0), rawMaterialsRemaining(0) {};
 
   private:
     int laborHoursRemaining;
