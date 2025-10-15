@@ -1,8 +1,8 @@
-#include "Worker.h"
+#include "Person.h"
 #include <random>
 #include <algorithm>
 
-float Worker::getCurrentProductivity() {
+float Person::getCurrentProductivity() {
     static std::random_device rd;
     static std::mt19937 gen(rd());
     

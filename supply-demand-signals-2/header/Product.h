@@ -2,11 +2,17 @@
 #include <vector>
 #include <string>
 
-struct Product {
-  std::string productName;
-  double pricePerUnit;
-  int orderSize;
-  int numUnits;
+class Product {
+  public:
+    std::string productName;
+    double pricePerUnit;
+    int orderSize;
+  
+    Product(const std::string& name, double price, int order) : productName(name), pricePerUnit(price), orderSize(order), laborHoursRemaining(0), rawMaterialsRemaining(0) {};
 
-  Product(const std::string& name, double price, int order, int units) : productName(name), pricePerUnit(price), orderSize(order), numUnits(units) {};
+  private:
+    int laborHoursRemaining;
+    int rawMaterialsRemaining;
+  
+  friend class Firm;
 };
