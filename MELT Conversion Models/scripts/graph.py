@@ -50,7 +50,7 @@ for idx, column in enumerate(columns_to_plot, start=1):
         ax.set_xlabel("Country")
         ax.set_ylabel("Value")
         ax.set_title(f"Group {i + 1}: {column}")
-        ax.tick_params(axis='x', rotation=45)
+        ax.tick_params(axis='x', rotation=0)
         fig.tight_layout(rect=[0, 0, 1, 0.95])  # Leave space at top for text
 
         plt.savefig(f"../graphs/Group {i + 1}: {column}.png")
