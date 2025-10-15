@@ -3,7 +3,7 @@
 #include <random>
 
 // generates a unique name for the new product
-void CapitalistProduct::generate_name()
+void CapitalistProduct::set_product_name()
 {
     static const std::string chars =
         "0123456789"
@@ -23,36 +23,51 @@ void CapitalistProduct::generate_name()
         id += chars[dist(rng)];
     }
 
-    name = id;
+    product_name = id;
 }
 
-// assign a random price between 10 and 100
-// This value can be changed!
-void CapitalistProduct::new_desired_price()
+// assign a product type out of the 26 available types
+void CapitalistProduct::set_product_type()
 {
     static std::mt19937 gen(std::random_device{}());
-    price = std::uniform_real_distribution<>(10, 100)(gen);
+    std::uniform_int_distribution<> dist(0, 25);
+
+    product_type = 'A' + dist(gen);
 }
 
-// new sell factor
-void CapitalistProduct::new_sell_factor()
+// assign a random price between 500 and 9000
+// Arbitrary Value
+void CapitalistProduct::set_desired_price()
 {
     static std::mt19937 gen(std::random_device{}());
-    sell_factor = std::uniform_real_distribution<>(0, 1)(gen);
+    price = std::uniform_real_distribution<>(500, 9000)(gen);
+}
+
+// new portion sold
+void CapitalistProduct::set_portion_sold_in_export()
+{
+    static std::mt19937 gen(std::random_device{}());
+    portion_sold_in_export = std::uniform_real_distribution<>(0, 1)(gen);
 }
 
 // total amount producted between 100 and 1000
-// This value can be changed!
-void CapitalistProduct::new_total_amount()
+// Arbitrary value
+void CapitalistProduct::set_quantity_produced_for_export()
 {
     static std::mt19937 gen(std::random_device{}());
-    total_amount = std::uniform_real_distribution<>(100, 1000)(gen);
+    quantity_produced_for_export = std::uniform_real_distribution<>(100, 1000)(gen);
 }
 
 // Of the price, 10 percent to 90 percent can be surplus
-// This value can be changed!
-void CapitalistProduct::new_surplus_factor()
+// Arbitrary value
+void CapitalistProduct::set_surplus_factor()
 {
     static std::mt19937 gen(std::random_device{}());
     surplus_factor = std::uniform_real_distribution<>(0.1, 0.9)(gen);
+}
+
+void CapitalistProduct::export_to_destined_economy(const LaborTimeEconomy &lte)
+{
+    set_portion_sold_in_export();
+    set_quantity_produced_for_export();
 }

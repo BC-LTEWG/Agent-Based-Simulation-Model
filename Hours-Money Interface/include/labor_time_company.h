@@ -4,12 +4,16 @@
 #include <vector>
 #include "labor_time_product.h"
 
+struct LaborTimeEconomy;
+
 struct LaborTimeCompany
 {
-    std::string name;
-    std::string economy;
+    std::string company_name;
+    LaborTimeEconomy *economy = nullptr;
     std::vector<LaborTimeProduct> products;
 
+    void set_company_name();
+    void create_product();
     std::string print_products();
 
     // How likely is a company going to create a new product
@@ -19,4 +23,6 @@ struct LaborTimeCompany
 
     void new_create_factor();
     void new_remove_factor();
+
+    LaborTimeCompany(LaborTimeEconomy *lte);
 };

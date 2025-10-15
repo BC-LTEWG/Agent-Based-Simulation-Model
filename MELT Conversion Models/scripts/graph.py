@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import os
 
 # Load the CSV
-df = pd.read_csv("../output.csv")
+df = pd.read_csv("../data/output.csv")
 
 # Columns selected
 columns_to_plot = [
@@ -16,7 +16,7 @@ columns_to_plot = [
 ]
 
 # Output folder
-os.makedirs("graphs", exist_ok=True)
+os.makedirs("../graphs", exist_ok=True)
 
 # Create graphs 
 for idx, column in enumerate(columns_to_plot, start=1):
@@ -47,22 +47,11 @@ for idx, column in enumerate(columns_to_plot, start=1):
                 fontweight='bold'
             )
 
-        # Add stats text 
-        fig.text(
-            0.01, 0.98,
-            f"Mean: {mean_val:.2f}\nStd Dev: {std_dev:.2f}\nVariance: {var_val:.2f}",
-            ha='left',
-            va='top',
-            fontsize=11,
-            color='black',
-            fontweight='bold'
-        )
-
         ax.set_xlabel("Country")
         ax.set_ylabel("Value")
-        ax.set_title(f"Graph {idx*2 - 1 + i}: {column}")
+        ax.set_title(f"Group {i + 1}: {column}")
         ax.tick_params(axis='x', rotation=45)
         fig.tight_layout(rect=[0, 0, 1, 0.95])  # Leave space at top for text
 
-        plt.savefig(f"graphs/graph_{idx*2 - 1 + i}.png")
+        plt.savefig(f"../graphs/Group {i + 1}: {column}.png")
         plt.close()

@@ -19,7 +19,7 @@ using namespace std;
 int main()
 {
     // Load the CSV data into DataLoader
-    DataLoader::loadData("scripts/data.csv");
+    DataLoader::loadData("data/data.csv");
 
     // Create a vector of CapitalistEconomy
     vector<CapitalistEconomy> capitalist_economies;
@@ -160,7 +160,7 @@ int main()
     }
 
     // Open output CSV file
-    std::ofstream outfile("output.csv");
+    std::ofstream outfile("data/output.csv");
     if (!outfile.is_open())
     {
         std::cerr << "Failed to open CSV file for writing.\n";

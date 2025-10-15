@@ -3,9 +3,10 @@
 #include <capitalist_product.h>
 #include <string>
 #include <random>
+#include <map>
 
 // generates a unique name for the new product
-void LaborTimeProduct::generate_name()
+void LaborTimeProduct::set_product_name()
 {
     static const std::string chars =
         "0123456789"
@@ -25,55 +26,70 @@ void LaborTimeProduct::generate_name()
         id += chars[dist(rng)];
     }
 
-    name = id;
+    product_name = id;
 }
 
-// assign a random labor time between 10 and 40
-// This value can be changed!
-void LaborTimeProduct::new_labor_time()
+// assign a product type out of the 26 available types
+void LaborTimeProduct::set_product_type()
 {
     static std::mt19937 gen(std::random_device{}());
-    labor_time = std::uniform_real_distribution<>(10, 40)(gen);
+    std::uniform_int_distribution<> dist(0, 25);
+
+    product_type = 'A' + dist(gen);
+}
+
+// assign a random labor time between 9 and 18
+// Arbitrary value
+// The value is set to 9 and 18 so the max and min price range are the same as the capitalist product
+void LaborTimeProduct::set_labor_time()
+{
+    static std::mt19937 gen(std::random_device{}());
+    labor_time = std::uniform_real_distribution<>(9, 18)(gen);
 }
 
 // how much will be product be in the destined country
-void LaborTimeProduct::calculate_sell_price(CapitalistEconomy economy)
+void LaborTimeProduct::calculate_sale_price(const CapitalistEconomy &economy)
 {
-    // I am checking if the product exists in the market
+    // I am checking if the product type exists in the market
     // If the product doesn't exist, then we use melt
-    // But I am assigning almost unique names so I doubt there would be an exist product
-    // That's why I think the whole market system
-    // should either be removed or I should be giving names that can be repeated
-    for (CapitalistProduct product : economy.market)
+    for (const std::pair<char, double> &product : economy.market_price)
     {
-        if (product.name == name)
+        if (product.first == product_type)
         {
-            sell_price = product.price * 0.9; // 0.9 of the market price?
+            sale_price = product.second * 0.9; // 0.9 of the market price?
             return;
         }
     }
-    sell_price = labor_time * economy.melt;
+    sale_price = labor_time * economy.melt + (labor_time * economy.melt) / (1 - surplus_factor);
 }
 
-// new sell factor
-void LaborTimeProduct::new_sell_factor()
+// new portion sold
+void LaborTimeProduct::set_portion_sold_in_export()
 {
     static std::mt19937 gen(std::random_device{}());
-    sell_factor = std::uniform_real_distribution<>(0, 1)(gen);
+    portion_sold_in_export = std::uniform_real_distribution<>(0, 1)(gen);
 }
 
 // total amount producted between 100 and 1000
-// This value can be changed!
-void LaborTimeProduct::new_total_amount()
+// Arbitrary value
+void LaborTimeProduct::set_quantity_produced_for_export()
 {
     static std::mt19937 gen(std::random_device{}());
-    total_amount = std::uniform_real_distribution<>(100, 1000)(gen);
+    quantity_produced_for_export = std::uniform_real_distribution<>(100, 1000)(gen);
 }
 
 // Of the converted price, we can add 10 percent to 90 percent of the value to be surplus
-// This value can be changed!
-void LaborTimeProduct::new_surplus_factor()
+// Arbitrary value
+void LaborTimeProduct::set_surplus_factor()
 {
     static std::mt19937 gen(std::random_device{}());
     surplus_factor = std::uniform_real_distribution<>(0.1, 0.9)(gen);
+}
+
+void LaborTimeProduct::export_to_destined_economy(const CapitalistEconomy &ce)
+{
+    set_portion_sold_in_export();
+    set_quantity_produced_for_export();
+    set_surplus_factor();
+    calculate_sale_price(ce);
 }
