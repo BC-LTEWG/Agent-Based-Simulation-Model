@@ -25,13 +25,9 @@ class Firm {
     std::vector<Machine*> machines;
     std::vector<Person*> workers;
     std::vector<Plan*> plans;
-    std::unordered_map<Product, std::vector<Plan&>> planHistory;
+    std::unordered_map<const Product&, std::vector<Plan&>> planHistory;
 
   public:
-    Firm() : machines({}), workers({}), plans({}) {}
+    Firm() {}
     Firm(std::vector<Machine*> machines, std::vector<Person*> workforce, std::vector<Plan*> plans) : machines(machines), workers(workforce), plans(plans) {}
-
-
-
-    
 };

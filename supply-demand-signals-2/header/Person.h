@@ -21,5 +21,5 @@ struct Person {
 
   float getCurrentProductivity();
   
-  float avgProductivityOverTimeStep(std::string productName) {};
+  float avgProductivityOverTimeStep(std::string productName);
 };
