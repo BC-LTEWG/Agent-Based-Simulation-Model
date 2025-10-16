@@ -12,10 +12,16 @@ struct CapitalistProduct
     CapitalistCompany *company = nullptr;
     char product_type; // product type can be car or laptop in reality, an example will be cars produced by different firms currently in the market
     double price;
+    double quality;
+    int time_to_market = 0;
+    double time_to_market_factor;
 
     void set_product_name();
     void set_product_type();
     void set_desired_price();
+    void set_product_quality();
+    void increment_time_to_market();
+    void set_time_to_market_factor();
     void export_to_destined_economy(const LaborTimeEconomy &lte);
 
     double portion_sold_in_export;

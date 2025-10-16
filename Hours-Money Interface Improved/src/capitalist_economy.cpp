@@ -3,6 +3,39 @@
 #include <string>
 #include <random>
 
+int generate_random_number(int a, int b)
+{
+    static std::mt19937 gen(std::random_device{}());
+    std::uniform_int_distribution<> dist(a, b);
+    return dist(gen);
+}
+
+void CapitalistEconomy::generate_dependencies(std::map<char, std::vector<char>> &dependencies, int number_of_base_products)
+{
+    for (int i = 0; i < 18; i++)
+    {
+        char current_char = 'I' + i;
+        int number_of_dependencies = generate_random_number(2, 5);
+        std::vector<char> current_product_type_dependencies;
+
+        for (int j = 0; j < number_of_dependencies; j++)
+        {
+            int selected_dependency = generate_random_number(0, number_of_base_products - 1);
+            char selected_dependency_char = 'A' + selected_dependency;
+            if (std::find(current_product_type_dependencies.begin(), current_product_type_dependencies.end(), selected_dependency_char) != current_product_type_dependencies.end())
+            {
+                j--;
+            }
+            else
+            {
+                current_product_type_dependencies.push_back(selected_dependency_char);
+            }
+        }
+
+        dependencies[current_char] = current_product_type_dependencies;
+    }
+}
+
 // New gdp per capita or mean per capita every year
 void CapitalistEconomy::new_earnings_per_capita()
 {

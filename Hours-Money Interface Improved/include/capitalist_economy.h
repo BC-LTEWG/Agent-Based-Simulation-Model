@@ -15,8 +15,12 @@ struct CapitalistEconomy
     double work_hours = INITIAL_HOURS;                        // how many hours worked on average in a year
     double melt;                                              // what would the new melt be in a new cycle
     std::vector<CapitalistCompany> companies;
-    std::vector<CapitalistProduct> market; // each new product will be added to the market with its market price determined
-    std::map<char, double> market_price;   // each type of product has its own average market price
+    std::vector<CapitalistProduct> market;                       // each new product will be added to the market with its market price determined
+    std::map<char, double> market_price;                         // each type of product has its own average market price
+    std::map<char, std::vector<CapitalistProduct>> dependencies; // The first eight products are basic products, the next sixteen are dependent products that depends on one or more basic products to produce
+
+    // This should be run once per simulation
+    void generate_dependencies(std::map<char, std::vector<char>> &dependencies, int number_of_base_products);
 
     void new_earnings_per_capita();
     void new_work_hours();

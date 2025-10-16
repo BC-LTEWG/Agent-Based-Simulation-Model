@@ -1,5 +1,6 @@
 #include <capitalist_product.h>
 #include <string>
+#include <cmath>
 #include <random>
 
 // generates a unique name for the new product
@@ -41,6 +42,28 @@ void CapitalistProduct::set_desired_price()
 {
     static std::mt19937 gen(std::random_device{}());
     price = std::uniform_real_distribution<>(500, 9000)(gen);
+}
+
+// set product quality
+void CapitalistProduct::set_product_quality()
+{
+    static std::mt19937 gen(std::random_device{}());
+    quality = std::uniform_real_distribution<>(0.2, 0.8)(gen);
+}
+
+void CapitalistProduct::increment_time_to_market()
+{
+    time_to_market++;
+}
+
+// The factor increases as time to market the product increases
+void CapitalistProduct::set_time_to_market_factor()
+{
+    const double k = 1.0;  // growth rate constant
+    const double t0 = 5.0; // midpoint at 5 cycles
+
+    // logistic growth
+    time_to_market_factor = 1.0 / (1.0 + std::exp(-k * (time_to_market - t0)));
 }
 
 // new portion sold
