@@ -7,7 +7,6 @@
 #include <unordered_map>
 #include <tuple>
 
-class Firm;
 
 struct Plan {
   Product& product;
@@ -19,6 +18,8 @@ struct Plan {
   int prd;
   int laborHoursRemaining;
   int rawMaterialsRemaining;
+  int totalHours;
+  int totalHoursRemaining;
 };
 
 class Firm {
@@ -30,4 +31,6 @@ class Firm {
 
     Firm() {}
     Firm(std::vector<Machine*> machines, std::vector<Person*> workforce, std::vector<Plan*> plans) : machines(machines), workers(workforce), plans(plans) {}
+
+
 };

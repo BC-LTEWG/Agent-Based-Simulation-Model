@@ -22,4 +22,6 @@ struct Person {
   float getCurrentProductivity();
   
   float avgProductivityOverTimeStep(std::string productName);
+
+  void purchaseGoods(Product& p, int quantity) {};
 };

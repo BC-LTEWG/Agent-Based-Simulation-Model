@@ -16,4 +16,7 @@ class Distributor : public Firm {
         Distributor(std::vector<Person&> workforce) : Firm(workforce) {}
 
 
+
+
+
 };

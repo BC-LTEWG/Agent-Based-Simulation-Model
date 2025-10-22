@@ -1,6 +1,7 @@
 #include "Person.h"
 #include <random>
 #include <algorithm>
+#include "Society.h"
 
 float Person::getCurrentProductivity() {
     static std::random_device rd;
@@ -28,4 +29,10 @@ float Person::getCurrentProductivity() {
         default:
             return baseProductivity;
     }
+}
+
+void purchaseGoods(Product& p, int quantity) {
+  for(Producer& p : producers) {
+    if ()
+  }
 }
