@@ -5,6 +5,7 @@
 #include <tuple>
 #include "Firm.h"
 #include "Person.h"
+#include "Producer.h"
 
 class Distributor : public Firm {
     private:
@@ -13,7 +14,9 @@ class Distributor : public Firm {
         
     public:
         Distributor() : Firm() {}
-        Distributor(std::vector<Person&> workforce) : Firm(workforce) {}
+        Distributor(std::vector<Machine*> machines, std::vector<Person*> workforce, std::vector<Plan*> plans) : Firm(machines, workforce, plans) {}
+        double getOutputRatio(Product& product) {};
+        double plannedSatisfactionPerPerson(Product& product, Person& person) {};
 
 
 

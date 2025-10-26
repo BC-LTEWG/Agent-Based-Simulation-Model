@@ -18,4 +18,7 @@ class Producer : public Firm {
         : Firm(machines, workforce, {}) {}
     Producer(std::vector<Machine*> machines, std::vector<Person*> workforce, std::vector<Plan*> plans) 
         : Firm(machines, workforce, plans) {}
+
+
+    
 };

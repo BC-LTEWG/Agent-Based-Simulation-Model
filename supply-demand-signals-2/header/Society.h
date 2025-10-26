@@ -16,11 +16,13 @@ class Society{
 
     Society(std::vector<Person&> Workers, std::vector<Firm&> firms, std::unordered_map<Firm&, double> prices) : workers(Workers), firms(firms), prices(prices) {}
     
-    std::size_t numWorkers() {return workers.size()};
-    std::size_t numFirms() {return firms.size()};
+    std::size_t numWorkers() {return workers.size();};
+    std::size_t numFirms() {return firms.size();};
     bool meetsStandardForLowerWorkingHours() {};
     void setWorkHoursDaily(int hours) {current_work_hours_daily = hours;};
     double getAvgProductivity() {};
+
+    std::unordered_map<std::string, int> avgWorkerNeeds() {};
     
 
 
