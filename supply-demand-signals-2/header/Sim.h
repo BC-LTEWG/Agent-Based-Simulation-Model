@@ -7,13 +7,12 @@
 #include "Society.h"
 
 class Sim {
-public:
-    Sim();
-    void advance_time_step();
-    void run_sim(int days);
-    void run_work_day();
-    void reset_time_step();
+  public:
+    Sim(): currentTimeStep(0) {};
+    void timeStep() {};
+    void run(int timeSteps) {};
 
-private:
-    std::chrono::hours time_step;
+  private:
+	int current_time_step;
+	Society society;
 };
