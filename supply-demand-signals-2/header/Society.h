@@ -14,7 +14,7 @@ public:
     std::vector<Person*> workers, availableWorkers;
     std::vector<Firm*> firms;
     std::unordered_map<Firm*, double> prices;
-	static float randomRetirementChance = 8.3e-7;
+	static double randomRetirementChance = 8.3e-7;
 	static int guaranteedRetirementAge = 438300;
 	static int averageRetirementAge = (1 - pow(1 - randomRetirementChance, guaranteedRetirementAge)) / randomRetirementChance;
     const int initial_work_hours_daily = 8;
