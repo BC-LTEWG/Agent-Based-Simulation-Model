@@ -5,10 +5,13 @@
 #include <unordered_map>
 #include <vector>
 
+#include "Firm.h"
 #include "Product.h"
+#include "Society.h"
+
 
 class Person {
-public:
+  public:
     enum HealthStatus { HEALTHY, UNHEALTHY, RECOVERING };
     enum Expertise { EXPERTISE_1, EXPERTISE_2, EXPERTISE_3 };
 
@@ -25,11 +28,13 @@ public:
     void purchase_goods(Product& p, int quantity);
     void get_paid(double income);
     void charge(double cost);
+    bool willRetire();
 
-private:
+  private:
     std::unordered_map<std::string, int> expertise;
     int age;
     HealthStatus health_status;
     std::unordered_map<std::string, double> needs;
+	Firm employer;
     double account;
 };
