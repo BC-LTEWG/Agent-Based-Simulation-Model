@@ -4,6 +4,8 @@
 #include <vector>
 #include "labor_time_company.h"
 
+struct LaborTimeCompany;
+
 struct LaborTimeEconomy
 {
     std::string name;

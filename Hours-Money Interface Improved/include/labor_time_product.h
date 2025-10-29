@@ -5,6 +5,7 @@
 #include "capitalist_economy.h"
 
 struct LaborTimeCompany;
+struct CapitalistEconomy;
 
 struct LaborTimeProduct
 {

@@ -7,6 +7,9 @@
 #include "capitalist_product.h"
 #include "values.h"
 
+struct CapitalistCompany;
+struct CapitalistProduct;
+
 struct CapitalistEconomy
 {
     std::string name;
@@ -22,9 +25,13 @@ struct CapitalistEconomy
     std::map<char, double> labor_cost_map;          // Map of labor cost
 
     // These should be run once per simulation
-    void generate_dependencies(std::map<char, std::vector<char>> &dependencies, int number_of_base_products);
-    void generate_production_cost_map(std::map<char, double> &production_cost_map, std::map<char, std::vector<char>> &dependencies);
-    void generate_labor_cost_map(std::map<char, double> &labor_cost_map, std::map<char, double> &production_cost_map);
+    void generate_dependencies(int number_of_base_products);
+    void generate_production_cost_map();
+    void generate_labor_cost_map();
+
+    void print_dependencies();
+    void print_production_cost_map();
+    void print_labor_cost_map();
 
     void new_earnings_per_capita();
     void new_work_hours();
