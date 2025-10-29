@@ -45,6 +45,8 @@ void CapitalistProduct::set_desired_price()
 }
 
 // set product quality
+// use a normal distribution for the average quality to be set
+// the mean set at 1, I will decide on the variance but it is very small for identical products
 void CapitalistProduct::set_product_quality()
 {
     static std::mt19937 gen(std::random_device{}());
@@ -57,10 +59,11 @@ void CapitalistProduct::increment_time_to_market()
 }
 
 // The factor increases as time to market the product increases
+// Logistic growth
 void CapitalistProduct::set_time_to_market_factor()
 {
-    const double k = 1.0;  // growth rate constant
-    const double t0 = 5.0; // midpoint at 5 cycles
+    const double k = 1.0;                   // growth rate constant
+    const double t0 = NUMBER_OF_CYCLES / 2; // midpoint at half the cycles
 
     // logistic growth
     time_to_market_factor = 1.0 / (1.0 + std::exp(-k * (time_to_market - t0)));

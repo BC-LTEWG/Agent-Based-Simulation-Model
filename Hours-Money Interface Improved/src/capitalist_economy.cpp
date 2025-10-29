@@ -2,11 +2,19 @@
 #include <capitalist_product.h>
 #include <string>
 #include <random>
+#include <map>
 
-int generate_random_number(int a, int b)
+int generate_random_int(int min, int max)
 {
     static std::mt19937 gen(std::random_device{}());
-    std::uniform_int_distribution<> dist(a, b);
+    std::uniform_int_distribution<> dist(min, max);
+    return dist(gen);
+}
+
+double generate_random_double(double min, double max)
+{
+    static std::mt19937 gen(std::random_device{}());
+    std::uniform_real_distribution<> dist(min, max);
     return dist(gen);
 }
 
@@ -15,12 +23,12 @@ void CapitalistEconomy::generate_dependencies(std::map<char, std::vector<char>> 
     for (int i = 0; i < 18; i++)
     {
         char current_char = 'I' + i;
-        int number_of_dependencies = generate_random_number(2, 5);
+        int number_of_dependencies = generate_random_int(2, 5);
         std::vector<char> current_product_type_dependencies;
 
         for (int j = 0; j < number_of_dependencies; j++)
         {
-            int selected_dependency = generate_random_number(0, number_of_base_products - 1);
+            int selected_dependency = generate_random_int(0, number_of_base_products - 1);
             char selected_dependency_char = 'A' + selected_dependency;
             if (std::find(current_product_type_dependencies.begin(), current_product_type_dependencies.end(), selected_dependency_char) != current_product_type_dependencies.end())
             {
@@ -33,6 +41,113 @@ void CapitalistEconomy::generate_dependencies(std::map<char, std::vector<char>> 
         }
 
         dependencies[current_char] = current_product_type_dependencies;
+    }
+}
+
+void CapitalistEconomy::generate_production_cost_map(std::map<char, double> &production_cost_map, std::map<char, std::vector<char>> &dependencies)
+{
+    // Random variation factor
+    const double RANDOM_MIN = 0.8;
+    const double RANDOM_MAX = 1.2;
+
+    // Random variation simulates natural fluctuations in extraction,
+    // transport, and market conditions for each base commodity.
+
+    // Each base product’s fixed ratio (defined in values.h) already
+    // includes its inherent processing/extraction cost, so no extra
+    // base_processing_cost is added here.
+
+    // The hybrid model applies a ±20% random factor to introduce
+    // slight variability while preserving realistic cost ratios.
+    // These fluctuations will persist across production cycles but remain
+    // bounded within the ±20% range of each product’s base cost
+    // defined in values.h.
+    production_cost_map['A'] = BASE_COST_A; // fixed baseline
+
+    production_cost_map['B'] = BASE_COST_B * generate_random_double(RANDOM_MIN, RANDOM_MAX);
+    production_cost_map['C'] = BASE_COST_C * generate_random_double(RANDOM_MIN, RANDOM_MAX);
+    production_cost_map['D'] = BASE_COST_D * generate_random_double(RANDOM_MIN, RANDOM_MAX);
+    production_cost_map['E'] = BASE_COST_E * generate_random_double(RANDOM_MIN, RANDOM_MAX);
+    production_cost_map['F'] = BASE_COST_F * generate_random_double(RANDOM_MIN, RANDOM_MAX);
+    production_cost_map['G'] = BASE_COST_G * generate_random_double(RANDOM_MIN, RANDOM_MAX);
+    production_cost_map['H'] = BASE_COST_H * generate_random_double(RANDOM_MIN, RANDOM_MAX);
+
+    // Production cost for dependencies
+    // Total production cost = base processing cost + sum of dependent base product cost (weight/percentage of the base product times production cost of base product)
+    for (int i = 0; i < 18; i++)
+    {
+        char current_product_type = 'I' + i;
+        double base_processing_cost = generate_random_double(0.2, 0.5);
+
+        // generate the sum of dependent base product cost
+        double sum_of_dependent_base_product_cost = 0;
+        double total_weight = 0;
+        std::vector<double> specific_weights;
+
+        for (char dependency : dependencies[current_product_type])
+        {
+            double specific_weight = generate_random_double(0.1, 1);
+            specific_weights.push_back(specific_weight);
+            total_weight += specific_weight;
+        }
+
+        int current_index = 0;
+        for (char dependency : dependencies[current_product_type])
+        {
+            // Normalize each weight by dividing it by the total weight
+            sum_of_dependent_base_product_cost += ((specific_weights[current_index] / total_weight) * production_cost_map[dependency]);
+            current_index++;
+        }
+
+        production_cost_map[current_product_type] = base_processing_cost + sum_of_dependent_base_product_cost;
+    }
+}
+
+void CapitalistEconomy::generate_labor_cost_map(std::map<char, double> &labor_cost_map, std::map<char, double> &production_cost_map)
+{
+    // LaborCost(P) = ProductionCost(P) × LaborShare(P)
+
+    // This function generates a separate map for human labor costs,
+    // excluding raw materials and production costs already included
+    // in production_cost_map.
+
+    // Each product’s labor intensity is determined by its production type:
+    //   - Automated (0.1–0.4): low human labor input
+    //   - Balanced  (0.4–0.7): medium human labor input
+    //   - Handcrafted (0.7–1.0): high human labor input
+
+    // Base products (A–H) are generally automated or balanced,
+    // while derived products (I–Z) can vary across all three types.
+
+    for (char product = 'A'; product <= 'Z'; ++product)
+    {
+        // Randomly assign production type
+        int production_type = generate_random_int(1, 3); // 1=Automated, 2=Balanced, 3=Handcrafted
+        double labor_share = 0.0;
+
+        // Assign labor share based on production type
+        if (production_type == 1) // Automated
+        {
+            labor_share = generate_random_double(0.1, 0.4);
+        }
+        else if (production_type == 2) // Balanced
+        {
+            labor_share = generate_random_double(0.4, 0.7);
+        }
+        else // Handcrafted
+        {
+            labor_share = generate_random_double(0.7, 1.0);
+        }
+
+        // Base products (A–H) are rarely handcrafted, reduce labor intensity if so
+        if (product <= 'H' && production_type == 3)
+        {
+            labor_share *= 0.6; // reduce handcrafted intensity for extraction-based industries
+        }
+
+        // Labor cost formula:
+        // LaborCost(P) = ProductionCost(P) × LaborShare(P)
+        labor_cost_map[product] = production_cost_map[product] * labor_share;
     }
 }
 
