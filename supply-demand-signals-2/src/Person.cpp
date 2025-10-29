@@ -2,6 +2,18 @@
 #include <random>
 #include <algorithm>
 
+Person::Person(
+        const std::unordered_map<std::string, int>& expertise,
+        int age,
+        HealthStatus health_status,
+        const std::unordered_map<std::string, double>& needs) :
+    expertise(expertise),
+    age(age),
+    health_status(health_status),
+    needs(needs)
+{}
+  
+
 float Person::getCurrentProductivity() {
     static std::random_device rd;
     static std::mt19937 gen(rd());
@@ -10,12 +22,12 @@ float Person::getCurrentProductivity() {
     
     float baseProductivity = baseDist(gen);
     
-    switch(healthStatus) {
-        case HEALTH_STATUS::HEALTHY:
+    switch(health_status) {
+        case HEALTHY:
             return std::min(baseProductivity * 1.2f, 2.0f);
-        case HEALTH_STATUS::RECOVERING:
+        case RECOVERING:
             return baseProductivity * 0.8f;
-        case HEALTH_STATUS::UNHEALTHY:
+        case UNHEALTHY:
             return baseProductivity * 0.5f;
             
         default:
