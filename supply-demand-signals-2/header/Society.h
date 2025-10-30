@@ -7,16 +7,18 @@
 #include "Machine.h"
 #include "Person.h"
 
+class Firm;
+class Person;
+
 const double PRODUCTIVITY_THRESHOLD = 60.0;
 
 class Society {
-public:
+  public:
     std::vector<Person*> workers, availableWorkers;
     std::vector<Firm*> firms;
     std::unordered_map<Firm*, double> prices;
-	static double randomRetirementChance = 8.3e-7;
-	static int guaranteedRetirementAge = 438300;
-	static int averageRetirementAge = (1 - pow(1 - randomRetirementChance, guaranteedRetirementAge)) / randomRetirementChance;
+	static double randomRetirementChance, averageRetirementAge;
+	static int guaranteedRetirementAge;
     const int initial_work_hours_daily = 8;
     int current_work_hours_daily = initial_work_hours_daily;
 

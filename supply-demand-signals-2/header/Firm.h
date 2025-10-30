@@ -5,11 +5,13 @@
 #include <unordered_map>
 #include <vector>
 
+#include "Firm.h"
 #include "Machine.h"
 #include "Person.h"
 #include "Product.h"
 
 class Firm;
+class Person;
 
 struct Plan {
     Product* product;

@@ -2,6 +2,10 @@
 
 #include "Society.h"
 
+double Society::randomRetirementChance = 8.3e-7;
+int Society::guaranteedRetirementAge = 438300;
+double Society::averageRetirementAge = (1 - pow(1 - Society::randomRetirementChance, Society::guaranteedRetirementAge)) / Society::randomRetirementChance;
+
 Society::Society(std::vector<Person*> workers, std::vector<Firm*> firms, std::unordered_map<Firm*, double> prices) 
     : workers(workers), firms(firms), prices(prices) {}
 

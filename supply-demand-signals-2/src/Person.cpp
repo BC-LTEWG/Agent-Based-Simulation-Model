@@ -8,17 +8,16 @@ Person::Person(
     const std::unordered_map<std::string, int>& expertise,
     int age,
     HealthStatus health_status,
-    const std::unordered_map<Product&, double>& needs) :
+    const std::unordered_map<Product*, double>& needs) :
     expertise(expertise),
     age(age),
     health_status(health_status),
     needs(needs)
 {
-
     static std::random_device rd;
     static std::mt19937 gen(rd());
-	static std::lognormal_distribution dist(0, 3.2);		
-	for (std::pair<Product&, double> p  : needs) {
+	static std::lognormal_distribution<> dist(0, 3.2);		
+	for (std::pair<Product*, double> p  : needs) {
 		p.second = 1 / dist(gen);
 	}
 }
@@ -70,28 +69,31 @@ void Person::purchaseGood(Product& p, int quantity) {
     (void)quantity;
 }
 
-bool Person::willRetire() {
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-	static std::uniform_real_distribution<> dist(0, 1);
-
-
-	if (age >= Society.guaranteedRetirementAge) {
-		return true;
-	}
-
-	return dist(gen) < Society.randomRetirementChance;
-}
-
 void Person::purchaseGoods() {
     static std::random_device rd;
     static std::mt19937 gen(rd());
 	static std::uniform_real_distribution<> dist(0, 1);
 
-	for (std::pair<Product&, double> p : needs) {
+	for (std::pair<Product*, double> p : needs) {
 		if (dist(gen) < p.second) {
-			purchaseGood(p.first, 1);
+			purchaseGood(*p.first, 1);
 		}
 	}
+}
+
+bool Person::willRetire() {
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+	static std::uniform_real_distribution<> dist(0, 1);
+
+	if (age >= Society::guaranteedRetirementAge) {
+		return true;
+	}
+
+	return dist(gen) < Society::randomRetirementChance;
+}
+
+int main() {
+	return EXIT_SUCCESS;
 }
 		
