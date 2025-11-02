@@ -1,32 +1,34 @@
-cc = gcc
-CFLAGS = -Wall -Wextra -Werror -std=c++17
-BUILD_DIR = ../build
+CXX = g++
+CXXFLAGS = -Wall -Wextra -Werror -std=c++17 -I../header
+BUILD_DIR = ../header
+SRC_DIR = .
 
-# all: my_program
+TARGET = lte_program
 
-# lte_simulation: main.cpp Person.cpp Firm.cpp Machine.cpp Product.cpp Producer.cpp Distributor.cpp Society.cpp Sim.cpp
-#	$(cc) $(CFLAGS) -o my_program main.cpp Person.cpp Firm.cpp Machine.cpp Product.cpp Producer.cpp Distributor.cpp Society.cpp Sim.cpp
+all: $(TARGET)
 
-all: copy lte_simulation
+$(TARGET): $(BUILD_DIR)/Person.o $(BUILD_DIR)/Firm.o $(BUILD_DIR)/Machine.o $(BUILD_DIR)/Distributor.o $(BUILD_DIR)/Society.o main.cpp
+	pushd $(BUILD_DIR) ; $(CXX) $(CXXFLAGS) $(SRC_DIR)/main.cpp Person.o Firm.o Machine.o Distributor.o Society.o -o $(SRC_DIR)/$(TARGET) ; popd
 
-copy: copy_header copy_src
+$(BUILD_DIR)/Person.o: Person.cpp $(BUILD_DIR)/Person.h
+	pushd $(BUILD_DIR) ; $(CXX) $(CXXFLAGS) -c $(SRC_DIR)/Person.cpp -o Person.o ; popd
 
-copy_header:
-	cp ../header/*.h ${BUILD_DIR}
+$(BUILD_DIR)/Firm.o: Firm.cpp $(BUILD_DIR)/Firm.h
+	pushd $(BUILD_DIR) ; $(CXX) $(CXXFLAGS) -c $(SRC_DIR)/Firm.cpp -o Firm.o ; popd
 
-copy_src:
-	cp ./*.cpp ${BUILD_DIR}
+$(BUILD_DIR)/Machine.o: Machine.cpp $(BUILD_DIR)/Machine.h
+	pushd $(BUILD_DIR) ; $(CXX) $(CXXFLAGS) -c $(SRC_DIR)/Machine.cpp -o Machine.o ; popd
 
-lte_simulation: ${BUILD_DIR}/Person.o main.cpp
-	pushd ${BUILD_DIR} ; g++ ${FLAGS} $^ -o $@ ; popd
+$(BUILD_DIR)/Distributor.o: Distributor.cpp $(BUILD_DIR)/Distributor.h
+	pushd $(BUILD_DIR) ; $(CXX) $(CXXFLAGS) -c $(SRC_DIR)/Distributor.cpp -o Distributor.o ; popd
 
-Person.o : Person.cpp
-	pushd ${BUILD_DIR} ; g++ ${FLAGS} -c $^ -o $@ ; popd 
+$(BUILD_DIR)/Society.o: Society.cpp $(BUILD_DIR)/Society.h
+	pushd $(BUILD_DIR) ; $(CXX) $(CXXFLAGS) -c $(SRC_DIR)/Society.cpp -o Society.o ; popd
 
 clean:
-	rm -f my_program *.o
+	rm -f $(BUILD_DIR)/*.o $(TARGET)
 
-run: my_program
-	./my_program
+run: $(TARGET)
+	./$(TARGET)
 
 .PHONY: all clean run
