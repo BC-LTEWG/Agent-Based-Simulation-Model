@@ -8,6 +8,7 @@
 #include "Firm.h"
 #include "Product.h"
 #include "Society.h"
+
 class Firm;
 
 class Person {
@@ -15,23 +16,23 @@ class Person {
     enum HealthStatus { HEALTHY, UNHEALTHY, RECOVERING };
     enum Expertise { EXPERTISE_1, EXPERTISE_2, EXPERTISE_3 };
 
-    Person(const std::unordered_map<std::string, int>& expertise, int age, HealthStatus health_status, const std::unordered_map<Product*, double>& needs);
+    Person(const std::unordered_map<std::string, int>& expertise, int age, HealthStatus health_status, const std::unordered_map<Product*, double>& purchase_frequencies);
   
-    std::unordered_map<std::string, double>& get_worker_needs();
+    std::unordered_map<Product*, double>& getWorkerPurchasePeriods() { return this->purchase_frequencies; };
     HealthStatus get_health_status();
     float get_current_productivity();
     float avg_productivity_over_time_step(std::string product_name);
-    void purchaseGood(Product& p, int quantity);
-    void purchaseGoods();
     void get_paid(double income);
     void charge(double cost);
-    bool willRetire();
+    void purchase_good(Product* p, int quantity);
+    void purchase_goods();
+    bool will_retire();
   
   private:
     std::unordered_map<std::string, int> expertise;
     int age;
     HealthStatus health_status;
-    std::unordered_map<Product*, double> needs;
+    std::unordered_map<Product*, double> purchase_frequencies;
     Firm* employer;
     double account;
 };

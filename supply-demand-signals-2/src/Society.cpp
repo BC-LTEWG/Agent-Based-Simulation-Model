@@ -1,9 +1,14 @@
 #include <numeric>
+#include <cmath>
 
 #include "Society.h"
 
 double Society::randomRetirementChance = 8.3e-7;
+
+// approx 50 years in hours
 int Society::guaranteedRetirementAge = 438300;
+
+// should be approx 45 years in hours
 double Society::averageRetirementAge = (1 - pow(1 - Society::randomRetirementChance, Society::guaranteedRetirementAge)) / Society::randomRetirementChance;
 
 Society::Society(std::vector<Person*> workers, std::vector<Firm*> firms, std::unordered_map<Firm*, double> prices) 

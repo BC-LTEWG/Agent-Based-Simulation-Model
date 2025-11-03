@@ -1,24 +1,24 @@
 #include <algorithm>
 #include <cstdlib>
+#include <iostream> // testing main directive
 #include <random>
 
 #include "Person.h"
+#include "Sim.h"
 
 Person::Person(
     const std::unordered_map<std::string, int>& expertise,
     int age,
     HealthStatus health_status,
-    const std::unordered_map<Product*, double>& needs) :
+    const std::unordered_map<Product*, double>& purchase_frequencies) :
     expertise(expertise),
     age(age),
     health_status(health_status),
-    needs(needs)
+	purchase_frequencies(purchase_frequencies)
 {
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-	static std::lognormal_distribution<> dist(0, 3.2);		
-	for (std::pair<Product*, double> p  : needs) {
-		p.second = 1 / dist(gen);
+	static std::normal_distribution<> dist(1, 1);
+	for (std::pair<Product*, double> p : purchase_frequencies) {
+		p.second = p.first->base_frequency * dist(Sim::gen);	
 	}
 }
 
@@ -39,22 +39,19 @@ Person::HealthStatus Person::get_health_status() {
 }
 
 float Person::get_current_productivity() {
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-    
-    std::uniform_real_distribution<float> baseDist(0.1f, 2.0f);
-    
-    float baseProductivity = baseDist(gen);
+
+    static std::uniform_real_distribution<float> baseDist(0.1f, 2.0f);
+    float base_productivity = baseDist(Sim::gen);
     
     switch(health_status) {
-        case HEALTHY:
-            return std::min(baseProductivity * 1.2f, 2.0f);
-        case RECOVERING:
-            return baseProductivity * 0.8f;
-        case UNHEALTHY:
-            return baseProductivity * 0.5f;
+        case HEALTH_STATUS::HEALTHY:
+            return std::min(base_productivity * 1.2f, 2.0f);
+        case HEALTH_STATUS::RECOVERING:
+            return base_productivity * 0.8f;
+        case HEALTH_STATUS::UNHEALTHY:
+            return base_productivity * 0.5f;
         default:
-            return baseProductivity;
+            return base_productivity;
     }
 }
 
@@ -64,36 +61,39 @@ float Person::avg_productivity_over_time_step(std::string product_name) {
     return 0.0f;
 }
 
-void Person::purchaseGood(Product& p, int quantity) {
+void Person::purchase_good(Product& p, int quantity) {
     (void)p;
     (void)quantity;
 }
 
-void Person::purchaseGoods() {
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
+void Person::purchase_goods() {
 	static std::uniform_real_distribution<> dist(0, 1);
 
-	for (std::pair<Product*, double> p : needs) {
-		if (dist(gen) < p.second) {
-			purchaseGood(*p.first, 1);
+	for (std::pair<Product*, double> p : purchase_frequencies) {
+		if (dist(Sim::gen) < p.second) {
+			purchase_good(p.first, 1);
 		}
 	}
 }
 
-bool Person::willRetire() {
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
+bool Person::will_retire() {
 	static std::uniform_real_distribution<> dist(0, 1);
 
 	if (age >= Society::guaranteedRetirementAge) {
 		return true;
 	}
 
-	return dist(gen) < Society::randomRetirementChance;
+	return dist(Sim::gen) < Society::randomRetirementChance;
 }
 
 int main() {
+	Product product("Bread", 1, 1); 
+	Person sal( {{"Computer Science", 5}}, 0, HEALTH_STATUS::HEALTHY, { {&product, 0} } );
+	std::vector<Person*> workers = { &sal };
+	std::vector<Firm*> firms = { new Firm() };
+	Society society(workers, firms, { {firms[0], 10.0} });
+	Sim sim(&society);
+	std::cout << product.base_frequency << std::endl;
 	return EXIT_SUCCESS;
 }
 		
