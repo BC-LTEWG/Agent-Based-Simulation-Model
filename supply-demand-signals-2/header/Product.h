@@ -1,11 +1,12 @@
 #pragma once
-#include <vector>
+
 #include <string>
+#include <vector>
 
 struct Product {
-    std::string productName;
-    double pricePerUnit;
-    int orderSize;
+    std::string product_name;
+    double price_per_unit;
+    int order_size;
   
-    Product(const std::string name, double price, int order) : productName(name), pricePerUnit(price), orderSize(order) {};
+    Product(const std::string name, double price, int order);
 };

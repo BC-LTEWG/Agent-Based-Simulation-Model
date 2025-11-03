@@ -12,4 +12,3 @@ int main() {
     std::cout << person.health_status << std::endl;
     return EXIT_SUCCESS;
 }
-
