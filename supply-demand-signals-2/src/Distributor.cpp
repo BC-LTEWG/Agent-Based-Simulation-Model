@@ -14,5 +14,14 @@ double Distributor::planned_satisfaction_per_person(Product& product, Person& pe
 }
 
 void Distributor::sell_goods(Product& product, int quantity) {
-    inventory[&product].second = (inventory.find(&product) == inventory.end() && inventory[&product].second > quantity) ? inventory[&product].second - quantity : inventory[&product].second;
+    if (!inventory[&product]) {
+        std::cerr << "Inventory has no such product: " << product.name << std::endl;
+        int available = inventory[&product];
+        if (available >= quantity) {
+            inventory[&product] -= quantity;
+        } else {
+            inventory[&product] = 0;
+            int remainder = quantity - available;
+            std::cout << "Shortfall in product " << product.name << " of " << remainder << " units. " << std::endl;
+        }
 }
