@@ -10,13 +10,13 @@ const double PRODUCTIVITY_THRESHOLD = 60.0;
 
 class Society {
 public:
-    std::vector<Person&> workers;
-    std::vector<Firm&> firms;
-    std::unordered_map<Firm&, double> prices;
+    std::vector<Person*> workers;
+    std::vector<Firm*> firms;
+    std::unordered_map<Firm*, double> prices;
     const int initial_work_hours_daily = 8;
     int current_work_hours_daily = initial_work_hours_daily;
 
-    Society(std::vector<Person&> workers, std::vector<Firm&> firms, std::unordered_map<Firm&, double> prices);
+    Society(std::vector<Person*> workers, std::vector<Firm*> firms, std::unordered_map<Firm*, double> prices);
     
     std::size_t num_workers();
     std::size_t num_firms();

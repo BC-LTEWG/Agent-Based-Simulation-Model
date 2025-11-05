@@ -43,8 +43,11 @@ float Person::get_current_productivity() {
 }
 
 float Person::avg_productivity_over_time_step(std::string product_name) {
+    (void)product_name;
     return 0.0f;
 }
 
 void Person::purchase_goods(Product& p, int quantity) {
+    (void)p;
+    (void)quantity;
 }

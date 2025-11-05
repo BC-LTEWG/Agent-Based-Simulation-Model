@@ -11,8 +11,8 @@
 
 class Distributor : public Firm {
 private:
-    std::vector<Producer&> suppliers;
-    std::unordered_map<Product, std::pair<Producer&, int>> inventory;
+    std::vector<Producer*> suppliers;
+    std::unordered_map<Product*, std::pair<Producer*, int>> inventory;
     
 public:
     Distributor();

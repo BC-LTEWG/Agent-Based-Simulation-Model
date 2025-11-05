@@ -14,5 +14,5 @@ double Distributor::planned_satisfaction_per_person(Product& product, Person& pe
 }
 
 void Distributor::sell_goods(Product& product, int quantity) {
-    inventory[product].second = (inventory.find(product) == inventory.end() && inventory[product].second > quantity) ? inventory[product].second - quantity : inventory[product].second;
+    inventory[&product].second = (inventory.find(&product) == inventory.end() && inventory[&product].second > quantity) ? inventory[&product].second - quantity : inventory[&product].second;
 }

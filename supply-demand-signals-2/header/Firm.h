@@ -12,9 +12,9 @@
 class Firm;
 
 struct Plan {
-    Product& product;
+    Product* product;
     std::vector<Machine> machines;
-    Firm& firm;
+    Firm* firm;
     int labor_hours;
     int raw_materials;
     int total_quantity;

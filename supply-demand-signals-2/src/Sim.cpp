@@ -6,6 +6,7 @@ void Sim::advance_time_step() {
 }
 
 void Sim::run_sim(int days) {
+    (void)days;
 }
 
 void Sim::run_work_day() {

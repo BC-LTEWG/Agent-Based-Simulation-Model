@@ -2,7 +2,7 @@
 
 #include "Society.h"
 
-Society::Society(std::vector<Person&> workers, std::vector<Firm&> firms, std::unordered_map<Firm&, double> prices) 
+Society::Society(std::vector<Person*> workers, std::vector<Firm*> firms, std::unordered_map<Firm*, double> prices) 
     : workers(workers), firms(firms), prices(prices) {}
 
 std::size_t Society::num_workers() {
@@ -15,8 +15,8 @@ std::size_t Society::num_firms() {
 
 bool Society::meets_standard_for_lower_working_hours() {
     double sum = 0.0;
-    for(auto& firm : firms) {
-        sum += firm.get_avg_productivity();
+    for(auto firm : firms) {
+        sum += firm->get_avg_productivity();
     }
     double avgProductivity = sum / firms.size();
     return avgProductivity >= PRODUCTIVITY_THRESHOLD;
