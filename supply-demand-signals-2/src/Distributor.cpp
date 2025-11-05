@@ -13,15 +13,19 @@ double Distributor::planned_satisfaction_per_person(Product& product, Person& pe
     return get_output_ratio(product) * person.get_worker_needs()[product.product_name];
 }
 
-void Distributor::sell_goods(Product& product, int quantity) {
+void Distributor::sell_goods(Product& product, int quantity, Person * person) {
     if (!inventory[&product]) {
         std::cerr << "Inventory has no such product: " << product.name << std::endl;
         int available = inventory[&product];
+        int remainder = 0;
         if (available >= quantity) {
             inventory[&product] -= quantity;
         } else {
             inventory[&product] = 0;
-            int remainder = quantity - available;
-            std::cout << "Shortfall in product " << product.name << " of " << remainder << " units. " << std::endl;
+            remainder = quantity - available;
+            std::cout << "Shortfall in product " << product.name 
+                << " of " << remainder << " units. " << std::endl;
         }
+        double cost = (available - remainder) * product.price_per_unit;
+        person->charge(cost);
 }

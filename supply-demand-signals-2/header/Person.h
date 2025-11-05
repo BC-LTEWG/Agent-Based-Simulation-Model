@@ -23,9 +23,13 @@ public:
     float get_current_productivity();
     float avg_productivity_over_time_step(std::string product_name);
     void purchase_goods(Product& p, int quantity);
+    void get_paid(double income);
+    void charge(double cost);
 
+private:
     std::unordered_map<std::string, int> expertise;
     int age;
     HealthStatus health_status;
     std::unordered_map<std::string, double> needs;
+    double account;
 };

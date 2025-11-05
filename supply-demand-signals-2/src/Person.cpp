@@ -14,6 +14,14 @@ Person::Person(
     needs(needs)
 {}
 
+void Person::get_paid(double income) {
+    account += income;
+}
+
+void Person::charge(double cost) {
+    account -= cost; 
+}
+
 std::unordered_map<std::string, double>& Person::get_worker_needs() {
     return this->needs;
 }

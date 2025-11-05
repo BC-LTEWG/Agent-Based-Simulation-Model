@@ -19,5 +19,5 @@ public:
     Distributor(std::vector<Machine*> machines, std::vector<Person*> workforce, std::vector<Plan*> plans);
     double get_output_ratio(Product& product);
     double planned_satisfaction_per_person(Product& product, Person& person);
-    void sell_goods(Product& product, int quantity);
+    void sell_goods(Product& product, int quantity, Person * person);
 };
