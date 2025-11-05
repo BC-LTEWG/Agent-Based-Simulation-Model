@@ -7,6 +7,7 @@
 #include "labor_time_economy.h"
 #include "labor_time_company.h"
 #include "labor_time_product.h"
+
 #include "random_utils.h"
 #include "values.h"
 #include <iomanip>
