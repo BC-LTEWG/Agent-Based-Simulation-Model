@@ -1,24 +1,12 @@
 #include <capitalist_economy.h>
 #include <capitalist_product.h>
+#include "random_utils.h"
 #include <string>
+#include <iostream>
 #include <random>
 #include <map>
 
-int generate_random_int(int min, int max)
-{
-    static std::mt19937 gen(std::random_device{}());
-    std::uniform_int_distribution<> dist(min, max);
-    return dist(gen);
-}
-
-double generate_random_double(double min, double max)
-{
-    static std::mt19937 gen(std::random_device{}());
-    std::uniform_real_distribution<> dist(min, max);
-    return dist(gen);
-}
-
-void CapitalistEconomy::generate_dependencies(std::map<char, std::vector<char>> &dependencies, int number_of_base_products)
+void CapitalistEconomy::generate_dependencies(int number_of_base_products)
 {
     for (int i = 0; i < 18; i++)
     {
@@ -44,7 +32,7 @@ void CapitalistEconomy::generate_dependencies(std::map<char, std::vector<char>> 
     }
 }
 
-void CapitalistEconomy::generate_production_cost_map(std::map<char, double> &production_cost_map, std::map<char, std::vector<char>> &dependencies)
+void CapitalistEconomy::generate_production_cost_map()
 {
     // Random variation factor
     const double RANDOM_MIN = 0.8;
@@ -103,7 +91,7 @@ void CapitalistEconomy::generate_production_cost_map(std::map<char, double> &pro
     }
 }
 
-void CapitalistEconomy::generate_labor_cost_map(std::map<char, double> &labor_cost_map, std::map<char, double> &production_cost_map)
+void CapitalistEconomy::generate_labor_cost_map()
 {
     // LaborCost(P) = ProductionCost(P) × LaborShare(P)
 
@@ -148,6 +136,47 @@ void CapitalistEconomy::generate_labor_cost_map(std::map<char, double> &labor_co
         // Labor cost formula:
         // LaborCost(P) = ProductionCost(P) × LaborShare(P)
         labor_cost_map[product] = production_cost_map[product] * labor_share;
+    }
+}
+
+void CapitalistEconomy::print_dependencies()
+{
+    std::cout << " Dependency map printed below " << std::endl;
+
+    for (int c = 0; c < 26; c++)
+    {
+        char current_char = 'A' + c;
+        std::cout << "Product type: " << current_char;
+        std::cout << " Dependencies of current product: ";
+        for (int length = 0; length < dependencies[current_char].size(); length++)
+        {
+            std::cout << dependencies[current_char][length] << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+void CapitalistEconomy::print_production_cost_map()
+{
+    std::cout << " Production cost map printed below " << std::endl;
+
+    for (int c = 0; c < 26; c++)
+    {
+        char current_char = 'A' + c;
+        std::cout << "Product type: " << current_char;
+        std::cout << " Production cost of current product: " << production_cost_map[current_char] << std::endl;
+    }
+}
+
+void CapitalistEconomy::print_labor_cost_map()
+{
+    std::cout << " Labor cost map printed below " << std::endl;
+
+    for (int c = 0; c < 26; c++)
+    {
+        char current_char = 'A' + c;
+        std::cout << "Product type: " << current_char;
+        std::cout << " Labor cost of current product: " << labor_cost_map[current_char] << std::endl;
     }
 }
 

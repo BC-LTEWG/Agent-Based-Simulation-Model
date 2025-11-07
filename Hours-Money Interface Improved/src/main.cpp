@@ -7,20 +7,34 @@
 #include "labor_time_economy.h"
 #include "labor_time_company.h"
 #include "labor_time_product.h"
+
+#include "random_utils.h"
 #include "values.h"
 #include <iomanip>
 #include <fstream>
 
 using namespace std;
 
-// Used for generating random number
-double generate_number(double lower_bound, double upper_bound)
+int main()
 {
-    static std::mt19937 gen(std::random_device{}());
-    std::uniform_real_distribution<double> dist(lower_bound, upper_bound);
-    return dist(gen);
+    // Build the economies
+    CapitalistEconomy ce;
+    ce.name = "ce";
+
+    ce.generate_dependencies(NUMBER_OF_BASE_PRODUCTS);
+    ce.generate_production_cost_map();
+    ce.generate_labor_cost_map();
+
+    ce.print_dependencies();
+    ce.print_production_cost_map();
+    ce.print_labor_cost_map();
+
+    return 0;
 }
 
+// This is my main for the previous project
+// The structure of this main is reusable in future simulation
+/*
 int main()
 {
     // Build the two economies
@@ -225,3 +239,4 @@ int main()
 
     return 0;
 }
+*/

@@ -5,6 +5,7 @@
 #include "labor_time_product.h"
 
 struct LaborTimeEconomy;
+struct LaborTimeProduct;
 
 struct LaborTimeCompany
 {

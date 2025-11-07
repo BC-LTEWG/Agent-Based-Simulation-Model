@@ -13,7 +13,7 @@
 // Units are arbitrary but ratio-preserving (fictional currency like CE dollar in this case)
 // Final base_costs[p] = FIXED_VALUE[p] * random_factor(0.8–1.2) applied at runtime.
 
-#define BASE_COST_A 1.0 // Common metal (iron/aluminum)
+#define BASE_COST_A 1.0 // Common metal (iron/aluminum), the numeraire
 #define BASE_COST_B 0.8 // Basic organic (wood/grain)
 #define BASE_COST_C 0.3 // Water/simple resource
 #define BASE_COST_D 1.5 // Energy (coal/gas)
