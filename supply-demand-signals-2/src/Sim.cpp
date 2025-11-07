@@ -21,7 +21,7 @@ Sim::Sim() : current_time_step(0) {
 	// note: no way to assing products to producers or suppliers to distributors yet
 	std::vector<Producer*> producers;
 	for (int i = 0; i < STARTING_PRODUCERS; i++) {
-		//producers.push_back(new Producer());
+		producers.push_back(new Producer());
 	}
 	std::vector<Distributor*> distributors;
 	for (int i = 0; i < STARTING_DISTRIBUTORS; i++) {

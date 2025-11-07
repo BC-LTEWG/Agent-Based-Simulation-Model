@@ -1,4 +1,4 @@
-#include "../header/Distributor.h"
+#include "Distributor.h"
 
 Distributor::Distributor() : Firm() {}
 
