@@ -11,7 +11,7 @@ class Sim {
 	static std::random_device rd;
 	static std::mt19937 gen;
 
-    Sim(Society* society);
+    Sim();
     void time_step();
     void run(int time_steps);
 

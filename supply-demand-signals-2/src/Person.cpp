@@ -72,7 +72,7 @@ void Person::purchase_goods() {
 
 	for (std::pair<Product*, double> p : purchase_frequencies) {
 		if (dist(Sim::gen) < p.second) {
-			purchase_good(p.first, 1);
+			purchase_good(*p.first, 1);
 		}
 	}
 }
@@ -85,11 +85,5 @@ bool Person::will_retire() {
 	}
 
 	return dist(Sim::gen) < RANDOM_RETIREMENT_CHANCE;
-}
-
-int main() {
-	Product product("Bread", 1, 1); 
-	Person sal( {{"Computer Science", 5}}, 0, HEALTH_STATUS::HEALTHY, { {&product, 0} } );
-	return EXIT_SUCCESS;
 }
 		

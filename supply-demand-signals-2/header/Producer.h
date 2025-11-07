@@ -10,11 +10,11 @@
 #include "Product.h"
 
 class Producer : public Firm {
-private:
+  private:
     std::vector<Product*> products;
     std::unordered_map<Product*, int> inventory;
-    
-public:
+
+  public:
     Producer();
     Producer(std::vector<Machine*> machines, std::vector<Person*> workforce);
     Producer(std::vector<Machine*> machines, std::vector<Person*> workforce, std::vector<Plan*> plans);
