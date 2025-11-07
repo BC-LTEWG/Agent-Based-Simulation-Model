@@ -12,8 +12,8 @@ class Sim {
 	static std::mt19937 gen;
 
     Sim(Society* society);
-    void timeStep() {};
-    void run(int timeSteps) {};
+    void time_step();
+    void run(int time_steps);
 
   private:
 	int current_time_step;

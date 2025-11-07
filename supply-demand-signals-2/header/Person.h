@@ -7,7 +7,6 @@
 
 #include "Firm.h"
 #include "Product.h"
-#include "Society.h"
 
 class Firm;
 
@@ -18,7 +17,7 @@ class Person {
 
     Person(const std::unordered_map<std::string, int>& expertise, int age, HealthStatus health_status, const std::unordered_map<Product*, double>& purchase_frequencies);
   
-    std::unordered_map<Product*, double>& getWorkerPurchasePeriods() { return this->purchase_frequencies; };
+    std::unordered_map<Product*, double>& get_purchase_frequencies();
     HealthStatus get_health_status();
     float get_current_productivity();
     float avg_productivity_over_time_step(std::string product_name);

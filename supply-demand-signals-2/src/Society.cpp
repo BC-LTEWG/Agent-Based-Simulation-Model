@@ -1,21 +1,20 @@
-#include <numeric>
 #include <cmath>
+#include <numeric>
 
+#include "Constants.h"
 #include "Society.h"
 
-double Society::randomRetirementChance = 8.3e-7;
+Society::Society(std::vector<Person*> people, std::vector<Producer*> producers, std::vector<Distributor*> distributors, std::unordered_map<Product*, Distributor*> product_to_distributor, std::unordered_map<Firm*, double> prices) : people(people), unemployed_people(people), producers(producers), distributors(distributors), product_to_distributor(product_to_distributor), prices(prices) {
+	for (Producer* producer : producers) {
+		firms.push_back(producer);
+	}
+	for (Distributor* distributor : distributors) {
+		firms.push_back(distributor);
+	}
+}
 
-// approx 50 years in hours
-int Society::guaranteedRetirementAge = 438300;
-
-// should be approx 45 years in hours
-double Society::averageRetirementAge = (1 - pow(1 - Society::randomRetirementChance, Society::guaranteedRetirementAge)) / Society::randomRetirementChance;
-
-Society::Society(std::vector<Person*> workers, std::vector<Firm*> firms, std::unordered_map<Firm*, double> prices) 
-    : workers(workers), firms(firms), prices(prices) {}
-
-std::size_t Society::num_workers() {
-    return workers.size();
+std::size_t Society::num_people() {
+	return people.size();
 }
 
 std::size_t Society::num_firms() {
@@ -23,12 +22,12 @@ std::size_t Society::num_firms() {
 }
 
 bool Society::meets_standard_for_lower_working_hours() {
-    double sum = 0.0;
-    for(auto firm : firms) {
-        sum += firm->get_avg_productivity();
-    }
-    double avgProductivity = sum / firms.size();
-    return avgProductivity >= PRODUCTIVITY_THRESHOLD;
+  double sum = 0.0;
+  for (Firm* firm : firms) {
+    sum += firm->get_avg_productivity();
+  }
+  double avg_productivity = sum / firms.size();
+  return avg_productivity >= PRODUCTIVITY_THRESHOLD;
 }
 
 void Society::set_work_hours_daily(int hours) {

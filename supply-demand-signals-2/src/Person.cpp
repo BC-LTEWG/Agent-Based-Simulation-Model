@@ -3,6 +3,7 @@
 #include <iostream> // testing main directive
 #include <random>
 
+#include "Constants.h"
 #include "Person.h"
 #include "Sim.h"
 
@@ -16,7 +17,7 @@ Person::Person(
     health_status(health_status),
 	purchase_frequencies(purchase_frequencies)
 {
-	static std::normal_distribution<> dist(1, 1);
+	static std::normal_distribution<> dist(PERSON_FREQUENCY_MULTIPLIER_MEAN, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
 	for (std::pair<Product*, double> p : purchase_frequencies) {
 		p.second = p.first->base_frequency * dist(Sim::gen);	
 	}
@@ -30,8 +31,8 @@ void Person::charge(double cost) {
     account -= cost; 
 }
 
-std::unordered_map<std::string, double>& Person::get_worker_needs() {
-    return this->needs;
+std::unordered_map<Product*, double>& Person::get_purchase_frequencies() { 
+	return this->purchase_frequencies;
 }
 
 Person::HealthStatus Person::get_health_status() {
@@ -79,21 +80,16 @@ void Person::purchase_goods() {
 bool Person::will_retire() {
 	static std::uniform_real_distribution<> dist(0, 1);
 
-	if (age >= Society::guaranteedRetirementAge) {
+	if (age >= GUARANTEED_RETIREMENT_AGE) {
 		return true;
 	}
 
-	return dist(Sim::gen) < Society::randomRetirementChance;
+	return dist(Sim::gen) < RANDOM_RETIREMENT_CHANCE;
 }
 
 int main() {
 	Product product("Bread", 1, 1); 
 	Person sal( {{"Computer Science", 5}}, 0, HEALTH_STATUS::HEALTHY, { {&product, 0} } );
-	std::vector<Person*> workers = { &sal };
-	std::vector<Firm*> firms = { new Firm() };
-	Society society(workers, firms, { {firms[0], 10.0} });
-	Sim sim(&society);
-	std::cout << product.base_frequency << std::endl;
 	return EXIT_SUCCESS;
 }
 		

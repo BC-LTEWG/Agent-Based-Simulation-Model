@@ -4,7 +4,7 @@
 #include <vector>
 
 class Machine {
-public:
+  public:
     std::string name;
     const int lifetime;
     int hours_used;

@@ -4,5 +4,5 @@ std::random_device Sim::rd;
 
 std::mt19937 Sim::gen(Sim::rd());
 
-Sim::Sim(Society* society) : currentTimeStep(0), society(society) {}
+Sim::Sim(Society* society) : current_time_step(0), society(society) {}
 

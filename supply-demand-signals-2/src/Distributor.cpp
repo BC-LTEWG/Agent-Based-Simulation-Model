@@ -1,4 +1,4 @@
-#include "Distributor.h"
+#include "../header/Distributor.h"
 
 Distributor::Distributor() : Firm() {}
 
@@ -28,4 +28,5 @@ void Distributor::sell_goods(Product& product, int quantity, Person * person) {
         }
         double cost = (available - remainder) * product.price_per_unit;
         person->charge(cost);
+	}
 }
