@@ -1,21 +1,19 @@
-#pragma once 
-#include <vector>
-#include <string>
-#include "Society.h"
+#pragma once
+
 #include <chrono>
+#include <string>
+#include <vector>
+
+#include "Society.h"
 
 class Sim {
-  public:
-    Sim(): timeStep(0) {};
-    void advanceTimeStep() {};
-    void runSim(int days) {};
-    void runWorkDay() {};
-    void resetTimeStep() {timeStep = std::chrono::hours(0);};
+public:
+    Sim();
+    void advance_time_step();
+    void run_sim(int days);
+    void run_work_day();
+    void reset_time_step();
 
-
-  private:
-    std::chrono::hours timeStep;
-
-
-
+private:
+    std::chrono::hours time_step;
 };

@@ -1,32 +1,35 @@
-#pragma once 
-#include "Product.h"
-#include <string>
-#include <vector>
-#include <unordered_map>
+#pragma once
+
 #include <random>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
+#include "Product.h"
 
+class Person {
+public:
+    enum HealthStatus { HEALTHY, UNHEALTHY, RECOVERING };
+    enum Expertise { EXPERTISE_1, EXPERTISE_2, EXPERTISE_3 };
 
-enum health_status { HEALTHY, UNHEALTHY, RECOVERING };
+    Person(
+        const std::unordered_map<std::string, int>& expertise,
+        int age,
+        HealthStatus health_status,
+        const std::unordered_map<std::string, double>& needs);
 
-enum expertise { EXPERTISE_1, EXPERTISE_2, EXPERTISE_3 };
+    std::unordered_map<std::string, double>& get_worker_needs();
+    HealthStatus get_health_status();
+    float get_current_productivity();
+    float avg_productivity_over_time_step(std::string product_name);
+    void purchase_goods(Product& p, int quantity);
+    void get_paid(double income);
+    void charge(double cost);
 
-
-struct Person {
-  std::unordered_map<std::string, int> expertise;
-  int age;
-  health_status healthStatus;
-  std::unordered_map<std::string, double> needs;
-
-  
-  Person(const std::unordered_map<std::string, int>& expertise, int age, health_status healthStatus, const std::unordered_map<std::string, double>& needs) : expertise(expertise), age(age), healthStatus(healthStatus), needs(needs) {}
-  
-  std::unordered_map<std::string, double>& getWorkerNeeds() {return this->needs;};
-  health_status getHealthStatus() {return this->healthStatus;};
-
-  float getCurrentProductivity();
-  
-  float avgProductivityOverTimeStep(std::string productName);
-
-  void purchaseGoods(Product& p, int quantity) {};
+private:
+    std::unordered_map<std::string, int> expertise;
+    int age;
+    HealthStatus health_status;
+    std::unordered_map<std::string, double> needs;
+    double account;
 };
