@@ -45,11 +45,11 @@ float Person::get_current_productivity() {
     float base_productivity = baseDist(Sim::gen);
     
     switch(health_status) {
-        case HEALTH_STATUS::HEALTHY:
+        case HEALTHY:
             return std::min(base_productivity * 1.2f, 2.0f);
-        case HEALTH_STATUS::RECOVERING:
+        case RECOVERING:
             return base_productivity * 0.8f;
-        case HEALTH_STATUS::UNHEALTHY:
+        case UNHEALTHY:
             return base_productivity * 0.5f;
         default:
             return base_productivity;
@@ -72,7 +72,7 @@ void Person::purchase_goods() {
 
 	for (std::pair<Product*, double> p : purchase_frequencies) {
 		if (dist(Sim::gen) < p.second) {
-			purchase_good(*p.first, 1);
+			purchase_good(*(p.first), 1);
 		}
 	}
 }

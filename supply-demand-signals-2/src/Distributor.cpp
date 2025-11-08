@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "Distributor.h"
 
 Distributor::Distributor() : Firm() {}
@@ -10,12 +12,12 @@ double Distributor::get_output_ratio(Product& product) {
 }
 
 double Distributor::planned_satisfaction_per_person(Product& product, Person& person) {
-    return get_output_ratio(product) * person.get_worker_needs()[product.product_name];
+    return get_output_ratio(product) * person.get_purchase_frequencies()[&product];
 }
 
 void Distributor::sell_goods(Product& product, int quantity, Person * person) {
     if (!inventory[&product]) {
-        std::cerr << "Inventory has no such product: " << product.name << std::endl;
+        std::cerr << "Inventory has no such product: " << product.product_name << std::endl;
         int available = inventory[&product];
         int remainder = 0;
         if (available >= quantity) {
@@ -23,7 +25,7 @@ void Distributor::sell_goods(Product& product, int quantity, Person * person) {
         } else {
             inventory[&product] = 0;
             remainder = quantity - available;
-            std::cout << "Shortfall in product " << product.name 
+            std::cout << "Shortfall in product " << product.product_name 
                 << " of " << remainder << " units. " << std::endl;
         }
         double cost = (available - remainder) * product.price_per_unit;

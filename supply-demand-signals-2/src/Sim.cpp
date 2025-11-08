@@ -16,7 +16,7 @@ Sim::Sim() : current_time_step(0) {
 		for (Product* p : products) {
 			purchase_frequencies[p] = 0.0;
 		}
-		people.push_back(new Person({}, 0, HEALTH_STATUS::HEALTHY, purchase_frequencies));
+		people.push_back(new Person({}, 0, Person::HEALTHY, purchase_frequencies));
 	}
 	// note: no way to assing products to producers or suppliers to distributors yet
 	std::vector<Producer*> producers;

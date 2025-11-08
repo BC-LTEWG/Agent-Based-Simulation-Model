@@ -23,7 +23,7 @@ class Person {
     float avg_productivity_over_time_step(std::string product_name);
     void get_paid(double income);
     void charge(double cost);
-    void purchase_good(Product* p, int quantity);
+    void purchase_good(Product& p, int quantity);
     void purchase_goods();
     bool will_retire();
   
