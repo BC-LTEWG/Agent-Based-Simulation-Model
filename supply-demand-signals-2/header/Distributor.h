@@ -13,6 +13,7 @@ class Distributor : public Firm {
 private:
     std::vector<Producer*> suppliers;
     std::unordered_map<Product*, int> inventory;
+    std::unordered_map<Product*, int> reorder_thresholds;
     
 public:
     Distributor();
@@ -20,4 +21,11 @@ public:
     double get_output_ratio(Product& product);
     double planned_satisfaction_per_person(Product& product, Person& person);
     void sell_goods(Product& product, int quantity, Person * person);
+    void add_supplier(Producer* producer);
+    void set_reorder_threshold(Product* product, int threshold);
+    void check_and_reorder();
+    Producer* find_producer_for_product(Product* product);
+    void receive_order(Product* product, int quantity);
+    void initialize_inventory(Product* product, int quantity);
+    int get_inventory(Product* product);
 };
