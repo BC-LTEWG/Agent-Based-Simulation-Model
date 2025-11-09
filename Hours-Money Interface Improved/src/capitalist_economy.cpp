@@ -47,8 +47,7 @@ void CapitalistEconomy::generate_production_cost_map()
 
     // The hybrid model applies a ±20% random factor to introduce
     // slight variability while preserving realistic cost ratios.
-    // These fluctuations will persist across production cycles but remain
-    // bounded within the ±20% range of each product’s base cost
+    // These fluctuations will persist across production cycles and unbounded.
     // defined in values.h.
     production_cost_map['A'] = BASE_COST_A; // fixed baseline
 
