@@ -1,12 +1,21 @@
+#include <cmath>
 #include <numeric>
 
+#include "Constants.h"
 #include "Society.h"
 
-Society::Society(std::vector<Person*> workers, std::vector<Firm*> firms, std::unordered_map<Firm*, double> prices) 
-    : workers(workers), firms(firms), prices(prices) {}
+Society::Society(std::vector<Person*> people, std::vector<Product*> products, std::vector<Producer*> producers, std::vector<Distributor*> distributors, std::unordered_map<Product*, Distributor*> product_to_distributor, std::unordered_map<Firm*, double> prices) 
+	: people(people), products(products), unemployed_people(people), producers(producers), distributors(distributors), product_to_distributor(product_to_distributor), prices(prices) {
+	for (Producer* producer : producers) {
+		firms.push_back(producer);
+	}
+	for (Distributor* distributor : distributors) {
+		firms.push_back(distributor);
+	}
+}
 
-std::size_t Society::num_workers() {
-    return workers.size();
+std::size_t Society::num_people() {
+	return people.size();
 }
 
 std::size_t Society::num_firms() {
@@ -14,12 +23,12 @@ std::size_t Society::num_firms() {
 }
 
 bool Society::meets_standard_for_lower_working_hours() {
-    double sum = 0.0;
-    for(auto firm : firms) {
-        sum += firm->get_avg_productivity();
-    }
-    double avgProductivity = sum / firms.size();
-    return avgProductivity >= PRODUCTIVITY_THRESHOLD;
+  double sum = 0.0;
+  for (Firm* firm : firms) {
+    sum += firm->get_avg_productivity();
+  }
+  double avg_productivity = sum / firms.size();
+  return avg_productivity >= PRODUCTIVITY_THRESHOLD;
 }
 
 void Society::set_work_hours_daily(int hours) {

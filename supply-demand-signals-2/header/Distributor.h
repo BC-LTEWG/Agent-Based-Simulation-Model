@@ -10,11 +10,11 @@
 #include "Producer.h"
 
 class Distributor : public Firm {
-private:
+  private:
     std::vector<Producer*> suppliers;
     std::unordered_map<Product*, int> inventory;
     
-public:
+  public:
     Distributor();
     Distributor(std::vector<Machine*> machines, std::vector<Person*> workforce, std::vector<Plan*> plans);
     double get_output_ratio(Product& product);

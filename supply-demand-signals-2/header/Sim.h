@@ -1,19 +1,21 @@
 #pragma once
 
-#include <chrono>
+#include <random>
 #include <string>
 #include <vector>
 
 #include "Society.h"
 
 class Sim {
-public:
-    Sim();
-    void advance_time_step();
-    void run_sim(int days);
-    void run_work_day();
-    void reset_time_step();
+  public:
+	static std::random_device rd;
+	static std::mt19937 gen;
 
-private:
-    std::chrono::hours time_step;
+    Sim();
+    void time_step();
+    void run(int time_steps);
+
+  private:
+	int current_time_step;
+	Society* society;
 };
