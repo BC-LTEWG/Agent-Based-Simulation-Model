@@ -5,10 +5,11 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Firm.h"
 #include "Product.h"
 
+class Distributor;
 class Firm;
+class Society;
 
 class Person {
   public:
@@ -23,15 +24,18 @@ class Person {
     float avg_productivity_over_time_step(std::string product_name);
     void get_paid(double income);
     void charge(double cost);
-    void purchase_good(Product& p, int quantity);
+    void purchase_good(Product* p, int quantity);
     void purchase_goods();
     bool will_retire();
+	void set_society(Society* society);
   
   private:
     std::unordered_map<std::string, int> expertise;
     int age;
     HealthStatus health_status;
     std::unordered_map<Product*, double> purchase_frequencies;
-    Firm* employer;
+    Firm* employer = nullptr;
+	Society* society = nullptr;
     double account;
+	std::vector<Distributor*> ranked_distributors;
 };

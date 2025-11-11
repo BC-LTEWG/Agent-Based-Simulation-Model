@@ -4,13 +4,16 @@
 #include "Constants.h"
 #include "Society.h"
 
-Society::Society(std::vector<Person*> people, std::vector<Product*> products, std::vector<Producer*> producers, std::vector<Distributor*> distributors, std::unordered_map<Product*, Distributor*> product_to_distributor, std::unordered_map<Firm*, double> prices) 
-	: people(people), products(products), unemployed_people(people), producers(producers), distributors(distributors), product_to_distributor(product_to_distributor), prices(prices) {
+Society::Society(std::vector<Person*> people, std::vector<Product*> products, std::vector<Producer*> producers, std::vector<Distributor*> distributors, std::unordered_map<Product*, std::vector<Distributor*>> product_to_distributors, std::unordered_map<Firm*, double> prices)
+	: people(people), products(products), unemployed_people(people), producers(producers), distributors(distributors), product_to_distributors(product_to_distributors), prices(prices) {
 	for (Producer* producer : producers) {
 		firms.push_back(producer);
 	}
 	for (Distributor* distributor : distributors) {
 		firms.push_back(distributor);
+	}
+	for (Person* person : people) {
+		person->set_society(this);
 	}
 }
 

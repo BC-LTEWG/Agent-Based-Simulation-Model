@@ -15,6 +15,10 @@ double Distributor::planned_satisfaction_per_person(Product& product, Person& pe
     return get_output_ratio(product) * person.get_purchase_frequencies()[&product];
 }
 
+bool Distributor::has_product(Product* product) {
+	return inventory[product];
+}
+
 void Distributor::sell_goods(Product& product, int quantity, Person * person) {
     if (!inventory[&product]) {
         std::cerr << "Inventory has no such product: " << product.product_name << std::endl;
