@@ -19,12 +19,12 @@ struct Order {
 };
 
 class Producer : public Firm {
-private:
+  private:
     std::vector<Product*> products;
     std::unordered_map<Product*, int> inventory;
     std::vector<Order*> pending_orders;
     
-public:
+  public:
     Producer();
     Producer(std::vector<Machine*> machines, std::vector<Person*> workforce);
     Producer(std::vector<Machine*> machines, std::vector<Person*> workforce, std::vector<Plan*> plans);

@@ -5,11 +5,13 @@
 #include <unordered_map>
 #include <vector>
 
+#include "Firm.h"
 #include "Machine.h"
 #include "Person.h"
 #include "Product.h"
 
 class Firm;
+class Person;
 
 struct Plan {
     Product* product;
@@ -31,7 +33,7 @@ public:
     std::vector<Person*> workers;
     std::vector<Plan*> plans;
     std::unordered_map<Product*, std::vector<Plan*>> plan_history;
-
+	
     Firm();
     Firm(std::vector<Machine*> machines, std::vector<Person*> workforce, std::vector<Plan*> plans);
     

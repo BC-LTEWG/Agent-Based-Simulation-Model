@@ -22,21 +22,21 @@ int main() {
 
     std::cout << "Creating workers..." << std::endl;
     std::unordered_map<std::string, int> expertise;
-    std::unordered_map<std::string, double> needs;
+    std::unordered_map<Product*, double> purchase_frequencies;
     
     std::vector<Person*> bakery_workers;
     for (int i = 0; i < 5; ++i) {
-        bakery_workers.push_back(new Person(expertise, 30, Person::HEALTHY, needs));
+        bakery_workers.push_back(new Person(expertise, 30, Person::HEALTHY, purchase_frequencies));
     }
     
     std::vector<Person*> dairy_workers;
     for (int i = 0; i < 3; ++i) {
-        dairy_workers.push_back(new Person(expertise, 28, Person::HEALTHY, needs));
+        dairy_workers.push_back(new Person(expertise, 28, Person::HEALTHY, purchase_frequencies));
     }
     
     std::vector<Person*> distributor_workers;
     for (int i = 0; i < 2; ++i) {
-        distributor_workers.push_back(new Person(expertise, 25, Person::HEALTHY, needs));
+        distributor_workers.push_back(new Person(expertise, 25, Person::HEALTHY, purchase_frequencies));
     }
     
     std::cout << "Created " << (bakery_workers.size() + dairy_workers.size() + distributor_workers.size()) << " workers" << std::endl << std::endl;
