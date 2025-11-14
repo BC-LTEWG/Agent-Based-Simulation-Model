@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "Distributor.h"
 #include <iostream>
 
@@ -11,7 +13,7 @@ double Distributor::get_output_ratio(Product& product) {
 }
 
 double Distributor::planned_satisfaction_per_person(Product& product, Person& person) {
-    return get_output_ratio(product) * person.get_worker_needs()[product.product_name];
+    return get_output_ratio(product) * person.get_purchase_frequencies()[&product];
 }
 
 void Distributor::sell_goods(Product& product, int quantity, Person * person) {

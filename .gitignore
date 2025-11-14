@@ -39,6 +39,7 @@
 Signals/sim
 Hours-Money\ Interface/main
 MELT\ Conversion\ Models/main
+Houes-Money\ Interface\ Improved/main
 
 # Hidden system and tool artifacts
 .DS_Store
