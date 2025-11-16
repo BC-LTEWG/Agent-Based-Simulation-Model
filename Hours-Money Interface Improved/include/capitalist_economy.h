@@ -23,15 +23,19 @@ struct CapitalistEconomy
     std::map<char, std::vector<char>> dependencies; // The first eight products are basic products, the next eighteen are dependent products that depends on one or more basic products to produce
     std::map<char, double> production_cost_map;     // Map of product production costs.
     std::map<char, double> labor_cost_map;          // Map of labor cost
+    std::map<char, double> total_cost_map;          // Map of total cost
+                                                    // Total cost = production cost (processing cost(machinery) + raw materials) + labor cost * MELT
 
     // These should be run once per simulation
     void generate_dependencies(int number_of_base_products);
     void generate_production_cost_map();
     void generate_labor_cost_map();
+    void generate_total_cost_map(double melt);
 
     void print_dependencies();
     void print_production_cost_map();
     void print_labor_cost_map();
+    void print_total_cost_map();
 
     void new_earnings_per_capita();
     void new_work_hours();
