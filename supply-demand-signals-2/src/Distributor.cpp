@@ -15,7 +15,7 @@ double Distributor::planned_satisfaction_per_person(Product& product, Person& pe
     return get_output_ratio(product) * person.get_purchase_frequencies()[&product];
 }
 
-bool Distributor::has_product(Product* product) {
+bool Distributor::has_product(Product * product) {
 	return inventory[product];
 }
 

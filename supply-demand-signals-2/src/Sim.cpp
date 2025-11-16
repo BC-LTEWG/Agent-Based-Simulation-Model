@@ -12,11 +12,7 @@ Sim::Sim() : current_time_step(0) {
 	}
 	std::vector<Person*> people;
 	for (int i = 0; i < STARTING_PEOPLE; i++) {
-		std::unordered_map<Product*, double> purchase_frequencies;
-		for (Product* p : products) {
-			purchase_frequencies[p] = 0.0;
-		}
-		people.push_back(new Person({}, 0, Person::HEALTHY, purchase_frequencies));
+		people.push_back(new Person({}, 0, Person::HEALTHY));
 	}
 	// note: no way to assing products to producers or suppliers to distributors yet
 	std::vector<Producer*> producers;
