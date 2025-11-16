@@ -1,5 +1,4 @@
 #pragma once
-
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -10,14 +9,16 @@
 #include "Producer.h"
 
 class Distributor : public Firm {
-  private:
-    std::vector<Producer*> suppliers;
-    std::unordered_map<Product*, int> inventory;
-    
   public:
     Distributor();
     Distributor(std::vector<Machine*> machines, std::vector<Person*> workforce, std::vector<Plan*> plans);
     double get_output_ratio(Product& product);
     double planned_satisfaction_per_person(Product& product, Person& person);
+	bool has_product(Product* product);
     void sell_goods(Product& product, int quantity, Person * person);
+
+  private:
+    std::vector<Producer*> suppliers;
+    std::unordered_map<Product*, int> inventory;
+    
 };
