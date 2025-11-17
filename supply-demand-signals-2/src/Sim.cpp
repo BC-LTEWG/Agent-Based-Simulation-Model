@@ -5,7 +5,7 @@ std::random_device Sim::rd;
 
 std::mt19937 Sim::gen(Sim::rd());
 
-Sim::Sim() : current_time_step(0) {
+Sim::Sim() {
 	std::vector<Product*> products;
 	for (int i = 0; i < STARTING_PRODUCTS; i++) {
 		products.push_back(new Product("Product " + std::to_string(i), 0, 1));
@@ -25,6 +25,12 @@ Sim::Sim() : current_time_step(0) {
 	}
 	society = new Society(people, products, producers, distributors, {}, {});	
 }
+
+int Sim::get_current_time_step() {
+	return current_time_step;
+}
+
+int Sim::current_time_step = 0;
 
 int main() {
 	Sim simulation;

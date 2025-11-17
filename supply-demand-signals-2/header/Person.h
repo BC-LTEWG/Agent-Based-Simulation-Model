@@ -25,9 +25,12 @@ class Person {
     void get_paid(double income);
     void charge(double cost);
     void purchase_good(Product * p, int quantity);
-    void purchase_goods();
+	bool will_shop();
+	void shop();
     bool will_retire();
+	void retire();
 	void set_society(Society * society);
+	void on_time_step();
   
   private:
     std::unordered_map<std::string, int> expertise;
@@ -38,4 +41,5 @@ class Person {
 	Society * society = nullptr;
     double account;
 	std::vector<Distributor*> ranked_distributors;
+	int shopping_offset;
 };

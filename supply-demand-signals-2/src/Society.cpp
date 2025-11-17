@@ -45,3 +45,15 @@ double Society::get_avg_productivity() {
 std::unordered_map<std::string, int> Society::avg_worker_needs() {
     return std::unordered_map<std::string, int>();
 }
+
+Person * Society::birth_person() {
+	Person * person = new Person({}, 0, Person::HEALTHY);
+	people.push_back(person);
+	unemployed_people.push_back(person);
+	person->set_society(this);
+	return person;
+}
+
+void Society::retire_person(Person * person) {
+	// unimplemented until hiring/reallocation is done
+}

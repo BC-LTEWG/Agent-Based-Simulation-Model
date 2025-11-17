@@ -15,6 +15,8 @@ Person::Person(
     age(age),
     health_status(health_status)
 {
+	static std::normal_distribution<> dist(PERSON_SHOPPING_PERIOD / 2, PERSON_SHOPPING_OFFSET_STDDEV);
+	shopping_offset = (((int) dist(Sim::gen)) + PERSON_SHOPPING_PERIOD) % PERSON_SHOPPING_PERIOD;
 }
 
 void Person::get_paid(double income) {
@@ -64,33 +66,43 @@ void Person::purchase_good(Product * p, int quantity) {
 	}
 }
 
-void Person::purchase_goods() {
-	static std::uniform_real_distribution<> dist(0, 1);
+bool Person::will_shop() {
+	return Sim::get_current_time_step() % PERSON_SHOPPING_PERIOD == shopping_offset;
+}
 
-	for (std::pair<Product*, double> p : purchase_frequencies) {
-		if (dist(Sim::gen) < p.second) {
-			purchase_good(p.first, 1);
+void Person::shop() {
+	static std::normal_distribution<> dist(1, PERSON_SHOPPING_MULTIPLIER_STDDEV);
+	for (auto &p : purchase_frequencies) {
+		int quantity = std::round(p.second * PERSON_SHOPPING_PERIOD * std::abs(dist(Sim::gen)));
+		if (quantity > 0) {
+			purchase_good(p.first, quantity);
 		}
 	}
 }
 
 bool Person::will_retire() {
 	static std::uniform_real_distribution<> dist(0, 1);
-
-	if (age >= GUARANTEED_RETIREMENT_AGE) {
-		return true;
-	}
-
+	if (age >= GUARANTEED_RETIREMENT_AGE) { return true; }
 	return dist(Sim::gen) < RANDOM_RETIREMENT_CHANCE;
+}
+
+void Person::retire() {
+	society->retire_person(this);
 }
 
 void Person::set_society(Society * society) {
 	this->society = society;
 	ranked_distributors = society->distributors;
 	std::shuffle(ranked_distributors.begin(), ranked_distributors.end(), Sim::gen);
-	static std::normal_distribution<> dist(PERSON_FREQUENCY_MULTIPLIER_MEAN, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
+	static std::normal_distribution<> dist(1, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
 	for (Product * p : society->products) {
-		purchase_frequencies[p] = p->base_frequency * dist(Sim::gen);
+		purchase_frequencies[p] = p->base_frequency * std::abs(dist(Sim::gen));
 	}
+}
+
+void Person::on_time_step() {
+	++age;
+	if (will_shop()) { shop(); }
+	if (will_retire()) { retire(); }
 }
 		

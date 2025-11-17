@@ -33,7 +33,6 @@ class Society{
     void set_work_hours_daily(int hours);
     double get_avg_productivity();
     std::unordered_map<std::string, int> avg_worker_needs();
-	Person& birth_worker();
-	void birth_people_every_timestep();
-	void retire_person(Person& person);
+	Person * birth_person();
+	void retire_person(Person * person);
 };
