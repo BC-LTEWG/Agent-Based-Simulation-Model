@@ -19,6 +19,7 @@ Code and supporting documents for the Labor-Time Economy Working Group project a
 4. When your changes are ready for review, create a new pull request (PR) on GitHub in your branch.
    - Be sure to name your PR appropriately with a short summary description.
    - Make your longer description clear.  Use imperative verbs and describe concepts and purposes.
+   - At the bottom of the description, write the keyword "Resolves" followed by a space and then the "#" sign and the number of the issue that your changes address.  There should always be an issue for every PR.
    - Choose at least one review according to the round-robin review scheme (see below).
 5. Respond to reviewers' comments.
 6. When your code is approved, merge it into main on GitHub.
