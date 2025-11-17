@@ -34,3 +34,12 @@ Every time anybody requests a review, that author should request it from the nex
 - Sal Nuhin
 - Zhejun Zhang
 
+When reviewing, please bear in mind the following:
+- The logic must be clear.  Ask questions if it is not.
+- Wherever possible, code should _not_ rely on comments for clarity.  Code should be self-explanatory.  We should avoid comments as much as possible.
+- Names should document meanings and purposes and should help make code self-explanatory.
+- The logic must be sound.
+- We must avoid code duplication.
+- Code should be reasonably efficient.
+- Code should follow our style guidelines — capitalization, spacing, etc.
+
