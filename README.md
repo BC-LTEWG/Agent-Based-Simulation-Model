@@ -2,6 +2,11 @@
 Code and supporting documents for the Labor-Time Economy Working Group project at Boston College.
 
 ## For Developers
+
+### Essential Documents on the Wiki
+- [Development Schedule](https://github.com/Amittai-Aviram/BC-LTEWG/wiki/Development-Schedule)
+- [C++ Style Guide](https://github.com/Amittai-Aviram/BC-LTEWG/wiki/Style-Guide-(C-%E2%80%90%7C%E2%80%90-%E2%80%90%7C%E2%80%90)
+
 ### Git Workflow
 1. Create a branch if (and only if) you do not already have one:
    `git pull origin main`
