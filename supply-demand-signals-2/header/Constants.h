@@ -7,7 +7,9 @@ const int WEEK = DAY * 7;
 const int MONTH = DAY * 30;
 const int YEAR = DAY * 365;
 
-const double PRODUCTIVITY_THRESHOLD = 60.0; // threshold for productivity before lowering working hours
+// Threshold for productivity before lowering working hours
+const double PRODUCTIVITY_THRESHOLD = 60.0;
+const int INITIAL_WORK_HOURS_DAILY = 8;
 
 const double RANDOM_RETIREMENT_CHANCE = 8.3e-7;
 const int GUARANTEED_RETIREMENT_AGE = 50 * YEAR; 

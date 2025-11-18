@@ -10,17 +10,11 @@
 Person::Person(
     const std::unordered_map<std::string, int>& expertise,
     int age,
-    HealthStatus health_status,
-    const std::unordered_map<Product*, double>& purchase_frequencies) :
+    HealthStatus health_status) :
     expertise(expertise),
     age(age),
-    health_status(health_status),
-	purchase_frequencies(purchase_frequencies)
+    health_status(health_status)
 {
-	static std::normal_distribution<> dist(PERSON_FREQUENCY_MULTIPLIER_MEAN, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
-	for (std::pair<Product*, double> p : purchase_frequencies) {
-		p.second = p.first->base_frequency * dist(Sim::gen);	
-	}
 }
 
 void Person::get_paid(double income) {
@@ -56,15 +50,18 @@ float Person::get_current_productivity() {
     }
 }
 
-
 float Person::avg_productivity_over_time_step(std::string product_name) {
     (void)product_name;
     return 0.0f;
 }
 
-void Person::purchase_good(Product& p, int quantity) {
-    (void)p;
-    (void)quantity;
+void Person::purchase_good(Product * p, int quantity) {
+	for (Distributor * distributor : ranked_distributors) {
+		if (distributor->has_product(p)) {
+			distributor->sell_goods(*p, quantity, this);
+			return;
+		}
+	}
 }
 
 void Person::purchase_goods() {
@@ -72,7 +69,7 @@ void Person::purchase_goods() {
 
 	for (std::pair<Product*, double> p : purchase_frequencies) {
 		if (dist(Sim::gen) < p.second) {
-			purchase_good(*(p.first), 1);
+			purchase_good(p.first, 1);
 		}
 	}
 }
@@ -85,5 +82,15 @@ bool Person::will_retire() {
 	}
 
 	return dist(Sim::gen) < RANDOM_RETIREMENT_CHANCE;
+}
+
+void Person::set_society(Society * society) {
+	this->society = society;
+	ranked_distributors = society->distributors;
+	std::shuffle(ranked_distributors.begin(), ranked_distributors.end(), Sim::gen);
+	static std::normal_distribution<> dist(PERSON_FREQUENCY_MULTIPLIER_MEAN, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
+	for (Product * p : society->products) {
+		purchase_frequencies[p] = p->base_frequency * dist(Sim::gen);
+	}
 }
 		
