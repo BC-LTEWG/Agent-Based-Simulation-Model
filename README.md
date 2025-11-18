@@ -5,7 +5,7 @@ Code and supporting documents for the Labor-Time Economy Working Group project a
 
 ### Essential Documents on the Wiki
 - [Development Schedule](https://github.com/Amittai-Aviram/BC-LTEWG/wiki/Development-Schedule)
-- [C++ Style Guide](https://github.com/Amittai-Aviram/BC-LTEWG/wiki/Style-Guide-(C-%E2%80%90%7C%E2%80%90-%E2%80%90%7C%E2%80%90)
+- [C++ Style Guide](https://github.com/Amittai-Aviram/BC-LTEWG/wiki/Style-Guide)
 
 ### Git Workflow
 1. Create a branch if (and only if) you do not already have one:
