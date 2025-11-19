@@ -1,4 +1,4 @@
-from .CapitalistEconomy import *
+from CapitalistEconomy import *
 
 # examples of using the CapitalistEconomy class. 
 def get_trajectories(params):
