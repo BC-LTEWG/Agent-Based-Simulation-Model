@@ -2,6 +2,7 @@
 
 #include <unordered_map>
 
+#include "Constants.h"
 #include "Distributor.h"
 #include "Firm.h"
 #include "Machine.h"
@@ -13,19 +14,18 @@ class Person;
 
 class Society{
   public:
-    std::vector<Person*> people;
-	std::vector<Person*> unemployed_people;
-    std::vector<Firm*> firms;
-	std::vector<Product*> products;
-	std::vector<Producer*> producers;
-	std::vector<Distributor*> distributors;
-	std::unordered_map<Product*, Distributor*> product_to_distributor;
-    std::unordered_map<Firm*, double> prices;
+    std::vector<Person *> people;
+	std::vector<Person *> unemployed_people;
+    std::vector<Firm *> firms;
+	std::vector<Product *> products;
+	std::vector<Producer *> producers;
+	std::vector<Distributor *> distributors;
+	std::unordered_map<Product *, std::vector<Distributor *>> product_to_distributors;
+    std::unordered_map<Firm *, double> prices;
     std::unordered_map<std::string, int> avg_needs();
-    const int initial_work_hours_daily = 8;
-    int current_work_hours_daily = initial_work_hours_daily;
+    int current_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
 
-    Society(std::vector<Person*> people, std::vector<Product*> products, std::vector<Producer*> producers, std::vector<Distributor*> distributors, std::unordered_map<Product*, Distributor*> product_to_distributor, std::unordered_map<Firm*, double> prices);
+    Society(std::vector<Person *> people, std::vector<Product *> products, std::vector<Producer *> producers, std::vector<Distributor *> distributors, std::unordered_map<Product *, std::vector<Distributor *>> product_to_distributors, std::unordered_map<Firm *, double> prices);
 
     std::size_t num_people();
     std::size_t num_firms();
