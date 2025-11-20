@@ -10,4 +10,5 @@ struct Product {
 	double base_frequency;
   
     Product(const std::string name, double price, int order);
+    int get_required_labor();
 };

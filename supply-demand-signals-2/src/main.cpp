@@ -15,26 +15,26 @@ int main() {
     std::cout << "=== Testing Re-ordering System ===" << std::endl << std::endl;
 
     std::cout << "Creating products..." << std::endl;
-    Product* bread = new Product("Bread", 5.0, 100);
-    Product* milk = new Product("Milk", 3.0, 50);
+    Product * bread = new Product("Bread", 5.0, 100);
+    Product * milk = new Product("Milk", 3.0, 50);
     std::cout << "Product 1: " << bread->product_name << " - $" << bread->price_per_unit << " (order: " << bread->order_size << ")" << std::endl;
     std::cout << "Product 2: " << milk->product_name << " - $" << milk->price_per_unit << " (order: " << milk->order_size << ")" << std::endl << std::endl;
 
     std::cout << "Creating workers..." << std::endl;
     std::unordered_map<std::string, int> expertise;
-    std::unordered_map<Product*, double> purchase_frequencies;
+    std::unordered_map<Product *, double> purchase_frequencies;
     
-    std::vector<Person*> bakery_workers;
+    std::vector<Person *> bakery_workers;
     for (int i = 0; i < 5; ++i) {
         bakery_workers.push_back(new Person(expertise, 30, Person::HEALTHY, purchase_frequencies));
     }
     
-    std::vector<Person*> dairy_workers;
+    std::vector<Person *> dairy_workers;
     for (int i = 0; i < 3; ++i) {
         dairy_workers.push_back(new Person(expertise, 28, Person::HEALTHY, purchase_frequencies));
     }
     
-    std::vector<Person*> distributor_workers;
+    std::vector<Person *> distributor_workers;
     for (int i = 0; i < 2; ++i) {
         distributor_workers.push_back(new Person(expertise, 25, Person::HEALTHY, purchase_frequencies));
     }
@@ -42,25 +42,25 @@ int main() {
     std::cout << "Created " << (bakery_workers.size() + dairy_workers.size() + distributor_workers.size()) << " workers" << std::endl << std::endl;
 
     std::cout << "Creating machines..." << std::endl;
-    std::vector<Machine*> bakery_machines;
+    std::vector<Machine *> bakery_machines;
     bakery_machines.push_back(new Machine("Oven", 10000));
     
-    std::vector<Machine*> dairy_machines;
+    std::vector<Machine *> dairy_machines;
     dairy_machines.push_back(new Machine("Pasteurizer", 10000));
     
     std::cout << "Created " << (bakery_machines.size() + dairy_machines.size()) << " machines" << std::endl << std::endl;
 
     std::cout << "Creating producers..." << std::endl;
-    Producer* bakery = new Producer(bakery_machines, bakery_workers);
+    Producer * bakery = new Producer(bakery_machines, bakery_workers);
     bakery->add_product_to_catalog(bread);
     std::cout << "Bakery created with " << bakery_workers.size() << " workers" << std::endl;
     
-    Producer* dairy = new Producer(dairy_machines, dairy_workers);
+    Producer * dairy = new Producer(dairy_machines, dairy_workers);
     dairy->add_product_to_catalog(milk);
     std::cout << "Dairy created with " << dairy_workers.size() << " workers" << std::endl << std::endl;
 
     std::cout << "Creating distributor..." << std::endl;
-    Distributor* store = new Distributor(std::vector<Machine*>(), distributor_workers, std::vector<Plan*>());
+    Distributor * store = new Distributor(std::vector<Machine *>(), distributor_workers, std::vector<Plan *>());
     store->add_supplier(bakery);
     store->add_supplier(dairy);
     std::cout << "Store created with " << distributor_workers.size() << " workers and 2 suppliers" << std::endl << std::endl;
