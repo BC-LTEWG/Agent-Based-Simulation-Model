@@ -98,3 +98,12 @@ void Distributor::initialize_inventory(Product * product, int quantity) {
 int Distributor::get_inventory(Product * product) {
     return inventory[product];
 }
+
+bool Distributor::overproduction(Product* product) {
+    for(auto& products : plans) {
+        if(products->product == product) {
+            return products->total_quantity > PRODUCTION_THRESHOLD * products->total_quantity;
+        }
+    }
+    return false;
+}
