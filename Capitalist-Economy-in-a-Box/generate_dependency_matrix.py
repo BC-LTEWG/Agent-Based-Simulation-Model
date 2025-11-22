@@ -20,8 +20,7 @@ MAXIMUM_HOURS_WORKED = 90
 dependencies = {chr(ord('A') + i): [] for i in range(NUMBER_OF_TOTAL_PRODUCTS)}
 production_cost_map = {chr(ord('A') + i): 0.0 for i in range(NUMBER_OF_TOTAL_PRODUCTS)}
 
-# Matrix for csv output 
-matrix = [[0.0 for _ in range(NUMBER_OF_TOTAL_PRODUCTS)] for _ in range(NUMBER_OF_TOTAL_PRODUCTS)]
+# Matrix for output 
 A = [[0.0 for _ in range(NUMBER_OF_TOTAL_PRODUCTS)] for _ in range(NUMBER_OF_TOTAL_PRODUCTS)]
 labor = [0.0 for _ in range(NUMBER_OF_TOTAL_PRODUCTS)]
 
@@ -62,26 +61,12 @@ def generate_dependencies():
 
     return dependencies
 
-# QUESTION: How should the value of labor ('Z') be modeled?
-
-# Context:
-# - Every product (A-Y) in this system requires labor ('Z') as an input.
-# - Labor ('Z') is currently treated as the original input (no dependencies).
-# - The goal is to generate a dependency / cost matrix (26×26) that can be
-#   exported as a CSV and used to replace the A matrix in the Leontief equation:
-#
-#       x = (I - A)^(-1) * y
-#
-#   where A is the input-output coefficients matrix.
-
 # Current logic:
 # - Base goods (A-H) depend only on 'Z' (living labor).
 # - Derived goods (I-Y) depend on random combinations of base goods + 'Z'.
 # - Labor ('Z') has no dependencies (root input).
 
-# Output plan:
-# - Final dependency network converted into a numeric matrix A (26×26)
-# - stored as 'dependency_matrix.csv' for simulation and Leontief analysis.
+# Notes from meeting (deleted when officially released)
 # uniformly disttributed labor hours for Z (min/max) 
 # Give it its own Z value, then add up the Z value of its base products 
 # Two pull requests with and without graphing 
