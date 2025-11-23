@@ -71,49 +71,6 @@ def generate_dependencies():
 # Give it its own Z value, then add up the Z value of its base products 
 # Two pull requests with and without graphing 
 # 26 product types for LTE, assume labor time already built to explore trade 
-def generate_production_cost_map(): 
-    
-    production_cost_map['A'] = BASE_COST_A 
-    production_cost_map['B'] = BASE_COST_B 
-    production_cost_map['C'] = BASE_COST_C 
-    production_cost_map['D'] = BASE_COST_D 
-    production_cost_map['E'] = BASE_COST_E 
-    production_cost_map['F'] = BASE_COST_F 
-    production_cost_map['G'] = BASE_COST_G 
-    production_cost_map['H'] = BASE_COST_H 
-    
-    number_of_dependent_product = NUMBER_OF_TOTAL_PRODUCTS - NUMBER_OF_BASE_PRODUCTS - 1 
-    
-    # Production cost for derived products (I–Y) 
-    for i in range(number_of_dependent_product): 
-        # I to Y (17 products) 
-        current_product_type = chr(ord('I') + i) 
-        
-        # Base processing cost between 0.2 and 0.5 
-        base_processing_cost = random.uniform(0.2, 0.5) 
-        
-        # Sum of dependent base product costs 
-        sum_of_dependent_cost = 0.0 
-        total_weight = 0.0 
-        specific_weights = [] 
-        
-        # Assign random weights for each dependency 
-        for dependency in dependencies[current_product_type]: 
-            w = random.uniform(0.1, 1.0) 
-            specific_weights.append(w) 
-            total_weight += w 
-            
-        # Compute weighted average of dependency costs 
-        if total_weight > 0: 
-            for j, dependency in enumerate(dependencies[current_product_type]): 
-                weight_ratio = specific_weights[j] / total_weight 
-                sum_of_dependent_cost += weight_ratio * production_cost_map[dependency] 
-        
-        # Calculate total cost for the derived product 
-        production_cost_map[current_product_type] = base_processing_cost + sum_of_dependent_cost 
-        
-    return production_cost_map
-
 def generate_labor():
     
     number_of_dependent_product = NUMBER_OF_TOTAL_PRODUCTS - NUMBER_OF_BASE_PRODUCTS - 1
@@ -138,31 +95,63 @@ def generate_labor():
 
 def construct_A_matrix():
     
-    for col in range(NUMBER_OF_TOTAL_PRODUCTS - 1): 
-        output_char = chr(ord('A') + col)
-        dependencies_list = dependencies.get(output_char, []) # fetch dependency list 
+    production_cost_map['A'] = BASE_COST_A 
+    production_cost_map['B'] = BASE_COST_B 
+    production_cost_map['C'] = BASE_COST_C 
+    production_cost_map['D'] = BASE_COST_D 
+    production_cost_map['E'] = BASE_COST_E 
+    production_cost_map['F'] = BASE_COST_F 
+    production_cost_map['G'] = BASE_COST_G 
+    production_cost_map['H'] = BASE_COST_H 
+    
+    number_of_dependent_product = NUMBER_OF_TOTAL_PRODUCTS - NUMBER_OF_BASE_PRODUCTS - 1 
+    
+    # Production cost for derived products (I–Y) 
+    for i in range(number_of_dependent_product): 
+        # I to Y (17 products) 
+        current_product_type = chr(ord('I') + i) 
+        col = ord(current_product_type) - ord('A')
         
-        # Random weights for dependencies (excluding Z)
-        weights_for_dependencies = []
-        total_weight = 0
-        for dependency in dependencies_list:
-            if dependency != 'Z':
-                w = random.uniform(0.1, 1.0)
-                weights_for_dependencies.append((dependency, w))
-                total_weight += w
+        # Base processing cost between 0.2 and 0.5 
+        base_processing_cost = random.uniform(0.2, 0.5) 
+        
+        # Sum of dependent base product costs 
+        sum_of_dependent_cost = 0.0 
+        total_weight = 0.0 
+        specific_weights = [] 
+        
+        # Assign random weights for each dependency 
+        for dependency in dependencies[current_product_type]: 
+            w = random.uniform(0.1, 1.0) 
+            specific_weights.append(w) 
+            total_weight += w 
+            
+        # Compute weighted average of dependency costs 
+        if total_weight > 0:
+            j = 0
+            for dependency in dependencies[current_product_type]:
+                if dependency != 'Z':
+                    weight_ratio = specific_weights[j] / total_weight
+                    sum_of_dependent_cost += weight_ratio * production_cost_map[dependency]
+                    j += 1
+        
+        # Calculate total cost for the derived product 
+        production_cost_map[current_product_type] = base_processing_cost + sum_of_dependent_cost
         
         # Total = intermediate input + primary input (labor)
         # A_ij = value of input i used by industry j / total output of industry j
         # Normalize to ensure shares sum to < 1 (leaving room for labor)
-        for dependency, weight in weights_for_dependencies:
-            row = ord(dependency) - ord('A')
-            cost = production_cost_map.get(dependency, 1.0)
-            if total_weight > 0:
-                A[row][col] = (weight * cost) / total_weight 
-            else: 
-                A[row][col] = 0
+        if total_weight > 0:
+            j = 0
+            for dependency in dependencies[current_product_type]:
+                if dependency != 'Z':
+                    row = ord(dependency) - ord('A')
+                    cost = production_cost_map.get(dependency, 1.0)
+                    weight = specific_weights[j]
+                    A[row][col] = (weight * cost) / total_weight
+                    j += 1
     
-    return A
+    return A, production_cost_map
 
 def normalize_A_and_l(A, labor):
     n = len(A)
@@ -182,9 +171,8 @@ def normalize_A_and_l(A, labor):
 
 if __name__ == "__main__":
     deps = generate_dependencies()
-    costs = generate_production_cost_map()
     labor = generate_labor()
-    A_matrix = construct_A_matrix()
+    A_matrix, costs = construct_A_matrix() 
     A_matrix, labor = normalize_A_and_l(A_matrix, labor)
 
     print("\nDEPENDENCY MAP:")
