@@ -12,7 +12,7 @@ Sim::Sim() {
 	}
 	std::vector<Person*> people;
 	for (int i = 0; i < STARTING_PEOPLE; i++) {
-		people.push_back(new Person({}, 0, Person::HEALTHY));
+		people.push_back(new Person(0, Person::HEALTHY));
 	}
 	// note: no way to assing products to producers or suppliers to distributors yet
 	std::vector<Producer*> producers;
@@ -30,7 +30,13 @@ int Sim::get_current_time_step() {
 	return current_time_step;
 }
 
+std::vector<Ability> Sim::get_all_abilities() {
+	return all_abilities;
+}
+
 int Sim::current_time_step = 0;
+
+std::vector<Ability> Sim::all_abilities = { ABILITY_1, ABILITY_2, ABILITY_3 };
 
 int main() {
 	Sim simulation;

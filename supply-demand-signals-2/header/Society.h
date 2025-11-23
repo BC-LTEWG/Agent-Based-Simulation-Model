@@ -35,4 +35,5 @@ class Society{
     std::unordered_map<std::string, int> avg_worker_needs();
 	Person * birth_person();
 	void retire_person(Person * person);
+	void add_unemployed(Person * person);
 };

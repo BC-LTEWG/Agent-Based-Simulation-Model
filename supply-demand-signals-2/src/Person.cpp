@@ -8,15 +8,23 @@
 #include "Sim.h"
 
 Person::Person(
-    const std::unordered_map<std::string, int>& expertise,
     int age,
-    HealthStatus health_status) :
-    expertise(expertise),
+    HealthStatus health_status,
+	std::unordered_map<Ability, double> starting_abilities) :
     age(age),
     health_status(health_status)
 {
-	static std::normal_distribution<> dist(PERSON_SHOPPING_PERIOD / 2, PERSON_SHOPPING_OFFSET_STDDEV);
-	shopping_offset = (((int) dist(Sim::gen)) + PERSON_SHOPPING_PERIOD) % PERSON_SHOPPING_PERIOD;
+	static std::normal_distribution<> shopping_dist(PERSON_SHOPPING_PERIOD / 2, PERSON_SHOPPING_OFFSET_STDDEV);
+	shopping_offset = (((int) shopping_dist(Sim::gen)) + PERSON_SHOPPING_PERIOD) % PERSON_SHOPPING_PERIOD;
+
+	static std::normal_distribution<> ability_dist(1.0, PERSON_ABILITY_STDDEV);
+	if (starting_abilities.size() > 0) {
+		abilities = starting_abilities;
+	} else {
+		for (Ability ability : Sim::get_all_abilities()) {
+			abilities[ability] = std::max(0.0, ability_dist(Sim::gen));
+		}
+	}
 }
 
 void Person::get_paid(double income) {

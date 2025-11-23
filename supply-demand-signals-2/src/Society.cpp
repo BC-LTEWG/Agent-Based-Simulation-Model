@@ -5,14 +5,17 @@
 #include "Society.h"
 
 Society::Society(std::vector<Person*> people, std::vector<Product*> products, std::vector<Producer*> producers, std::vector<Distributor*> distributors, std::unordered_map<Product*, std::vector<Distributor*>> product_to_distributors, std::unordered_map<Firm*, double> prices)
-	: people(people), products(products), unemployed_people(people), producers(producers), distributors(distributors), product_to_distributors(product_to_distributors), prices(prices) {
+	: people(people), products(products), producers(producers), distributors(distributors), product_to_distributors(product_to_distributors), prices(prices) {
 	for (Producer * producer : producers) {
 		firms.push_back(producer);
+		producer->set_society(this);
 	}
 	for (Distributor * distributor : distributors) {
 		firms.push_back(distributor);
+		distributor->set_society(this);
 	}
 	for (Person * person : people) {
+		add_unemployed(person);
 		person->set_society(this);
 	}
 }
@@ -47,7 +50,7 @@ std::unordered_map<std::string, int> Society::avg_worker_needs() {
 }
 
 Person * Society::birth_person() {
-	Person * person = new Person({}, 0, Person::HEALTHY);
+	Person * person = new Person(0, Person::HEALTHY);
 	people.push_back(person);
 	unemployed_people.push_back(person);
 	person->set_society(this);
@@ -56,4 +59,8 @@ Person * Society::birth_person() {
 
 void Society::retire_person(Person * person) {
 	// unimplemented until hiring/reallocation is done
+}
+
+void Society::add_unemployed(Person * person) {
+	unemployed_people.push_back(person);
 }

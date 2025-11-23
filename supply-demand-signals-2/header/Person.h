@@ -14,9 +14,8 @@ class Society;
 class Person {
   public:
     enum HealthStatus { HEALTHY, UNHEALTHY, RECOVERING };
-    enum Expertise { EXPERTISE_1, EXPERTISE_2, EXPERTISE_3 };
 
-    Person(const std::unordered_map<std::string, int>& expertise, int age, HealthStatus health_status);
+    Person(int age, HealthStatus health_status, std::unordered_map<Ability, double> starting_abilities = {});
   
     std::unordered_map<Product*, double>& get_purchase_frequencies();
     HealthStatus get_health_status();
@@ -33,7 +32,7 @@ class Person {
 	void on_time_step();
   
   private:
-    std::unordered_map<std::string, int> expertise;
+    std::unordered_map<Ability, double> abilities;
     int age;
     HealthStatus health_status;
     std::unordered_map<Product*, double> purchase_frequencies;
