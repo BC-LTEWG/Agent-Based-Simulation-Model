@@ -5,9 +5,8 @@ import numpy as np
 
 # generate A and l 
 deps = generate_dependencies()
-costs = generate_production_cost_map()
 labor = generate_labor()
-A_matrix = construct_A_matrix()
+A_matrix, _ = construct_A_matrix()
 A_matrix, labor = normalize_A_and_l(A_matrix, labor)
 
 A = np.array(A_matrix)
