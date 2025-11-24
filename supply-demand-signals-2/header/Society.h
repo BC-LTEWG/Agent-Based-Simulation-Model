@@ -12,8 +12,9 @@
 class Firm;
 class Person;
 
-class Society{
+class Society {
   public:
+	static Society * instance;
     std::vector<Person*> people;
 	std::vector<Person*> unemployed_people;
     std::vector<Firm*> firms;
@@ -25,7 +26,7 @@ class Society{
     std::unordered_map<std::string, int> avg_needs();
     int current_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
 
-    Society(std::vector<Person*> people, std::vector<Product*> products, std::vector<Producer*> producers, std::vector<Distributor*> distributors, std::unordered_map<Product*, std::vector<Distributor*>> product_to_distributors, std::unordered_map<Firm*, double> prices);
+	Society();
 
     std::size_t num_people();
     std::size_t num_firms();

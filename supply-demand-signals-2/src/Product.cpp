@@ -7,8 +7,10 @@ Product::Product(const std::string name, double price, int order)
 	static std::uniform_real_distribution<> frequency_dist(PRODUCT_FREQUENCY_MIN, PRODUCT_FREQUENCY_MAX);		
 	base_frequency = frequency_dist(Sim::gen);
 
-	required_abilities = Sim::get_all_abilities();
+	for (int i = 0; i < NUM_ABILITIES; i++) {
+		required_abilities.push_back((Ability) i);
+	}
 	shuffle(required_abilities.begin(), required_abilities.end(), Sim::gen);
-	static std::uniform_int_distribution<> ability_count_dist(1, required_abilities.size());
+	static std::uniform_int_distribution<> ability_count_dist(1, PRODUCT_ABILITY_COUNT_MAX);
 	required_abilities.resize(ability_count_dist(Sim::gen));
 }

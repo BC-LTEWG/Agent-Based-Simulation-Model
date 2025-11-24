@@ -38,8 +38,4 @@ class Firm {
     Firm(std::vector<Machine*> machines, std::vector<Person*> workforce, std::vector<Plan*> plans);
     
     double get_avg_productivity();
-	void set_society(Society * society);
-  
-  private:
-	Society * society;
 };

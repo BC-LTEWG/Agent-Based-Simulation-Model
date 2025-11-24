@@ -8,7 +8,3 @@ Firm::Firm(std::vector<Machine*> machines, std::vector<Person*> workforce, std::
 double Firm::get_avg_productivity() {
     return 0.0;
 }
-
-void Firm::set_society(Society * society) {
-	this->society = society;
-}

@@ -3,32 +3,36 @@
 #include <iostream> // testing main directive
 #include <random>
 
-#include "Constants.h"
 #include "Person.h"
 #include "Sim.h"
 
-Person::Person(
-    int age,
-    HealthStatus health_status,
-	std::unordered_map<Ability, double> starting_abilities) :
-    age(age),
-    health_status(health_status)
+Person::Person():
+    age(INITIAL_AGE),
+    health_status(HEALTHY)
 {
 	static std::normal_distribution<> shopping_dist(PERSON_SHOPPING_PERIOD / 2, PERSON_SHOPPING_OFFSET_STDDEV);
 	shopping_offset = (((int) shopping_dist(Sim::gen)) + PERSON_SHOPPING_PERIOD) % PERSON_SHOPPING_PERIOD;
 
 	static std::normal_distribution<> ability_dist(1.0, PERSON_ABILITY_STDDEV);
-	if (starting_abilities.size() > 0) {
-		abilities = starting_abilities;
-	} else {
-		for (Ability ability : Sim::get_all_abilities()) {
-			abilities[ability] = std::max(0.0, ability_dist(Sim::gen));
-		}
+	std::vector<Ability> all_abilities;
+	for (int i = 0; i < NUM_ABILITIES; i++) {
+		all_abilities.push_back((Ability) i);
+	}
+	std::shuffle(all_abilities.begin(), all_abilities.end(), Sim::gen);
+	all_abilities.resize(PERSON_ABILITY_COUNT_MAX);
+	for (Ability ability : all_abilities) {
+		abilities[ability] = std::max(0.0, ability_dist(Sim::gen));
+	}
+	ranked_distributors = Society::instance->distributors;
+	std::shuffle(ranked_distributors.begin(), ranked_distributors.end(), Sim::gen);
+	static std::normal_distribution<> dist(1, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
+	for (Product * p : Society::instance->products) {
+		purchase_frequencies[p] = p->base_frequency * std::abs(dist(Sim::gen));
 	}
 }
 
-void Person::get_paid(double income) {
-    account += income;
+void Person::register_hours_worked(double hours_worked) {
+    account += hours_worked;
 }
 
 void Person::charge(double cost) {
@@ -95,17 +99,7 @@ bool Person::will_retire() {
 }
 
 void Person::retire() {
-	society->retire_person(this);
-}
-
-void Person::set_society(Society * society) {
-	this->society = society;
-	ranked_distributors = society->distributors;
-	std::shuffle(ranked_distributors.begin(), ranked_distributors.end(), Sim::gen);
-	static std::normal_distribution<> dist(1, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
-	for (Product * p : society->products) {
-		purchase_frequencies[p] = p->base_frequency * std::abs(dist(Sim::gen));
-	}
+	Society::instance->retire_person(this);
 }
 
 void Person::on_time_step() {

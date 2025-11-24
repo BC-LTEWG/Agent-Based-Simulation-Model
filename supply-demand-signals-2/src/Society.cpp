@@ -4,19 +4,27 @@
 #include "Constants.h"
 #include "Society.h"
 
-Society::Society(std::vector<Person*> people, std::vector<Product*> products, std::vector<Producer*> producers, std::vector<Distributor*> distributors, std::unordered_map<Product*, std::vector<Distributor*>> product_to_distributors, std::unordered_map<Firm*, double> prices)
-	: people(people), products(products), producers(producers), distributors(distributors), product_to_distributors(product_to_distributors), prices(prices) {
-	for (Producer * producer : producers) {
+Society * Society::instance = nullptr;
+
+Society::Society() {
+	instance = this;
+	for (int i = 0; i < STARTING_PRODUCTS; i++) {
+		products.push_back(new Product("Product " + std::to_string(i), 0, 1));
+	}
+	// note: no way to assigning products to producers or suppliers to distributors yet
+	for (int i = 0; i < STARTING_PRODUCERS; i++) {
+		Producer * producer = new Producer();
+		producers.push_back(producer);
 		firms.push_back(producer);
-		producer->set_society(this);
 	}
-	for (Distributor * distributor : distributors) {
+	for (int i = 0; i < STARTING_DISTRIBUTORS; i++) {
+		Distributor * distributor = new Distributor();
+		distributors.push_back(distributor);
 		firms.push_back(distributor);
-		distributor->set_society(this);
 	}
-	for (Person * person : people) {
-		add_unemployed(person);
-		person->set_society(this);
+	// people MUST come after products and distributors are created
+	for (int i = 0; i < STARTING_PEOPLE; i++) {
+		birth_person();	
 	}
 }
 
@@ -50,10 +58,9 @@ std::unordered_map<std::string, int> Society::avg_worker_needs() {
 }
 
 Person * Society::birth_person() {
-	Person * person = new Person(0, Person::HEALTHY);
+	Person * person = new Person();
 	people.push_back(person);
-	unemployed_people.push_back(person);
-	person->set_society(this);
+	add_unemployed(person);
 	return person;
 }
 
