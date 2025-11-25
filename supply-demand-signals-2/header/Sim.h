@@ -12,10 +12,11 @@ class Sim {
 	static std::mt19937 gen;
 
     Sim();
+	static int get_current_time_step();
     void time_step();
     void run(int time_steps);
 
   private:
-	int current_time_step;
-	Society* society;
+	static int current_time_step;
+	Society * society;
 };

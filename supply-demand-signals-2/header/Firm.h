@@ -28,7 +28,7 @@ struct Plan {
 };
 
 class Firm {
-public:
+  public:
     std::vector<Machine*> machines;
     std::vector<Person*> workers;
     std::vector<Plan*> plans;
