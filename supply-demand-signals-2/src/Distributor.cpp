@@ -84,26 +84,31 @@ Producer * Distributor::find_producer_for_product(Product * product) {
     return nullptr;
 }
 
-void Distributor::receive_order(Product * product, int quantity) {
+void Distributor::receive_shipment(Product * product, int quantity) {
     inventory[product] += quantity;
     std::cout << "Received " << quantity << " units of " 
               << product->product_name << ". New inventory: " 
               << inventory[product] << std::endl;
 }
 
-void Distributor::initialize_inventory(Product * product, int quantity) {
-    inventory[product] = quantity;
-}
+
 
 int Distributor::get_inventory(Product * product) {
-    return inventory[product];
+    return inventory.find(product)->second;
 }
 
-bool Distributor::overproduction(Product* product) {
+bool Distributor::is_overproduced(Product* product) {
     for(auto& products : plans) {
         if(products->product == product) {
             return products->total_quantity > PRODUCTION_THRESHOLD * products->total_quantity;
         }
     }
     return false;
+}
+
+
+void Distributor::initialize_inventory(std::unordered_map<Product&, int> & inventory_items) {
+    for(auto& items : inventory_items) {
+        inventory[&items.first] = items.second;
+    }
 }

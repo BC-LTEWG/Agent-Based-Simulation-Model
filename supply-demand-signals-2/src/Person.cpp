@@ -86,10 +86,10 @@ bool Person::will_retire() {
 
 void Person::set_society(Society * society) {
 	this->society = society;
-	ranked_distributors = society->distributors;
+	ranked_distributors = society->get_distributors();
 	std::shuffle(ranked_distributors.begin(), ranked_distributors.end(), Sim::gen);
 	static std::normal_distribution<> dist(PERSON_FREQUENCY_MULTIPLIER_MEAN, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
-	for (Product * p : society->products) {
+	for (Product * p : society->get_products()) {
 		purchase_frequencies[p] = p->base_frequency * dist(Sim::gen);
 	}
 }

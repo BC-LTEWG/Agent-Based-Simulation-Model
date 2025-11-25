@@ -13,13 +13,6 @@ int Product::get_required_labor() {
     return 1;
 }
 
-void Product::set_leontief_matrix() {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::normal_distribution<> dist(0.0, 1.0);
-    for(int i = 0; i < leontief_matrix.size(); i++) {
-        for(int j = 0; j < leontief_matrix[i].size(); j++) {
-            leontief_matrix[i][j][this] = dist(gen);
-        }
-    }
+void Product::add_input(Product & input, int quantity) {
+    inputs.push_back(std::unordered_map<Product&, int>({{input, quantity}}));
 }

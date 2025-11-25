@@ -45,3 +45,39 @@ double Society::get_avg_productivity() {
 std::unordered_map<std::string, int> Society::avg_worker_needs() {
     return std::unordered_map<std::string, int>();
 }
+
+const std::vector<Person *>& Society::get_people() const {
+    return people;
+}
+
+const std::vector<Person *>& Society::get_unemployed_people() const {
+    return unemployed_people;
+}
+
+const std::vector<Firm *>& Society::get_firms() const {
+    return firms;
+}
+
+const std::vector<Product *>& Society::get_products() const {
+    return products;
+}
+
+const std::vector<Producer *>& Society::get_producers() const {
+    return producers;
+}
+
+const std::vector<Distributor *>& Society::get_distributors() const {
+    return distributors;
+}
+
+const std::unordered_map<Product *, std::vector<Distributor *>>& Society::get_product_to_distributors() const {
+    return product_to_distributors;
+}
+
+const std::unordered_map<Firm *, double>& Society::get_prices() const {
+    return prices;
+}
+
+int Society::get_current_work_hours_daily() const {
+    return current_work_hours_daily;
+}

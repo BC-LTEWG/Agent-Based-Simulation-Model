@@ -90,7 +90,7 @@ void Producer::process_orders() {
 void Producer::complete_order(Order * order) {
     if (inventory[order->product] >= order->quantity) {
         inventory[order->product] -= order->quantity;
-        order->customer->receive_order(order->product, order->quantity);
+        order->customer->receive_shipment(order->product, order->quantity);
     }
 }
 

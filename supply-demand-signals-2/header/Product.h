@@ -10,9 +10,9 @@ struct Product {
     int order_size;
 	double base_frequency;
 
-    std::vector<std::vector<std::pair<Product*, double>>> leontief_matrix;
-  
+    std::vector<std::unordered_map<Product&, int>> inputs;
+
     Product(const std::string name, double price, int order);
     int get_required_labor();
-    void set_leontief_matrix();
+    void add_input(Product & input, int quantity);
 };

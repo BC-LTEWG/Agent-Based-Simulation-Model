@@ -7,8 +7,18 @@
 #include "Firm.h"
 #include "Person.h"
 #include "Producer.h"
+#include "Product.h"
 
 #define PRODUCTION_THRESHOLD 1.5
+
+class Distributor;
+
+struct Order {
+    Product * product;
+    int quantity;
+    Distributor * customer;
+    int requested_turnaround_time;
+};
 
 class Distributor : public Firm {
   public:
@@ -22,10 +32,10 @@ class Distributor : public Firm {
     void set_reorder_threshold(Product * product, int threshold);
     void check_and_reorder();
     Producer * find_producer_for_product(Product * product);
-    void receive_order(Product * product, int quantity);
-    void initialize_inventory(Product * product, int quantity);
+    void receive_shipment(Product * product, int quantity);
+    void initialize_inventory(std::unordered_map<Product&, int> & inventory_items);
     int get_inventory(Product * product);
-    bool overproduction(Product * product);
+    bool is_overproduced(Product * product);
 
   private:
     std::vector<Producer *> suppliers;

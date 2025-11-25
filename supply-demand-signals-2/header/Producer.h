@@ -11,13 +11,7 @@
 #include "Product.h"
 
 class Distributor;
-
-struct Order {
-    Product * product;
-    int quantity;
-    Distributor * customer;
-    int requested_turnaround_time;
-};
+struct Order;
 
 class Producer : public Firm {
   public:

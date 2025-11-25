@@ -18,7 +18,6 @@ static class PriceController {
         void set_price(Product * product, double price);
         void get_all_prices();
         void set_all_prices(std::unordered_map<Product *, double> prices);
-        void get_all_prices();
         void update_plan(Plan * plan);
         void get_plan_history();
     private:
