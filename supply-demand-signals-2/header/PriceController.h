@@ -6,22 +6,24 @@
 #include "Firm.h"
 #include "Product.h"
 
+#include <iostream>
 #include <unordered_map>
+#include <vector>
+
+struct Plan;
+
+class PriceController {
+    public:
+        static void update_prices();
+        static void get_price(Product * product);
+        static void set_price(Product * product, double price);
+        static void get_all_prices();
+        static void set_all_prices(std::unordered_map<Product *, double> prices);
+        static void update_plan(Plan * plan);
+        static void get_plan_history();
+    private:
+        static inline std::unordered_map<Product *, double> price_history;
+        static inline std::vector<Plan *> plan_history;
+};
 
 #endif
-
-
-static class PriceController {
-    public:
-        void update_prices();
-        void get_price(Product * product);
-        void set_price(Product * product, double price);
-        void get_all_prices();
-        void set_all_prices(std::unordered_map<Product *, double> prices);
-        void update_plan(Plan * plan);
-        void get_plan_history();
-    private:
-        std::unordered_map<Product *, double> price_history;
-        std::vector<Plan *> plan_history;
-
-};
