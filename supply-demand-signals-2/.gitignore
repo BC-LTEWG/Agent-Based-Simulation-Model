@@ -1,2 +1,4 @@
 build/*
 lte_program
+src/lte_program
+*.o
