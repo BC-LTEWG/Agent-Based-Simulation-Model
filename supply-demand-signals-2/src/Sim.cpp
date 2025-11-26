@@ -5,23 +5,20 @@ std::random_device Sim::rd;
 
 std::mt19937 Sim::gen(Sim::rd());
 
-Sim::Sim() : current_time_step(0) {
-	std::vector<Product*> products;
-	for (int i = 0; i < STARTING_PRODUCTS; i++) {
-		products.push_back(new Product("Product " + std::to_string(i), 0, 1));
-	}
-	std::vector<Person*> people;
-	for (int i = 0; i < STARTING_PEOPLE; i++) {
-		people.push_back(new Person({}, 0, Person::HEALTHY));
-	}
-	// note: no way to assing products to producers or suppliers to distributors yet
-	std::vector<Producer*> producers;
-	for (int i = 0; i < STARTING_PRODUCERS; i++) {
-		producers.push_back(new Producer());
-	}
-	std::vector<Distributor*> distributors;
-	for (int i = 0; i < STARTING_DISTRIBUTORS; i++) {
-		distributors.push_back(new Distributor());
-	}
-	society = new Society(people, products, producers, distributors, {}, {});	
+Sim::Sim() {
+	society = new Society();
 }
+<<<<<<< HEAD
+=======
+
+int Sim::get_current_time_step() {
+	return current_time_step;
+}
+
+int Sim::current_time_step = 0;
+
+int main() {
+	Sim simulation;
+	return EXIT_SUCCESS;
+}
+>>>>>>> 1216f2094b18f1f7c0ad89c94cbb1d9b5b03f344

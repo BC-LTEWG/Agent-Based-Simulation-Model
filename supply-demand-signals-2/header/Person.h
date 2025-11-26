@@ -5,37 +5,40 @@
 #include <unordered_map>
 #include <vector>
 
+#include "Constants.h"
 #include "Product.h"
 
 class Distributor;
 class Firm;
 class Society;
 
+
 class Person {
   public:
     enum HealthStatus { HEALTHY, UNHEALTHY, RECOVERING };
-    enum Expertise { EXPERTISE_1, EXPERTISE_2, EXPERTISE_3 };
-
-    Person(const std::unordered_map<std::string, int>& expertise, int age, HealthStatus health_status);
+	
+    Person();
+	void on_time_step();
   
     std::unordered_map<Product*, double>& get_purchase_frequencies();
     HealthStatus get_health_status();
     float get_current_productivity();
     float avg_productivity_over_time_step(std::string product_name);
-    void get_paid(double income);
+    void register_hours_worked(double hours_worked);
     void charge(double cost);
     void purchase_good(Product * p, int quantity);
-    void purchase_goods();
+	bool will_shop();
+	void shop();
     bool will_retire();
-	void set_society(Society * society);
+	void retire();
   
   private:
-    std::unordered_map<std::string, int> expertise;
+    std::unordered_map<Ability, double> abilities;
     int age;
     HealthStatus health_status;
     std::unordered_map<Product*, double> purchase_frequencies;
     Firm * firm = nullptr;
-	Society * society = nullptr;
     double account;
 	std::vector<Distributor*> ranked_distributors;
+	int shopping_offset;
 };
