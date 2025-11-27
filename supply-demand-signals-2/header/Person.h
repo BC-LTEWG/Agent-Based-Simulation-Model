@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "Agent.h"
 #include "Constants.h"
 #include "Product.h"
 
@@ -13,12 +14,12 @@ class Firm;
 class Society;
 
 
-class Person {
+class Person : public Agent {
   public:
     enum HealthStatus { HEALTHY, UNHEALTHY, RECOVERING };
 	
     Person();
-	void on_time_step();
+	void on_time_step() override;
   
     std::unordered_map<Product*, double>& get_purchase_frequencies();
     HealthStatus get_health_status();

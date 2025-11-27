@@ -1,4 +1,5 @@
 #pragma once
+
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -36,6 +37,7 @@ class Distributor : public Firm {
     void initialize_inventory(std::unordered_map<Product&, int> & inventory_items);
     int get_inventory(Product * product);
     bool is_overproduced(Product * product);
+    void on_time_step() override;
 
   private:
     std::vector<Producer *> suppliers;

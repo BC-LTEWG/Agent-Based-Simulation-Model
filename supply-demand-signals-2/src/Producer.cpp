@@ -9,6 +9,9 @@ Producer::Producer(std::vector<Machine *> machines, std::vector<Person *> workfo
 Producer::Producer(std::vector<Machine *> machines, std::vector<Person *> workforce, std::vector<Plan *> plans) 
     : Firm(machines, workforce, plans) {}
 
+void Producer::on_time_step() {
+}
+
 void Producer::add_product_to_catalog(Product * product) {
     products.insert(product);
 }

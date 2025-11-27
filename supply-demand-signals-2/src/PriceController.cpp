@@ -3,6 +3,9 @@
 #include "Product.h"
 #include <iostream>
 
+void PriceController::on_time_step() {
+}
+
 void PriceController::update_prices() {
 
 }
