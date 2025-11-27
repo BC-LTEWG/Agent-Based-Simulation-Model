@@ -107,4 +107,7 @@ void Person::on_time_step() {
 	if (will_shop()) { shop(); }
 	if (will_retire()) { retire(); }
 }
-		
+
+void Person::set_firm(Firm * workplace) {
+    firm = workplace;
+}

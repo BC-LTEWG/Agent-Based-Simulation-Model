@@ -32,6 +32,7 @@ class Person : public Agent {
 	void shop();
     bool will_retire();
 	void retire();
+    void set_firm(Firm *);
   
   private:
     std::unordered_map<Ability, double> abilities;
