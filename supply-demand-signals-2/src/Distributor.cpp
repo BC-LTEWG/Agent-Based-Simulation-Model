@@ -106,9 +106,9 @@ bool Distributor::is_overproduced(Product* product) {
     return false;
 }
 
-void Distributor::initialize_inventory(std::unordered_map<Product&, int> & inventory_items) {
+void Distributor::initialize_inventory(std::unordered_map<Product *, int>& inventory_items) {
     for(auto& items : inventory_items) {
-        inventory[&items.first] = items.second;
+        inventory[items.first] = items.second;
     }
 }
 
