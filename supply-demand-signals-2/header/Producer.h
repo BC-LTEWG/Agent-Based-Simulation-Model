@@ -18,6 +18,7 @@ class Producer : public Firm {
     Producer();
     Producer(std::vector<Machine *> machines, std::vector<Person *> workforce);
     Producer(std::vector<Machine *> machines, std::vector<Person *> workforce, std::vector<Plan *> plans);
+    void on_time_step() override;
     
     void add_product_to_catalog(Product * product);
     bool can_produce(Product * product);

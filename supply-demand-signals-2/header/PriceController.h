@@ -2,6 +2,7 @@
 #ifndef PRICE_CONTROLLER_H
 #define PRICE_CONTROLLER_H
 
+#include "Agent.h"
 #include "Constants.h"
 #include "Firm.h"
 #include "Product.h"
@@ -12,8 +13,9 @@
 
 struct Plan;
 
-class PriceController {
+class PriceController : public Agent {
     public:
+        void on_time_step() override;
         static void update_prices();
         static void get_price(Product * product);
         static void set_price(Product * product, double price);

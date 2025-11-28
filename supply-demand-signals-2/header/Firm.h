@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Firm.h"
+#include "Agent.h"
 #include "Machine.h"
 #include "Person.h"
 #include "Product.h"
@@ -27,7 +27,7 @@ struct Plan {
     int total_hours_remaining;
 };
 
-class Firm {
+class Firm : public Agent {
   public:
     std::vector<Machine*> machines;
     std::vector<Person*> workers;

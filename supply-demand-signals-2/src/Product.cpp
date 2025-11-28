@@ -20,6 +20,6 @@ int Product::get_required_labor() {
     return 1;
 }
 
-void Product::add_input(Product & input, int quantity) {
-    inputs.push_back(std::unordered_map<Product&, int>({{input, quantity}}));
+void Product::add_input(Product * input, int quantity) {
+    inputs[input] = quantity;
 }
