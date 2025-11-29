@@ -10,7 +10,7 @@ BASE_COST_F = 1.8  # Silicon/electronic substrate
 BASE_COST_G = 2.5  # Rare mineral/alloy
 BASE_COST_H = 1.2  # Textile/biological base
 
-NUMBER_OF_TOTAL_PRODUCTS = 26
+NUMBER_OF_TOTAL_PRODUCTS = 25
 NUMBER_OF_BASE_PRODUCTS = 8
 
 MINIMUM_HOURS_WORKED = 10
@@ -18,6 +18,7 @@ MAXIMUM_HOURS_WORKED = 90
 
 # Create a list of 26 independent empty lists with letters as key
 dependencies = {chr(ord('A') + i): [] for i in range(NUMBER_OF_TOTAL_PRODUCTS)}
+dependencies['Z'] = []
 production_cost_map = {chr(ord('A') + i): 0.0 for i in range(NUMBER_OF_TOTAL_PRODUCTS)}
 
 # Matrix for output 
@@ -27,15 +28,9 @@ labor = [0.0 for _ in range(NUMBER_OF_TOTAL_PRODUCTS)]
 def generate_dependencies():
     
     # Generate dependencies such that:
-    #   - A-H depend only on labor ('Z')
-    #   - I-Y depend on 2-5 random base products (A-H) + labor ('Z')
-    #   - Labor Z has no dependencies (root input)
-      
-    # Base products (A–H) depend only on labor 
-    for base in [chr(ord('A') + i) for i in range(NUMBER_OF_BASE_PRODUCTS)]:
-        dependencies[base] = ['Z']
+    #   - I-Y depend on 2-5 random base products (A-H)
         
-    number_of_dependent_product = NUMBER_OF_TOTAL_PRODUCTS - NUMBER_OF_BASE_PRODUCTS - 1
+    number_of_dependent_product = NUMBER_OF_TOTAL_PRODUCTS - NUMBER_OF_BASE_PRODUCTS 
 
     # Derived products (I–Y) depend on base products A–H + labor 
     for i in range(number_of_dependent_product):  # 'I' to 'Y' (18 letters total but 'Z' is handled separately)
@@ -52,28 +47,13 @@ def generate_dependencies():
             if selected_dependency_char not in current_product_type_dependencies:
                 current_product_type_dependencies.append(selected_dependency_char)
 
-        # Always include labor ('Z')
-        current_product_type_dependencies.append('Z')
-
         dependencies[current_char] = current_product_type_dependencies
-        
-    dependencies['Z'] = []
 
     return dependencies
 
-# Current logic:
-# - Base goods (A-H) depend only on 'Z' (living labor).
-# - Derived goods (I-Y) depend on random combinations of base goods + 'Z'.
-# - Labor ('Z') has no dependencies (root input).
-
-# Notes from meeting (deleted when officially released)
-# uniformly disttributed labor hours for Z (min/max) 
-# Give it its own Z value, then add up the Z value of its base products 
-# Two pull requests with and without graphing 
-# 26 product types for LTE, assume labor time already built to explore trade 
 def generate_labor():
     
-    number_of_dependent_product = NUMBER_OF_TOTAL_PRODUCTS - NUMBER_OF_BASE_PRODUCTS - 1
+    number_of_dependent_product = NUMBER_OF_TOTAL_PRODUCTS - NUMBER_OF_BASE_PRODUCTS
     
     # Labor values for base products 
     for i in range(NUMBER_OF_BASE_PRODUCTS):
@@ -104,7 +84,7 @@ def construct_A_matrix():
     production_cost_map['G'] = BASE_COST_G 
     production_cost_map['H'] = BASE_COST_H 
     
-    number_of_dependent_product = NUMBER_OF_TOTAL_PRODUCTS - NUMBER_OF_BASE_PRODUCTS - 1 
+    number_of_dependent_product = NUMBER_OF_TOTAL_PRODUCTS - NUMBER_OF_BASE_PRODUCTS
     
     # Production cost for derived products (I–Y) 
     for i in range(number_of_dependent_product): 

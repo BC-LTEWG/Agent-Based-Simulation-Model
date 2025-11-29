@@ -49,3 +49,11 @@ myenv
 
 # debug information files
 *.dwo
+
+# Python cache and build artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.eggs/
+build/
+dist/
