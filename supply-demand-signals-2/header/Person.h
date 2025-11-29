@@ -8,10 +8,10 @@
 #include "Agent.h"
 #include "Constants.h"
 #include "Product.h"
+#include "Society.h"
 
 class Distributor;
 class Firm;
-class Society;
 
 
 class Person : public Agent {

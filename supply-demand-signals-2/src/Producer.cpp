@@ -34,7 +34,7 @@ Order * Producer::accept_order(Product * product, int quantity, Distributor * cu
     order->quantity = quantity;
     order->customer = customer;
     
-    int total_labor_hours = quantity * product->get_required_labor();
+    int total_labor_hours = quantity * product->living_labor_per_order;
     int available_workers = workers.size();
     int hours_per_day = 8;
     
@@ -50,7 +50,7 @@ Order * Producer::accept_order(Product * product, int quantity, Distributor * cu
     Plan * plan = new Plan();
     plan->product = product;
     plan->firm = this;
-    plan->total_quantity = quantity;
+    plan->total_orders = quantity;
     plan->labor_hours = total_labor_hours;
     plan->labor_hours_remaining = total_labor_hours;
     plan->total_hours = total_labor_hours;
@@ -75,7 +75,7 @@ void Producer::process_orders() {
             available_labor -= work_done;
             
             if (plan->total_hours_remaining == 0) {
-                inventory[plan->product] += plan->total_quantity;
+                inventory[plan->product] += plan->total_orders * plan->product->order_size;
                 
                 for (auto it = pending_orders.begin(); it != pending_orders.end(); ++it) {
                     Order * order = *it;

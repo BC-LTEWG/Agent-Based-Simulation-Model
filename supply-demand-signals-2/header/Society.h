@@ -3,14 +3,13 @@
 #include <unordered_map>
 
 #include "Constants.h"
-#include "Distributor.h"
-#include "Firm.h"
 #include "Machine.h"
-#include "Person.h"
-#include "Producer.h"
 
 class Firm;
 class Person;
+class Producer;
+class Distributor;
+struct Product;
 
 class Society {
   public:
