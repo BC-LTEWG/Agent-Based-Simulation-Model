@@ -5,13 +5,14 @@
 #include <unordered_map>
 #include <vector>
 
+#include "Constants.h"
 #include "Firm.h"
-#include "Machine.h"
-#include "Person.h"
-#include "Product.h"
 
-class Distributor;
 struct Order;
+struct Product;
+class Distributor;
+class Machine;
+class Person;
 
 class Producer : public Firm {
   public:

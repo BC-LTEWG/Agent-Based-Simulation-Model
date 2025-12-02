@@ -6,13 +6,13 @@
 #include <vector>
 
 #include "Firm.h"
-#include "Person.h"
-#include "Producer.h"
-#include "Product.h"
 
 #define PRODUCTION_THRESHOLD 1.5
 
+struct Product;
 class Distributor;
+class Person;
+class Producer;
 
 struct Order {
     Product * product;

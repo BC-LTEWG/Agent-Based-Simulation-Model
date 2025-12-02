@@ -1,7 +1,9 @@
-#include "PriceController.h"
-#include "Firm.h"
-#include "Product.h"
 #include <iostream>
+
+#include "Distributor.h"
+#include "Firm.h"
+#include "PriceController.h"
+#include "Product.h"
 
 void PriceController::on_time_step() {
 }
@@ -87,10 +89,10 @@ void PriceController::get_plan_history() {
     
     for (size_t i = 0; i < plan_history.size(); ++i) {
         Plan * plan = plan_history[i];
-        if (plan != nullptr && plan->product != nullptr) {
+        if (plan != nullptr && plan->order->product != nullptr) {
             std::cout << "Plan " << i + 1 << ": "
-                      << "Product: " << plan->product->product_name
-                      << ", Quantity: " << plan->total_quantity
+                      << "Product: " << plan->order->product->product_name
+                      << ", Quantity: " << plan->order->quantity
                       << ", Labor Hours: " << plan->labor_hours
                       << ", Remaining Hours: " << plan->total_hours_remaining
                       << std::endl;

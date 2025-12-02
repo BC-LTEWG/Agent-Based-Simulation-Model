@@ -15,7 +15,7 @@ struct Product {
 	double base_frequency;
 	
     std::unordered_map<Product *, int> inputs_per_order;
- 	int living_labor_per_order; 
+ 	double living_labor_per_order; 
 	
 	std::vector<Ability> required_abilities;
 };

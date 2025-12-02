@@ -1,4 +1,5 @@
 #include "Producer.h"
+#include "Product.h"
 #include "Distributor.h"
 
 Producer::Producer() : Firm() {}
@@ -48,9 +49,8 @@ Order * Producer::accept_order(Product * product, int quantity, Distributor * cu
     pending_orders.push_back(order);
     
     Plan * plan = new Plan();
-    plan->product = product;
+	plan->order = order;
     plan->firm = this;
-    plan->total_orders = quantity;
     plan->labor_hours = total_labor_hours;
     plan->labor_hours_remaining = total_labor_hours;
     plan->total_hours = total_labor_hours;
@@ -75,11 +75,11 @@ void Producer::process_orders() {
             available_labor -= work_done;
             
             if (plan->total_hours_remaining == 0) {
-                inventory[plan->product] += plan->total_orders * plan->product->order_size;
+                inventory[plan->order->product] += plan->order->quantity * plan->order->product->order_size;
                 
                 for (auto it = pending_orders.begin(); it != pending_orders.end(); ++it) {
                     Order * order = *it;
-                    if (order->product == plan->product) {
+                    if (order->product == plan->order->product) {
                         complete_order(order);
                         pending_orders.erase(it);
                         break;

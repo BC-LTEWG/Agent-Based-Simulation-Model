@@ -1,18 +1,14 @@
 #pragma once
 
-#include <random>
-#include <string>
 #include <unordered_map>
 #include <vector>
 
 #include "Agent.h"
 #include "Constants.h"
-#include "Product.h"
-#include "Society.h"
 
+struct Product;
 class Distributor;
 class Firm;
-
 
 class Person : public Agent {
   public:

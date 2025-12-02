@@ -1,10 +1,12 @@
 #include <algorithm>
 #include <cstdlib>
-#include <iostream> // testing main directive
 #include <random>
 
+#include "Distributor.h"
 #include "Person.h"
+#include "Product.h"
 #include "Sim.h"
+#include "Society.h"
 
 Person::Person():
     age(INITIAL_AGE),

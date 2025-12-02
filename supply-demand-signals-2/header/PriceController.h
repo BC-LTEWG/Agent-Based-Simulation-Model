@@ -2,16 +2,16 @@
 #ifndef PRICE_CONTROLLER_H
 #define PRICE_CONTROLLER_H
 
-#include "Agent.h"
-#include "Constants.h"
-#include "Firm.h"
-#include "Product.h"
-
 #include <iostream>
 #include <unordered_map>
 #include <vector>
 
+#include "Agent.h"
+#include "Constants.h"
+
 struct Plan;
+struct Product;
+class Firm;
 
 class PriceController : public Agent {
     public:

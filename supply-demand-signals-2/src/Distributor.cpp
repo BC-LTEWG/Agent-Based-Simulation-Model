@@ -1,7 +1,9 @@
 #include <iostream>
 
 #include "Distributor.h"
-#include <iostream>
+#include "Person.h"
+#include "Producer.h"
+#include "Product.h"
 
 Distributor::Distributor() : Firm() {}
 
@@ -99,8 +101,8 @@ int Distributor::get_inventory(Product * product) {
 
 bool Distributor::is_overproduced(Product* product) {
     for(auto& products : plans) {
-        if(products->product == product) {
-            return products->total_quantity > PRODUCTION_THRESHOLD * products->total_quantity;
+        if(products->order->product == product) {
+            return products->order->quantity > PRODUCTION_THRESHOLD * products->order->quantity;
         }
     }
     return false;
