@@ -19,7 +19,6 @@ struct Plan {
 
     Firm * firm;
 	std::vector<Person*> workers;
-    std::vector<Machine*> machines;
 				 
 	bool will_train_workers;
 	int predicted_turnaround_time;
@@ -28,7 +27,6 @@ struct Plan {
     int labor_hours;
     int raw_materials;
     int total_hours;
-
     int labor_hours_remaining;
     int raw_materials_remaining;
     int total_hours_remaining;
@@ -38,19 +36,20 @@ class Firm : public Agent {
   public:
     std::vector<Machine*> machines;
     std::vector<Person*> workers;
-    std::vector<Plan*> plans;
-    std::unordered_map<Product*, std::vector<Plan*>> plan_history;
 	
 	Firm();
-	Firm(std::vector<Machine*> machines, std::vector<Person*> workforce, std::vector<Plan*> plans);
     
     double get_avg_productivity();
 
-  private:
+  protected:
+    std::unordered_map<Product *, int> inventory;
+    std::unordered_map<Product*, std::vector<Plan*>> plan_history; // unused and prob need to change later
+    std::vector<Plan*> plans_in_progress;
+
 	double suitability(Person * person, std::vector<Ability>& required_abilities);
 	int predict_workers_needed(Order * order);
 	double predict_turnaround_time(Order * order, double total_suitability); 
-	void assign_predicted_turnaround_time(Plan& draft_plan, std::vector<Ability>& required_abilities);
-	void assign_workers_by_suitability_threshold(Plan& draft_plan, std::vector<Ability>& required_abilities, double suitability_threshold);
-	void assign_workers(Plan& draft_plan, std::vector<Ability>& required_abilities);
+	void assign_predicted_turnaround_time(Plan * draft_plan, std::vector<Ability>& required_abilities);
+	void assign_workers_by_suitability_threshold(Plan * draft_plan, std::vector<Ability>& required_abilities, double suitability_threshold);
+	void assign_workers(Plan * draft_plan, std::vector<Ability>& required_abilities);
 };

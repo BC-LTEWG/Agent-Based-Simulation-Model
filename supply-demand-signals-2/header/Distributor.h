@@ -24,7 +24,8 @@ struct Order {
 class Distributor : public Firm {
   public:
     Distributor();
-    Distributor(std::vector<Machine *> machines, std::vector<Person *> workforce, std::vector<Plan *> plans);
+    void on_time_step() override;
+
     double get_output_ratio(Product& product);
     double planned_satisfaction_per_person(Product& product, Person& person);
 	  bool has_product(Product * product);
@@ -37,7 +38,6 @@ class Distributor : public Firm {
     void initialize_inventory(std::unordered_map<Product *, int>& inventory_items);
     int get_inventory(Product * product);
     bool is_overproduced(Product * product);
-    void on_time_step() override;
 
   private:
     std::vector<Producer *> suppliers;

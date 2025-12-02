@@ -7,8 +7,8 @@
 
 Distributor::Distributor() : Firm() {}
 
-Distributor::Distributor(std::vector<Machine *> machines, std::vector<Person *> workforce, std::vector<Plan *> plans) 
-    : Firm(machines, workforce, plans) {}
+void Distributor::on_time_step() {
+}
 
 double Distributor::get_output_ratio(Product& product) {
     return 1.0 / product.order_size;
@@ -64,7 +64,9 @@ void Distributor::check_and_reorder() {
                 int order_quantity = product->order_size;
                 std::cout << "Reordering " << order_quantity << " units of " 
                           << product->product_name << std::endl;
-                Order * order = producer->accept_order(product, order_quantity, this);
+				//NOTE: SOLELY FOR BUILDING
+				Order * order = nullptr;
+                //Order * order = producer->accept_order(product, order_quantity, this);
                 if (order) {
                     std::cout << "Order accepted. Turnaround time: " 
                               << order->requested_turnaround_time << " days" << std::endl;
@@ -100,7 +102,7 @@ int Distributor::get_inventory(Product * product) {
 }
 
 bool Distributor::is_overproduced(Product* product) {
-    for(auto& products : plans) {
+    for(auto& products : plans_in_progress) {
         if(products->order->product == product) {
             return products->order->quantity > PRODUCTION_THRESHOLD * products->order->quantity;
         }
@@ -114,5 +116,3 @@ void Distributor::initialize_inventory(std::unordered_map<Product *, int>& inven
     }
 }
 
-void Distributor::on_time_step() {
-}
