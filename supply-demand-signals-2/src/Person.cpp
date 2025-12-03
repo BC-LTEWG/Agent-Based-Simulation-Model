@@ -37,6 +37,13 @@ std::unordered_map<Ability, double>& Person::get_abilities() {
 	return this->abilities;
 }
 
+void Person::train(std::unordered_map<Ability, double> target_abilities) {
+	// can introduce < 100% effectiveness on training later
+	for (auto &pair : target_abilities) {
+		abilities[pair.first] = pair.second;
+	}
+}
+
 void Person::register_hours_worked(double hours_worked) {
     account += hours_worked;
 }

@@ -28,5 +28,9 @@ class Producer : public Firm {
     std::set<Product *> catalog;
 	std::unordered_map<Order *, Plan *> order_to_draft_plan;
 
+	void start_plan(Plan * plan);
+	void execute_plan(Plan * plan);
+	void end_plan(Plan * plan);
+
 	void execute_plans();
 };

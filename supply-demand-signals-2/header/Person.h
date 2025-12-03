@@ -18,6 +18,7 @@ class Person : public Agent {
 	void on_time_step() override;
   
 	std::unordered_map<Ability, double>& get_abilities();
+	void train(std::unordered_map<Ability, double> target_abilities);
     std::unordered_map<Product*, double>& get_purchase_frequencies();
     HealthStatus get_health_status();
     float get_current_productivity();

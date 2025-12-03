@@ -15,21 +15,22 @@ class Machine;
 class Person;
 
 struct Plan {
+	// independent/input fields
 	Order * order;
-
     Firm * firm;
 	std::vector<Person*> workers;
-				 
-	bool will_train_workers;
-	int predicted_turnaround_time;
+	int training_time;
+	int training_time_remaining;
 
-    int prd;
+	// dependent/output fields	
+	int predicted_turnaround_time;
+    double prd;
     int labor_hours;
-    int raw_materials;
-    int total_hours;
+    double raw_materials;
+    double total_hours;
     int labor_hours_remaining;
-    int raw_materials_remaining;
-    int total_hours_remaining;
+    double raw_materials_remaining;
+    double total_hours_remaining;
 };
 
 class Firm : public Agent {
@@ -48,8 +49,10 @@ class Firm : public Agent {
 
 	double suitability(Person * person, std::vector<Ability>& required_abilities);
 	int predict_workers_needed(Order * order);
-	double predict_turnaround_time(Order * order, double total_suitability); 
-	void assign_predicted_turnaround_time(Plan * draft_plan, std::vector<Ability>& required_abilities);
 	void assign_workers_by_suitability_threshold(Plan * draft_plan, std::vector<Ability>& required_abilities, double suitability_threshold);
-	void assign_workers(Plan * draft_plan, std::vector<Ability>& required_abilities);
+	int predict_turnaround_time(Order * order, double total_suitability); 
+	int predict_labor_hours(Order * order, double total_suitability);
+	void assign_plan_dependent_fields(Plan * draft_plan, std::vector<Ability>& required_abilities);
+	void draft_optimal_plan(Plan * draft_plan, std::vector<Ability>& required_abilities);
+	void train_workers(std::vector<Person *>& workers, std::vector<Ability>& required_abilities);
 };

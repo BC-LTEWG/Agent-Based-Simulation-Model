@@ -12,10 +12,10 @@ void PriceController::update_prices() {
 
 }
 
-void PriceController::get_price(Product * product) {
+double PriceController::get_price(Product * product) {
     if (product == nullptr) {
         std::cerr << "Error: Cannot get price for null product" << std::endl;
-        return;
+        return 0.0;
     }
     
     auto it = price_history.find(product);
@@ -26,6 +26,7 @@ void PriceController::get_price(Product * product) {
         std::cout << "Price for " << product->product_name 
                   << ": " << product->price_per_unit << " (default)" << std::endl;
     }
+	return 0.0;
 }
 
 void PriceController::set_price(Product * product, double price) {

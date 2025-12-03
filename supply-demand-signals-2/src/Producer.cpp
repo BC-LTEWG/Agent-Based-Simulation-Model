@@ -1,6 +1,7 @@
 #include "Distributor.h"
 #include "Producer.h"
 #include "Product.h"
+#include "Sim.h"
 #include "Society.h"
 
 Producer::Producer() : Firm() {}
@@ -23,13 +24,7 @@ int Producer::draft_order(Order * order) {
 	Plan * draft_plan = new Plan();
 	draft_plan->order = order;
 	draft_plan->firm = this;
-	assign_workers(draft_plan, order->product->required_abilities);
-	
-	// incomplete
-	draft_plan->prd = 0;
-	draft_plan->labor_hours = draft_plan->labor_hours_remaining = 0;
-	draft_plan->raw_materials = draft_plan->raw_materials_remaining = 0;
-	draft_plan->total_hours = draft_plan->total_hours_remaining = 0; 
+	draft_optimal_plan(draft_plan, order->product->required_abilities);
 
 	order_to_draft_plan[order] = draft_plan;
 	return draft_plan->predicted_turnaround_time;
@@ -65,23 +60,49 @@ bool Producer::pursue_order(Order * order) {
 	return true;
 }
 
+void Producer::start_plan(Plan * plan) {
+	// simplification: consume all raw materials at start of plan
+	for (auto &p : plan->order->product->inputs_per_order) {
+		inventory[p.first] -= p.second * plan->order->quantity;
+	}
+}
+
+void Producer::execute_plan(Plan * plan) {
+	int labor_hours_done = std::min((int) plan->workers.size(), plan->labor_hours_remaining);
+	double raw_materials_used = 0.0; 
+	if (plan->training_time_remaining > 0) {
+		plan->training_time_remaining--;
+		if (plan->training_time_remaining == 0) train_workers(plan->workers, plan->order->product->required_abilities);
+	} else {
+		raw_materials_used = plan->raw_materials * labor_hours_done / (plan->labor_hours - plan->workers.size() * plan->training_time);
+	}
+	plan->labor_hours_remaining -= labor_hours_done;
+	plan->raw_materials_remaining -= raw_materials_used;
+	plan->total_hours_remaining -= labor_hours_done + raw_materials_used;
+}
+
+void Producer::end_plan(Plan * plan) {
+	// simplification: whole product amount is added to inventory at the end of a plan
+	int units_produced = plan->order->quantity * plan->order->product->order_size;
+	inventory[plan->order->product] += units_produced;
+	// simplification: product shipped instantly
+	inventory[plan->order->product] -= units_produced;
+	plan->order->customer->receive_shipment(plan->order->product, units_produced);
+}
+
 void Producer::execute_plans() {
 	for (auto iter = plans_in_progress.begin(); iter != plans_in_progress.end(); ++iter) {
 		Plan * plan = *iter;
-		if (plan->total_hours_remaining > 0) {
-			int work_done = std::min((int) plan->workers.size(), plan->total_hours_remaining);
-			plan->total_hours_remaining -= work_done;
-			plan->labor_hours_remaining -= work_done;
-			// nothing on raw materials yet
-			// nor paying workers
+		if (plan->total_hours == plan->total_hours_remaining) {
+			start_plan(plan);
+		}
+		if (plan->total_hours_remaining > 0 && Sim::get_current_time_step() % DAY < Society::instance->current_work_hours_daily) {
+			execute_plan(plan);
 		}
 		if (plan->total_hours_remaining == 0) {
-			// whole product amount is added to inventory at the end of a plan, not throughout
-			int units_produced = plan->order->quantity * plan->order->product->order_size;
-			inventory[plan->order->product] += units_produced;
-			// simplification: shipped instantly
-			inventory[plan->order->product] -= units_produced;
-			plan->order->customer->receive_shipment(plan->order->product, units_produced);
+			end_plan(plan);
+			iter = plans_in_progress.erase(iter);
+			--iter; 
 		}
 	}
 }
