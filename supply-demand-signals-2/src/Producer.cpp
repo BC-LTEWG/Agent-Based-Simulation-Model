@@ -79,6 +79,7 @@ void Producer::execute_plan(Plan * plan) {
 	plan->labor_hours_remaining -= labor_hours_done;
 	plan->raw_materials_remaining -= raw_materials_used;
 	plan->total_hours_remaining -= labor_hours_done + raw_materials_used;
+	plan->prd += labor_hours_done + raw_materials_used;
 }
 
 void Producer::end_plan(Plan * plan) {
