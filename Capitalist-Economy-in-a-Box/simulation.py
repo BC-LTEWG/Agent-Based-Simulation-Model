@@ -1,13 +1,14 @@
 from parameters import Params
 from CapitalistEconomy import *
 from generate_dependency_matrix import *
+import matplotlib.pyplot as plt
 import numpy as np
 
 # generate A and l 
 deps = generate_dependencies()
 l = generate_l()
-A_matrix, _ = construct_A_matrix()
-A_matrix, l = normalize_A_and_l(A_matrix, l)
+A_matrix, _, normalizing_value = construct_A_matrix_and_production_cost_map()
+A_matrix, l = normalize_A_and_l(A_matrix, l, normalizing_value)
 
 A = np.array(A_matrix)
 l = np.array(l)
@@ -35,14 +36,22 @@ params = Params(
     T=100
 )
 
+# Global to record equilibrium time index (first time detected)
+EQUILIBRIUM_INDEX = None
+
 # examples of using the CapitalistEconomy class. 
 def get_trajectories(params):
+    global EQUILIBRIUM_INDEX
     economy = CapitalistEconomy(params)
 
     e = None
     for i in range(params.T):
         try:
             economy.step()
+            
+            if EQUILIBRIUM_INDEX is None and detect_price_equilibrium(economy.traj):
+                EQUILIBRIUM_INDEX = i
+                
         except Exception as error:
             e = error
             break
@@ -69,34 +78,46 @@ def get_trajectories_supply_shock(params):
     traj, t = economy.traj, economy.t
     return traj, t, e
 
-def detect_equilibrium_timestamp(traj):
-    # Detects the first time step when both prices and outputs
-    # stop changing when stabilizes (Δp = 0 and Δq = 0). 
-
-    # Parameters:
-    #     traj (dict): trajectory data from the simulation,
-    #                  must contain keys "p" (prices) and "q" (outputs).
-
-    # Returns:
-    #     int: timestamp (iteration index) where equilibrium is reached,
-    #          or None if not stabilized by the end of the run.
-             
-    # Convert lists of price/output vectors into NumPy arrays for easy math
+def detect_price_equilibrium(traj):
+    # Returns True if equilibrium (no change in prices and outputs)
+    # is reached at any time step, otherwise returns False.
     prices = np.array(traj["p"])
     outputs = np.array(traj["q"])
 
-    # Loop through all time steps, starting at t = 1 (since t=0 has no previous step)
     for t in range(1, len(prices)):
-        # Calculate the difference between consecutive steps
         dp = prices[t] - prices[t - 1]
         dq = outputs[t] - outputs[t - 1]
 
         # Check if *all* elements in both Δp and Δq are exactly zero
-        if np.all(dp == 0) and np.all(dq == 0):
-            return t  # Found stabilization time
+        # if np.all(dp == 0) and np.all(dq == 0):
+        # We need exact 0 for the simulation, but now for the graph we use this 
+        if np.all(np.abs(dp) < 1e-4) and np.all(np.abs(dq) < 1e-4):
+            return True  # Equilibrium found
 
-    # If we never found an exact zero change, return None
-    return None
+    # Not yet reached by end of simulation
+    return False
+
+# Plot the graph for visualization here 
+def plot_avg_price_output(traj, t, equilibrium_index):
+    prices = np.array(traj["p"])
+    outputs = np.array(traj["q"])
+
+    avg_p = np.mean(prices, axis=1)
+    avg_q = np.mean(outputs, axis=1)
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(t, avg_p, label="Average Price", color="gold")
+    plt.plot(t, avg_q, label="Average Output", color="black")
+
+    if equilibrium_index is not None:
+        plt.axvline(x=t[equilibrium_index], color="red", linestyle="--", label=f"Equilibrium (t={t[equilibrium_index]:.2f})")
+
+    plt.xlabel("Time")
+    plt.ylabel("Value")
+    plt.title("Average Price and Output with Equilibrium Marker")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
 if __name__ == "__main__":
     traj, t, e = get_trajectories(params)
@@ -107,14 +128,12 @@ if __name__ == "__main__":
         print("Final prices:", traj["p"][-1])
         print("Final outputs:", traj["q"][-1])
         
-        total_steps = len(traj["p"])  # total number of time stamps
-        print(f"\nTotal time steps simulated: {total_steps}")
+    if EQUILIBRIUM_INDEX is not None:
+        print(f"Equilibrium detected at time step {EQUILIBRIUM_INDEX}")
+    else:
+        print("No equilibrium detected during simulation.")
 
-        eq_time = detect_equilibrium_timestamp(traj)
-        if eq_time is not None:
-            print(f"Exact equilibrium reached at time step: {eq_time}")
-        else:
-            print("System never reached an exact equilibrium (no total zero change).")
+    plot_avg_price_output(traj, t, EQUILIBRIUM_INDEX)
 
 # Plan for trade interface(initial thoughts): 
 # These are maps that map from commodity to their prices 

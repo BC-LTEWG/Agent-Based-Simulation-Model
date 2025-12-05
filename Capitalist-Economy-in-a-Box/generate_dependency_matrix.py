@@ -1,5 +1,5 @@
-import csv
 import random
+import numpy as np
 
 BASE_COST_A = 1.0  # Common metal (iron/aluminum)
 BASE_COST_B = 0.8  # Basic organic (wood/grain)
@@ -13,16 +13,24 @@ BASE_COST_H = 1.2  # Textile/biological base
 NUMBER_OF_TOTAL_PRODUCTS = 25
 NUMBER_OF_BASE_PRODUCTS = 8
 
-MINIMUM_HOURS_WORKED = 10
-MAXIMUM_HOURS_WORKED = 90
+# Minimum/Maximum hours required for random generation of the number of hours worth of 
+# product i to make a unit of product j 
+MINIMUM_HOURS_REQUIRED = 10
+MAXIMUM_HOURS_REQUIRED = 90
+
+# Normalizing Entry
+# Normalize to ensure shares sum of products for 
+# any product type in A is less than 1 
+# If sum of products is greater than 1, it is not sustainable (using more than 1 to produce 1 product)
+normalizing_value = 0
 
 # Create a list of 25 independent empty lists with letters as key
 dependencies = {chr(ord('A') + i): [] for i in range(NUMBER_OF_TOTAL_PRODUCTS)}
 production_cost_map = {chr(ord('A') + i): 0.0 for i in range(NUMBER_OF_TOTAL_PRODUCTS)}
 
-# Matrix for output 
-A = [[0.0 for _ in range(NUMBER_OF_TOTAL_PRODUCTS)] for _ in range(NUMBER_OF_TOTAL_PRODUCTS)]
-l = [0.0 for _ in range(NUMBER_OF_TOTAL_PRODUCTS)]
+# Matrix for simulation 
+A = np.zeros((NUMBER_OF_TOTAL_PRODUCTS, NUMBER_OF_TOTAL_PRODUCTS))
+l = np.zeros(NUMBER_OF_TOTAL_PRODUCTS)
 
 def generate_dependencies():
     
@@ -32,7 +40,7 @@ def generate_dependencies():
     number_of_dependent_product = NUMBER_OF_TOTAL_PRODUCTS - NUMBER_OF_BASE_PRODUCTS 
 
     # Derived products (I–Y) depend on base products A–H + labor 
-    for i in range(number_of_dependent_product):  # 'I' to 'Y' (18 letters total but 'Z' is handled separately)
+    for i in range(number_of_dependent_product):  # 'I' to 'Y' 
         current_char = chr(ord('I') + i)
 
         num_deps = random.randint(2, 5)
@@ -56,13 +64,13 @@ def generate_l():
     
     # Labor values for base products 
     for i in range(NUMBER_OF_BASE_PRODUCTS):
-        labor_value = random.uniform(MINIMUM_HOURS_WORKED, MAXIMUM_HOURS_WORKED) / 100
+        labor_value = random.uniform(MINIMUM_HOURS_REQUIRED, MAXIMUM_HOURS_REQUIRED) / 100
         l[i] = labor_value
     
     # Labor values for dependent products
     for i in range(number_of_dependent_product):
         current_product_type = chr(ord('I') + i)
-        labor_value = random.uniform(MINIMUM_HOURS_WORKED, MAXIMUM_HOURS_WORKED) / 100
+        labor_value = random.uniform(MINIMUM_HOURS_REQUIRED, MAXIMUM_HOURS_REQUIRED) / 100
         for dependency in dependencies[current_product_type]:
             index_of_dependency = ord(dependency) - ord('A')
             labor_value += l[index_of_dependency]
@@ -71,7 +79,11 @@ def generate_l():
         
     return l 
 
-def construct_A_matrix():
+# This has to be run after generate l as it uses l value to get the largest column + l for the normalizing value 
+# It should only be run once per simulation 
+def construct_A_matrix_and_production_cost_map():
+    global normalizing_value
+    normalizing_value = 0
     
     production_cost_map['A'] = BASE_COST_A 
     production_cost_map['B'] = BASE_COST_B 
@@ -86,6 +98,7 @@ def construct_A_matrix():
     
     # Production cost for derived products (I–Y) 
     for i in range(number_of_dependent_product): 
+        
         # I to Y (17 products) 
         current_product_type = chr(ord('I') + i) 
         col = ord(current_product_type) - ord('A')
@@ -119,41 +132,41 @@ def construct_A_matrix():
         # A_ij = value of input i used by industry j / total output of industry j
         if total_weight > 0:
             j = 0
+            col_sum = 0
             for dependency in dependencies[current_product_type]:
                 row = ord(dependency) - ord('A')
                 cost = production_cost_map.get(dependency, 1.0)
                 weight = specific_weights[j]
-                A[row][col] = (weight * cost) / total_weight
+                A[row , col] = (weight * cost) / total_weight
+                col_sum += A[row, col]
                 j += 1
+            
+            # Calculating the normalizing value while constructing the matrix
+            total = col_sum + l[col]
+            if total > normalizing_value:
+                normalizing_value = total
     
-    return A, production_cost_map
+    # Return A_max, production_cost_map, normalizing value
+    return A, production_cost_map, normalizing_value
 
-# Normalize to ensure shares sum of products for 
-# any product type in A is less than 1 
-# If sum of products is greater than 1, it is not sustainable (using more than 1 to produce 1 product)
 # I chose to use l to normalize due to wanting to preserve 
 # The ratio between each product i used to produce j in A to living labor to produce j
-def normalize_A_and_l(A, l):
-    n = len(A)
-    for j in range(n):
-        # column sum of intermediate inputs
-        col_sum = sum(A[i][j] for i in range(n))
-        total = col_sum + l[j]
-
-        if total > 1.0:
-            # scale both A-column and labor proportionally
-            # sum * 1/sum = 1
-            scale = 1.0 / total
-            for i in range(n):
-                A[i][j] *= scale
-            l[j] *= scale
+def normalize_A_and_l(A, l, normalizing_value):
+    # scale both A-column and labor proportionally
+    # sum * 1/sum = 1
+    scale = 1.0 / normalizing_value
+    A *= scale
+    l *= scale
     return A, l
 
 if __name__ == "__main__":
     deps = generate_dependencies()
     l = generate_l()
-    A_matrix, costs = construct_A_matrix() 
-    A_matrix, l = normalize_A_and_l(A_matrix, l)
+    A_matrix, costs, normalizing_value = construct_A_matrix_and_production_cost_map() 
+
+    print(f"\nNormalizing Value (max column total A + l): {normalizing_value:.3f}") 
+
+    A_matrix, l = normalize_A_and_l(A_matrix, l, normalizing_value)
 
     print("\nDEPENDENCY MAP:")
     for k in list(deps.keys()):
