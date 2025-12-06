@@ -22,7 +22,7 @@ bool Distributor::has_product(Product * product) {
 	return inventory[product];
 }
 
-Producer * Distributor::choose_order(Order * order) {
+Producer * Distributor::send_order(Order * order) {
 
     int order_time = INT_MAX;
     Producer * chosen_producer = nullptr;
