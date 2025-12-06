@@ -3,6 +3,7 @@
 #include "Product.h"
 #include "Sim.h"
 #include "Society.h"
+#include <algorithm>
 
 Producer::Producer() : Firm() {}
 

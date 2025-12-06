@@ -1,5 +1,5 @@
 #include <iostream>
-
+#include <climits>
 #include "Distributor.h"
 #include "Person.h"
 #include "Producer.h"
@@ -20,6 +20,32 @@ double Distributor::planned_satisfaction_per_person(Product& product, Person& pe
 
 bool Distributor::has_product(Product * product) {
 	return inventory[product];
+}
+
+Producer * Distributor::choose_order(Order * order) {
+
+    int order_time = INT_MAX;
+    Producer * chosen_producer = nullptr;
+
+    for(auto * producer : suppliers) {
+        if(producer->draft_order(order) < order_time) {
+            order_time = producer->draft_order(order);
+            chosen_producer = producer;
+        }
+    }
+
+    if (chosen_producer) {
+        chosen_producer->pursue_order(order);
+    }
+
+    for(auto * producer : suppliers) {
+        if(producer != chosen_producer) {
+            producer->drop_order(order);
+        }
+    }
+
+    return chosen_producer;
+
 }
 
 void Distributor::sell_goods(Product& product, int quantity, Person * person) {

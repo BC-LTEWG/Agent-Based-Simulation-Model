@@ -38,6 +38,7 @@ class Distributor : public Firm {
     void initialize_inventory(std::unordered_map<Product *, int>& inventory_items);
     int get_inventory(Product * product);
     bool is_overproduced(Product * product);
+    Producer * choose_order(Order * order);
 
   private:
     std::vector<Producer *> suppliers;
