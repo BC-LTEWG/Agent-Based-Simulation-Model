@@ -1,6 +1,7 @@
 #include <iostream>
 #include <climits>
 #include "Distributor.h"
+#include "Machine.h"
 #include "Person.h"
 #include "Producer.h"
 #include "Product.h"
@@ -8,6 +9,19 @@
 Distributor::Distributor() : Firm() {}
 
 void Distributor::on_time_step() {
+    for (auto * plan : plans_in_progress) {
+        plan->labor_hours_remaining -= plan->workers.size();
+        plan->prd += plan->workers.size(); // still need to finish the rest
+        for (auto * worker : plan->workers) {
+            worker->register_hours_worked(1);
+        }
+        for (auto * machine : machines) {
+            machine->hours_used += plan->labor_hours / plan->workers.size();
+        }
+        this->inventory[plan->order->product] += plan->order->quantity;
+        
+    }
+
 }
 
 double Distributor::get_output_ratio(Product& product) {
