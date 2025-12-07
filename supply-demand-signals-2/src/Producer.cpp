@@ -1,99 +1,111 @@
-#include "Producer.h"
 #include "Distributor.h"
+#include "Producer.h"
+#include "Product.h"
+#include "Sim.h"
+#include "Society.h"
+#include <algorithm>
 
 Producer::Producer() : Firm() {}
 
-Producer::Producer(std::vector<Machine *> machines, std::vector<Person *> workforce) 
-    : Firm(machines, workforce, {}) {}
-
-Producer::Producer(std::vector<Machine *> machines, std::vector<Person *> workforce, std::vector<Plan *> plans) 
-    : Firm(machines, workforce, plans) {}
-
 void Producer::on_time_step() {
-}
-
-void Producer::add_product_to_catalog(Product * product) {
-    products.insert(product);
+	execute_plans();
 }
 
 bool Producer::can_produce(Product * product) {
-    return products.find(product) != products.end();
+    return catalog.count(product);
 }
 
-std::set<Product *>& Producer::get_catalog() {
-    return products;
+int Producer::draft_order(Order * order) {
+	if (order_to_draft_plan[order] != nullptr) {
+		return DRAFT_ORDER_REJECTED;
+	}
+	if (!can_produce(order->product)) {
+		catalog.insert(order->product);
+	}
+	Plan * draft_plan = new Plan();
+    draft_plan-> m = draft_plan->labor_hours / draft_plan->workers.size();
+	draft_plan->order = order;
+	draft_plan->firm = this;
+	draft_optimal_plan(draft_plan, order->product->required_abilities);
+
+	order_to_draft_plan[order] = draft_plan;
+	return draft_plan->predicted_turnaround_time;
 }
 
-Order * Producer::accept_order(Product * product, int quantity, Distributor * customer) {
-    if (!can_produce(product)) {
-        return nullptr;
-    }
-    
-    Order * order = new Order();
-    order->product = product;
-    order->quantity = quantity;
-    order->customer = customer;
-    
-    int total_labor_hours = quantity * product->get_required_labor();
-    int available_workers = workers.size();
-    int hours_per_day = 8;
-    
-    if (available_workers > 0) {
-        int days_needed = (total_labor_hours + (available_workers * hours_per_day - 1)) / (available_workers * hours_per_day);
-        order->requested_turnaround_time = days_needed;
-    } else {
-        order->requested_turnaround_time = 999;
-    }
-    
-    pending_orders.push_back(order);
-    
-    Plan * plan = new Plan();
-    plan->product = product;
-    plan->firm = this;
-    plan->total_quantity = quantity;
-    plan->labor_hours = total_labor_hours;
-    plan->labor_hours_remaining = total_labor_hours;
-    plan->total_hours = total_labor_hours;
-    plan->total_hours_remaining = total_labor_hours;
-    plan->raw_materials = 0;
-    plan->raw_materials_remaining = 0;
-    plan->prd = 0;
-    
-    plans.push_back(plan);
-    
-    return order;
+bool Producer::drop_order(Order * order) {
+	if (order_to_draft_plan[order] == nullptr) {
+		return false;
+	}
+	order_to_draft_plan[order] = nullptr;
+	return true;
 }
 
-void Producer::process_orders() {
-    int available_labor = workers.size() * 8;
-    
-    for (Plan * plan : plans) {
-        if (plan->total_hours_remaining > 0 && available_labor > 0) {
-            int work_done = std::min(available_labor, plan->total_hours_remaining);
-            plan->total_hours_remaining -= work_done;
-            plan->labor_hours_remaining -= work_done;
-            available_labor -= work_done;
-            
-            if (plan->total_hours_remaining == 0) {
-                inventory[plan->product] += plan->total_quantity;
-                
-                for (auto it = pending_orders.begin(); it != pending_orders.end(); ++it) {
-                    Order * order = *it;
-                    if (order->product == plan->product) {
-                        complete_order(order);
-                        pending_orders.erase(it);
-                        break;
-                    }
-                }
-            }
-        }
-    }
+bool Producer::pursue_order(Order * order) {
+	if (order_to_draft_plan[order] == nullptr) {
+		return false;
+	}
+	Plan * draft_plan = order_to_draft_plan[order];
+	// remove all workers from their current pools
+	for (Person * worker : draft_plan->workers) {
+		auto it = std::find(workers.begin(), workers.end(), worker);
+		if (it != workers.end()) {
+			workers.erase(it);
+		}
+		it = std::find(Society::instance->unemployed_people.begin(), Society::instance->unemployed_people.end(), worker);
+		if (it != Society::instance->unemployed_people.end()) {
+			Society::instance->unemployed_people.erase(it);
+		}
+	}
+	// move draft_plan to plans_in_progress
+	order_to_draft_plan[order] = nullptr;
+	plans_in_progress.push_back(draft_plan);
+	return true;
 }
 
-void Producer::complete_order(Order * order) {
-    if (inventory[order->product] >= order->quantity) {
-        inventory[order->product] -= order->quantity;
-        order->customer->receive_shipment(order->product, order->quantity);
-    }
+void Producer::start_plan(Plan * plan) {
+	// simplification: consume all raw materials at start of plan
+	for (auto &p : plan->order->product->inputs_per_order) {
+		inventory[p.first] -= p.second * plan->order->quantity;
+	}
 }
 
+void Producer::execute_plan(Plan * plan) {
+	int labor_hours_done = std::min((int) plan->workers.size(), plan->labor_hours_remaining);
+	double raw_materials_used = 0.0; 
+	if (plan->training_time_remaining > 0) {
+		plan->training_time_remaining--;
+		if (plan->training_time_remaining == 0) train_workers(plan->workers, plan->order->product->required_abilities);
+	} else {
+		raw_materials_used = plan->raw_materials * labor_hours_done / (plan->labor_hours - plan->workers.size() * plan->training_time);
+	}
+	plan->labor_hours_remaining -= labor_hours_done;
+	plan->raw_materials_remaining -= raw_materials_used;
+	plan->total_hours_remaining -= labor_hours_done + raw_materials_used;
+	plan->prd += labor_hours_done + raw_materials_used;
+}
+
+void Producer::end_plan(Plan * plan) {
+	// simplification: whole product amount is added to inventory at the end of a plan
+	int units_produced = plan->order->quantity * plan->order->product->order_size;
+	inventory[plan->order->product] += units_produced;
+	// simplification: product shipped instantly
+	inventory[plan->order->product] -= units_produced;
+	plan->order->customer->receive_shipment(plan->order->product, units_produced);
+}
+
+void Producer::execute_plans() {
+	for (auto iter = plans_in_progress.begin(); iter != plans_in_progress.end(); ++iter) {
+		Plan * plan = *iter;
+		if (plan->total_hours == plan->total_hours_remaining) {
+			start_plan(plan);
+		}
+		if (plan->total_hours_remaining > 0 && Sim::get_current_time_step() % DAY < Society::instance->current_work_hours_daily) {
+			execute_plan(plan);
+		}
+		if (plan->total_hours_remaining == 0) {
+			end_plan(plan);
+			iter = plans_in_progress.erase(iter);
+			--iter; 
+		}
+	}
+}

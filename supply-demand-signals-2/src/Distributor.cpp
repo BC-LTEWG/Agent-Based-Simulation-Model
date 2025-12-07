@@ -1,16 +1,44 @@
 #include <iostream>
-
+#include <climits>
 #include "Distributor.h"
-#include <iostream>
+#include "Machine.h"
+#include "Person.h"
+#include "Producer.h"
+#include "Product.h"
 
 Distributor::Distributor() : Firm() {}
 
-Distributor::Distributor(std::vector<Machine *> machines, std::vector<Person *> workforce, std::vector<Plan *> plans) 
-    : Firm(machines, workforce, plans) {}
+void Distributor::on_time_step() {
+    for (auto iter = plans_in_progress.begin(); iter != plans_in_progress.end(); ++iter) {
+        Plan * plan = *iter;
+        
+        plan->labor_hours_remaining -= plan->workers.size();
+        plan->prd += plan->workers.size();
+        
+        for (auto * worker : plan->workers) {
+            worker->register_hours_worked(1);
+        }
+        
+
+        double m = (static_cast<double>(plan->labor_hours) / plan->workers.size()) * machines.size();
+
+        double hours_per_machine = m / machines.size();
+        for (auto * machine : machines) {
+            machine->hours_used -= hours_per_machine;
+        }
+        
+        plan->prd += m + (plan->labor_hours - plan->labor_hours_remaining);
+        
+        delete plan;
+        
+    }
+}
 
 double Distributor::get_output_ratio(Product& product) {
     return 1.0 / product.order_size;
 }
+
+
 
 double Distributor::planned_satisfaction_per_person(Product& product, Person& person) {
     return get_output_ratio(product) * person.get_purchase_frequencies()[&product];
@@ -18,6 +46,32 @@ double Distributor::planned_satisfaction_per_person(Product& product, Person& pe
 
 bool Distributor::has_product(Product * product) {
 	return inventory[product];
+}
+
+Producer * Distributor::send_order(Order * order) {
+
+    int order_time = INT_MAX;
+    Producer * chosen_producer = nullptr;
+
+    for(auto * producer : suppliers) {
+        if(producer->draft_order(order) < order_time) {
+            order_time = producer->draft_order(order);
+            chosen_producer = producer;
+        }
+    }
+
+    if (chosen_producer) {
+        chosen_producer->pursue_order(order);
+    }
+
+    for(auto * producer : suppliers) {
+        if(producer != chosen_producer) {
+            producer->drop_order(order);
+        }
+    }
+
+    return chosen_producer;
+
 }
 
 void Distributor::sell_goods(Product& product, int quantity, Person * person) {
@@ -62,7 +116,9 @@ void Distributor::check_and_reorder() {
                 int order_quantity = product->order_size;
                 std::cout << "Reordering " << order_quantity << " units of " 
                           << product->product_name << std::endl;
-                Order * order = producer->accept_order(product, order_quantity, this);
+				//NOTE: SOLELY FOR BUILDING
+				Order * order = nullptr;
+                //Order * order = producer->accept_order(product, order_quantity, this);
                 if (order) {
                     std::cout << "Order accepted. Turnaround time: " 
                               << order->requested_turnaround_time << " days" << std::endl;
@@ -98,9 +154,9 @@ int Distributor::get_inventory(Product * product) {
 }
 
 bool Distributor::is_overproduced(Product* product) {
-    for(auto& products : plans) {
-        if(products->product == product) {
-            return products->total_quantity > PRODUCTION_THRESHOLD * products->total_quantity;
+    for(auto& products : plans_in_progress) {
+        if(products->order->product == product) {
+            return products->order->quantity > PRODUCTION_THRESHOLD * products->order->quantity;
         }
     }
     return false;
@@ -112,5 +168,3 @@ void Distributor::initialize_inventory(std::unordered_map<Product *, int>& inven
     }
 }
 
-void Distributor::on_time_step() {
-}

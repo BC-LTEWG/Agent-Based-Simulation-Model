@@ -1,10 +1,12 @@
 #include <algorithm>
 #include <cstdlib>
-#include <iostream> // testing main directive
 #include <random>
 
+#include "Distributor.h"
 #include "Person.h"
+#include "Product.h"
 #include "Sim.h"
+#include "Society.h"
 
 Person::Person():
     age(INITIAL_AGE),
@@ -28,6 +30,17 @@ Person::Person():
 	static std::normal_distribution<> dist(1, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
 	for (Product * p : Society::instance->products) {
 		purchase_frequencies[p] = p->base_frequency * std::abs(dist(Sim::gen));
+	}
+}
+
+std::unordered_map<Ability, double>& Person::get_abilities() {
+	return this->abilities;
+}
+
+void Person::train(std::unordered_map<Ability, double> target_abilities) {
+	// can introduce < 100% effectiveness on training later
+	for (auto &pair : target_abilities) {
+		abilities[pair.first] = pair.second;
 	}
 }
 

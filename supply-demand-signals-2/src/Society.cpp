@@ -1,7 +1,11 @@
 #include <cmath>
 #include <numeric>
 
-#include "Constants.h"
+#include "Distributor.h"
+#include "Firm.h"
+#include "Person.h"
+#include "Product.h"
+#include "Producer.h"
 #include "Society.h"
 
 Society * Society::instance = nullptr;
