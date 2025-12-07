@@ -9,24 +9,36 @@
 Distributor::Distributor() : Firm() {}
 
 void Distributor::on_time_step() {
-    for (auto * plan : plans_in_progress) {
+    for (auto iter = plans_in_progress.begin(); iter != plans_in_progress.end(); ++iter) {
+        Plan * plan = *iter;
+        
         plan->labor_hours_remaining -= plan->workers.size();
-        plan->prd += plan->workers.size(); // still need to finish the rest
+        plan->prd += plan->workers.size();
+        
         for (auto * worker : plan->workers) {
             worker->register_hours_worked(1);
         }
+        
+
+        double m = (static_cast<double>(plan->labor_hours) / plan->workers.size()) * machines.size();
+
+        double hours_per_machine = m / machines.size();
         for (auto * machine : machines) {
-            machine->hours_used += plan->labor_hours / plan->workers.size();
+            machine->hours_used -= hours_per_machine;
         }
-        this->inventory[plan->order->product] += plan->order->quantity;
+        
+        plan->prd += m + (plan->labor_hours - plan->labor_hours_remaining);
+        
+        delete plan;
         
     }
-
 }
 
 double Distributor::get_output_ratio(Product& product) {
     return 1.0 / product.order_size;
 }
+
+
 
 double Distributor::planned_satisfaction_per_person(Product& product, Person& person) {
     return get_output_ratio(product) * person.get_purchase_frequencies()[&product];

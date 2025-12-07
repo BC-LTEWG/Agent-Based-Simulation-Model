@@ -23,6 +23,7 @@ int Producer::draft_order(Order * order) {
 		catalog.insert(order->product);
 	}
 	Plan * draft_plan = new Plan();
+    draft_plan-> m = draft_plan->labor_hours / draft_plan->workers.size();
 	draft_plan->order = order;
 	draft_plan->firm = this;
 	draft_optimal_plan(draft_plan, order->product->required_abilities);
