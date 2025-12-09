@@ -1,9 +1,12 @@
+#include <algorithm>
+
 #include "Distributor.h"
+#include "PriceController.h"
+#include "Person.h"
 #include "Producer.h"
 #include "Product.h"
 #include "Sim.h"
 #include "Society.h"
-#include <algorithm>
 
 Producer::Producer() : Firm() {}
 
@@ -78,10 +81,13 @@ void Producer::execute_plan(Plan * plan) {
 	} else {
 		raw_materials_used = plan->raw_materials * labor_hours_done / (plan->labor_hours - plan->workers.size() * plan->training_time);
 	}
+	//pay workers
+	for (Person * worker : plan->workers) {
+		worker->register_hours_worked((double) labor_hours_done / plan->workers.size());
+	}
 	plan->labor_hours_remaining -= labor_hours_done;
 	plan->raw_materials_remaining -= raw_materials_used;
 	plan->total_hours_remaining -= labor_hours_done + raw_materials_used;
-	plan->prd += labor_hours_done + raw_materials_used;
 }
 
 void Producer::end_plan(Plan * plan) {
@@ -91,6 +97,7 @@ void Producer::end_plan(Plan * plan) {
 	// simplification: product shipped instantly
 	inventory[plan->order->product] -= units_produced;
 	plan->order->customer->receive_shipment(plan->order->product, units_produced);
+	plan->prd += PriceController::get_price(plan->order->product) * units_produced;
 }
 
 void Producer::execute_plans() {
@@ -99,6 +106,7 @@ void Producer::execute_plans() {
 		if (plan->total_hours == plan->total_hours_remaining) {
 			start_plan(plan);
 		}
+		//simplification: all work is done during the same hours of the day
 		if (plan->total_hours_remaining > 0 && Sim::get_current_time_step() % DAY < Society::instance->current_work_hours_daily) {
 			execute_plan(plan);
 		}
