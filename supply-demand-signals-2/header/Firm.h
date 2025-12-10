@@ -51,7 +51,7 @@ class Firm : public Agent {
 	double suitability(Person * person, std::vector<Ability>& required_abilities);
 	double suitability(std::unordered_map<Ability, double>& abilities, 
 			           std::vector<Ability>& required_abilities,
-					   Person::HealthStatus health_status);
+					   float productivity);
 	int predict_workers_needed(Order * order);
 	void assign_workers_by_suitability_threshold(Plan * draft_plan, std::vector<Ability>& required_abilities, double suitability_threshold);
 	int predict_turnaround_time(Order * order, double total_suitability); 

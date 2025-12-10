@@ -11,18 +11,20 @@ double Firm::get_avg_productivity() {
 }
 
 double Firm::suitability(Person * person, std::vector<Ability>& required_abilities) {
-	return suitability(person->get_abilities(), required_abilities, person->get_health_status());
+	return suitability(person->get_abilities(),
+			           required_abilities,
+					   person->get_current_productivity());
 }
 
 double Firm::suitability(std::unordered_map<Ability, double>& abilities,
 						 std::vector<Ability>& required_abilities,
-						 Person::HealthStatus health_status) {
+						 float productivity) {
 	double suitability = 0.0;
 	for (Ability ability : required_abilities) {
 		suitability += abilities[ability];
 	}
 	suitability /= required_abilities.size();
-	suitability *= (health_status == Person::HEALTHY ? 1.0 : UNHEALTHY_WORK_RATE);
+	suitability *= productivity;
 	return suitability;
 }
 
@@ -75,7 +77,7 @@ void Firm::assign_plan_dependent_fields(Plan * draft_plan, std::vector<Ability>&
 			}
 		}
 		for (Person * worker : draft_plan->workers) {
-			total_suitability += suitability(max_required_abilities, required_abilities, worker->get_health_status());
+			total_suitability += suitability(max_required_abilities, required_abilities, worker->get_current_productivity());
 		}
 		draft_plan->predicted_turnaround_time = draft_plan->training_time + predict_turnaround_time(draft_plan->order, total_suitability);
 	 	draft_plan->labor_hours = draft_plan->labor_hours_remaining = draft_plan->training_time * draft_plan->workers.size() + predict_labor_hours(draft_plan->order, total_suitability);	

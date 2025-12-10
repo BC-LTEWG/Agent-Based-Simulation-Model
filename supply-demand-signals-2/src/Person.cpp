@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cstdlib>
+#include <cmath>
 #include <random>
 
 #include "Distributor.h"
@@ -61,19 +62,13 @@ Person::HealthStatus Person::get_health_status() {
 }
 
 float Person::get_current_productivity() {
-
-    static std::uniform_real_distribution<float> baseDist(0.1f, 2.0f);
-    float base_productivity = baseDist(Sim::gen);
-    
     switch(health_status) {
         case HEALTHY:
-            return std::min(base_productivity * 1.2f, 2.0f);
-        case RECOVERING:
-            return base_productivity * 0.8f;
+            return 1.0;
         case UNHEALTHY:
-            return base_productivity * 0.5f;
+            return UNHEALTHY_PRODUCTIVITY;
         default:
-            return base_productivity;
+            return 1.0;
     }
 }
 
@@ -115,10 +110,23 @@ void Person::retire() {
 	Society::instance->retire_person(this);
 }
 
+void Person::update_health_status() {
+	static std::uniform_real_distribution<> dist(0, 1);
+	if (health_status == HEALTHY &&
+		dist(Sim::gen) < 1 - pow(1 - DAILY_SICKNESS_CHANCE, 1.0 / DAY)) {
+		health_status = UNHEALTHY;
+	} else if (health_status == UNHEALTHY &&
+	   dist(Sim::gen) < 1 - pow(1 - DAILY_RECOVERY_CHANCE, 1.0 / DAY)) {
+		health_status = HEALTHY;
+	} 
+}
+
+
 void Person::on_time_step() {
 	++age;
 	if (will_shop()) { shop(); }
 	if (will_retire()) { retire(); }
+	update_health_status();
 }
 
 void Person::set_firm(Firm * workplace) {
