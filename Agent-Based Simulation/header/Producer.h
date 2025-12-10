@@ -11,7 +11,7 @@
 struct Order;
 struct Product;
 class Distributor;
-class Machine;
+struct Machine;
 class Person;
 
 class Producer : public Firm {

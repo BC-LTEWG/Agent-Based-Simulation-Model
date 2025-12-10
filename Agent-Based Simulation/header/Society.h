@@ -7,7 +7,7 @@
 struct Product;
 class Distributor;
 class Firm;
-class Machine;
+struct Machine;
 class Person;
 class Producer;
 
