@@ -3,4 +3,7 @@ lte_program
 src/lte_program
 *.o
 sim
+*.swp
+src/*.swp
+header/*.swp
 
