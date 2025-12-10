@@ -29,7 +29,7 @@ Person::Person():
 	std::shuffle(ranked_distributors.begin(), ranked_distributors.end(), Sim::gen);
 	static std::normal_distribution<> dist(1, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
 	for (Product * p : Society::instance->products) {
-		purchase_frequencies[p] = p->base_frequency * std::abs(dist(Sim::gen));
+		purchase_frequencies[p] = p->mean_consumption_frequency * std::abs(dist(Sim::gen));
 	}
 }
 

@@ -13,20 +13,6 @@ class Producer;
 
 class Society {
   public:
-	static Society * instance;
-    std::vector<Person*> people;
-	std::vector<Person*> unemployed_people;
-    std::vector<Firm*> firms;
-	std::vector<Product*> products;
-	std::vector<Producer*> producers;
-	std::vector<Distributor*> distributors;
-	std::unordered_map<Product*, std::vector<Distributor*>> product_to_distributors;
-    std::unordered_map<Firm*, double> prices;
-    std::unordered_map<std::string, int> avg_needs();
-    int current_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
-
-	Society();
-
     std::size_t num_people();
     std::size_t num_firms();
     bool meets_standard_for_lower_working_hours();
@@ -36,4 +22,17 @@ class Society {
 	Person * birth_person();
 	void retire_person(Person * person);
 	void add_unemployed(Person * person);
+	Society();
+	static Society * instance;
+  private:
+    std::vector<Person *> people;
+	std::vector<Person *> unemployed_people;
+    std::vector<Firm *> firms;
+	std::vector<Product *> products;
+	std::vector<Producer *> producers;
+	std::vector<Distributor *> distributors;
+	std::unordered_map<Product *, std::vector<Distributor *>> product_to_distributors;
+    std::unordered_map<Firm *, double> prices;
+    std::unordered_map<std::string, int> avg_needs();
+    int current_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
 };
