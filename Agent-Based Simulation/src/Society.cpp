@@ -13,7 +13,7 @@ Society * Society::instance = nullptr;
 Society::Society() {
 	instance = this;
 	for (int i = 0; i < STARTING_PRODUCTS; i++) {
-		products.push_back(new Product("Product " + std::to_string(i), 0, 1));
+		products.push_back(new Product("Product " + std::to_string(i)));
 	}
 	// note: no way to assigning products to producers or suppliers to distributors yet
 	for (int i = 0; i < STARTING_PRODUCERS; i++) {

@@ -7,7 +7,7 @@
 #include "Constants.h"
 
 struct Product {
-    Product(const std::string name, double price, int order);
+    Product(const std::string name);
     void add_input(Product * input, int quantity);
     std::string product_name;
     double price_per_unit;
