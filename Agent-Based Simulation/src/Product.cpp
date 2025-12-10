@@ -20,5 +20,5 @@ Product::Product(const std::string name) : product_name{name} {
 }
 
 void Product::add_input(Product * input, int quantity) {
-    inputs_per_order[input] = quantity;
+    inputs_per_unit[input] = quantity;
 }
