@@ -24,7 +24,6 @@ class Society {
 	void add_unemployed(Person * person);
 	Society();
 	static Society * instance;
-  private:
     std::vector<Person *> people;
 	std::vector<Person *> unemployed_people;
     std::vector<Firm *> firms;

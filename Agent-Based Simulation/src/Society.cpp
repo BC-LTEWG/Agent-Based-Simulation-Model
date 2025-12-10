@@ -12,22 +12,25 @@ Society * Society::instance = nullptr;
 
 Society::Society() {
 	instance = this;
-	for (int i = 0; i < STARTING_PRODUCTS; i++) {
+	for (int i = 0; i < STARTING_NUM_PRODUCTS; i++) {
 		products.push_back(new Product("Product " + std::to_string(i)));
 	}
-	// note: no way to assigning products to producers or suppliers to distributors yet
-	for (int i = 0; i < STARTING_PRODUCERS; i++) {
+	for (int i = 0; i < STARTING_NUM_PRODUCTS; i++) {
+		products[i]->set_inputs(products);
+	}
+	// note: no way to assign products to producers or suppliers to distributors yet
+	for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
 		Producer * producer = new Producer();
 		producers.push_back(producer);
 		firms.push_back(producer);
 	}
-	for (int i = 0; i < STARTING_DISTRIBUTORS; i++) {
+	for (int i = 0; i < STARTING_NUM_DISTRIBUTORS; i++) {
 		Distributor * distributor = new Distributor();
 		distributors.push_back(distributor);
 		firms.push_back(distributor);
 	}
 	// people MUST come after products and distributors are created
-	for (int i = 0; i < STARTING_PEOPLE; i++) {
+	for (int i = 0; i < STARTING_NUM_PEOPLE; i++) {
 		birth_person();	
 	}
 }

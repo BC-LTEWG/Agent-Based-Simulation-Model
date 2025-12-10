@@ -64,7 +64,7 @@ bool Producer::pursue_order(Order * order) {
 
 void Producer::start_plan(Plan * plan) {
 	// simplification: consume all raw materials at start of plan
-	for (auto &p : plan->order->product->inputs_per_order) {
+	for (auto &p : plan->order->product->inputs_per_unit) {
 		inventory[p.first] -= p.second * plan->order->quantity;
 	}
 }
