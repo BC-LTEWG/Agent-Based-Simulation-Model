@@ -22,7 +22,11 @@ double Firm::suitability(Person * person, std::vector<Ability>& required_abiliti
 }
 
 int Firm::predict_workers_needed(Order * order) {
-	return ceil(order->quantity * order->product->living_labor_per_order * DAY / Society::instance->current_work_hours_daily / order->requested_turnaround_time);
+	return ceil(
+            order->quantity *
+            order->product->living_labor_per_unit *
+            DAY / Society::instance->current_work_hours_daily / order->requested_turnaround_time
+            );
 }
 
 void Firm::assign_workers_by_suitability_threshold(Plan * draft_plan, std::vector<Ability>& required_abilities, double suitability_threshold) {
@@ -52,11 +56,15 @@ void Firm::assign_workers_by_suitability_threshold(Plan * draft_plan, std::vecto
 
 
 int Firm::predict_turnaround_time(Order * order, double total_suitability) {
-	return std::ceil(order->quantity * order->product->living_labor_per_order * DAY / total_suitability / Society::instance->current_work_hours_daily);
+	return std::ceil(
+            order->quantity *
+            order->product->living_labor_per_unit *
+            DAY / total_suitability / Society::instance->current_work_hours_daily
+            );
 }
 
 int Firm::predict_labor_hours(Order * order, double total_suitability) {
-	return std::ceil(order->quantity * order->product->living_labor_per_order / total_suitability);
+	return std::ceil(order->quantity * order->product->living_labor_per_unit / total_suitability);
 }
 		
 void Firm::assign_plan_dependent_fields(Plan * draft_plan, std::vector<Ability>& required_abilities) {
@@ -76,7 +84,7 @@ void Firm::assign_plan_dependent_fields(Plan * draft_plan, std::vector<Ability>&
 	}
 	
 	int raw_materials = 0;
-	for (auto &p : draft_plan->order->product->inputs_per_order) {
+	for (auto &p : draft_plan->order->product->inputs_per_unit) {
 		raw_materials += PriceController::get_price(p.first) * p.second * draft_plan->order->quantity;
 	}
 	draft_plan->raw_materials = draft_plan->raw_materials_remaining = raw_materials;
