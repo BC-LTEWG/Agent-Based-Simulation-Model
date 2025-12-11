@@ -31,20 +31,19 @@ Code and supporting documents for the Labor-Time Economy Working Group project a
 7. Be sure to update your local copy of `main` as above: `git switch main`; `git pull`; `git switch <your-branch>`; `git merge main`.
 
 ### Reviews
-Every time anybody requests a review, that author should request it from the next person in this list, in round-robin fashion. When requesting a review, please check the current pending PRs to see who was the last to receive a request, and send your request to the next person on the list.  If there are no pending PRs, please use the most recent closed PR for this purpose.
+You must request a review (through a GitHub _pull request_ before your code can become part of the `main` branch of the repository. You must obtain at least one approval from a reviewer before merging.
 
-- Amittai Aviram
-- Alex Creiner
-- Devin Lim
-- Sal Nuhin
-- Zhejun Zhang
+It is the author of the PR who should merge the PR into `main`. If you approve a PR, please do not merge it; let the author do so. This enables the author to see any last-minute comments and (if necessary) make last-minute changes.
 
 When reviewing, please bear in mind the following:
 - The logic must be clear.  Ask questions if it is not.
-- Wherever possible, code should _not_ rely on comments for clarity.  Code should be self-explanatory.  We should avoid comments as much as possible.
-- Names should document meanings and purposes and should help make code self-explanatory.
+- Wherever possible, code should _not_ rely on comments for clarity.  Code should be self-explanatory.  We should _avoid comments_ as much as possible.
+- Avoid comments! Names should document meanings and purposes and should help make code self-explanatory.
 - The logic must be sound.
 - We must avoid code duplication.
 - Code should be reasonably efficient.
 - Code should follow our style guidelines — capitalization, spacing, etc.
+- In a class definition, put the public API functions first, starting with the constructors. In the `private` section, put all functions above the data members.
+- In implementation files, function implementations should follow the same order as their corresponding declarations in class (`class` or `struct`) definitions.
+- The structure of the code base should maintain good _separation of concerns_.
 
