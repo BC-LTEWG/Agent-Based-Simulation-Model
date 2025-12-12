@@ -12,12 +12,7 @@ Society * Society::instance = nullptr;
 
 Society::Society() {
     instance = this;
-    for (int i = 0; i < STARTING_NUM_PRODUCTS; i++) {
-        products.push_back(new Product("Product " + std::to_string(i)));
-    }
-    for (int i = 0; i < STARTING_NUM_PRODUCTS; i++) {
-        products[i]->set_inputs(products);
-    }
+    set_initial_products();
     // note: no way to assign products to producers or suppliers to distributors yet
     for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
         Producer * producer = new Producer();
@@ -35,6 +30,15 @@ Society::Society() {
     }
 }
 
+void Society::set_initial_products() {
+    for (int i = 0; i < STARTING_NUM_PRODUCTS; i++) {
+        products.push_back(new Product("Product " + std::to_string(i)));
+    }
+    for (int i = NUM_BASE_PRODUCTS; i < STARTING_NUM_PRODUCTS; i++) {
+        products[i]->set_inputs(products, i);
+    }
+}
+
 std::vector<Product *>& Society::get_products() {
     return products;
 }
@@ -43,39 +47,18 @@ std::vector<Distributor *>& Society::get_distributors() {
     return distributors;
 }
 
-std::size_t Society::num_people() {
-    return people.size();
+std::vector<Person *>& Society::get_unemployed_people() {
+    return unemployed_people;
 }
 
-std::size_t Society::num_firms() {
-    return firms.size();
-}
-
-bool Society::meets_standard_for_lower_working_hours() {
-    double sum = 0.0;
-    for (Firm * firm : firms) {
-        sum += firm->get_avg_productivity();
-    }
-    double avg_productivity = sum / firms.size();
-    return avg_productivity >= PRODUCTIVITY_THRESHOLD;
-}
-
-void Society::set_work_hours_daily(int hours) {
-    current_work_hours_daily = hours;
-}
-
-double Society::get_avg_productivity() {
-    return 0.0;
-}
-
-std::unordered_map<std::string, int> Society::avg_worker_needs() {
-    return std::unordered_map<std::string, int>();
+int Society::get_current_work_hours_daily() {
+    return current_work_hours_daily;
 }
 
 Person * Society::birth_person() {
     Person * person = new Person();
     people.push_back(person);
-    add_unemployed(person);
+    unemployed_people.push_back(person);
     return person;
 }
 
@@ -83,6 +66,3 @@ void Society::retire_person(Person * person) {
     // unimplemented until hiring/reallocation is done
 }
 
-void Society::add_unemployed(Person * person) {
-    unemployed_people.push_back(person);
-}

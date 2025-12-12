@@ -11,7 +11,10 @@ double Firm::get_avg_productivity() {
     return 0.0;
 }
 
-double Firm::suitability(Person * person, std::vector<Ability>& required_abilities) {
+double Firm::suitability(
+        Person * person,
+        std::vector<Ability>& required_abilities
+        ) {
     double suitability = 0.0;
     for (Ability ability : required_abilities) {
         suitability += person->get_abilities()[ability];
@@ -25,7 +28,7 @@ int Firm::predict_workers_needed(Order * order) {
             order->quantity *
             order->product->living_labor_per_unit *
             DAY /
-            Society::instance->current_work_hours_daily /
+            Society::instance->get_current_work_hours_daily() /
             order->requested_turnaround_time
             );
 }
@@ -37,7 +40,8 @@ void Firm::assign_workers_by_suitability_threshold(
         ) {
     std::unordered_map<Person *, double> worker_to_suitability;
     for (Person * worker : workers) {
-        worker_to_suitability[worker] = suitability(worker, required_abilities);
+        worker_to_suitability[worker] =
+            suitability(worker, required_abilities);
     }
     sort(workers.begin(), workers.end(), [&](Person * a, Person * b) {
             return worker_to_suitability[a] > worker_to_suitability[b];
@@ -53,7 +57,7 @@ void Firm::assign_workers_by_suitability_threshold(
         } 
         draft_plan->workers.push_back(worker);
     }
-    for (Person * unemployed_person : Society::instance->unemployed_people) {	
+    for (Person * unemployed_person : Society::instance->get_unemployed_people()) {	
         if (draft_plan->workers.size() >= max_workers) {
             break;
         } else if (
@@ -72,7 +76,7 @@ int Firm::predict_turnaround_time(Order * order, double total_suitability) {
             order->product->living_labor_per_unit *
             DAY /
             total_suitability /
-            Society::instance->current_work_hours_daily
+            Society::instance->get_current_work_hours_daily()
             );
 }
 
@@ -127,7 +131,10 @@ void Firm::assign_plan_dependent_fields(
     draft_plan->prd = -(draft_plan->total_hours);
 }
 
-void Firm::draft_optimal_plan(Plan * draft_plan, std::vector<Ability>& required_abilities) {
+void Firm::draft_optimal_plan(
+        Plan * draft_plan,
+        std::vector<Ability>& required_abilities
+        ) {
     // try without training first
     Plan * draft_plan_without_training = new Plan(*draft_plan);
     assign_workers_by_suitability_threshold(

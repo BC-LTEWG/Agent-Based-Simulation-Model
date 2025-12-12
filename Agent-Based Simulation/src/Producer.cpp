@@ -51,9 +51,13 @@ bool Producer::pursue_order(Order * order) {
 		if (it != workers.end()) {
 			workers.erase(it);
 		}
-		it = std::find(Society::instance->unemployed_people.begin(), Society::instance->unemployed_people.end(), worker);
-		if (it != Society::instance->unemployed_people.end()) {
-			Society::instance->unemployed_people.erase(it);
+		it = std::find(
+                Society::instance->get_unemployed_people().begin(),
+                Society::instance->get_unemployed_people().end(),
+                worker
+                );
+		if (it != Society::instance->get_unemployed_people().end()) {
+			Society::instance->get_unemployed_people().erase(it);
 		}
 	}
 	// move draft_plan to plans_in_progress
@@ -70,13 +74,22 @@ void Producer::start_plan(Plan * plan) {
 }
 
 void Producer::execute_plan(Plan * plan) {
-	int labor_hours_done = std::min((int) plan->workers.size(), plan->labor_hours_remaining);
+	int labor_hours_done =
+        std::min((int) plan->workers.size(), plan->labor_hours_remaining);
 	double raw_materials_used = 0.0; 
 	if (plan->training_time_remaining > 0) {
 		plan->training_time_remaining--;
-		if (plan->training_time_remaining == 0) train_workers(plan->workers, plan->order->product->required_abilities);
+		if (plan->training_time_remaining == 0) {
+            train_workers(
+                    plan->workers,
+                    plan->order->product->required_abilities
+                    );
+        }
 	} else {
-		raw_materials_used = plan->raw_materials * labor_hours_done / (plan->labor_hours - plan->workers.size() * plan->training_time);
+		raw_materials_used =
+            plan->raw_materials *
+            labor_hours_done /
+            (plan->labor_hours - plan->workers.size() * plan->training_time);
 	}
 	plan->labor_hours_remaining -= labor_hours_done;
 	plan->raw_materials_remaining -= raw_materials_used;
@@ -85,21 +98,34 @@ void Producer::execute_plan(Plan * plan) {
 }
 
 void Producer::end_plan(Plan * plan) {
-	// simplification: whole product amount is added to inventory at the end of a plan
-	int units_produced = plan->order->quantity * plan->order->product->order_size;
+	// simplification: whole product amount is added to inventory at the end of
+    // a plan
+	int units_produced =
+        plan->order->quantity * plan->order->product->order_size;
 	inventory[plan->order->product] += units_produced;
 	// simplification: product shipped instantly
 	inventory[plan->order->product] -= units_produced;
-	plan->order->customer->receive_shipment(plan->order->product, units_produced);
+	plan->order->customer->receive_shipment(
+            plan->order->product,
+            units_produced
+            );
 }
 
 void Producer::execute_plans() {
-	for (auto iter = plans_in_progress.begin(); iter != plans_in_progress.end(); ++iter) {
+	for (
+            auto iter = plans_in_progress.begin();
+            iter != plans_in_progress.end();
+            ++iter
+            ) {
 		Plan * plan = *iter;
 		if (plan->total_hours == plan->total_hours_remaining) {
 			start_plan(plan);
 		}
-		if (plan->total_hours_remaining > 0 && Sim::get_current_time_step() % DAY < Society::instance->current_work_hours_daily) {
+		if (
+                plan->total_hours_remaining > 0 &&
+                Sim::get_current_time_step() % DAY <
+                Society::instance->get_current_work_hours_daily()
+                ) {
 			execute_plan(plan);
 		}
 		if (plan->total_hours_remaining == 0) {
