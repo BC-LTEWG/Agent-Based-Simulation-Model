@@ -1,8 +1,12 @@
 from parameters import Params
 from CapitalistEconomy import *
 from generate_dependency_matrix import *
+import os
 import matplotlib.pyplot as plt
 import numpy as np
+
+# Making folder for graphs 
+os.makedirs("graphs", exist_ok=True)
 
 # generate A and l 
 deps = generate_dependencies()
@@ -117,13 +121,14 @@ def plot_prices(time, prices, product_labels, equilibrium_time):
 
     plt.xlabel("Continuous Time (t)")
     plt.ylabel("Price Level")
-    plt.title("Price Trajectories for All 26 Commodities (Continuous Time)")
+    plt.title("Price Trajectories for All 26 Commodities")
     plt.grid(True)
     plt.legend(loc="upper right", fontsize=8, ncol=2)
 
     # Show all 200 time steps
     plt.xlim(0, time[-1])
-    plt.show()
+    plt.savefig("graphs/Price Trajectories for All 26 Commodities.png", dpi=300)
+    plt.close()
 
 
 def plot_outputs(time, outputs, product_labels, equilibrium_time):
@@ -141,14 +146,14 @@ def plot_outputs(time, outputs, product_labels, equilibrium_time):
 
     plt.xlabel("Continuous Time (t)")
     plt.ylabel("Output Level")
-    plt.title("Output Trajectories for All 26 Commodities (Continuous Time)")
+    plt.title("Output Trajectories for All 26 Commodities")
     plt.grid(True)
     plt.legend(loc="upper right", fontsize=8, ncol=2)
 
     # Show all 200 time steps
     plt.xlim(0, time[-1])
-    plt.show()
-
+    plt.savefig("graphs/Output Trajectories for All 26 Commodities.png", dpi=300)
+    plt.close()
 
 def plot_averages(time, avg_p, avg_q, equilibrium_time):
     # 3. Plot average prices + average outputs 
@@ -162,13 +167,14 @@ def plot_averages(time, avg_p, avg_q, equilibrium_time):
 
     plt.xlabel("Continuous Time (t)")
     plt.ylabel("Value")
-    plt.title("Average Price and Average Output (Continuous Time)")
+    plt.title("Average Price and Average Output")
     plt.legend()
     plt.grid(True)
 
     # Show all 200 time steps
     plt.xlim(0, time[-1])
-    plt.show()
+    plt.savefig("graphs/Average Price and Average Output.png", dpi=300)
+    plt.close()
 
 # Plot graphs for visualization 
 def plot_graphs(traj, t, equilibrium_time):
