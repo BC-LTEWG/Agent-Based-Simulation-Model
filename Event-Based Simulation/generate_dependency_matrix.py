@@ -10,7 +10,7 @@ BASE_COST_F = 1.8  # Silicon/electronic substrate
 BASE_COST_G = 2.5  # Rare mineral/alloy
 BASE_COST_H = 1.2  # Textile/biological base
 
-NUMBER_OF_TOTAL_PRODUCTS = 25
+NUMBER_OF_TOTAL_PRODUCTS = 26
 NUMBER_OF_BASE_PRODUCTS = 8
 
 # Minimum/Maximum hours required for random generation of the number of hours worth of 
@@ -24,7 +24,7 @@ MAXIMUM_HOURS_REQUIRED = 90
 # If sum of products is greater than 1, it is not sustainable (using more than 1 to produce 1 product)
 normalizing_value = 0
 
-# Create a list of 25 independent empty lists with letters as key
+# Create a list of 26 independent empty lists with letters as key
 dependencies = {chr(ord('A') + i): [] for i in range(NUMBER_OF_TOTAL_PRODUCTS)}
 production_cost_map = {chr(ord('A') + i): 0.0 for i in range(NUMBER_OF_TOTAL_PRODUCTS)}
 
@@ -35,12 +35,12 @@ l = np.zeros(NUMBER_OF_TOTAL_PRODUCTS)
 def generate_dependencies():
     
     # Generate dependencies such that:
-    #   - I-Y depend on 2-5 random base products (A-H)
+    #   - I-Z depend on 2-5 random base products (A-H)
         
     number_of_dependent_product = NUMBER_OF_TOTAL_PRODUCTS - NUMBER_OF_BASE_PRODUCTS 
 
-    # Derived products (I–Y) depend on base products A–H + labor 
-    for i in range(number_of_dependent_product):  # 'I' to 'Y' 
+    # Derived products (I–Z) depend on base products A–H + labor 
+    for i in range(number_of_dependent_product):  # 'I' to 'Z' 
         current_char = chr(ord('I') + i)
 
         num_deps = random.randint(2, 5)
@@ -96,10 +96,10 @@ def construct_A_matrix_and_production_cost_map():
     
     number_of_dependent_product = NUMBER_OF_TOTAL_PRODUCTS - NUMBER_OF_BASE_PRODUCTS
     
-    # Production cost for derived products (I–Y) 
+    # Production cost for derived products (I–Z) 
     for i in range(number_of_dependent_product): 
         
-        # I to Y (17 products) 
+        # I to Z (18 products) 
         current_product_type = chr(ord('I') + i) 
         col = ord(current_product_type) - ord('A')
         
