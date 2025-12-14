@@ -1,0 +1,6 @@
+g++ -std=c++17 -Wall -Wextra -O2 -Iinclude -I/usr/local/include -c src/main.cpp -o src/main.o
+g++ -std=c++17 -Wall -Wextra -O2 -Iinclude -I/usr/local/include -c src/Firm.cpp -o src/Firm.o
+g++ -std=c++17 -Wall -Wextra -O2 -Iinclude -I/usr/local/include -c src/Worker.cpp -o src/Worker.o
+g++ -std=c++17 -Wall -Wextra -O2 -Iinclude -I/usr/local/include -c src/PriceController.cpp -o src/PriceController.o
+g++ -std=c++17 -Wall -Wextra -O2 -Iinclude -I/usr/local/include -c src/Simulation.cpp -o src/Simulation.o
+g++ -std=c++17 -Wall -Wextra -O2 src/main.o src/Firm.o src/Worker.o src/PriceController.o src/Simulation.o -o simulation -Wl,--start-group /usr/local/lib/libmatplot.a /usr/local/lib/Matplot++/libnodesoup.a -Wl,--end-group
