@@ -106,15 +106,13 @@ void Producer::execute_plan(Plan * plan) {
 void Producer::end_plan(Plan * plan) {
 	// simplification: whole product amount is added to inventory at the end of
     // a plan
-	int units_produced =
-        plan->order->quantity * plan->order->product->order_size;
+	int units_produced = plan->order->quantity;
 	inventory[plan->order->product] += units_produced;
 	// simplification: product shipped instantly
 	inventory[plan->order->product] -= units_produced;
 	plan->order->customer->receive_shipment(
             plan->order->product,
-            units_produced
-            );
+            units_produced);
 	plan->prd += PriceController::get_price(plan->order->product) * units_produced;
 }
 
