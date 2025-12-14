@@ -12,7 +12,8 @@ const int YEAR = DAY * 365;
 // Threshold for productivity before lowering working hours
 const double PRODUCTIVITY_THRESHOLD = 60.0;
 const int INITIAL_WORK_HOURS_DAILY = 8;
-const int INITIAL_WORK_WEEK = INITIAL_WORK_HOURS_DAILY * 5;
+const int INITIAL_WORK_DAYS_WEEKLY = 5;
+const int INITIAL_WORK_WEEK = INITIAL_WORK_HOURS_DAILY * INITIAL_WORK_DAYS_WEEKLY;
 
 const int STARTING_NUM_PEOPLE = 1000;
 const int STARTING_NUM_PRODUCTS = 100;

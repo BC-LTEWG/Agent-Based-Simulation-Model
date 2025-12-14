@@ -20,6 +20,7 @@ class Society {
         std::vector<Person *>& get_unemployed_people();
         void retire_person(Person * person);
         int get_current_work_hours_daily();
+		int get_current_work_days_weekly();
     private:
         Person * birth_person();
         void set_initial_products();
@@ -30,5 +31,6 @@ class Society {
         std::vector<Product *> products;
         std::vector<Distributor *> distributors;
         int current_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
+		int current_work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
         std::vector<Person *> unemployed_people;
 };

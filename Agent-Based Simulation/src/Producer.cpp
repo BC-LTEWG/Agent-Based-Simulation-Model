@@ -129,7 +129,8 @@ void Producer::execute_plans() {
 			start_plan(plan);
 		}
 		if (plan->total_hours_remaining > 0 &&
-			Sim::get_current_time_step() % DAY < Society::instance->get_current_work_hours_daily()) {
+			Sim::get_current_time_step() % DAY < Society::instance->get_current_work_hours_daily() && 
+			Sim::get_current_time_step() / DAY % 7 < Society::instance->get_current_work_days_weekly()) {
 			execute_plan(plan);
 		}
 		if (plan->total_hours_remaining == 0) {

@@ -55,6 +55,10 @@ int Society::get_current_work_hours_daily() {
     return current_work_hours_daily;
 }
 
+int Society::get_current_work_days_weekly() {
+	return current_work_days_weekly;
+}
+
 Person * Society::birth_person() {
     Person * person = new Person();
     people.push_back(person);

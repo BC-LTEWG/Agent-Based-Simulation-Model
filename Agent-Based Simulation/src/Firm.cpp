@@ -130,7 +130,7 @@ void Firm::assign_plan_dependent_fields(
 	}
 
 	int raw_materials = 0;
-	for (auto &p : draft_plan->order->product->inputs_per_order) {
+	for (auto &p : draft_plan->order->product->inputs_per_unit) {
 		raw_materials += PriceController::get_price(p.first) *
 					     p.second *
 						 draft_plan->order->quantity;
