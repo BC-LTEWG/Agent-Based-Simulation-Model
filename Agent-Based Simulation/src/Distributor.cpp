@@ -117,7 +117,9 @@ void Distributor::check_and_reorder() {
                 std::cout << "Reordering " << order_quantity << " units of " 
                           << product->product_name << std::endl;
 				//NOTE: SOLELY FOR BUILDING
-				Order * order = nullptr;
+				Order * order = new Order{product, order_quantity, this, 0};
+				send_order(order);
+
                 //Order * order = producer->accept_order(product, order_quantity, this);
                 if (order) {
                     std::cout << "Order accepted. Turnaround time: " 

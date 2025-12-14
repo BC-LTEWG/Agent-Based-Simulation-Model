@@ -11,6 +11,10 @@ double Firm::get_avg_productivity() {
     return 0.0;
 }
 
+std::unordered_map<Product *, int>& Firm::get_inventory_map() {
+    return inventory;
+}
+
 double Firm::suitability(
         Person * person,
         std::vector<Ability>& required_abilities

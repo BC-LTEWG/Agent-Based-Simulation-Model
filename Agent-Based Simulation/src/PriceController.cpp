@@ -4,8 +4,12 @@
 #include "Firm.h"
 #include "PriceController.h"
 #include "Product.h"
+#include "Machine.h"
+#include "Society.h"
+#include "Agent.h"
 
 void PriceController::on_time_step() {
+    poll_prices();
 }
 
 void PriceController::update_prices() {
@@ -26,7 +30,26 @@ double PriceController::get_price(Product * product) {
         std::cout << "Price for " << product->product_name 
                   << ": " << product->price_per_unit << " (default)" << std::endl;
     }
-	return 0.0;
+	return (it != price_history.end()) ? it->second : product->price_per_unit;
+}
+
+double PriceController::get_price(Product * product, Firm * firm) {
+    if (product == nullptr) {
+        std::cerr << "Error: Cannot get price for null product" << std::endl;
+        return 0.0;
+    }
+
+    if (firm != nullptr) {
+        auto firm_it = firm_price_history.find(firm);
+        if (firm_it != firm_price_history.end()) {
+            auto it = firm_it->second.find(product);
+            if (it != firm_it->second.end()) {
+                return it->second;
+            }
+        }
+    }
+
+    return get_price(product);
 }
 
 void PriceController::set_price(Product * product, double price) {
@@ -34,14 +57,33 @@ void PriceController::set_price(Product * product, double price) {
         std::cerr << "Error: Cannot set price for null product" << std::endl;
         return;
     }
-    
+
     if (price < 0) {
         std::cerr << "Error: Price cannot be negative" << std::endl;
         return;
     }
-    
+
     price_history[product] = price;
     product->price_per_unit = price;
+}
+
+void PriceController::set_price(Product * product, Firm * firm, double price) {
+    if (product == nullptr) {
+        std::cerr << "Error: Cannot set price for null product" << std::endl;
+        return;
+    }
+
+    if (price < 0) {
+        std::cerr << "Error: Price cannot be negative" << std::endl;
+        return;
+    }
+
+    if (firm == nullptr) {
+        set_price(product, price);
+        return;
+    }
+
+    firm_price_history[firm][product] = price;
 }
 
 void PriceController::get_all_prices() {
@@ -99,5 +141,32 @@ void PriceController::get_plan_history() {
                       << std::endl;
         }
     }
+}
+
+double PriceController::machine_price_computation(Machine * machine) {
+    if(machine == nullptr) {
+        std::cerr << "Error: can't find machine" << std::endl;
+        return 0.0;
+    }
+
+    double price = 0;
+
+    for(auto & [input, units] : machine->inputs_per_unit) {
+        price += machine->price_per_unit * units;
+    }
+
+    return price;
+}
+
+void PriceController::poll_prices() {
+    for (auto * firm : Society::instance->get_firms()) {
+        for (auto &entry : firm->get_inventory_map()) {
+            firm_price_history[firm][entry.first] = get_price(entry.first, firm);
+        }
+    }
+}
+
+double PriceController::product_price(Product * product, Firm * firm) {
+    return get_price(product, firm);
 }
 

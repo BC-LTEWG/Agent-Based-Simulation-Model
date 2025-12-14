@@ -7,6 +7,7 @@
 
 #include "Agent.h"
 #include "Constants.h"
+#include "Person.h"
 
 struct Order;
 struct Product;
@@ -42,6 +43,7 @@ class Firm : public Agent {
 	Firm();
     
     double get_avg_productivity();
+    std::unordered_map<Product *, int>& get_inventory_map();
 
   protected:
     std::unordered_map<Product *, int> inventory;
@@ -49,6 +51,9 @@ class Firm : public Agent {
     std::vector<Plan*> plans_in_progress;
 
 	double suitability(Person * person, std::vector<Ability>& required_abilities);
+	double suitability(std::unordered_map<Ability, double>& abilities, 
+			           std::vector<Ability>& required_abilities,
+					   float productivity);
 	int predict_workers_needed(Order * order);
 	void assign_workers_by_suitability_threshold(Plan * draft_plan, std::vector<Ability>& required_abilities, double suitability_threshold);
 	int predict_turnaround_time(Order * order, double total_suitability); 
