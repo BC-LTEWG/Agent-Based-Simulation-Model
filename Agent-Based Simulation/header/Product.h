@@ -10,7 +10,7 @@ struct Machine;
 
 struct Product {
     Product(const std::string name);
-    void set_inputs(std::vector<Product *>& products);
+    void set_inputs(std::vector<Product *>& products, int product_index);
     std::string product_name;
     double price_per_unit;
     int order_size;
