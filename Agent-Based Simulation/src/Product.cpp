@@ -19,7 +19,8 @@ Product::Product(const std::string name) : product_name{name} {
         required_abilities.push_back((Ability) i);
     }
     shuffle(required_abilities.begin(), required_abilities.end(), Sim::gen);
-    static std::uniform_int_distribution<> ability_count_dist(1, PRODUCT_ABILITY_COUNT_MAX);
+    static std::uniform_int_distribution<>
+        ability_count_dist(1, PRODUCT_ABILITY_COUNT_MAX);
     required_abilities.resize(ability_count_dist(Sim::gen));
     static std::uniform_real_distribution<>
         frequency_dist(
@@ -29,15 +30,18 @@ Product::Product(const std::string name) : product_name{name} {
     mean_consumption_frequency = frequency_dist(Sim::gen);
 }
 
-void Product::set_inputs(std::vector<Product *>& products) {
+void Product::set_inputs(std::vector<Product *>& products, int product_index) {
     static std::uniform_int_distribution<>
         num_inputs_dist(PRODUCT_NUM_INPUTS_MIN, PRODUCT_NUM_INPUTS_MAX);
     const int num_inputs = num_inputs_dist(Sim::gen);
-    static std::uniform_int_distribution<>
+    std::uniform_int_distribution<>
         product_index_dist(0, products.size() - 1);
     std::set<int> indices;
     while (indices.size() < num_inputs) {
-        indices.insert(product_index_dist(Sim::gen));
+        int index = product_index_dist(Sim::gen);
+        if (index != product_index) {
+            indices.insert(product_index_dist(Sim::gen));
+        }
     }
     static std::uniform_int_distribution<>
         num_input_units_dist(
