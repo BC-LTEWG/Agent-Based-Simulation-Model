@@ -11,16 +11,20 @@ double Firm::get_avg_productivity() {
     return 0.0;
 }
 
-double Firm::suitability(Person * person,
-						 std::vector<Ability>& required_abilities) {
+double Firm::suitability(
+    Person * person,
+    std::vector<Ability>& required_abilities
+    ) {
 	return suitability(person->get_abilities(),
 			           required_abilities,
 					   person->get_current_productivity());
 }
 
-double Firm::suitability(std::unordered_map<Ability, double>& abilities,
-						 std::vector<Ability>& required_abilities,
-						 float productivity) {
+double Firm::suitability(
+    std::unordered_map<Ability, double>& abilities,
+    std::vector<Ability>& required_abilities,
+    float productivity
+    ) {
 	double suitability = 0.0;
 	for (Ability ability : required_abilities) {
 		suitability += abilities[ability];
