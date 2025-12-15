@@ -12,15 +12,26 @@ double Firm::get_avg_productivity() {
 }
 
 double Firm::suitability(
-        Person * person,
-        std::vector<Ability>& required_abilities
-        ) {
-    double suitability = 0.0;
-    for (Ability ability : required_abilities) {
-        suitability += person->get_abilities()[ability];
-    }
-    suitability /= required_abilities.size();
-    return suitability;
+    Person * person,
+    std::vector<Ability>& required_abilities
+    ) {
+	return suitability(person->get_abilities(),
+			           required_abilities,
+					   person->get_current_productivity());
+}
+
+double Firm::suitability(
+    std::unordered_map<Ability, double>& abilities,
+    std::vector<Ability>& required_abilities,
+    float productivity
+    ) {
+	double suitability = 0.0;
+	for (Ability ability : required_abilities) {
+		suitability += abilities[ability];
+	}
+	suitability /= required_abilities.size();
+	suitability *= productivity;
+	return suitability;
 }
 
 int Firm::predict_workers_needed(Order * order) {
@@ -92,43 +103,47 @@ void Firm::assign_plan_dependent_fields(
         Plan * draft_plan,
         std::vector<Ability>& required_abilities
         ) {
-    double total_suitability = 0.0;
-    double max_suitability = 0.0;
-    for (Person * worker : draft_plan->workers) {
-        double worker_suitability = suitability(worker, required_abilities);
-        total_suitability += suitability(worker, required_abilities);
-        max_suitability = std::max(max_suitability, worker_suitability);
-    }
-    if (draft_plan->training_time) {
-        draft_plan->predicted_turnaround_time =
-            draft_plan->training_time +
-            predict_turnaround_time(
-                    draft_plan->order,
-                    max_suitability * draft_plan->workers.size()
-                    );
-        draft_plan->labor_hours = draft_plan->labor_hours_remaining =
-            draft_plan->training_time * draft_plan->workers.size() +
-            predict_labor_hours(
-                    draft_plan->order,
-                    max_suitability * draft_plan->workers.size()
-                    );	
-    } else {
-        draft_plan->predicted_turnaround_time =
-            predict_turnaround_time(draft_plan->order, total_suitability);
-        draft_plan->labor_hours =
-            draft_plan->labor_hours_remaining =
-            predict_labor_hours(draft_plan->order, total_suitability);
-    }
-    int raw_materials = 0;
-    for (auto &p : draft_plan->order->product->inputs_per_unit) {
-        raw_materials += PriceController::get_price(p.first) * p.second *
-            draft_plan->order->quantity;
-    }
-    draft_plan->raw_materials =
-        draft_plan->raw_materials_remaining = raw_materials;
-    draft_plan->total_hours = draft_plan->total_hours_remaining =
-        draft_plan->labor_hours + draft_plan->raw_materials;
-    draft_plan->prd = -(draft_plan->total_hours);
+	double total_suitability = 0.0;
+	if (draft_plan->training_time) {
+		std::unordered_map<Ability, double> max_required_abilities;
+		for (Person * worker : draft_plan->workers) {
+			for (Ability ability : required_abilities) {
+				max_required_abilities[ability] = std::max(max_required_abilities[ability],
+						 								   worker->get_abilities()[ability]);
+			}
+		}
+		for (Person * worker : draft_plan->workers) {
+			total_suitability += suitability(max_required_abilities,
+											 required_abilities,
+											 worker->get_current_productivity());
+		}
+		draft_plan->predicted_turnaround_time =
+			draft_plan->training_time + predict_turnaround_time(draft_plan->order, total_suitability);
+	 	draft_plan->labor_hours =
+			draft_plan->labor_hours_remaining =
+			draft_plan->training_time * draft_plan->workers.size() + predict_labor_hours(draft_plan->order, total_suitability);	
+	} else {
+		for (Person * worker : draft_plan->workers) {
+			total_suitability += suitability(worker, required_abilities);
+		}
+		draft_plan->predicted_turnaround_time =
+			predict_turnaround_time(draft_plan->order, total_suitability);
+		draft_plan->labor_hours =
+			draft_plan->labor_hours_remaining =
+			predict_labor_hours(draft_plan->order, total_suitability);
+	}
+
+	int raw_materials = 0;
+	for (auto &p : draft_plan->order->product->inputs_per_unit) {
+		raw_materials += PriceController::get_price(p.first) *
+					     p.second *
+						 draft_plan->order->quantity;
+	}
+	draft_plan->raw_materials = 
+		draft_plan->raw_materials_remaining = raw_materials;
+	draft_plan->total_hours =
+		draft_plan->total_hours_remaining = draft_plan->labor_hours + draft_plan->raw_materials;
+	draft_plan->prd = -(draft_plan->total_hours);
 }
 
 void Firm::draft_optimal_plan(
