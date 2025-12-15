@@ -2,13 +2,104 @@
 #include "Firm.h"
 #include "Person.h"
 #include "PriceController.h"
+#include "Producer.h"
 #include "Product.h"
 #include "Society.h"
 
 Firm::Firm() {}
 
+void Firm::initialize_inventory(std::unordered_map<Product *, int>& inventory_items) {
+    for(auto& items : inventory_items) {
+        inventory[items.first] = items.second;
+    }
+}
+
 double Firm::get_avg_productivity() {
     return 0.0;
+}
+
+bool Firm::has_product(Product * product) {
+	return inventory[product];
+}
+
+int Firm::get_inventory(Product * product) {
+    return inventory.find(product)->second;
+}
+
+void Firm::add_supplier(Producer * producer) {
+    suppliers.push_back(producer);
+}
+
+void Firm::set_reorder_threshold(Product * product, int threshold) {
+    reorder_thresholds[product] = threshold;
+}
+
+void Firm::receive_shipment(Product * product, int quantity) {
+    inventory[product] += quantity;
+    std::cout << "Received " << quantity << " units of " 
+              << product->product_name << ". New inventory: " 
+              << inventory[product] << std::endl;
+}
+
+Producer * Firm::find_producer_for_product(Product * product) {
+    for (Producer * producer : suppliers) {
+        if (producer->can_produce(product)) {
+            return producer;
+        }
+    }
+    return nullptr;
+}
+
+Producer * Firm::send_order(Order * order) {
+    int order_time = INT_MAX;
+    Producer * chosen_producer = nullptr;
+
+    for(auto * producer : suppliers) {
+        if(producer->draft_order(order) < order_time) {
+            order_time = producer->draft_order(order);
+            chosen_producer = producer;
+        }
+    }
+    if (chosen_producer) {
+        chosen_producer->pursue_order(order);
+    }
+    for(auto * producer : suppliers) {
+        if(producer != chosen_producer) {
+            producer->drop_order(order);
+        }
+    }
+
+    return chosen_producer;
+}
+
+void Firm::check_and_reorder() {
+    for (auto& pair : inventory) {
+        Product * product = pair.first;
+        int current_inventory = pair.second;
+        
+        int threshold = product->order_size;
+        if (reorder_thresholds.find(product) != reorder_thresholds.end()) {
+            threshold = reorder_thresholds[product];
+        }
+        
+        if (current_inventory < threshold) {
+            Producer * producer = find_producer_for_product(product);
+            if (producer) {
+                int order_quantity = product->order_size;
+                std::cout << "Reordering " << order_quantity << " units of " 
+                          << product->product_name << std::endl;
+                Order * order = new Order{product, order_quantity, this, 0};
+				send_order(order);
+                if (order) {
+                    std::cout << "Order accepted. Turnaround time: " 
+                              << order->requested_turnaround_time << " days" << std::endl;
+                }
+            } else {
+                std::cerr << "No producer found for product: " 
+                          << product->product_name << std::endl;
+            }
+        }
+    }
 }
 
 double Firm::suitability(
