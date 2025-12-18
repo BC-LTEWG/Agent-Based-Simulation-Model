@@ -1,12 +1,19 @@
+#include <numeric>
+
 #include "Distributor.h"
 #include "Firm.h"
 #include "Person.h"
 #include "PriceController.h"
 #include "Producer.h"
 #include "Product.h"
+#include "Sim.h"
 #include "Society.h"
 
 Firm::Firm() {}
+
+void Firm::on_time_step() {
+    apply_demand_window();
+}
 
 void Firm::initialize_inventory(std::unordered_map<Product *, int>& inventory_items) {
     for(auto& items : inventory_items) {
@@ -28,10 +35,6 @@ int Firm::get_inventory(Product * product) {
 
 void Firm::add_supplier(Producer * producer) {
     suppliers.push_back(producer);
-}
-
-void Firm::set_reorder_threshold(Product * product, int threshold) {
-    reorder_thresholds[product] = threshold;
 }
 
 void Firm::receive_shipment(Product * product, int quantity) {
@@ -77,10 +80,8 @@ void Firm::check_and_reorder() {
         Product * product = pair.first;
         int current_inventory = pair.second;
         
-        int threshold = product->order_size;
-        if (reorder_thresholds.find(product) != reorder_thresholds.end()) {
-            threshold = reorder_thresholds[product];
-        }
+        double threshold = std::max((double) product->order_size, 
+            inventory_demands[product] * FIRM_STOCKPILE_DURATION);
         
         if (current_inventory < threshold) {
             Producer * producer = find_producer_for_product(product);
@@ -291,6 +292,22 @@ void Firm::train_workers(
     }
     for (Person * worker : workers) {
         worker->train(max_required_abilities);	
+    }
+}
+
+void Firm::add_demand_signal(DemandSignal& signal) {
+    demand_signals.push(signal);
+    inventory_demands[signal.product] += (double) signal.quantity / FIRM_DEMAND_WINDOW;
+    apply_demand_window();
+}
+
+void Firm::apply_demand_window() {
+    while (!demand_signals.empty() && 
+           demand_signals.front().timestep <= 
+           Sim::get_current_time_step() - FIRM_DEMAND_WINDOW) {
+        inventory_demands[demand_signals.front().product] -= 
+            (double) demand_signals.front().quantity / FIRM_DEMAND_WINDOW;
+        demand_signals.pop();
     }
 }
 
