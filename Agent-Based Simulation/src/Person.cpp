@@ -3,6 +3,7 @@
 #include <cmath>
 #include <random>
 
+#include "Firm.h"
 #include "Distributor.h"
 #include "Person.h"
 #include "Product.h"

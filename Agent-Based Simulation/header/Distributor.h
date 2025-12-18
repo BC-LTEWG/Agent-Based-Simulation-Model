@@ -14,13 +14,6 @@ class Distributor;
 class Person;
 class Producer;
 
-struct Order {
-    Product * product;
-    int quantity;
-    Distributor * customer;
-    int requested_turnaround_time;
-};
-
 class Distributor : public Firm {
   public:
     Distributor();
@@ -28,20 +21,8 @@ class Distributor : public Firm {
 
     double get_output_ratio(Product& product);
     double planned_satisfaction_per_person(Product& product, Person& person);
-	  bool has_product(Product * product);
     void sell_goods(Product& product, int quantity, Person * person);
-    void add_supplier(Producer * producer);
-    void set_reorder_threshold(Product * product, int threshold);
-    void check_and_reorder();
-    Producer * find_producer_for_product(Product * product);
-    void receive_shipment(Product * product, int quantity);
-    void initialize_inventory(std::unordered_map<Product *, int>& inventory_items);
-    int get_inventory(Product * product);
     bool is_overproduced(Product * product);
-    Producer * send_order(Order * order);
 
   private:
-    std::vector<Producer *> suppliers;
-    std::unordered_map<Product *, int> inventory;
-    std::unordered_map<Product *, int> reorder_thresholds;
 };

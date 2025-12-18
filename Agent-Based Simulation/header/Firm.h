@@ -9,10 +9,11 @@
 #include "Constants.h"
 #include "Person.h"
 
-struct Order;
-struct Product;
 class Firm;
 struct Machine;
+struct Order;
+class Producer;
+struct Product;
 
 struct Plan {
 	// independent/input fields
@@ -34,19 +35,39 @@ struct Plan {
     double total_hours_remaining;
 };
 
+struct Order {
+    Product * product;
+    int quantity;
+    Firm * customer;
+    int requested_turnaround_time;
+};
+
 class Firm : public Agent {
   public:
     std::vector<Machine*> machines;
     std::vector<Person*> workers;
 	
 	Firm();
+
+    void initialize_inventory(std::unordered_map<Product *, int>& inventory_items);
     
     double get_avg_productivity();
+	bool has_product(Product * product);
+    int get_inventory(Product * product);
+    void add_supplier(Producer * producer);
+    void set_reorder_threshold(Product * product, int threshold);
+    void receive_shipment(Product * product, int quantity);
 
   protected:
+    std::vector<Producer *> suppliers;
     std::unordered_map<Product *, int> inventory;
+    std::unordered_map<Product *, int> reorder_thresholds;
     std::unordered_map<Product*, std::vector<Plan*>> plan_history; // unused and prob need to change later
     std::vector<Plan*> plans_in_progress;
+
+    Producer * find_producer_for_product(Product * product);
+    Producer * send_order(Order * order);
+    void check_and_reorder();
 
 	double suitability(Person * person, std::vector<Ability>& required_abilities);
 	double suitability(std::unordered_map<Ability, double>& abilities, 
