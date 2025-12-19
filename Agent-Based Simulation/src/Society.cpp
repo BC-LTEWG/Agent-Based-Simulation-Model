@@ -1,4 +1,5 @@
 #include <cmath>
+#include <iostream>
 #include <numeric>
 
 #include "Distributor.h"
@@ -31,11 +32,11 @@ Society::Society() {
 }
 
 void Society::set_initial_products() {
-    for (int i = 0; i < STARTING_NUM_PRODUCTS; i++) {
+    for (int i = 0; i < STARTING_NUM_PRODUCTS; ++i) {
         products.push_back(new Product("Product " + std::to_string(i)));
     }
-    for (int i = NUM_BASE_PRODUCTS; i < STARTING_NUM_PRODUCTS; i++) {
-        products[i]->set_inputs(products, i);
+    for (int i = NUM_BASE_PRODUCTS; i < STARTING_NUM_PRODUCTS; ++i) {
+        products[i]->set_inputs(products);
     }
 }
 
