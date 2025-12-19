@@ -44,6 +44,8 @@ double Distributor::planned_satisfaction_per_person(Product& product, Person& pe
 
 
 void Distributor::sell_goods(Product& product, int quantity, Person * person) {
+    add_demand_signal(&product, quantity);
+
     if (!inventory[&product]) {
         std::cerr << "Inventory has no such product: " << product.product_name << std::endl;
     }

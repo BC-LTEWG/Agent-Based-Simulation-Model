@@ -19,7 +19,14 @@ bool Producer::can_produce(Product * product) {
 }
 
 int Producer::draft_order(Order * order) {
-	if (order_to_draft_plan[order] != nullptr) {
+    bool enough_inputs = true;
+    for (auto &p : order->product->inputs_per_unit) {
+        if (inventory[p.first] < p.second * order->quantity) {
+            enough_inputs = false;
+        }
+        add_demand_signal(p.first, p.second * order->quantity);
+    }
+	if (!enough_inputs || order_to_draft_plan[order] != nullptr) {
 		return DRAFT_ORDER_REJECTED;
 	}
 	if (!can_produce(order->product)) {

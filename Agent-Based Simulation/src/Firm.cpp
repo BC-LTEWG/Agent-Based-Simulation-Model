@@ -57,8 +57,10 @@ Producer * Firm::send_order(Order * order) {
     int order_time = INT_MAX;
     Producer * chosen_producer = nullptr;
 
-    for(auto * producer : suppliers) {
-        if(producer->draft_order(order) < order_time) {
+    for (auto * producer : suppliers) {
+        int draft_order_time = producer->draft_order(order);
+        if (draft_order_time != DRAFT_ORDER_REJECTED &&
+            draft_order_time < order_time) {
             order_time = producer->draft_order(order);
             chosen_producer = producer;
         }
@@ -295,9 +297,9 @@ void Firm::train_workers(
     }
 }
 
-void Firm::add_demand_signal(DemandSignal& signal) {
-    demand_signals.push(signal);
-    inventory_demands[signal.product] += (double) signal.quantity / FIRM_DEMAND_WINDOW;
+void Firm::add_demand_signal(Product * product, int quantity) {
+    demand_signals.push({product, quantity, Sim::get_current_time_step()});
+    inventory_demands[product] += (double) quantity / FIRM_DEMAND_WINDOW;
     apply_demand_window();
 }
 
