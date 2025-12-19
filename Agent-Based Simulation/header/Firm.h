@@ -3,6 +3,7 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <queue>
 
@@ -63,7 +64,7 @@ class Firm : public Agent {
 	bool has_product(Product * product);
     int get_inventory(Product * product);
     void add_supplier(Producer * producer);
-    void receive_shipment(Product * product, int quantity);
+    void receive_order(Order * order);
 
   protected:
     std::vector<Producer *> suppliers;
@@ -71,6 +72,7 @@ class Firm : public Agent {
     
     std::queue<DemandSignal> demand_signals;
     std::unordered_map<Product *, double> inventory_demands;
+    std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
     std::unordered_map<Product*, std::vector<Plan*>> plan_history; // unused and prob need to change later
     std::vector<Plan*> plans_in_progress;
 

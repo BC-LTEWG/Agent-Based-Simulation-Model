@@ -11,6 +11,7 @@
 Producer::Producer() : Firm() {}
 
 void Producer::on_time_step() {
+    Firm::on_time_step();
 	execute_plans();
 }
 
@@ -113,14 +114,11 @@ void Producer::execute_plan(Plan * plan) {
 void Producer::end_plan(Plan * plan) {
 	// simplification: whole product amount is added to inventory at the end of
     // a plan
-	int units_produced = plan->order->quantity;
-	inventory[plan->order->product] += units_produced;
+	inventory[plan->order->product] += plan->order->quantity;
 	// simplification: product shipped instantly
-	inventory[plan->order->product] -= units_produced;
-	plan->order->customer->receive_shipment(
-            plan->order->product,
-            units_produced);
-	plan->prd += PriceController::get_price(plan->order->product) * units_produced;
+	inventory[plan->order->product] -= plan->order->quantity;
+	plan->order->customer->receive_order(plan->order);
+    plan->prd += PriceController::get_price(plan->order->product) * plan->order->quantity;
 }
 
 void Producer::execute_plans() {

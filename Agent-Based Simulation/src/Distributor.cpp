@@ -9,6 +9,7 @@
 Distributor::Distributor() : Firm() {}
 
 void Distributor::on_time_step() {
+    Firm::on_time_step();
     for (auto iter = plans_in_progress.begin(); iter != plans_in_progress.end(); ++iter) {
         Plan * plan = *iter;
         
