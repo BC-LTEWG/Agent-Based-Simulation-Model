@@ -15,7 +15,7 @@ struct Product {
     double price_per_unit;
     int order_size;
     std::vector<Machine *> machines_needed;
-    std::unordered_map<Product *, int> inputs_per_unit;
+    std::unordered_map<Product *, double> inputs_per_unit;
  	double living_labor_per_unit; 
 	std::vector<Ability> required_abilities;
 	double mean_consumption_frequency;
