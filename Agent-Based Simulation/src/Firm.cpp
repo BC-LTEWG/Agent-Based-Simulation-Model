@@ -11,6 +11,8 @@
 
 Firm::Firm() {}
 
+Firm::Firm(std::unordered_set<Product *> initial_catalog) : catalog(initial_catalog) {}
+
 void Firm::on_time_step() {
     apply_demand_window();
     check_and_reorder();
@@ -27,7 +29,7 @@ double Firm::get_avg_productivity() {
 }
 
 bool Firm::has_product(Product * product) {
-	return inventory[product];
+	return catalog.count(product) && inventory[product];
 }
 
 int Firm::get_inventory(Product * product) {
@@ -81,9 +83,9 @@ Producer * Firm::send_order(Order * order) {
 }
 
 void Firm::check_and_reorder() {
-    for (auto& pair : inventory) {
-        Product * product = pair.first;
-        int current_inventory = pair.second;
+    std::unordered_set<Product *> products_to_reorder = get_products_to_reorder();
+    for (Product * product : products_to_reorder) {
+        int current_inventory = inventory[product];
        
         double threshold = std::max((double) product->order_size, 
             inventory_demands[product] * FIRM_STOCKPILE_DURATION);
@@ -327,8 +329,6 @@ void Firm::apply_demand_window() {
         demand_signals.pop();
     }
 }
-
-
 
 
 

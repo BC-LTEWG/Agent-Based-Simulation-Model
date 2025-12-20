@@ -1,6 +1,6 @@
 #pragma once
 
-#include <set>
+#include <unordered_set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -17,6 +17,7 @@ class Person;
 class Producer : public Firm {
   public:
     Producer();
+    Producer(std::unordered_set<Product *> initial_catalog);
     void on_time_step() override;
 
     bool can_produce(Product * product);
@@ -25,7 +26,6 @@ class Producer : public Firm {
 	bool pursue_order(Order * order);
 
   private:
-    std::set<Product *> catalog;
 	std::unordered_map<Order *, Plan *> order_to_draft_plan;
 
 	void start_plan(Plan * plan);
@@ -33,4 +33,5 @@ class Producer : public Firm {
 	void end_plan(Plan * plan);
 
 	void execute_plans();
+    std::unordered_set<Product *> get_products_to_reorder() override;
 };

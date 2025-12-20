@@ -10,6 +10,17 @@
 
 Producer::Producer() : Firm() {}
 
+Producer::Producer(std::unordered_set<Product *> initial_catalog) :
+    Firm(initial_catalog) {
+    for (Product * product : initial_catalog) {
+        for (auto& p : product->inputs_per_unit) {
+            inventory[p.first] += p.second *
+                                  product->order_size *
+                                  FIRM_INITIAL_INVENTORY_MULTIPLIER;
+        }
+    }
+}
+
 void Producer::on_time_step() {
     Firm::on_time_step();
 	execute_plans();
@@ -142,4 +153,14 @@ void Producer::execute_plans() {
 			--iter; 
 		}
 	}
+}
+
+std::unordered_set<Product *> Producer::get_products_to_reorder() {
+    std::unordered_set<Product *> products_to_reorder;
+    for (Product * product : catalog) {
+        for (auto &p : product->inputs_per_unit) {
+            products_to_reorder.insert(p.first);
+        }
+    }
+    return products_to_reorder;
 }

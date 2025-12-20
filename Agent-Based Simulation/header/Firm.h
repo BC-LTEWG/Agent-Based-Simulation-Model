@@ -56,6 +56,7 @@ class Firm : public Agent {
     std::vector<Person*> workers;
 	
 	Firm();
+    Firm(std::unordered_set<Product *> initial_catalog);
     void on_time_step() override;
 
     void initialize_inventory(std::unordered_map<Product *, int>& inventory_items);
@@ -69,6 +70,7 @@ class Firm : public Agent {
   protected:
     std::vector<Producer *> suppliers;
     std::unordered_map<Product *, int> inventory;
+    std::unordered_set<Product *> catalog;
     
     std::queue<DemandSignal> demand_signals;
     std::unordered_map<Product *, double> inventory_demands;
@@ -93,4 +95,5 @@ class Firm : public Agent {
 	void train_workers(std::vector<Person *>& workers, std::vector<Ability>& required_abilities);
     void add_demand_signal(Product * product, int quantity);
     void apply_demand_window();
+    virtual std::unordered_set<Product *> get_products_to_reorder() = 0;
 };

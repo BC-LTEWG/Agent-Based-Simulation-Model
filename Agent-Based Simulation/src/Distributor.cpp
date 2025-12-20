@@ -8,6 +8,13 @@
 
 Distributor::Distributor() : Firm() {}
 
+Distributor::Distributor(std::unordered_set<Product *> initial_catalog) :
+    Firm(initial_catalog) {
+    for (Product * p : initial_catalog) {
+        inventory[p] = p->order_size * FIRM_INITIAL_INVENTORY_MULTIPLIER;
+    }
+}
+
 void Distributor::on_time_step() {
     Firm::on_time_step();
     for (auto iter = plans_in_progress.begin(); iter != plans_in_progress.end(); ++iter) {
@@ -76,4 +83,6 @@ bool Distributor::is_overproduced(Product* product) {
     return false;
 }
 
-
+std::unordered_set<Product *> Distributor::get_products_to_reorder() {
+    return catalog;
+}
