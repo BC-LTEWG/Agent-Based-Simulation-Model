@@ -15,14 +15,22 @@ Society::Society() {
     set_initial_products();
     // note: no way to assign products to producers or suppliers to distributors yet
     for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
-        Producer * producer = new Producer();
+        Producer * producer = new Producer({products[i % STARTING_NUM_PRODUCTS]});
         producers.push_back(producer);
         firms.push_back(producer);
     }
     for (int i = 0; i < STARTING_NUM_DISTRIBUTORS; i++) {
-        Distributor * distributor = new Distributor();
+        Distributor * distributor = new Distributor({products[i % STARTING_NUM_PRODUCTS]});
         distributors.push_back(distributor);
         firms.push_back(distributor);
+    }
+    // add suppliers to firms
+    for (Firm * firm : firms) {
+        for (Producer * producer : producers) {
+            if (producer != firm) {
+                firm->add_supplier(producer);
+            }
+        }
     }
     // people MUST come after products and distributors are created
     for (int i = 0; i < STARTING_NUM_PEOPLE; i++) {

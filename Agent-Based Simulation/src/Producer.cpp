@@ -10,7 +10,19 @@
 
 Producer::Producer() : Firm() {}
 
+Producer::Producer(std::unordered_set<Product *> initial_catalog) :
+    Firm(initial_catalog) {
+    for (Product * product : initial_catalog) {
+        for (auto& p : product->inputs_per_unit) {
+            inventory[p.first] += p.second *
+                                  product->order_size *
+                                  FIRM_INITIAL_INVENTORY_MULTIPLIER;
+        }
+    }
+}
+
 void Producer::on_time_step() {
+    Firm::on_time_step();
 	execute_plans();
 }
 
@@ -19,7 +31,14 @@ bool Producer::can_produce(Product * product) {
 }
 
 int Producer::draft_order(Order * order) {
-	if (order_to_draft_plan[order] != nullptr) {
+    bool enough_inputs = true;
+    for (auto &p : order->product->inputs_per_unit) {
+        if (inventory[p.first] < p.second * order->quantity) {
+            enough_inputs = false;
+        }
+        add_demand_signal(p.first, p.second * order->quantity);
+    }
+	if (!enough_inputs || order_to_draft_plan[order] != nullptr) {
 		return DRAFT_ORDER_REJECTED;
 	}
 	if (!can_produce(order->product)) {
@@ -106,14 +125,11 @@ void Producer::execute_plan(Plan * plan) {
 void Producer::end_plan(Plan * plan) {
 	// simplification: whole product amount is added to inventory at the end of
     // a plan
-	int units_produced = plan->order->quantity;
-	inventory[plan->order->product] += units_produced;
+	inventory[plan->order->product] += plan->order->quantity;
 	// simplification: product shipped instantly
-	inventory[plan->order->product] -= units_produced;
-	plan->order->customer->receive_shipment(
-            plan->order->product,
-            units_produced);
-	plan->prd += PriceController::get_price(plan->order->product) * units_produced;
+	inventory[plan->order->product] -= plan->order->quantity;
+	plan->order->customer->receive_order(plan->order);
+    plan->prd += PriceController::get_price(plan->order->product) * plan->order->quantity;
 }
 
 void Producer::execute_plans() {
@@ -137,4 +153,14 @@ void Producer::execute_plans() {
 			--iter; 
 		}
 	}
+}
+
+std::unordered_set<Product *> Producer::get_products_to_reorder() {
+    std::unordered_set<Product *> products_to_reorder;
+    for (Product * product : catalog) {
+        for (auto &p : product->inputs_per_unit) {
+            products_to_reorder.insert(p.first);
+        }
+    }
+    return products_to_reorder;
 }

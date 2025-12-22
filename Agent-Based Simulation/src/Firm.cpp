@@ -1,12 +1,22 @@
+#include <numeric>
+
 #include "Distributor.h"
 #include "Firm.h"
 #include "Person.h"
 #include "PriceController.h"
 #include "Producer.h"
 #include "Product.h"
+#include "Sim.h"
 #include "Society.h"
 
 Firm::Firm() {}
+
+Firm::Firm(std::unordered_set<Product *> initial_catalog) : catalog(initial_catalog) {}
+
+void Firm::on_time_step() {
+    apply_demand_window();
+    check_and_reorder();
+}
 
 void Firm::initialize_inventory(std::unordered_map<Product *, int>& inventory_items) {
     for(auto& items : inventory_items) {
@@ -19,7 +29,7 @@ double Firm::get_avg_productivity() {
 }
 
 bool Firm::has_product(Product * product) {
-	return inventory[product];
+	return catalog.count(product) && inventory[product];
 }
 
 int Firm::get_inventory(Product * product) {
@@ -30,15 +40,12 @@ void Firm::add_supplier(Producer * producer) {
     suppliers.push_back(producer);
 }
 
-void Firm::set_reorder_threshold(Product * product, int threshold) {
-    reorder_thresholds[product] = threshold;
-}
-
-void Firm::receive_shipment(Product * product, int quantity) {
-    inventory[product] += quantity;
-    std::cout << "Received " << quantity << " units of " 
-              << product->product_name << ". New inventory: " 
-              << inventory[product] << std::endl;
+void Firm::receive_order(Order * order) {
+    inventory[order->product] += order->quantity;
+    product_to_outbound_orders[order->product].erase(order);
+    std::cout << "Received " << order->quantity << " units of " 
+              << order->product->product_name << ". New inventory: " 
+              << inventory[order->product] << std::endl;
 }
 
 Producer * Firm::find_producer_for_product(Product * product) {
@@ -54,14 +61,17 @@ Producer * Firm::send_order(Order * order) {
     int order_time = INT_MAX;
     Producer * chosen_producer = nullptr;
 
-    for(auto * producer : suppliers) {
-        if(producer->draft_order(order) < order_time) {
+    for (auto * producer : suppliers) {
+        int draft_order_time = producer->draft_order(order);
+        if (draft_order_time != DRAFT_ORDER_REJECTED &&
+            draft_order_time < order_time) {
             order_time = producer->draft_order(order);
             chosen_producer = producer;
         }
     }
     if (chosen_producer) {
         chosen_producer->pursue_order(order);
+        product_to_outbound_orders[order->product].insert(order);
     }
     for(auto * producer : suppliers) {
         if(producer != chosen_producer) {
@@ -73,22 +83,33 @@ Producer * Firm::send_order(Order * order) {
 }
 
 void Firm::check_and_reorder() {
-    for (auto& pair : inventory) {
-        Product * product = pair.first;
-        int current_inventory = pair.second;
-        
-        int threshold = product->order_size;
-        if (reorder_thresholds.find(product) != reorder_thresholds.end()) {
-            threshold = reorder_thresholds[product];
+    std::unordered_set<Product *> products_to_reorder = get_products_to_reorder();
+    for (Product * product : products_to_reorder) {
+        int current_inventory = inventory[product];
+       
+        double threshold = std::max((double) product->order_size, 
+            inventory_demands[product] * FIRM_STOCKPILE_DURATION);
+
+        int pending_inventory = current_inventory;
+        for (auto * order : product_to_outbound_orders[product]) {
+            pending_inventory += order->quantity;
         }
         
-        if (current_inventory < threshold) {
+        if (pending_inventory < threshold) {
             Producer * producer = find_producer_for_product(product);
             if (producer) {
-                int order_quantity = product->order_size;
-                std::cout << "Reordering " << order_quantity << " units of " 
+                int discrepancy = product->order_size * 
+                    ((int) std::ceil(threshold - pending_inventory) / product->order_size);
+                std::cout << "Reordering " << discrepancy << " units of " 
                           << product->product_name << std::endl;
-                Order * order = new Order{product, order_quantity, this, 0};
+
+                Order * order = new Order{
+                    product,
+                    discrepancy,
+                    this,
+                    (int) (pending_inventory / threshold * FIRM_STOCKPILE_DURATION)
+                };
+
 				send_order(order);
                 if (order) {
                     std::cout << "Order accepted. Turnaround time: " 
@@ -294,7 +315,20 @@ void Firm::train_workers(
     }
 }
 
+void Firm::add_demand_signal(Product * product, int quantity) {
+    demand_signals.push({product, quantity, Sim::get_current_time_step()});
+    inventory_demands[product] += (double) quantity / FIRM_DEMAND_WINDOW;
+}
 
+void Firm::apply_demand_window() {
+    while (!demand_signals.empty() && 
+           demand_signals.front().timestep <= 
+           Sim::get_current_time_step() - FIRM_DEMAND_WINDOW) {
+        inventory_demands[demand_signals.front().product] -= 
+            (double) demand_signals.front().quantity / FIRM_DEMAND_WINDOW;
+        demand_signals.pop();
+    }
+}
 
 
 

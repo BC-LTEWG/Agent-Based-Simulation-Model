@@ -8,7 +8,15 @@
 
 Distributor::Distributor() : Firm() {}
 
+Distributor::Distributor(std::unordered_set<Product *> initial_catalog) :
+    Firm(initial_catalog) {
+    for (Product * p : initial_catalog) {
+        inventory[p] = p->order_size * FIRM_INITIAL_INVENTORY_MULTIPLIER;
+    }
+}
+
 void Distributor::on_time_step() {
+    Firm::on_time_step();
     for (auto iter = plans_in_progress.begin(); iter != plans_in_progress.end(); ++iter) {
         Plan * plan = *iter;
         
@@ -44,6 +52,8 @@ double Distributor::planned_satisfaction_per_person(Product& product, Person& pe
 
 
 void Distributor::sell_goods(Product& product, int quantity, Person * person) {
+    add_demand_signal(&product, quantity);
+
     if (!inventory[&product]) {
         std::cerr << "Inventory has no such product: " << product.product_name << std::endl;
     }
@@ -73,4 +83,6 @@ bool Distributor::is_overproduced(Product* product) {
     return false;
 }
 
-
+std::unordered_set<Product *> Distributor::get_products_to_reorder() {
+    return catalog;
+}
