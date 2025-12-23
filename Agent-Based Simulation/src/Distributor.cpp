@@ -22,13 +22,10 @@ void Distributor::on_time_step() {
         Plan * plan = *iter;
         
         plan->labor_hours_remaining -= plan->workers.size();
-        plan->prd += plan->workers.size();
         
         for (auto * worker : plan->workers) {
             worker->register_hours_worked(1);
-        }  
-        
-        plan->prd += m + (plan->labor_hours - plan->labor_hours_remaining);
+        }
         
         delete plan;
         
