@@ -3,7 +3,9 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
+#include <queue>
 
 #include "Agent.h"
 #include "Constants.h"
@@ -42,12 +44,20 @@ struct Order {
     int requested_turnaround_time;
 };
 
+struct DemandSignal {
+    Product * product;
+    int quantity;
+    int timestep;
+};
+
 class Firm : public Agent {
   public:
     std::vector<Machine*> machines;
     std::vector<Person*> workers;
 	
 	Firm();
+    Firm(std::unordered_set<Product *> initial_catalog);
+    void on_time_step() override;
 
     void initialize_inventory(std::unordered_map<Product *, int>& inventory_items);
     
@@ -55,13 +65,16 @@ class Firm : public Agent {
 	bool has_product(Product * product);
     int get_inventory(Product * product);
     void add_supplier(Producer * producer);
-    void set_reorder_threshold(Product * product, int threshold);
-    void receive_shipment(Product * product, int quantity);
+    void receive_order(Order * order);
 
   protected:
     std::vector<Producer *> suppliers;
     std::unordered_map<Product *, int> inventory;
-    std::unordered_map<Product *, int> reorder_thresholds;
+    std::unordered_set<Product *> catalog;
+    
+    std::queue<DemandSignal> demand_signals;
+    std::unordered_map<Product *, double> inventory_demands;
+    std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
     std::unordered_map<Product*, std::vector<Plan*>> plan_history; // unused and prob need to change later
     std::vector<Plan*> plans_in_progress;
 
@@ -80,4 +93,7 @@ class Firm : public Agent {
 	void assign_plan_dependent_fields(Plan * draft_plan, std::vector<Ability>& required_abilities);
 	void draft_optimal_plan(Plan * draft_plan, std::vector<Ability>& required_abilities);
 	void train_workers(std::vector<Person *>& workers, std::vector<Ability>& required_abilities);
+    void add_demand_signal(Product * product, int quantity);
+    void apply_demand_window();
+    virtual std::unordered_set<Product *> get_products_to_reorder() = 0;
 };

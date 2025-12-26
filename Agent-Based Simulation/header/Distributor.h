@@ -17,6 +17,7 @@ class Producer;
 class Distributor : public Firm {
   public:
     Distributor();
+    Distributor(std::unordered_set<Product *> initial_catalog);
     void on_time_step() override;
 
     double get_output_ratio(Product& product);
@@ -25,4 +26,5 @@ class Distributor : public Firm {
     bool is_overproduced(Product * product);
 
   private:
+    std::unordered_set<Product *> get_products_to_reorder() override;
 };
