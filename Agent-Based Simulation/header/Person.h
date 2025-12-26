@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "Agent.h"
-#include "Constants.h"
 
 struct Product;
 class Distributor;
@@ -13,6 +12,7 @@ class Firm;
 class Person : public Agent {
   public:
     enum HealthStatus { HEALTHY, UNHEALTHY };
+    enum Ability { ABILITY_1, ABILITY_2, ABILITY_3, NUM_ABILITIES }; 
 	
     Person();
 	void on_time_step() override;

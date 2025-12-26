@@ -2,8 +2,6 @@
 
 #include <cmath>
 
-enum Ability { ABILITY_1, ABILITY_2, ABILITY_3, NUM_ABILITIES }; 
-
 const int DAY = 24;
 const int WEEK = DAY * 7;
 const int MONTH = DAY * 30;

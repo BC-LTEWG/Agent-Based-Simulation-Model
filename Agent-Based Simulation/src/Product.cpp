@@ -15,8 +15,8 @@ Product::Product(const std::string name) : product_name{name} {
                 PRODUCT_LABOR_PER_UNIT_MAX
                 );
     living_labor_per_unit = (double)living_labor_dist(Sim::gen);
-    for (int i = 0; i < NUM_ABILITIES; i++) {
-        required_abilities.push_back((Ability) i);
+    for (int i = 0; i < Person::NUM_ABILITIES; i++) {
+        required_abilities.push_back((Person::Ability) i);
     }
     shuffle(required_abilities.begin(), required_abilities.end(), Sim::gen);
     static std::uniform_int_distribution<>

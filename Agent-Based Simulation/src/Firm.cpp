@@ -1,5 +1,6 @@
 #include <numeric>
 
+#include "Constants.h"
 #include "Distributor.h"
 #include "Firm.h"
 #include "Person.h"
@@ -133,7 +134,7 @@ void Firm::check_and_reorder() {
 
 double Firm::suitability(
     Person * person,
-    std::vector<Ability>& required_abilities
+    std::vector<Person::Ability>& required_abilities
     ) {
 	return suitability(person->get_abilities(),
 			           required_abilities,
@@ -141,12 +142,12 @@ double Firm::suitability(
 }
 
 double Firm::suitability(
-    std::unordered_map<Ability, double>& abilities,
-    std::vector<Ability>& required_abilities,
+    std::unordered_map<Person::Ability, double>& abilities,
+    std::vector<Person::Ability>& required_abilities,
     float productivity
     ) {
 	double suitability = 0.0;
-	for (Ability ability : required_abilities) {
+	for (Person::Ability ability : required_abilities) {
 		suitability += abilities[ability];
 	}
 	suitability /= required_abilities.size();
@@ -166,7 +167,7 @@ int Firm::predict_workers_needed(Order * order) {
 
 void Firm::assign_workers_by_suitability_threshold(
         Plan * draft_plan,
-        std::vector<Ability>& required_abilities,
+        std::vector<Person::Ability>& required_abilities,
         double suitability_threshold
         ) {
     std::unordered_map<Person *, double> worker_to_suitability;
@@ -221,13 +222,13 @@ int Firm::predict_labor_hours(Order * order, double total_suitability) {
 
 void Firm::assign_plan_dependent_fields(
         Plan * draft_plan,
-        std::vector<Ability>& required_abilities
+        std::vector<Person::Ability>& required_abilities
         ) {
 	double total_suitability = 0.0;
 	if (draft_plan->training_time) {
-		std::unordered_map<Ability, double> max_required_abilities;
+		std::unordered_map<Person::Ability, double> max_required_abilities;
 		for (Person * worker : draft_plan->workers) {
-			for (Ability ability : required_abilities) {
+			for (Person::Ability ability : required_abilities) {
 				max_required_abilities[ability] = std::max(max_required_abilities[ability],
 						 								   worker->get_abilities()[ability]);
 			}
@@ -268,7 +269,7 @@ void Firm::assign_plan_dependent_fields(
 
 void Firm::draft_optimal_plan(
         Plan * draft_plan,
-        std::vector<Ability>& required_abilities
+        std::vector<Person::Ability>& required_abilities
         ) {
     // try without training first
     Plan * draft_plan_without_training = new Plan(*draft_plan);
@@ -306,11 +307,11 @@ void Firm::draft_optimal_plan(
 
 void Firm::train_workers(
         std::vector<Person *>& workers,
-        std::vector<Ability>& required_abilities
+        std::vector<Person::Ability>& required_abilities
         ) {
-    std::unordered_map<Ability, double> max_required_abilities;
+    std::unordered_map<Person::Ability, double> max_required_abilities;
     for (Person * worker : workers) {
-        for (Ability ability : required_abilities) {
+        for (Person::Ability ability : required_abilities) {
             max_required_abilities[ability] =
                 std::max(
                         max_required_abilities[ability],
