@@ -50,15 +50,6 @@ void Firm::receive_order(Order * order) {
               << inventory[order->product] << std::endl;
 }
 
-Producer * Firm::find_producer_for_product(Product * product) {
-    for (Producer * producer : suppliers) {
-        if (producer->can_produce(product)) {
-            return producer;
-        }
-    }
-    return nullptr;
-}
-
 Producer * Firm::send_order(Order * order) {
     int order_time = INT_MAX;
     Producer * chosen_producer = nullptr;
@@ -75,8 +66,8 @@ Producer * Firm::send_order(Order * order) {
         chosen_producer->pursue_order(order);
         product_to_outbound_orders[order->product].insert(order);
     }
-    for(auto * producer : suppliers) {
-        if(producer != chosen_producer) {
+    for (auto * producer : suppliers) {
+        if (producer != chosen_producer) {
             producer->drop_order(order);
         }
     }
@@ -84,43 +75,55 @@ Producer * Firm::send_order(Order * order) {
     return chosen_producer;
 }
 
+double Firm::get_reorder_threshold(Product * product) {
+    return std::max((double) product->order_size, 
+        inventory_demands[product] * FIRM_STOCKPILE_DURATION);
+}
+
+int Firm::get_pending_inventory(Product * product) {
+    int pending_inventory = inventory[product];
+    for (auto * order : product_to_outbound_orders[product]) {
+        pending_inventory += order->quantity;
+    }
+    return pending_inventory;
+}
+
+void Firm::reorder_product_to_threshold(
+        Product * product,
+        double threshold,
+        int pending_inventory
+        ) {
+    if (pending_inventory < threshold) {
+        int discrepancy = product->order_size * 
+            ((int) std::ceil(threshold - pending_inventory) / product->order_size);
+        std::cout << "Reordering " << discrepancy << " units of " 
+                  << product->product_name << std::endl;
+
+        Order * order = new Order{
+            product,
+            discrepancy,
+            this,
+            (int) (pending_inventory / threshold * FIRM_STOCKPILE_DURATION)
+        };
+
+        Producer * chosen_producer = send_order(order);
+        if (chosen_producer) {
+            std::cout << "Order accepted. Turnaround time: " 
+                      << order->requested_turnaround_time << " days" << std::endl;
+        } else {
+            std::cerr << "No producer found for product: " 
+                      << product->product_name << std::endl;
+        }
+    }
+}
+
 void Firm::check_and_reorder() {
     std::unordered_set<Product *> products_to_reorder = get_products_to_reorder();
     for (Product * product : products_to_reorder) {
-        int current_inventory = inventory[product];
-       
-        double threshold = std::max((double) product->order_size, 
-            inventory_demands[product] * FIRM_STOCKPILE_DURATION);
-
-        int pending_inventory = current_inventory;
-        for (auto * order : product_to_outbound_orders[product]) {
-            pending_inventory += order->quantity;
-        }
-        
+        double threshold = get_reorder_threshold(product);
+        int pending_inventory = get_pending_inventory(product);
         if (pending_inventory < threshold) {
-            Producer * producer = find_producer_for_product(product);
-            if (producer) {
-                int discrepancy = product->order_size * 
-                    ((int) std::ceil(threshold - pending_inventory) / product->order_size);
-                std::cout << "Reordering " << discrepancy << " units of " 
-                          << product->product_name << std::endl;
-
-                Order * order = new Order{
-                    product,
-                    discrepancy,
-                    this,
-                    (int) (pending_inventory / threshold * FIRM_STOCKPILE_DURATION)
-                };
-
-				send_order(order);
-                if (order) {
-                    std::cout << "Order accepted. Turnaround time: " 
-                              << order->requested_turnaround_time << " days" << std::endl;
-                }
-            } else {
-                std::cerr << "No producer found for product: " 
-                          << product->product_name << std::endl;
-            }
+            reorder_product_to_threshold(product, threshold, pending_inventory);
         }
     }
 }
