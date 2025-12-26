@@ -78,8 +78,12 @@ class Firm : public Agent {
     std::unordered_map<Product*, std::vector<Plan*>> plan_history; // unused and prob need to change later
     std::vector<Plan*> plans_in_progress;
 
-    Producer * find_producer_for_product(Product * product);
     Producer * send_order(Order * order);
+    double get_reorder_threshold(Product * product);
+    int get_pending_inventory(Product * product);
+    void reorder_product_to_threshold(Product * product, 
+                                      double threshold,
+                                      int pending_inventory);
     void check_and_reorder();
 
 	double suitability(Person * person, std::vector<Ability>& required_abilities);
