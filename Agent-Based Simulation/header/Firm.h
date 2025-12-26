@@ -38,10 +38,13 @@ struct Plan {
 };
 
 struct Order {
+    enum OrderStatus { ORDER_REQUESTED, ORDER_FINISHED };
+
     Product * product;
     int quantity;
     Firm * customer;
     int requested_turnaround_time;
+    OrderStatus status;
 };
 
 struct DemandSignal {
@@ -65,7 +68,7 @@ class Firm : public Agent {
 	bool has_product(Product * product);
     int get_inventory(Product * product);
     void add_supplier(Producer * producer);
-    void receive_order(Order * order);
+    void receive_shipment(Order * order);
 
   protected:
     std::vector<Producer *> suppliers;

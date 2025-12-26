@@ -40,11 +40,15 @@ void Firm::add_supplier(Producer * producer) {
     suppliers.push_back(producer);
 }
 
-void Firm::receive_order(Order * order) {
+void Firm::receive_shipment(Order * order) {
+    if (order->status != Order::ORDER_FINISHED) {
+        std::cerr << "Attempted to recieve a shipment for an incomplete order." << std::endl;
+        return;
+    }
     inventory[order->product] += order->quantity;
     product_to_outbound_orders[order->product].erase(order);
     std::cout << "Received " << order->quantity << " units of " 
-              << order->product->product_name << ". New inventory: " 
+              << order->product->product_name << ". New inventory level: " 
               << inventory[order->product] << std::endl;
 }
 
@@ -101,7 +105,8 @@ void Firm::reorder_product_to_threshold(
             product,
             discrepancy,
             this,
-            (int) (pending_inventory / threshold * FIRM_STOCKPILE_DURATION)
+            (int) (pending_inventory / threshold * FIRM_STOCKPILE_DURATION),
+            Order::ORDER_REQUESTED
         };
 
         Producer * chosen_producer = send_order(order);
