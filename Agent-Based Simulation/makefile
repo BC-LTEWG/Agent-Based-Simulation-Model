@@ -3,6 +3,7 @@ FLAGS = -Wall -Iheader -std=c++17
 HDR_DIR = header
 SRC_DIR = src
 BUILD_DIR = build
+TEST_DIR = test
 
 ${APP} : ${BUILD_DIR}/Product.o \
 	${BUILD_DIR}/Machine.o \
@@ -42,6 +43,10 @@ ${BUILD_DIR}/Society.o : ${SRC_DIR}/Society.cpp ${HDR_DIR}/Society.h
 
 ${BUILD_DIR}/Sim.o : ${SRC_DIR}/Sim.cpp ${HDR_DIR}/Sim.h
 	g++ ${FLAGS} -c $< -o $@
+
+tests: ${TEST_DIR}/test_leontief_function.cpp ${SRC_DIR}/leontief_function.cpp
+	g++ ${FLAGS} $^ -o $@
+
 
 clean:
 	rm -f ${BUILD_DIR}/*
