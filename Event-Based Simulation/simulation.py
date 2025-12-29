@@ -1,6 +1,7 @@
 from parameters import Params
 from CapitalistEconomy import *
 from generate_dependency_matrix import *
+from random_events import load_event_table
 import os
 import matplotlib.pyplot as plt
 import numpy as np
@@ -43,12 +44,10 @@ params = Params(
 # Global to record continuous equilibrium time (first time detected)
 EQUILIBRIUM_TIME = None
 
-# examples of using the CapitalistEconomy class. 
 def get_trajectories(params):
     global EQUILIBRIUM_TIME
-    economy = CapitalistEconomy(params)
+    economy = CapitalistEconomy(params, debug=True)
     
-    from random_events import load_event_table
     economy.events_catalog = load_event_table()
 
     e = None
@@ -72,7 +71,7 @@ def get_trajectories(params):
             e = error
             break
 
-    traj, t = economy.traj, economy.t
+    traj, t = economy.history, economy.t
     return traj, t, e
 
 # example of perturbing the economy during simulation
@@ -91,17 +90,17 @@ def get_trajectories_supply_shock(params):
             e = error
             break
 
-    traj, t = economy.traj, economy.t
+    traj, t = economy.history, economy.t
     return traj, t, e
 
 def detect_price_equilibrium(economy):
     # Returns True if equilibrium (no change in prices and outputs)
     # is reached at any time step, otherwise returns False.
-    if len(economy.traj["p"]) < 2:
+    if len(economy.history["p"]) < 2:
         return False
     
-    dp = economy.traj["p"][-1] - economy.traj["p"][-2]
-    dq = economy.traj["q"][-1] - economy.traj["q"][-2]
+    dp = economy.history["p"][-1] - economy.history["p"][-2]
+    dq = economy.history["q"][-1] - economy.history["q"][-2]
     
     return np.all(dp == 0) and np.all(dq == 0)
 
