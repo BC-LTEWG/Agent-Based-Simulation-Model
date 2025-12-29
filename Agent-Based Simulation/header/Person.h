@@ -12,7 +12,7 @@ class Firm;
 
 class Person : public Agent {
   public:
-    enum HealthStatus { HEALTHY, UNHEALTHY, RECOVERING };
+    enum HealthStatus { HEALTHY, UNHEALTHY };
 	
     Person();
 	void on_time_step() override;
@@ -26,10 +26,6 @@ class Person : public Agent {
     void register_hours_worked(double hours_worked);
     void charge(double cost);
     void purchase_good(Product * p, int quantity);
-	bool will_shop();
-	void shop();
-    bool will_retire();
-	void retire();
     void set_firm(Firm *);
   
   private:
@@ -41,4 +37,10 @@ class Person : public Agent {
     double account;
 	std::vector<Distributor*> ranked_distributors;
 	int shopping_offset;
+
+	bool will_shop();
+	void shop();
+    bool will_retire();
+	void retire();
+	void update_health_status();
 };

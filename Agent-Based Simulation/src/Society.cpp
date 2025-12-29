@@ -11,70 +11,70 @@
 Society * Society::instance = nullptr;
 
 Society::Society() {
-	instance = this;
-	for (int i = 0; i < STARTING_NUM_PRODUCTS; i++) {
-		products.push_back(new Product("Product " + std::to_string(i)));
-	}
-	for (int i = 0; i < STARTING_NUM_PRODUCTS; i++) {
-		products[i]->set_inputs(products);
-	}
-	// note: no way to assign products to producers or suppliers to distributors yet
-	for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
-		Producer * producer = new Producer();
-		producers.push_back(producer);
-		firms.push_back(producer);
-	}
-	for (int i = 0; i < STARTING_NUM_DISTRIBUTORS; i++) {
-		Distributor * distributor = new Distributor();
-		distributors.push_back(distributor);
-		firms.push_back(distributor);
-	}
-	// people MUST come after products and distributors are created
-	for (int i = 0; i < STARTING_NUM_PEOPLE; i++) {
-		birth_person();	
-	}
+    instance = this;
+    set_initial_products();
+    // note: no way to assign products to producers or suppliers to distributors yet
+    for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
+        Producer * producer = new Producer({products[i % STARTING_NUM_PRODUCTS]});
+        producers.push_back(producer);
+        firms.push_back(producer);
+    }
+    for (int i = 0; i < STARTING_NUM_DISTRIBUTORS; i++) {
+        Distributor * distributor = new Distributor({products[i % STARTING_NUM_PRODUCTS]});
+        distributors.push_back(distributor);
+        firms.push_back(distributor);
+    }
+    // add suppliers to firms
+    for (Firm * firm : firms) {
+        for (Producer * producer : producers) {
+            if (producer != firm) {
+                firm->add_supplier(producer);
+            }
+        }
+    }
+    // people MUST come after products and distributors are created
+    for (int i = 0; i < STARTING_NUM_PEOPLE; i++) {
+        birth_person();	
+    }
 }
 
-std::size_t Society::num_people() {
-	return people.size();
+void Society::set_initial_products() {
+    for (int i = 0; i < STARTING_NUM_PRODUCTS; i++) {
+        products.push_back(new Product("Product " + std::to_string(i)));
+    }
+    for (int i = NUM_BASE_PRODUCTS; i < STARTING_NUM_PRODUCTS; i++) {
+        products[i]->set_inputs(products, i);
+    }
 }
 
-std::size_t Society::num_firms() {
-    return firms.size();
+std::vector<Product *>& Society::get_products() {
+    return products;
 }
 
-bool Society::meets_standard_for_lower_working_hours() {
-  double sum = 0.0;
-  for (Firm * firm : firms) {
-    sum += firm->get_avg_productivity();
-  }
-  double avg_productivity = sum / firms.size();
-  return avg_productivity >= PRODUCTIVITY_THRESHOLD;
+std::vector<Distributor *>& Society::get_distributors() {
+    return distributors;
 }
 
-void Society::set_work_hours_daily(int hours) {
-    current_work_hours_daily = hours;
+std::vector<Person *>& Society::get_unemployed_people() {
+    return unemployed_people;
 }
 
-double Society::get_avg_productivity() {
-    return 0.0;
+int Society::get_current_work_hours_daily() {
+    return current_work_hours_daily;
 }
 
-std::unordered_map<std::string, int> Society::avg_worker_needs() {
-    return std::unordered_map<std::string, int>();
+int Society::get_current_work_days_weekly() {
+	return current_work_days_weekly;
 }
 
 Person * Society::birth_person() {
-	Person * person = new Person();
-	people.push_back(person);
-	add_unemployed(person);
-	return person;
+    Person * person = new Person();
+    people.push_back(person);
+    unemployed_people.push_back(person);
+    return person;
 }
 
 void Society::retire_person(Person * person) {
-	// unimplemented until hiring/reallocation is done
+    // unimplemented until hiring/reallocation is done
 }
 
-void Society::add_unemployed(Person * person) {
-	unemployed_people.push_back(person);
-}
