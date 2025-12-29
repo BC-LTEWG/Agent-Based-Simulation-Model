@@ -35,7 +35,7 @@ class Person : public Agent {
     std::unordered_map<Product*, double> purchase_frequencies;
     Firm * firm = nullptr;
     double account;
-	std::vector<Distributor*> ranked_distributors;
+	std::vector<Distributor *> ranked_distributors;
 	int shopping_offset;
 
 	bool will_shop();

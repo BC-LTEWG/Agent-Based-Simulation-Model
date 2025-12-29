@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <climits>
 #include <numeric>
 
 #include "Distributor.h"
@@ -166,11 +168,11 @@ void Firm::assign_workers_by_suitability_threshold(
         worker_to_suitability[worker] =
             suitability(worker, required_abilities);
     }
-    sort(workers.begin(), workers.end(), [&](Person * a, Person * b) {
+    std::sort(workers.begin(), workers.end(), [&](Person * a, Person * b) {
             return worker_to_suitability[a] > worker_to_suitability[b];
             });
 
-    int max_workers = predict_workers_needed(draft_plan->order);
+    std::size_t max_workers = predict_workers_needed(draft_plan->order);
     for (Person * worker : workers) {
         if (
                 draft_plan->workers.size() >= max_workers ||
