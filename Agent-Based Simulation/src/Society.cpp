@@ -71,9 +71,13 @@ void Society::set_product_prices() {
     Eigen::MatrixXd Leontief = I - A_t;
     Eigen::MatrixXd Leontief_inv = Leontief.inverse();
     Eigen::VectorXd values = Leontief_inv * l;
-    std::cout << l << std::endl;
-    std::cout << std::endl;
-    std::cout << values << std::endl;
+    for (std::size_t i = 0; i < dim; ++i) {
+        if (values(i) < 0.0) {
+            std::cerr << "Value " << i << " has a negative value: " <<
+                values(i) << std::endl;
+        }
+        products[i]->price_per_unit = values(i);
+    }
 }
 
 std::vector<Product *>& Society::get_products() {
