@@ -1,3 +1,4 @@
+#include <iostream>
 #include <random>
 #include <set>
 
@@ -47,5 +48,10 @@ void Product::set_inputs(std::vector<Product *>& products) {
                 );
     for (int index : indices) {
         inputs_per_unit[products[index]] = input_per_unit_dist(Sim::gen);
+    }
+    std::cout << product_name << std::endl;
+    for (const auto& pair : inputs_per_unit) {
+        std::cout << "\t" << pair.first->product_name << ": " <<
+            pair.second << std::endl;
     }
 }

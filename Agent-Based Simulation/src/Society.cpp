@@ -1,6 +1,8 @@
 #include <cmath>
+#include <Eigen/Dense>
 #include <iostream>
 #include <numeric>
+#include <unordered_map>
 
 #include "Distributor.h"
 #include "Firm.h"
@@ -40,12 +42,38 @@ Society::Society() {
 }
 
 void Society::set_initial_products() {
-    for (int i = 0; i < STARTING_NUM_PRODUCTS; ++i) {
+    for (std::size_t i = 0; i < STARTING_NUM_PRODUCTS; ++i) {
         products.push_back(new Product("Product " + std::to_string(i)));
     }
-    for (int i = NUM_BASE_PRODUCTS; i < STARTING_NUM_PRODUCTS; ++i) {
-        products[i]->set_inputs(products);
+    for (Product * product: products) {
+        product->set_inputs(products);
     }
+    set_product_prices();
+}
+
+void Society::set_product_prices() {
+    std::unordered_map<Product *, size_t> product_to_index;
+    for (size_t i = 0; i < products.size(); ++i) {
+        product_to_index[products[i]] = i;
+    }
+    size_t dim = products.size();
+    Eigen::MatrixXd A_t(dim, dim);
+    Eigen::VectorXd l(dim);
+    for (Product * product : products) {
+        for (const std::pair<Product * const, double>& input :
+                product->inputs_per_unit) {
+            A_t(product_to_index[product], product_to_index[input.first]) =
+                input.second;
+        }
+        l(product_to_index[product]) = product->living_labor_per_unit;
+    }
+    Eigen::MatrixXd I = Eigen::MatrixXd::Identity(dim, dim);
+    Eigen::MatrixXd Leontief = I - A_t;
+    Eigen::MatrixXd Leontief_inv = Leontief.inverse();
+    Eigen::VectorXd values = Leontief_inv * l;
+    std::cout << l << std::endl;
+    std::cout << std::endl;
+    std::cout << values << std::endl;
 }
 
 std::vector<Product *>& Society::get_products() {

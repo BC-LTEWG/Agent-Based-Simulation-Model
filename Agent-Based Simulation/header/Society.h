@@ -24,6 +24,7 @@ class Society {
     private:
         Person * birth_person();
         void set_initial_products();
+        void set_product_prices();
         std::vector<Person *> people;
         std::vector<Firm *> firms;
         std::vector<Producer *> producers;
