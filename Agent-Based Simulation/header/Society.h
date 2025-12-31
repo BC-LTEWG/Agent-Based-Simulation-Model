@@ -25,10 +25,12 @@ class Society {
         Person * birth_person();
         void set_initial_products();
         void set_product_prices();
+        std::unordered_map<Product *, std::size_t> get_product_to_index_map();
         std::vector<Person *> people;
         std::vector<Firm *> firms;
         std::vector<Producer *> producers;
-        std::unordered_map<Product *, std::vector<Distributor *>> product_to_distributors;
+        std::unordered_map<Product *, std::vector<Distributor *>>
+            product_to_distributors;
         std::vector<Product *> products;
         std::vector<Distributor *> distributors;
         int current_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
