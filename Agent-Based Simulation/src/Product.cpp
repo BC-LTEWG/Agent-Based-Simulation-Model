@@ -1,3 +1,4 @@
+#include <iostream>
 #include <random>
 #include <set>
 
@@ -30,7 +31,7 @@ Product::Product(const std::string name) : product_name{name} {
     mean_consumption_frequency = frequency_dist(Sim::gen);
 }
 
-void Product::set_inputs(std::vector<Product *>& products, int product_index) {
+void Product::set_inputs(std::vector<Product *>& products) {
     static std::uniform_int_distribution<>
         num_inputs_dist(PRODUCT_NUM_INPUTS_MIN, PRODUCT_NUM_INPUTS_MAX);
     const int num_inputs = num_inputs_dist(Sim::gen);
@@ -38,17 +39,14 @@ void Product::set_inputs(std::vector<Product *>& products, int product_index) {
         product_index_dist(0, products.size() - 1);
     std::set<int> indices;
     while (indices.size() < num_inputs) {
-        int index = product_index_dist(Sim::gen);
-        if (index != product_index) {
-            indices.insert(product_index_dist(Sim::gen));
-        }
+        indices.insert(product_index_dist(Sim::gen));
     }
-    static std::uniform_int_distribution<>
-        num_input_units_dist(
-                PRODUCT_NUM_INPUT_UNITS_MIN,
-                PRODUCT_NUM_INPUT_UNITS_MAX
+    static std::uniform_real_distribution<>
+        input_per_unit_dist(
+                PRODUCT_INPUT_PER_UNIT_MIN,
+                PRODUCT_INPUT_PER_UNIT_MAX
                 );
     for (int index : indices) {
-        inputs_per_unit[products[index]] = num_input_units_dist(Sim::gen);
+        inputs_per_unit[products[index]] = input_per_unit_dist(Sim::gen);
     }
 }
