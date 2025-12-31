@@ -55,7 +55,8 @@ void Society::set_initial_products() {
     set_product_prices();
 }
 
-std::unordered_map<Product *, std::size_t> Society::get_product_to_index_map() {
+std::unordered_map<Product *, std::size_t>
+Society::get_product_to_index_map() {
     std::unordered_map<Product *, size_t> product_to_index;
     for (size_t i = 0; i < products.size(); ++i) {
         product_to_index[products[i]] = i;
@@ -63,23 +64,26 @@ std::unordered_map<Product *, std::size_t> Society::get_product_to_index_map() {
     return product_to_index;
 }
 
-void Society::set_product_prices() {
-    std::unordered_map<Product *, size_t> product_to_index;
-    for (size_t i = 0; i < products.size(); ++i) {
-        product_to_index[products[i]] = i;
-    }
-    const size_t dim = products.size();
-    Eigen::MatrixXd A(dim, dim);
-    Eigen::VectorXd l(dim);
+void Society::populate_io_matrix_and_labor_vector(
+        std::unordered_map<Product *, std::size_t>& product_to_index,
+        Eigen::MatrixXd& input_output_matrix,
+        Eigen::VectorXd& labor_vector
+        ) {
     for (Product * output_product : products) {
         for (const std::pair<Product * const, double>& input :
                 output_product->inputs_per_unit) {
-            A(product_to_index[input.first], product_to_index[output_product]) =
-                input.second;
+            input_output_matrix(
+                    product_to_index[input.first],
+                    product_to_index[output_product]
+                    ) = input.second;
         }
-        l(product_to_index[output_product]) = output_product->living_labor_per_unit;
+        labor_vector(product_to_index[output_product]) =
+            output_product->living_labor_per_unit;
     }
-    Eigen::EigenSolver<Eigen::MatrixXd> eigen_solver(A, false);
+}
+
+double get_max_eigenvalue(Eigen::MatrixXd& io_matrix) {
+    Eigen::EigenSolver<Eigen::MatrixXd> eigen_solver(io_matrix, false);
     Eigen::VectorXcd eigenvalues = eigen_solver.eigenvalues();
     double max_eigenvalue = 0.0;
     for (size_t i = 0; i < eigenvalues.size(); ++i) {
@@ -89,21 +93,50 @@ void Society::set_product_prices() {
         }
     }
     std::cout << "Max eigenvalue: " << max_eigenvalue << std::endl;
-    if (max_eigenvalue >= 1.0) {
-        A /= max_eigenvalue;
-        for (std::size_t j = 0; j < dim; ++j) {
-            for (std::size_t i = 0; i < dim; ++i) {
-                if (A(i, j)) {
-                    products[j]->inputs_per_unit[products[i]] = A(i, j);
-                }
+    return max_eigenvalue;
+}
+
+void Society::adjust_io_matrix(
+        Eigen::MatrixXd& io_matrix,
+        double max_eigenvalue
+        ) {
+    io_matrix /= max_eigenvalue;
+    io_matrix = io_matrix.array() - PRODUCT_INPUT_EPSILON;
+    const size_t dim = io_matrix.rows();
+    for (std::size_t j = 0; j < dim; ++j) {
+        for (std::size_t i = 0; i < dim; ++i) {
+            if (io_matrix(i, j)) {
+                products[j]->inputs_per_unit[products[i]] = io_matrix(i, j);
             }
         }
     }
-    Eigen::MatrixXd A_t = A.transpose();
-    Eigen::MatrixXd I = Eigen::MatrixXd::Identity(dim, dim);
-    Eigen::MatrixXd Leontief = I - A_t;
-    Eigen::MatrixXd Leontief_inv = Leontief.inverse();
-    Eigen::VectorXd values = Leontief_inv * l;
+}
+
+Eigen::VectorXd get_leontief_function(
+        Eigen::MatrixXd io_matrix, 
+        Eigen::VectorXd labor
+        ) {
+    Eigen::MatrixXd io_matrix_transpose = io_matrix.transpose();
+    const std::size_t dim = io_matrix.rows();
+    Eigen::MatrixXd identity_matrix = Eigen::MatrixXd::Identity(dim, dim);
+    Eigen::MatrixXd leontief_matrix = identity_matrix - io_matrix_transpose;
+    Eigen::MatrixXd leontief_matrix_inverse = leontief_matrix.inverse();
+    return leontief_matrix_inverse * labor;
+}
+
+void Society::set_product_prices() {
+    std::unordered_map<Product *, size_t> product_to_index =
+        get_product_to_index_map();
+    const size_t dim = products.size();
+    Eigen::MatrixXd A(dim, dim);
+    Eigen::VectorXd l(dim);
+    populate_io_matrix_and_labor_vector(product_to_index, A, l);
+    double max_eigenvalue = get_max_eigenvalue(A);
+    std::cout << "Max eigenvalue: " << max_eigenvalue << std::endl;
+    if (max_eigenvalue >= 1.0) {
+        adjust_io_matrix(A, max_eigenvalue);
+    }
+    Eigen::VectorXd values = get_leontief_function(A, l);
     std::cout << "Values:" << std::endl;
     std::cout << values << std::endl;
     for (std::size_t i = 0; i < dim; ++i) {

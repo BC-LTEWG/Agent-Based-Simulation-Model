@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Eigen/Dense>
 #include <unordered_map>
 
 #include "Constants.h"
@@ -26,6 +27,12 @@ class Society {
         void set_initial_products();
         void set_product_prices();
         std::unordered_map<Product *, std::size_t> get_product_to_index_map();
+        void populate_io_matrix_and_labor_vector(
+                std::unordered_map<Product *, std::size_t>&,
+                Eigen::MatrixXd&,
+                Eigen::VectorXd&
+                );
+        void adjust_io_matrix(Eigen::MatrixXd&, double max_eigenvalue);
         std::vector<Person *> people;
         std::vector<Firm *> firms;
         std::vector<Producer *> producers;
