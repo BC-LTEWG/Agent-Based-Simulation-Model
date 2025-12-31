@@ -3,6 +3,7 @@
 #include <Eigen/Eigenvalues>
 #include <iostream>
 #include <numeric>
+#include <stdexcept>
 #include <unordered_map>
 
 #include "Distributor.h"
@@ -92,7 +93,6 @@ double get_max_eigenvalue(Eigen::MatrixXd& io_matrix) {
             max_eigenvalue = eigenvalues(i).real();
         }
     }
-    std::cout << "Max eigenvalue: " << max_eigenvalue << std::endl;
     return max_eigenvalue;
 }
 
@@ -100,8 +100,7 @@ void Society::adjust_io_matrix(
         Eigen::MatrixXd& io_matrix,
         double max_eigenvalue
         ) {
-    io_matrix /= max_eigenvalue;
-    io_matrix = io_matrix.array() - PRODUCT_INPUT_EPSILON;
+    io_matrix /= (max_eigenvalue + PRODUCT_INPUT_EPSILON);
     const size_t dim = io_matrix.rows();
     for (std::size_t j = 0; j < dim; ++j) {
         for (std::size_t i = 0; i < dim; ++i) {
@@ -132,18 +131,13 @@ void Society::set_product_prices() {
     Eigen::VectorXd l(dim);
     populate_io_matrix_and_labor_vector(product_to_index, A, l);
     double max_eigenvalue = get_max_eigenvalue(A);
-    std::cout << "Max eigenvalue: " << max_eigenvalue << std::endl;
     if (max_eigenvalue >= 1.0) {
         adjust_io_matrix(A, max_eigenvalue);
     }
     Eigen::VectorXd values = get_leontief_function(A, l);
-    std::cout << "Values:" << std::endl;
-    std::cout << values << std::endl;
     for (std::size_t i = 0; i < dim; ++i) {
-        // This should never happen.
         if (values(i) < 0.0) {
-            std::cerr << "Value " << i << " has a negative value: " <<
-                values(i) << std::endl;
+            throw std::domain_error("Value < 0.");
         }
         products[i]->price_per_unit = values(i);
     }
