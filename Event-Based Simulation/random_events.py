@@ -1,4 +1,5 @@
 import random
+import numpy as np
 
 # RANDOM EVENT SYSTEM 
 # This module introduces random macroeconomic and natural
@@ -144,16 +145,53 @@ def load_event_table():
         ),
     ]
 
-# APPLY EVENT EFFECTS TO ECONOMY
-# Need to apply event effects for the duration specified 
-# War and post war recovery needs to be consecutive 
-def apply_event(economy, event):
-    return 
-
 # EVENT TRIGGER SYSTEM (Quarter-based)
 # Decision on whether to trigger an event on a specific time step 
 # Need to add a list in CapitalistEconomy.py to record ongoing events 
 # to avoid having multiple of the same events happening on an economy 
 # and end the event when the duration is reached. 
+# Attempts to trigger new random events each timestep.
+# Adds triggered events to economy.active_events.
 def maybe_trigger_event(economy):
-    return 
+    for event in economy.events_catalog:
+
+        # Skip if already active
+        if event in economy.active_events:
+            continue
+
+        # Post-War Recovery only follows War
+        if event.name == "Post-War Recovery":
+            continue
+
+        # Trigger probability
+        if random.random() < event.base_chance:
+
+            # Activate event
+            event.active = True
+            event.remaining_steps = event.duration if event.duration > 0 else -1
+            event.applied_once = False  # reset permanent-event flag
+            economy.active_events.append(event)
+
+            # Mark link for War -> Recovery
+            if event.name == "War / Conflict":
+                for follow in economy.events_catalog:
+                    if follow.name == "Post-War Recovery":
+                        follow.follow_after = event
+
+    # Handle expired temporary events
+    ended = []
+    for ev in economy.active_events:
+        if ev.duration > 0 and ev.remaining_steps == 0:
+            ended.append(ev)
+
+    for ev in ended:
+        economy.active_events.remove(ev)
+
+        # War ended -> trigger Post-War Recovery
+        for candidate in economy.events_catalog:
+            if candidate.name == "Post-War Recovery":
+                if getattr(candidate, "follow_after", None) == ev:
+                    candidate.active = True
+                    candidate.remaining_steps = candidate.duration
+                    candidate.applied_once = False
+                    economy.active_events.append(candidate)
