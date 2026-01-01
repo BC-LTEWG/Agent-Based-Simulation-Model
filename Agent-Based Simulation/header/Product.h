@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Constants.h"
+#include "Person.h"
 
 struct Machine;
 
@@ -17,6 +17,6 @@ struct Product {
     std::vector<Machine *> machines_needed;
     std::unordered_map<Product *, double> inputs_per_unit;
  	double living_labor_per_unit; 
-	std::vector<Ability> required_abilities;
+	std::vector<Person::Ability> required_abilities;
 	double mean_consumption_frequency;
 };
