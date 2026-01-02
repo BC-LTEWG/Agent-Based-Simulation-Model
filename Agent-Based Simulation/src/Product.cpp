@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <random>
 #include <set>
@@ -19,7 +20,7 @@ Product::Product(const std::string name) : product_name{name} {
     for (int i = 0; i < Person::NUM_ABILITIES; i++) {
         required_abilities.push_back((Person::Ability) i);
     }
-    shuffle(required_abilities.begin(), required_abilities.end(), Sim::gen);
+    std::shuffle(required_abilities.begin(), required_abilities.end(), Sim::gen);
     static std::uniform_int_distribution<>
         ability_count_dist(1, PRODUCT_ABILITY_COUNT_MAX);
     required_abilities.resize(ability_count_dist(Sim::gen));
@@ -34,7 +35,7 @@ Product::Product(const std::string name) : product_name{name} {
 void Product::set_inputs(std::vector<Product *>& products) {
     static std::uniform_int_distribution<>
         num_inputs_dist(PRODUCT_NUM_INPUTS_MIN, PRODUCT_NUM_INPUTS_MAX);
-    const int num_inputs = num_inputs_dist(Sim::gen);
+    const std::size_t num_inputs = num_inputs_dist(Sim::gen);
     std::uniform_int_distribution<>
         product_index_dist(0, products.size() - 1);
     std::set<int> indices;
