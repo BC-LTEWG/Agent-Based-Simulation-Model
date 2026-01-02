@@ -14,13 +14,6 @@
 
 Person::Person():
     age(INITIAL_AGE),
-<<<<<<< HEAD
-    health_status(HEALTHY)
-{
-    static std::normal_distribution<>
-        shopping_dist(
-                PERSON_SHOPPING_PERIOD / 2, PERSON_SHOPPING_OFFSET_STDDEV
-=======
     health_status(HEALTHY) {
         static std::normal_distribution<>
             shopping_dist(
@@ -46,7 +39,6 @@ Person::Person():
                 ranked_distributors.begin(),
                 ranked_distributors.end(),
                 Sim::gen
->>>>>>> main
                 );
     shopping_offset =
         (((int) shopping_dist(Sim::gen)) +
