@@ -30,5 +30,5 @@ class Params:
     s_floor: float = 1e-5 # this and the next two constants just prevent the model from accidentally dividing by zero, they are not economically relevant
     eps_u: float = 1e-8
     eps_m: float = 1e-8
-    T: int = 100 # number of time steps to simulate
+    T: int = 200 # number of time steps to simulate
     res: int = 3 # resolution, i.e. the number of points to sample per time step

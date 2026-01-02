@@ -4,6 +4,7 @@
 #include <iostream>
 #include <random>
 
+#include "Constants.h"
 #include "Firm.h"
 #include "Distributor.h"
 #include "Person.h"
@@ -13,11 +14,39 @@
 
 Person::Person():
     age(INITIAL_AGE),
+<<<<<<< HEAD
     health_status(HEALTHY)
 {
     static std::normal_distribution<>
         shopping_dist(
                 PERSON_SHOPPING_PERIOD / 2, PERSON_SHOPPING_OFFSET_STDDEV
+=======
+    health_status(HEALTHY) {
+        static std::normal_distribution<>
+            shopping_dist(
+                    PERSON_SHOPPING_PERIOD / 2, PERSON_SHOPPING_OFFSET_STDDEV
+                    );
+        shopping_offset =
+            (((int) shopping_dist(Sim::gen)) +
+             PERSON_SHOPPING_PERIOD) % PERSON_SHOPPING_PERIOD;
+
+        static std::normal_distribution<>
+            ability_dist(1.0, PERSON_ABILITY_STDDEV);
+        std::vector<Person::Ability> all_abilities;
+        for (int i = 0; i < Person::NUM_ABILITIES; i++) {
+            all_abilities.push_back((Person::Ability) i);
+        }
+        std::shuffle(all_abilities.begin(), all_abilities.end(), Sim::gen);
+        all_abilities.resize(PERSON_ABILITY_COUNT_MAX);
+        for (Person::Ability ability : all_abilities) {
+            abilities[ability] = std::max(0.0, ability_dist(Sim::gen));
+        }
+        ranked_distributors = Society::instance->get_distributors();
+        std::shuffle(
+                ranked_distributors.begin(),
+                ranked_distributors.end(),
+                Sim::gen
+>>>>>>> main
                 );
     shopping_offset =
         (((int) shopping_dist(Sim::gen)) +
@@ -48,11 +77,11 @@ Person::Person():
     }
 }
 
-std::unordered_map<Ability, double>& Person::get_abilities() {
+std::unordered_map<Person::Ability, double>& Person::get_abilities() {
     return this->abilities;
 }
 
-void Person::train(std::unordered_map<Ability, double> target_abilities) {
+void Person::train(std::unordered_map<Person::Ability, double> target_abilities) {
     // can introduce < 100% effectiveness on training later
     for (auto &pair : target_abilities) {
         abilities[pair.first] = pair.second;
