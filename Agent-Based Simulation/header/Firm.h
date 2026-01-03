@@ -34,6 +34,7 @@ struct Plan {
     int labor_hours_remaining;
     double raw_materials_remaining;
     double total_hours_remaining;
+	int units_purchased;
 };
 
 struct Order {

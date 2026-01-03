@@ -26,9 +26,10 @@ void Distributor::on_time_step() {
         for (auto * worker : plan->workers) {
             worker->register_hours_worked(1);
         }
-        
-        delete plan;
-        
+
+        if (plan->units_purchased == plan->order->quantity) {
+            plan->prd = plan->total_hours; 
+        }
     }
 }
 
