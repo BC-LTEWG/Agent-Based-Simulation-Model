@@ -8,9 +8,11 @@
 
 #include "Distributor.h"
 #include "Firm.h"
+#include "Machine.h"
 #include "Person.h"
 #include "Product.h"
 #include "Producer.h"
+#include "Sim.h"
 #include "Society.h"
 
 Society * Society::instance = nullptr;
@@ -52,7 +54,7 @@ void Society::set_initial_products() {
     }
     static std::uniform_int_distribution<>
         machine_lifetime_dist(MACHINE_LIFETIME_MIN, MACHINE_LIFETIME_MAX);
-    machine_lifetime = machine_lifetime_dist(Sim::gen);
+    unsigned int machine_lifetime = machine_lifetime_dist(Sim::gen);
     for (std::size_t i = 0; i < STARTING_NUM_MACHINES; ++i) {
         Machine * new_machine =
             new Machine("Machine " + std::to_string(i), machine_lifetime);
