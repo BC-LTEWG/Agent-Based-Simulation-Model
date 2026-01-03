@@ -1,5 +1,10 @@
 #include <cmath>
+#include <Eigen/Dense>
+#include <Eigen/Eigenvalues>
+#include <iostream>
 #include <numeric>
+#include <stdexcept>
+#include <unordered_map>
 
 #include "Distributor.h"
 #include "Firm.h"
@@ -13,14 +18,17 @@ Society * Society::instance = nullptr;
 Society::Society() {
     instance = this;
     set_initial_products();
-    // note: no way to assign products to producers or suppliers to distributors yet
+    // note: no way to assign products to producers or suppliers
+    // to distributors yet
     for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
-        Producer * producer = new Producer({products[i % STARTING_NUM_PRODUCTS]});
+        Producer * producer = new Producer({products[i %
+                STARTING_NUM_PRODUCTS]});
         producers.push_back(producer);
         firms.push_back(producer);
     }
     for (int i = 0; i < STARTING_NUM_DISTRIBUTORS; i++) {
-        Distributor * distributor = new Distributor({products[i % STARTING_NUM_PRODUCTS]});
+        Distributor * distributor =
+            new Distributor({products[i % STARTING_NUM_PRODUCTS]});
         distributors.push_back(distributor);
         firms.push_back(distributor);
     }
@@ -39,11 +47,99 @@ Society::Society() {
 }
 
 void Society::set_initial_products() {
-    for (int i = 0; i < STARTING_NUM_PRODUCTS; i++) {
+    for (std::size_t i = 0; i < STARTING_NUM_PRODUCTS; ++i) {
         products.push_back(new Product("Product " + std::to_string(i)));
     }
-    for (int i = NUM_BASE_PRODUCTS; i < STARTING_NUM_PRODUCTS; i++) {
-        products[i]->set_inputs(products, i);
+    for (Product * product: products) {
+        product->set_inputs(products);
+    }
+    set_product_prices();
+}
+
+std::unordered_map<Product *, std::size_t>
+Society::get_product_to_index_map() {
+    std::unordered_map<Product *, size_t> product_to_index;
+    for (size_t i = 0; i < products.size(); ++i) {
+        product_to_index[products[i]] = i;
+    }
+    return product_to_index;
+}
+
+void Society::populate_io_matrix_and_labor_vector(
+        std::unordered_map<Product *, std::size_t>& product_to_index,
+        Eigen::MatrixXd& input_output_matrix,
+        Eigen::VectorXd& labor_vector
+        ) {
+    for (Product * output_product : products) {
+        for (const std::pair<Product * const, double>& input :
+                output_product->inputs_per_unit) {
+            input_output_matrix(
+                    product_to_index[input.first],
+                    product_to_index[output_product]
+                    ) = input.second;
+        }
+        labor_vector(product_to_index[output_product]) =
+            output_product->living_labor_per_unit;
+    }
+}
+
+double get_max_eigenvalue(Eigen::MatrixXd& io_matrix) {
+    Eigen::EigenSolver<Eigen::MatrixXd> eigen_solver(io_matrix, false);
+    Eigen::VectorXcd eigenvalues = eigen_solver.eigenvalues();
+    double max_eigenvalue = 0.0;
+    for (size_t i = 0; i < eigenvalues.size(); ++i) {
+        if (eigenvalues(i).real() > max_eigenvalue &&
+                !eigenvalues(i).imag()) {
+            max_eigenvalue = eigenvalues(i).real();
+        }
+    }
+    return max_eigenvalue;
+}
+
+void Society::adjust_io_matrix(
+        Eigen::MatrixXd& io_matrix,
+        double max_eigenvalue
+        ) {
+    io_matrix /= (max_eigenvalue + PRODUCT_INPUT_EPSILON);
+    const size_t dim = io_matrix.rows();
+    for (std::size_t j = 0; j < dim; ++j) {
+        for (std::size_t i = 0; i < dim; ++i) {
+            if (io_matrix(i, j)) {
+                products[j]->inputs_per_unit[products[i]] = io_matrix(i, j);
+            }
+        }
+    }
+}
+
+Eigen::VectorXd get_leontief_function(
+        Eigen::MatrixXd io_matrix, 
+        Eigen::VectorXd labor
+        ) {
+    Eigen::MatrixXd io_matrix_transpose = io_matrix.transpose();
+    const std::size_t dim = io_matrix.rows();
+    Eigen::MatrixXd identity_matrix = Eigen::MatrixXd::Identity(dim, dim);
+    Eigen::MatrixXd leontief_matrix = identity_matrix - io_matrix_transpose;
+    Eigen::MatrixXd leontief_matrix_inverse = leontief_matrix.inverse();
+    return leontief_matrix_inverse * labor;
+}
+
+void Society::set_product_prices() {
+    std::unordered_map<Product *, size_t> product_to_index =
+        get_product_to_index_map();
+    const size_t dim = products.size();
+    Eigen::MatrixXd A(dim, dim);
+    Eigen::VectorXd l(dim);
+    populate_io_matrix_and_labor_vector(product_to_index, A, l);
+    double max_eigenvalue = get_max_eigenvalue(A);
+    if (max_eigenvalue >= 1.0) {
+        adjust_io_matrix(A, max_eigenvalue);
+    }
+    Eigen::VectorXd values = get_leontief_function(A, l);
+    for (std::size_t i = 0; i < dim; ++i) {
+        if (values(i) < 0.0) {
+            throw std::domain_error("Value < 0.");
+        }
+        products[i]->price_per_unit = values(i);
     }
 }
 

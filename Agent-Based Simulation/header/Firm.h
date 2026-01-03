@@ -8,7 +8,6 @@
 #include <queue>
 
 #include "Agent.h"
-#include "Constants.h"
 #include "Person.h"
 
 class Firm;
@@ -38,10 +37,13 @@ struct Plan {
 };
 
 struct Order {
+    enum OrderStatus { ORDER_REQUESTED, ORDER_FINISHED };
+
     Product * product;
     int quantity;
     Firm * customer;
     int requested_turnaround_time;
+    OrderStatus status;
 };
 
 struct DemandSignal {
@@ -65,7 +67,7 @@ class Firm : public Agent {
 	bool has_product(Product * product);
     int get_inventory(Product * product);
     void add_supplier(Producer * producer);
-    void receive_order(Order * order);
+    void receive_shipment(Order * order);
 
   protected:
     std::vector<Producer *> suppliers;
@@ -78,21 +80,27 @@ class Firm : public Agent {
     std::unordered_map<Product*, std::vector<Plan*>> plan_history; // unused and prob need to change later
     std::vector<Plan*> plans_in_progress;
 
-    Producer * find_producer_for_product(Product * product);
     Producer * send_order(Order * order);
+    double get_reorder_threshold(Product * product);
+    int get_pending_inventory(Product * product);
+    void reorder_product_to_threshold(
+        Product * product, 
+        double threshold,
+        int pending_inventory
+    );
     void check_and_reorder();
 
-	double suitability(Person * person, std::vector<Ability>& required_abilities);
-	double suitability(std::unordered_map<Ability, double>& abilities, 
-			           std::vector<Ability>& required_abilities,
+	double suitability(Person * person, std::vector<Person::Ability>& required_abilities);
+	double suitability(std::unordered_map<Person::Ability, double>& abilities, 
+			           std::vector<Person::Ability>& required_abilities,
 					   float productivity);
 	int predict_workers_needed(Order * order);
-	void assign_workers_by_suitability_threshold(Plan * draft_plan, std::vector<Ability>& required_abilities, double suitability_threshold);
+	void assign_workers_by_suitability_threshold(Plan * draft_plan, std::vector<Person::Ability>& required_abilities, double suitability_threshold);
 	int predict_turnaround_time(Order * order, double total_suitability); 
 	int predict_labor_hours(Order * order, double total_suitability);
-	void assign_plan_dependent_fields(Plan * draft_plan, std::vector<Ability>& required_abilities);
-	void draft_optimal_plan(Plan * draft_plan, std::vector<Ability>& required_abilities);
-	void train_workers(std::vector<Person *>& workers, std::vector<Ability>& required_abilities);
+	void assign_plan_dependent_fields(Plan * draft_plan, std::vector<Person::Ability>& required_abilities);
+	void draft_optimal_plan(Plan * draft_plan, std::vector<Person::Ability>& required_abilities);
+	void train_workers(std::vector<Person *>& workers, std::vector<Person::Ability>& required_abilities);
     void add_demand_signal(Product * product, int quantity);
     void apply_demand_window();
     virtual std::unordered_set<Product *> get_products_to_reorder() = 0;

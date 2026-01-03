@@ -1,8 +1,13 @@
 from parameters import Params
 from CapitalistEconomy import *
 from generate_dependency_matrix import *
+from random_events import load_event_table
+import os
 import matplotlib.pyplot as plt
 import numpy as np
+
+# Making folder for graphs 
+os.makedirs("graphs", exist_ok=True)
 
 # generate A and l 
 deps = generate_dependencies()
@@ -33,30 +38,40 @@ params = Params(
     m_w0=0.5,
     w0=0.5,
     r0=0.0,
-    T=100
+    T=200
 )
 
-# Global to record equilibrium time index (first time detected)
-EQUILIBRIUM_INDEX = None
+# Global to record continuous equilibrium time (first time detected)
+EQUILIBRIUM_TIME = None
 
-# examples of using the CapitalistEconomy class. 
 def get_trajectories(params):
-    global EQUILIBRIUM_INDEX
-    economy = CapitalistEconomy(params)
+    global EQUILIBRIUM_TIME
+    economy = CapitalistEconomy(params, debug=True)
+    
+    economy.events_catalog = load_event_table()
 
     e = None
     for i in range(params.T):
         try:
             economy.step()
             
-            if EQUILIBRIUM_INDEX is None and detect_price_equilibrium(economy.traj):
-                EQUILIBRIUM_INDEX = i
-                
+            if not economy.detected_equilibrium:
+                if detect_price_equilibrium(economy):
+                    EQUILIBRIUM_TIME = economy.current_t
+                    economy.detected_equilibrium = True   
+                    economy.allow_random_events = True
+                    economy.event_steps_remaining = 40
+                    print(f"Equilibrium detected at continuous time t = {EQUILIBRIUM_TIME}")
+                    
+            if economy.allow_random_events and economy.event_steps_remaining == 0:
+                economy.allow_random_events = False
+                economy.force_end_events()
+                            
         except Exception as error:
             e = error
             break
 
-    traj, t = economy.traj, economy.t
+    traj, t = economy.history, economy.t
     return traj, t, e
 
 # example of perturbing the economy during simulation
@@ -75,65 +90,130 @@ def get_trajectories_supply_shock(params):
             e = error
             break
 
-    traj, t = economy.traj, economy.t
+    traj, t = economy.history, economy.t
     return traj, t, e
 
-def detect_price_equilibrium(traj):
+def detect_price_equilibrium(economy):
     # Returns True if equilibrium (no change in prices and outputs)
     # is reached at any time step, otherwise returns False.
-    prices = np.array(traj["p"])
-    outputs = np.array(traj["q"])
+    if len(economy.history["p"]) < 2:
+        return False
+    
+    dp = economy.history["p"][-1] - economy.history["p"][-2]
+    dq = economy.history["q"][-1] - economy.history["q"][-2]
+    
+    return np.all(dp == 0) and np.all(dq == 0)
 
-    for t in range(1, len(prices)):
-        dp = prices[t] - prices[t - 1]
-        dq = outputs[t] - outputs[t - 1]
+def plot_prices(time, prices, product_labels, equilibrium_time):
+    # 1. Plot individual prices
+    plt.figure(figsize=(12, 7))
 
-        # Check if *all* elements in both Δp and Δq are exactly zero
-        # if np.all(dp == 0) and np.all(dq == 0):
-        # We need exact 0 for the simulation, but now for the graph we use this 
-        if np.all(np.abs(dp) < 1e-4) and np.all(np.abs(dq) < 1e-4):
-            return True  # Equilibrium found
+    num_products = prices.shape[1]
 
-    # Not yet reached by end of simulation
-    return False
+    for i in range(num_products):
+        plt.plot(time, prices[:, i], linewidth=1, alpha=0.7,
+                 label=f"Price {product_labels[i]}")
 
-# Plot the graph for visualization here 
-def plot_avg_price_output(traj, t, equilibrium_index):
+    # draw continuous equilibrium time
+    if equilibrium_time is not None:
+        plt.axvline(x=equilibrium_time, color="red", linestyle="--", linewidth=2)
+
+    plt.xlabel("Continuous Time (t)")
+    plt.ylabel("Price Level")
+    plt.title("Price Trajectories for All 26 Commodities")
+    plt.grid(True)
+    plt.legend(loc="upper right", fontsize=8, ncol=2)
+
+    # Show all 200 time steps
+    plt.xlim(0, time[-1])
+    plt.savefig("graphs/Price Trajectories for All 26 Commodities.png", dpi=300)
+    plt.close()
+
+
+def plot_outputs(time, outputs, product_labels, equilibrium_time):
+    # 2. Plot individual outputs 
+    plt.figure(figsize=(12, 7))
+
+    num_products = outputs.shape[1]
+
+    for i in range(num_products):
+        plt.plot(time, outputs[:, i], linewidth=1, alpha=0.7,
+                 label=f"Output {product_labels[i]}")
+
+    if equilibrium_time is not None:
+        plt.axvline(x=equilibrium_time, color="red", linestyle="--", linewidth=2)
+
+    plt.xlabel("Continuous Time (t)")
+    plt.ylabel("Output Level")
+    plt.title("Output Trajectories for All 26 Commodities")
+    plt.grid(True)
+    plt.legend(loc="upper right", fontsize=8, ncol=2)
+
+    # Show all 200 time steps
+    plt.xlim(0, time[-1])
+    plt.savefig("graphs/Output Trajectories for All 26 Commodities.png", dpi=300)
+    plt.close()
+
+def plot_averages(time, avg_p, avg_q, equilibrium_time):
+    # 3. Plot average prices + average outputs 
+    plt.figure(figsize=(10, 6))
+    plt.plot(time, avg_p, label="Average Price", color="gold")
+    plt.plot(time, avg_q, label="Average Output", color="black")
+
+    if equilibrium_time is not None:
+        plt.axvline(x=equilibrium_time, color="red", linestyle="--",
+                    label=f"Equilibrium at t={equilibrium_time:.2f}")
+
+    plt.xlabel("Continuous Time (t)")
+    plt.ylabel("Value")
+    plt.title("Average Price and Average Output")
+    plt.legend()
+    plt.grid(True)
+
+    # Show all 200 time steps
+    plt.xlim(0, time[-1])
+    plt.savefig("graphs/Average Price and Average Output.png", dpi=300)
+    plt.close()
+
+# Plot graphs for visualization 
+def plot_graphs(traj, t, equilibrium_time):
     prices = np.array(traj["p"])
     outputs = np.array(traj["q"])
 
     avg_p = np.mean(prices, axis=1)
     avg_q = np.mean(outputs, axis=1)
 
-    plt.figure(figsize=(10, 6))
-    plt.plot(t, avg_p, label="Average Price", color="gold")
-    plt.plot(t, avg_q, label="Average Output", color="black")
+    # Use continuous time array t for x-axis
+    time = np.array(t)
 
-    if equilibrium_index is not None:
-        plt.axvline(x=t[equilibrium_index], color="red", linestyle="--", label=f"Equilibrium (t={t[equilibrium_index]:.2f})")
+    num_products = prices.shape[1]
+    product_labels = [chr(ord('A') + i) for i in range(num_products)]
 
-    plt.xlabel("Time")
-    plt.ylabel("Value")
-    plt.title("Average Price and Output with Equilibrium Marker")
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+    plot_prices(time, prices, product_labels, equilibrium_time)
+    plot_outputs(time, outputs, product_labels, equilibrium_time)
+    plot_averages(time, avg_p, avg_q, equilibrium_time)
 
 if __name__ == "__main__":
     traj, t, e = get_trajectories(params)
+
     if e:
         print("Simulation failed:", e)
     else:
         print("Simulation complete.")
         print("Final prices:", traj["p"][-1])
         print("Final outputs:", traj["q"][-1])
-        
-    if EQUILIBRIUM_INDEX is not None:
-        print(f"Equilibrium detected at time step {EQUILIBRIUM_INDEX}")
-    else:
-        print("No equilibrium detected during simulation.")
+    
+    total_steps = len(t)
+    print(f"\nTotal discrete time steps recorded: {total_steps}")
 
-    plot_avg_price_output(traj, t, EQUILIBRIUM_INDEX)
+    if EQUILIBRIUM_TIME is not None:
+        print(f"Equilibrium detected at continuous time t = {EQUILIBRIUM_TIME}")
+    else:
+        print("Equilibrium not reached.")
+
+
+    # Plot results
+    plot_graphs(traj, t, EQUILIBRIUM_TIME)
 
 # Plan for trade interface(initial thoughts): 
 # These are maps that map from commodity to their prices 
