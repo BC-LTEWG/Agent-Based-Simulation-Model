@@ -18,8 +18,8 @@ Distributor::Distributor(std::unordered_set<Product *> initial_catalog) :
 void Distributor::on_time_step() {
     Firm::on_time_step();
     double cost_per_hour = 0.0;
-    for (auto iter = plans_in_progress.begin(); iter != plans_in_progress.end(); ++iter) {
-        Plan * plan = *iter;
+    for (Plan * current_plan_in_progress : plans_in_progress) {
+        Plan * plan = current_plan_in_progress;
         
         plan->labor_hours_remaining -= plan->workers.size();
         

@@ -8,6 +8,6 @@
 struct Machine : public Product {
     Machine(const std::string& name, int lifetime, double cost_of_machine);
     const int lifetime;
-    int hours_used = 0;
+    int hours_remaining = 0;
     double cost_of_machine;
 };
