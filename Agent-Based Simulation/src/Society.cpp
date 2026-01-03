@@ -8,11 +8,9 @@
 
 #include "Distributor.h"
 #include "Firm.h"
-#include "Machine.h"
 #include "Person.h"
 #include "Product.h"
 #include "Producer.h"
-#include "Sim.h"
 #include "Society.h"
 
 Society * Society::instance = nullptr;
@@ -51,15 +49,6 @@ Society::Society() {
 void Society::set_initial_products() {
     for (std::size_t i = 0; i < STARTING_NUM_PRODUCTS; ++i) {
         products.push_back(new Product("Product " + std::to_string(i)));
-    }
-    static std::uniform_int_distribution<>
-        machine_lifetime_dist(MACHINE_LIFETIME_MIN, MACHINE_LIFETIME_MAX);
-    unsigned int machine_lifetime = machine_lifetime_dist(Sim::gen);
-    for (std::size_t i = 0; i < STARTING_NUM_MACHINES; ++i) {
-        Machine * new_machine =
-            new Machine("Machine " + std::to_string(i), machine_lifetime);
-        machines.push_back(new_machine);
-        products.push_back(new_machine);
     }
     for (Product * product: products) {
         product->set_inputs(products);
@@ -153,16 +142,6 @@ void Society::set_product_prices() {
         products[i]->price_per_unit = values(i);
     }
 }
-
-/*
-unsigned int get_estimated_average_worker_team_size() {
-    unsigned int average_order_size = 
-        (PRODUCT_ORDER_SIZE_MIN + PRODUCT_ORDER_SIZE_MAX + 1) / 2;
-    unsigned int average_living_labor =
-        (PRODUCT_LABOR_PER_UNIT_MIN + PRODUCT_LABOR_PER_UNIT_MIN + 1) / 2;
-    return average_order_size;
-}
-*/
 
 std::vector<Product *>& Society::get_products() {
     return products;
