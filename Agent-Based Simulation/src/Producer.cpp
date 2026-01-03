@@ -50,13 +50,12 @@ int Producer::draft_order(Order * order) {
 	draft_plan->firm = this;
 	draft_optimal_plan(draft_plan, order->product->required_abilities);
 
-    // compute machinery cost component after workers are assigned (issue #50)
-    double cost_per_hour = 0.0;
-    for (auto * machine : machines) {
-        cost_per_hour += machine->cost_of_machine / machine->lifetime;
+    double machinery_cost_per_hour = 0.0;
+    for (Machine * machine : machines) {
+        machinery_cost_per_hour += machine->cost_of_machine / machine->lifetime;
     }
     if (!draft_plan->workers.empty()) {
-        draft_plan->m = cost_per_hour *
+        draft_plan->m = machinery_cost_per_hour *
                         (static_cast<double>(draft_plan->labor_hours) /
                          draft_plan->workers.size());
     } else {
