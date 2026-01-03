@@ -1,8 +1,10 @@
-APP = sim
-FLAGS = -Wall -Iheader -std=c++17
+BIN_DIR = bin
 HDR_DIR = header
 SRC_DIR = src
 BUILD_DIR = build
+TEST_DIR = test
+APP = ${BIN_DIR}/sim
+FLAGS = -Wall -Iheader -std=c++17
 
 ${APP} : ${BUILD_DIR}/Product.o \
 	${BUILD_DIR}/Machine.o \
@@ -43,7 +45,16 @@ ${BUILD_DIR}/Society.o : ${SRC_DIR}/Society.cpp ${HDR_DIR}/Society.h
 ${BUILD_DIR}/Sim.o : ${SRC_DIR}/Sim.cpp ${HDR_DIR}/Sim.h
 	g++ ${FLAGS} -c $< -o $@
 
+TEST_SRCS = $(wildcard ${SRC_DIR}/*.cpp)
+TEST_DEPS = $(filter-out ${SRC_DIR}/main.cpp, ${TEST_SRCS})
+
+tests: ${BIN_DIR}/test_Person
+	cp ${TEST_DIR}/run_tests.sh ${BIN_DIR}
+
+${BIN_DIR}/test_Person: ${TEST_DIR}/test_Person.cpp ${TEST_DEPS}
+	g++ ${FLAGS} $^ -o $@
+
 clean:
-	rm -f ${BUILD_DIR}/*
+	rm -f $(wildcard ${BIN_DIR}/*) $(wildcard ${BUILD_DIR}/*)
 
 

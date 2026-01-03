@@ -135,12 +135,13 @@ void Producer::execute_plan(Plan * plan) {
 }
 
 void Producer::end_plan(Plan * plan) {
+    plan->order->status = Order::ORDER_FINISHED;
 	// simplification: whole product amount is added to inventory at the end of
     // a plan
 	inventory[plan->order->product] += plan->order->quantity;
 	// simplification: product shipped instantly
 	inventory[plan->order->product] -= plan->order->quantity;
-	plan->order->customer->receive_order(plan->order);
+	plan->order->customer->receive_shipment(plan->order);
     plan->prd += PriceController::get_price(plan->order->product) * plan->order->quantity;
 }
 

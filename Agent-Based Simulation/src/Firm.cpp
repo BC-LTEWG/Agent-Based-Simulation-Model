@@ -1,5 +1,8 @@
+#include <algorithm>
+#include <climits>
 #include <numeric>
 
+#include "Constants.h"
 #include "Distributor.h"
 #include "Firm.h"
 #include "Person.h"
@@ -40,21 +43,16 @@ void Firm::add_supplier(Producer * producer) {
     suppliers.push_back(producer);
 }
 
-void Firm::receive_order(Order * order) {
+void Firm::receive_shipment(Order * order) {
+    if (order->status != Order::ORDER_FINISHED) {
+        std::cerr << "Attempted to recieve a shipment for an incomplete order." << std::endl;
+        return;
+    }
     inventory[order->product] += order->quantity;
     product_to_outbound_orders[order->product].erase(order);
     std::cout << "Received " << order->quantity << " units of " 
-              << order->product->product_name << ". New inventory: " 
+              << order->product->product_name << ". New inventory level: " 
               << inventory[order->product] << std::endl;
-}
-
-Producer * Firm::find_producer_for_product(Product * product) {
-    for (Producer * producer : suppliers) {
-        if (producer->can_produce(product)) {
-            return producer;
-        }
-    }
-    return nullptr;
 }
 
 Producer * Firm::send_order(Order * order) {
@@ -73,8 +71,8 @@ Producer * Firm::send_order(Order * order) {
         chosen_producer->pursue_order(order);
         product_to_outbound_orders[order->product].insert(order);
     }
-    for(auto * producer : suppliers) {
-        if(producer != chosen_producer) {
+    for (auto * producer : suppliers) {
+        if (producer != chosen_producer) {
             producer->drop_order(order);
         }
     }
@@ -82,50 +80,63 @@ Producer * Firm::send_order(Order * order) {
     return chosen_producer;
 }
 
+double Firm::get_reorder_threshold(Product * product) {
+    return std::max((double) product->order_size, 
+        inventory_demands[product] * FIRM_STOCKPILE_DURATION);
+}
+
+int Firm::get_pending_inventory(Product * product) {
+    int pending_inventory = inventory[product];
+    for (auto * order : product_to_outbound_orders[product]) {
+        pending_inventory += order->quantity;
+    }
+    return pending_inventory;
+}
+
+void Firm::reorder_product_to_threshold(
+        Product * product,
+        double threshold,
+        int pending_inventory
+        ) {
+    if (pending_inventory < threshold) {
+        int discrepancy = product->order_size * 
+            ((int) std::ceil(threshold - pending_inventory) / product->order_size);
+        std::cout << "Reordering " << discrepancy << " units of " 
+                  << product->product_name << std::endl;
+
+        Order * order = new Order{
+            product,
+            discrepancy,
+            this,
+            (int) (pending_inventory / threshold * FIRM_STOCKPILE_DURATION),
+            Order::ORDER_REQUESTED
+        };
+
+        Producer * chosen_producer = send_order(order);
+        if (chosen_producer) {
+            std::cout << "Order accepted. Turnaround time: " 
+                      << order->requested_turnaround_time << " days" << std::endl;
+        } else {
+            std::cerr << "No producer found for product: " 
+                      << product->product_name << std::endl;
+        }
+    }
+}
+
 void Firm::check_and_reorder() {
     std::unordered_set<Product *> products_to_reorder = get_products_to_reorder();
     for (Product * product : products_to_reorder) {
-        int current_inventory = inventory[product];
-       
-        double threshold = std::max((double) product->order_size, 
-            inventory_demands[product] * FIRM_STOCKPILE_DURATION);
-
-        int pending_inventory = current_inventory;
-        for (auto * order : product_to_outbound_orders[product]) {
-            pending_inventory += order->quantity;
-        }
-        
+        double threshold = get_reorder_threshold(product);
+        int pending_inventory = get_pending_inventory(product);
         if (pending_inventory < threshold) {
-            Producer * producer = find_producer_for_product(product);
-            if (producer) {
-                int discrepancy = product->order_size * 
-                    ((int) std::ceil(threshold - pending_inventory) / product->order_size);
-                std::cout << "Reordering " << discrepancy << " units of " 
-                          << product->product_name << std::endl;
-
-                Order * order = new Order{
-                    product,
-                    discrepancy,
-                    this,
-                    (int) (pending_inventory / threshold * FIRM_STOCKPILE_DURATION)
-                };
-
-				send_order(order);
-                if (order) {
-                    std::cout << "Order accepted. Turnaround time: " 
-                              << order->requested_turnaround_time << " days" << std::endl;
-                }
-            } else {
-                std::cerr << "No producer found for product: " 
-                          << product->product_name << std::endl;
-            }
+            reorder_product_to_threshold(product, threshold, pending_inventory);
         }
     }
 }
 
 double Firm::suitability(
     Person * person,
-    std::vector<Ability>& required_abilities
+    std::vector<Person::Ability>& required_abilities
     ) {
 	return suitability(person->get_abilities(),
 			           required_abilities,
@@ -133,12 +144,12 @@ double Firm::suitability(
 }
 
 double Firm::suitability(
-    std::unordered_map<Ability, double>& abilities,
-    std::vector<Ability>& required_abilities,
+    std::unordered_map<Person::Ability, double>& abilities,
+    std::vector<Person::Ability>& required_abilities,
     float productivity
     ) {
 	double suitability = 0.0;
-	for (Ability ability : required_abilities) {
+	for (Person::Ability ability : required_abilities) {
 		suitability += abilities[ability];
 	}
 	suitability /= required_abilities.size();
@@ -158,7 +169,7 @@ int Firm::predict_workers_needed(Order * order) {
 
 void Firm::assign_workers_by_suitability_threshold(
         Plan * draft_plan,
-        std::vector<Ability>& required_abilities,
+        std::vector<Person::Ability>& required_abilities,
         double suitability_threshold
         ) {
     std::unordered_map<Person *, double> worker_to_suitability;
@@ -166,11 +177,11 @@ void Firm::assign_workers_by_suitability_threshold(
         worker_to_suitability[worker] =
             suitability(worker, required_abilities);
     }
-    sort(workers.begin(), workers.end(), [&](Person * a, Person * b) {
+    std::sort(workers.begin(), workers.end(), [&](Person * a, Person * b) {
             return worker_to_suitability[a] > worker_to_suitability[b];
             });
 
-    int max_workers = predict_workers_needed(draft_plan->order);
+    std::size_t max_workers = predict_workers_needed(draft_plan->order);
     for (Person * worker : workers) {
         if (
                 draft_plan->workers.size() >= max_workers ||
@@ -213,13 +224,13 @@ int Firm::predict_labor_hours(Order * order, double total_suitability) {
 
 void Firm::assign_plan_dependent_fields(
         Plan * draft_plan,
-        std::vector<Ability>& required_abilities
+        std::vector<Person::Ability>& required_abilities
         ) {
 	double total_suitability = 0.0;
 	if (draft_plan->training_time) {
-		std::unordered_map<Ability, double> max_required_abilities;
+		std::unordered_map<Person::Ability, double> max_required_abilities;
 		for (Person * worker : draft_plan->workers) {
-			for (Ability ability : required_abilities) {
+			for (Person::Ability ability : required_abilities) {
 				max_required_abilities[ability] = std::max(max_required_abilities[ability],
 						 								   worker->get_abilities()[ability]);
 			}
@@ -260,7 +271,7 @@ void Firm::assign_plan_dependent_fields(
 
 void Firm::draft_optimal_plan(
         Plan * draft_plan,
-        std::vector<Ability>& required_abilities
+        std::vector<Person::Ability>& required_abilities
         ) {
     // try without training first
     Plan * draft_plan_without_training = new Plan(*draft_plan);
@@ -298,11 +309,11 @@ void Firm::draft_optimal_plan(
 
 void Firm::train_workers(
         std::vector<Person *>& workers,
-        std::vector<Ability>& required_abilities
+        std::vector<Person::Ability>& required_abilities
         ) {
-    std::unordered_map<Ability, double> max_required_abilities;
+    std::unordered_map<Person::Ability, double> max_required_abilities;
     for (Person * worker : workers) {
-        for (Ability ability : required_abilities) {
+        for (Person::Ability ability : required_abilities) {
             max_required_abilities[ability] =
                 std::max(
                         max_required_abilities[ability],
