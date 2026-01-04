@@ -6,6 +6,8 @@
 #include "Product.h"
 #include "Sim.h"
 
+struct Machine;
+
 Product::Product(const std::string name) : product_name{name} {
     static std::uniform_int_distribution<>
         order_size_dist(PRODUCT_ORDER_SIZE_MIN, PRODUCT_ORDER_SIZE_MAX);
