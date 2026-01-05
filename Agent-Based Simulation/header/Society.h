@@ -41,7 +41,6 @@ class Society {
         std::vector<Product *> products;
         std::unordered_map<Product *, std::size_t> product_to_index;
         std::vector<Machine *> machines;
-        std::unordered_map<Machine *, std::size_t> machine_to_index;
         std::vector<Distributor *> distributors;
         int current_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
 		int current_work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
