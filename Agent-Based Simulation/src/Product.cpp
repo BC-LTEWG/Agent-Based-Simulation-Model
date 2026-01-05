@@ -3,6 +3,7 @@
 #include <set>
 
 #include "Constants.h"
+#include "Machine.h"
 #include "Product.h"
 #include "Sim.h"
 
@@ -38,10 +39,10 @@ void Product::set_inputs(std::vector<Product *>& products) {
         num_inputs_dist(PRODUCT_NUM_INPUTS_MIN, PRODUCT_NUM_INPUTS_MAX);
     const int num_inputs = num_inputs_dist(Sim::gen);
     std::uniform_int_distribution<>
-        product_index_dist(0, products.size() - 1);
+        product_input_index_dist(0, products.size() - 1);
     std::set<int> indices;
     while (indices.size() < num_inputs) {
-        indices.insert(product_index_dist(Sim::gen));
+        indices.insert(product_input_index_dist(Sim::gen));
     }
     static std::uniform_real_distribution<>
         input_per_unit_dist(
@@ -52,3 +53,18 @@ void Product::set_inputs(std::vector<Product *>& products) {
         inputs_per_unit[products[index]] = input_per_unit_dist(Sim::gen);
     }
 }
+
+void Product::set_machines(std::vector<Machine*> machines) {
+    static std::uniform_int_distribution<>
+        num_machines_dist(PRODUCT_NUM_MACHINES_MIN, PRODUCT_NUM_MACHINES_MAX);
+    const std::size_t num_machines = num_machines_dist(Sim::gen);
+    std::uniform_int_distribution<>
+        product_machine_index_dist(0, machines.size() - 1);
+    std::set<int> indices;
+    while (indices.size() < num_machines) {
+        indices.insert(product_machine_index_dist(Sim::gen));
+    }
+    for (int index : indices) {
+        machines_needed.push_back(machines[index]);
+    }
+ }
