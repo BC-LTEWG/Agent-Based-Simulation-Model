@@ -55,13 +55,16 @@ void Society::set_initial_products() {
     static std::uniform_int_distribution<>
         machine_lifetime_dist(MACHINE_LIFETIME_MIN, MACHINE_LIFETIME_MAX);
     for (std::size_t i = 0; i < STARTING_NUM_MACHINES; ++i) {
-        Machine * new_machine =
-            new Machine("Machine " + std::to_string(i), machine_lifetime_dist(Sim::gen));
-        products.push_back(new_machine);
-        machines.push_back(new_machine);
+        machines.push_back(
+                new Machine(
+                    "Machine " + std::to_string(i),
+                    machine_lifetime_dist(Sim::gen)
+                    )
+                );
     }
     for (Product * product: products) {
         product->set_inputs(products);
+        product->set_machines(machines);
     }
     set_product_prices();
 }
