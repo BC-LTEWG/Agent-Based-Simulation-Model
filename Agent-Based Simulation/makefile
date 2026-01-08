@@ -3,6 +3,8 @@ HDR_DIR = header
 SRC_DIR = src
 BUILD_DIR = build
 TEST_DIR = test
+TEST_SRCS = $(wildcard ${TEST_DIR}/*.cpp)
+TEST_EXECS = $(patsubst %.cpp, %.test, ${TEST_SRCS})
 APP = ${BIN_DIR}/sim
 FLAGS = -Wall -Iheader -std=c++17
 
@@ -45,16 +47,15 @@ ${BUILD_DIR}/Society.o : ${SRC_DIR}/Society.cpp ${HDR_DIR}/Society.h
 ${BUILD_DIR}/Sim.o : ${SRC_DIR}/Sim.cpp ${HDR_DIR}/Sim.h
 	g++ ${FLAGS} -c $< -o $@
 
-TEST_SRCS = $(wildcard ${SRC_DIR}/*.cpp)
-TEST_DEPS = $(filter-out ${SRC_DIR}/main.cpp, ${TEST_SRCS})
+TEST_DEPS_RAW = $(wildcard ${SRC_DIR}/*.cpp)
+TEST_DEPS = $(filter-out ${SRC_DIR}/main.cpp, ${TEST_DEPS_RAW})
 
-tests: ${BIN_DIR}/test_Person
-	cp ${TEST_DIR}/run_tests.sh ${BIN_DIR}
+tests: ${TEST_EXECS}
 
-${BIN_DIR}/test_Person: ${TEST_DIR}/test_Person.cpp ${TEST_DEPS}
+test/%.test: test/%.cpp ${TEST_DEPS}
 	g++ ${FLAGS} $^ -o $@
 
-clean:
-	rm -f $(wildcard ${BIN_DIR}/*) $(wildcard ${BUILD_DIR}/*)
 
+clean:
+	rm -f $(wildcard ${BIN_DIR}/*) $(wildcard ${BUILD_DIR}/*) $(wildcard ${TEST_DIR}/*.test)
 
