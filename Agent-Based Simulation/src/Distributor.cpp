@@ -27,7 +27,7 @@ void Distributor::on_time_step() {
             worker->register_hours_worked(1);
         }
 
-        if (plan->units_purchased == plan->order->quantity) {
+        if (plan->outgoing_units_consumed == plan->order->quantity) {
             plan->prd = plan->total_hours; 
         }
     }
