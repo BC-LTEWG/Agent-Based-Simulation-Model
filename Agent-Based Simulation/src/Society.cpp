@@ -49,30 +49,28 @@ Society::Society() {
 }
 
 void Society::set_initial_products() {
-    for (std::size_t i = 0; i < STARTING_NUM_PRODUCTS; ++i) {
-        products.push_back(new Product("Product " + std::to_string(i)));
+    std::size_t i = 0;
+    for (; i < STARTING_NUM_PRODUCTS; ++i) {
+        Product * new_product = new Product("Product " + std::to_string(i));
+        products.push_back(new_product);
+        product_to_index[new_product] = i;
     }
     static std::uniform_int_distribution<>
         machine_lifetime_dist(MACHINE_LIFETIME_MIN, MACHINE_LIFETIME_MAX);
-    for (std::size_t i = 0; i < STARTING_NUM_MACHINES; ++i) {
-        Machine * new_machine =
-            new Machine("Machine " + std::to_string(i), machine_lifetime_dist(Sim::gen));
-        products.push_back(new_machine);
+    for (std::size_t j = 0; j < STARTING_NUM_MACHINES; ++j, ++i) {
+        Machine * new_machine = new Machine(
+                "Machine " + std::to_string(i),
+                machine_lifetime_dist(Sim::gen)
+                );
         machines.push_back(new_machine);
+        products.push_back(new_machine);
+        product_to_index[new_machine] = i;
     }
     for (Product * product: products) {
         product->set_inputs(products);
+        product->set_machines(machines);
     }
     set_product_prices();
-}
-
-std::unordered_map<Product *, std::size_t>
-Society::get_product_to_index_map() {
-    std::unordered_map<Product *, size_t> product_to_index;
-    for (size_t i = 0; i < products.size(); ++i) {
-        product_to_index[products[i]] = i;
-    }
-    return product_to_index;
 }
 
 void Society::populate_io_matrix_and_labor_vector(
@@ -80,6 +78,10 @@ void Society::populate_io_matrix_and_labor_vector(
         Eigen::MatrixXd& input_output_matrix,
         Eigen::VectorXd& labor_vector
         ) {
+    static const int starting_num_firms = STARTING_NUM_PRODUCERS +
+        STARTING_NUM_DISTRIBUTORS;
+    static const int average_team_size =
+        STARTING_NUM_PEOPLE / starting_num_firms;
     for (Product * output_product : products) {
         for (const std::pair<Product * const, double>& input :
                 output_product->inputs_per_unit) {
@@ -87,6 +89,14 @@ void Society::populate_io_matrix_and_labor_vector(
                     product_to_index[input.first],
                     product_to_index[output_product]
                     ) = input.second;
+        }
+        double machine_use_hours =
+            output_product->living_labor_per_unit / average_team_size;
+        for (Machine * const machine : output_product->machines_needed) {
+            input_output_matrix(
+                    product_to_index[static_cast<Product * const>(machine)],
+                    product_to_index[output_product]
+                    ) = machine_use_hours / machine->lifetime;
         }
         labor_vector(product_to_index[output_product]) =
             output_product->living_labor_per_unit;
@@ -134,8 +144,6 @@ Eigen::VectorXd get_leontief_function(
 }
 
 void Society::set_product_prices() {
-    std::unordered_map<Product *, size_t> product_to_index =
-        get_product_to_index_map();
     const size_t dim = products.size();
     Eigen::MatrixXd A(dim, dim);
     Eigen::VectorXd l(dim);
