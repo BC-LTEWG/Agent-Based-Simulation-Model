@@ -2,6 +2,7 @@
 
 #include "Distributor.h"
 #include "PriceController.h"
+#include "Machine.h"
 #include "Person.h"
 #include "Producer.h"
 #include "Product.h"
@@ -45,10 +46,21 @@ int Producer::draft_order(Order * order) {
 		catalog.insert(order->product);
 	}
 	Plan * draft_plan = new Plan();
-    draft_plan-> m = draft_plan->labor_hours / draft_plan->workers.size();
 	draft_plan->order = order;
 	draft_plan->firm = this;
 	draft_optimal_plan(draft_plan, order->product->required_abilities);
+
+    double machinery_cost_per_hour = 0.0;
+    for (Machine * machine : machines) {
+        machinery_cost_per_hour += machine->price_per_unit / machine->lifetime;
+    }
+    if (!draft_plan->workers.empty()) {
+        draft_plan->m = machinery_cost_per_hour *
+                        (static_cast<double>(draft_plan->labor_hours) /
+                         draft_plan->workers.size());
+    } else {
+        draft_plan->m = 0.0;
+    }
 
 	order_to_draft_plan[order] = draft_plan;
 	return draft_plan->predicted_turnaround_time;
