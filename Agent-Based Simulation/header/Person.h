@@ -8,13 +8,14 @@
 struct Product;
 class Distributor;
 class Firm;
+class Society;
 
 class Person : public Agent {
   public:
     enum HealthStatus { HEALTHY, UNHEALTHY };
     enum Ability { ABILITY_1, ABILITY_2, ABILITY_3, NUM_ABILITIES }; 
 	
-    Person();
+    Person(Society * society);
 	void on_time_step() override;
   
 	std::unordered_map<Ability, double>& get_abilities();
@@ -29,6 +30,7 @@ class Person : public Agent {
     void set_firm(Firm *);
   
   private:
+    Society * society;
     std::unordered_map<Ability, double> abilities;
     int age;
     HealthStatus health_status;
