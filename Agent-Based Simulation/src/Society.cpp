@@ -192,3 +192,7 @@ void Society::retire_person(Person * person) {
     // unimplemented until hiring/reallocation is done
 }
 
+void Society::on_time_step() {
+    std::cout << "Society::on_time_step" << std::endl;
+}
+
