@@ -86,12 +86,12 @@ bool Producer::pursue_order(Order * order) {
 			workers.erase(it);
 		}
 		it = std::find(
-                Society::instance->get_unemployed_people().begin(),
-                Society::instance->get_unemployed_people().end(),
+                Society::get_instance()->get_unemployed_people().begin(),
+                Society::get_instance()->get_unemployed_people().end(),
                 worker
                 );
-		if (it != Society::instance->get_unemployed_people().end()) {
-			Society::instance->get_unemployed_people().erase(it);
+		if (it != Society::get_instance()->get_unemployed_people().end()) {
+			Society::get_instance()->get_unemployed_people().erase(it);
 		}
 	}
 	// move draft_plan to plans_in_progress
@@ -156,8 +156,8 @@ void Producer::execute_plans() {
 			start_plan(plan);
 		}
 		if (plan->total_hours_remaining > 0 &&
-			Sim::get_current_time_step() % DAY < Society::instance->get_current_work_hours_daily() && 
-			Sim::get_current_time_step() / DAY % 7 < Society::instance->get_current_work_days_weekly()) {
+			Sim::get_current_time_step() % DAY < Society::get_instance()->get_current_work_hours_daily() && 
+			Sim::get_current_time_step() / DAY % 7 < Society::get_instance()->get_current_work_days_weekly()) {
 			execute_plan(plan);
 		}
 		if (plan->total_hours_remaining == 0) {

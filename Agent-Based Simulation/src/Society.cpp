@@ -15,10 +15,12 @@
 #include "Sim.h"
 #include "Society.h"
 
-Society * Society::instance = nullptr;
+Society * Society::get_instance() {
+    static Society * instance = new Society;
+    return instance;
+}
 
 Society::Society() {
-    instance = this;
     set_initial_products();
     // note: no way to assign products to producers or suppliers
     // to distributors yet
@@ -182,7 +184,7 @@ int Society::get_current_work_days_weekly() {
 }
 
 Person * Society::birth_person() {
-    Person * person = new Person();
+    Person * person = new Person(this);
     people.push_back(person);
     unemployed_people.push_back(person);
     return person;
@@ -190,5 +192,9 @@ Person * Society::birth_person() {
 
 void Society::retire_person(Person * person) {
     // unimplemented until hiring/reallocation is done
+}
+
+void Society::on_time_step() {
+    std::cout << "Society::on_time_step" << std::endl;
 }
 

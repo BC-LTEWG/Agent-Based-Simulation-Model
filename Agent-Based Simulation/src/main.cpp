@@ -2,5 +2,6 @@
 
 int main() {
 	Sim simulation;
+    simulation.run(2);
 	return EXIT_SUCCESS;
 }

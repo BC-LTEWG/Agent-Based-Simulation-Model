@@ -11,7 +11,8 @@
 #include "Sim.h"
 #include "Society.h"
 
-Person::Person():
+Person::Person(Society * society):
+    society{society},
     age(INITIAL_AGE),
     health_status(HEALTHY) {
         static std::normal_distribution<>
@@ -33,7 +34,7 @@ Person::Person():
         for (Person::Ability ability : all_abilities) {
             abilities[ability] = std::max(0.0, ability_dist(Sim::gen));
         }
-        ranked_distributors = Society::instance->get_distributors();
+        ranked_distributors = society->get_distributors();
         std::shuffle(
                 ranked_distributors.begin(),
                 ranked_distributors.end(),
@@ -41,7 +42,7 @@ Person::Person():
                 );
         static std::normal_distribution<>
             dist(1, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
-        for (Product * p : Society::instance->get_products()) {
+        for (Product * p : society->get_products()) {
             purchase_frequencies[p] =
                 p->mean_consumption_frequency * std::abs(dist(Sim::gen));
         }
@@ -120,7 +121,7 @@ bool Person::will_retire() {
 }
 
 void Person::retire() {
-    Society::instance->retire_person(this);
+    society->retire_person(this);
 }
 
 void Person::update_health_status() {

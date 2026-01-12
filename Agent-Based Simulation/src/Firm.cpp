@@ -162,7 +162,7 @@ int Firm::predict_workers_needed(Order * order) {
             order->quantity *
             order->product->living_labor_per_unit *
             DAY /
-            Society::instance->get_current_work_hours_daily() /
+            Society::get_instance()->get_current_work_hours_daily() /
             order->requested_turnaround_time
             );
 }
@@ -191,7 +191,7 @@ void Firm::assign_workers_by_suitability_threshold(
         } 
         draft_plan->workers.push_back(worker);
     }
-    for (Person * unemployed_person : Society::instance->get_unemployed_people()) {	
+    for (Person * unemployed_person : Society::get_instance()->get_unemployed_people()) {	
         if (draft_plan->workers.size() >= max_workers) {
             break;
         } else if (
@@ -210,7 +210,7 @@ int Firm::predict_turnaround_time(Order * order, double total_suitability) {
             order->product->living_labor_per_unit *
             DAY /
             total_suitability /
-            Society::instance->get_current_work_hours_daily()
+            Society::get_instance()->get_current_work_hours_daily()
             );
 }
 

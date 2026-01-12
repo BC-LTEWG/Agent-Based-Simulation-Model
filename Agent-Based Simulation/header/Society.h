@@ -3,6 +3,7 @@
 #include <Eigen/Dense>
 #include <unordered_map>
 
+#include "Agent.h"
 #include "Constants.h"
 
 struct Product;
@@ -12,17 +13,18 @@ struct Machine;
 class Person;
 class Producer;
 
-class Society {
+class Society : public Agent {
     public:
-        Society();
-        static Society * instance;
+        static Society * get_instance();
         std::vector<Product *>& get_products();
         std::vector<Distributor *>& get_distributors();
         std::vector<Person *>& get_unemployed_people();
         void retire_person(Person * person);
         int get_current_work_hours_daily();
 		int get_current_work_days_weekly();
+        void on_time_step() override;
     private:
+        Society();
         Person * birth_person();
         void set_initial_products();
         void set_product_prices();

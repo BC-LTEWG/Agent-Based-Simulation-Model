@@ -17,16 +17,12 @@ Distributor::Distributor(std::unordered_set<Product *> initial_catalog) :
 
 void Distributor::on_time_step() {
     Firm::on_time_step();
-    double cost_per_hour = 0.0;
     for (Plan * current_plan_in_progress : plans_in_progress) {
         Plan * plan = current_plan_in_progress;
-        
         plan->labor_hours_remaining -= plan->workers.size();
-        
-        for (auto * worker : plan->workers) {
+        for (Person * worker : plan->workers) {
             worker->register_hours_worked(1);
         }
-
         if (plan->outgoing_units_consumed == plan->order->quantity) {
             plan->prd = plan->total_hours; 
         }
