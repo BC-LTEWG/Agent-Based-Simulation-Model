@@ -15,8 +15,7 @@ class Producer;
 
 class Society : public Agent {
     public:
-        Society();
-        static Society * instance;
+        static Society * get_instance();
         std::vector<Product *>& get_products();
         std::vector<Distributor *>& get_distributors();
         std::vector<Person *>& get_unemployed_people();
@@ -25,6 +24,7 @@ class Society : public Agent {
 		int get_current_work_days_weekly();
         void on_time_step() override;
     private:
+        Society();
         Person * birth_person();
         void set_initial_products();
         void set_product_prices();

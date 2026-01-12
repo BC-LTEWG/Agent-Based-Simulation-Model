@@ -57,5 +57,5 @@ test/%.test: test/%.cpp ${TEST_DEPS}
 
 
 clean:
-	rm -f $(wildcard ${BIN_DIR}/*) $(wildcard ${BUILD_DIR}/*) $(wildcard ${TEST_DIR}/*.test)
+	rm -rf $(wildcard ${BIN_DIR}/*) $(wildcard ${BUILD_DIR}/*) $(wildcard ${TEST_DIR}/*.test)
 

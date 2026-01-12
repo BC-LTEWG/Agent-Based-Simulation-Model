@@ -2,7 +2,7 @@
 #include "Sim.h"
 
 Sim::Sim() {
-	society = new Society();
+	society = Society::get_instance();
 }
 
 int Sim::get_current_time_step() {
