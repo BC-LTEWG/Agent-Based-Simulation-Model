@@ -8,7 +8,9 @@
 
 void PriceController::update_price(Plan * plan) {
     Product * product = plan->order->product;
-    double actual_labor = plan->labor_hours - plan->labor_hours_remaining;
+    double actual_labor =
+        (plan->labor_hours - plan->labor_hours_remaining) /
+        plan->order->quantity;
     double new_average_labor =
         (actual_labor +
          product->living_labor_per_unit * (PRICE_AVERAGING_WINDOW - 1)) /
