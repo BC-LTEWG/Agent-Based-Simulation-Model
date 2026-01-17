@@ -168,7 +168,8 @@ void Producer::end_plan(Plan * plan) {
 	// simplification: product shipped instantly
 	inventory[plan->order->product] -= plan->order->quantity;
 	plan->order->customer->receive_shipment(plan->order);
-    plan->prd += PriceController::get_price(plan->order->product) * plan->order->quantity;
+    plan->prd += plan->order->product->price_per_unit * plan->order->quantity;
+    PriceController::update_price(plan);
 }
 
 void Producer::execute_plans() {
