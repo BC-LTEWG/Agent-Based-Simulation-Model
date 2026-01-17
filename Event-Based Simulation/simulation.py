@@ -5,8 +5,9 @@ from random_events import load_event_table
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import csv
 
-# Making folder for graphs 
+# Making folder for graphs and the csv file with the data 
 os.makedirs("graphs", exist_ok=True)
 
 # generate A and l 
@@ -192,6 +193,55 @@ def plot_graphs(traj, t, equilibrium_time):
     plot_prices(time, prices, product_labels, equilibrium_time)
     plot_outputs(time, outputs, product_labels, equilibrium_time)
     plot_averages(time, avg_p, avg_q, equilibrium_time)
+    
+def export_trajectories_with_equilibrium(traj, t, equilibrium_time,
+                                         filename="graphs/trajectories_with_equilibrium.csv"):
+    prices = np.array(traj["p"])   # (T, 26)
+    outputs = np.array(traj["q"])  # (T, 26)
+    time = np.array(t)
+
+    num_products = prices.shape[1]
+    labels = [chr(ord('A') + i) for i in range(num_products)]
+
+    # Find equilibrium index (closest time)
+    eq_index = None
+    if equilibrium_time is not None:
+        eq_index = int(np.argmin(np.abs(time - equilibrium_time)))
+
+    # Build header
+    header = ["time", "is_equilibrium_step"]
+    header += [f"price_{lbl}" for lbl in labels]
+    header += [f"output_{lbl}" for lbl in labels]
+
+    # Extra equilibrium summary columns
+    header += ["equilibrium_time"]
+    header += [f"equilibrium_price_{lbl}" for lbl in labels]
+    header += [f"equilibrium_output_{lbl}" for lbl in labels]
+
+    with open(filename, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+
+        for i in range(len(time)):
+            is_eq = 1 if (eq_index is not None and i == eq_index) else 0
+
+            row = [time[i], is_eq]
+            row += prices[i].tolist()
+            row += outputs[i].tolist()
+
+            # Only record equilibrium data at the exact equilibrium step
+            if eq_index is not None and i == eq_index:
+                row.append(time[eq_index])
+                row += prices[eq_index].tolist()
+                row += outputs[eq_index].tolist()
+            else:
+                row.append("")
+                row += [""] * num_products
+                row += [""] * num_products
+
+            writer.writerow(row)
+
+    print(f"Trajectory table exported to: {filename}")
 
 if __name__ == "__main__":
     traj, t, e = get_trajectories(params)
@@ -210,27 +260,9 @@ if __name__ == "__main__":
         print(f"Equilibrium detected at continuous time t = {EQUILIBRIUM_TIME}")
     else:
         print("Equilibrium not reached.")
-
-
+        
+    # Export data points
+    export_trajectories_with_equilibrium(traj, t, EQUILIBRIUM_TIME)
+    
     # Plot results
-    plot_graphs(traj, t, EQUILIBRIUM_TIME)
-
-# Plan for trade interface(initial thoughts): 
-# These are maps that map from commodity to their prices 
-# CE: [[ce_a, price_ce_a], [ce_b, price_ce_b], [ce_c, price_ce_c], …, [ce_y, price_ce_y]]
-# LTE: [[lte_a, price_lte_a], [lte_b, price_lte_b], [lte_c, price_lte_c], …, [lte_y, price_lte_y]] 
-
-# We only need to figure out when to trade for CE and when to trade for LTE in a free market 
-# So we need two functions: 
-# CE_Trade()
-
-# LTE_Trade() 
-
-# For each time stamp, 
-# LTE checks if CE has a product type it doesn’t have. If so, LTE wants to trade for that product type with CE, adding it to the import list for that time stamp. 
-# CE checks if LTE has a product type it doesn’t have. If so, CE wants to trade for that product type with LTE, adding it to the import list for that time stamp. 
-# CE checks if there’s a shortage of products (prices that are higher than the start). If there is, add that product to the import list. 
-# LTE checks if there’s a social need for a product (how to check this? Labor time doesn’t fluctuate.). If there is, add that product to the import list. 
-# CE checks if there’s a surplus of products (if prices are lower than the start). If there is, add that product to the export list. 
-# LTE checks if there’s a surplus of products (How to check this?). If there is, add that product to the export list. 
-# Decide on a plan to trade products on the import and export lists (quantity? What for what? I can use MELT to convert labor time for price), and (record the currency change for the economy?). 
+    plot_graphs(traj, t, EQUILIBRIUM_TIME) 
