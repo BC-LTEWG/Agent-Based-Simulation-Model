@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cmath>
+#include <iostream>
 #include <random>
 
 #include "Constants.h"
@@ -60,6 +61,7 @@ void Person::train(std::unordered_map<Person::Ability, double> target_abilities)
 }
 
 void Person::register_hours_worked(double hours_worked) {
+    std::cout << "Person paid " << hours_worked << " labor hours." << std::endl;
     account += hours_worked;
 }
 
@@ -94,6 +96,8 @@ float Person::avg_productivity_over_time_step(std::string product_name) {
 void Person::purchase_good(Product * p, int quantity) {
     for (Distributor * distributor : ranked_distributors) {
         if (distributor->has_product(p)) {
+            std::cout << "Person purchasing " << quantity << " units of "
+                 << p->product_name << " from distributor." << std::endl;
             distributor->sell_goods(*p, quantity, this);
             return;
         }
@@ -105,6 +109,7 @@ bool Person::will_shop() {
 }
 
 void Person::shop() {
+    std::cout << "Person shopping event." << std::endl;
     static std::normal_distribution<> dist(1, PERSON_SHOPPING_MULTIPLIER_STDDEV);
     for (auto &p : purchase_frequencies) {
         int quantity = std::round(p.second * PERSON_SHOPPING_PERIOD * std::abs(dist(Sim::gen)));
@@ -141,6 +146,12 @@ void Person::on_time_step() {
 	if (will_shop()) { shop(); }
 	if (will_retire()) { retire(); }
 	update_health_status();
+    std::cout << "At time step " << Sim::get_current_time_step() 
+              << ", Person has:" << std::endl;
+    std::cout << "\tAge: " << age << std::endl;
+    std::cout << "\tAccount balance: " << account << std::endl;
+    std::cout << "\tHealth status: " << 
+        (health_status == HEALTHY ? "Healthy" : "Unhealthy") << std::endl;
 }
 
 void Person::set_firm(Firm * workplace) {
