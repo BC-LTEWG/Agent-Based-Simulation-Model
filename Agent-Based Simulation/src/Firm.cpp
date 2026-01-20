@@ -65,11 +65,11 @@ Producer * Firm::send_order(Order * order) {
     int order_time = INT_MAX;
     Producer * chosen_producer = nullptr;
 
-    for (auto * producer : suppliers) {
+    for (Producer * producer : suppliers) {
         int draft_order_time = producer->draft_order(order);
         if (draft_order_time != DRAFT_ORDER_REJECTED &&
-                draft_order_time < order_time) {
-            order_time = producer->draft_order(order);
+            draft_order_time < order_time) {
+            order_time = draft_order_time;
             chosen_producer = producer;
         }
     }
@@ -87,8 +87,9 @@ Producer * Firm::send_order(Order * order) {
 }
 
 double Firm::get_reorder_threshold(Product * product) {
-    return std::max((double) product->order_size, 
-            inventory_demands[product] * FIRM_STOCKPILE_DURATION);
+    double demand = std::min(inventory_demands[product], 10000.0);
+    return std::max((double) product->order_size,
+        demand * FIRM_STOCKPILE_DURATION);
 }
 
 int Firm::get_pending_inventory(Product * product) {
@@ -105,14 +106,19 @@ void Firm::reorder_product_to_threshold(
         int pending_inventory
         ) {
     if (pending_inventory < threshold) {
-        int discrepancy = product->order_size * 
-            ((int) std::ceil(threshold - pending_inventory) /
-             product->order_size);
+        double diff = threshold - pending_inventory;
+        if (diff > INT_MAX / 2) diff = INT_MAX / 2;
+        int units_needed = (int) std::ceil(diff);
+        int discrepancy = product->order_size > 0
+            ? ((units_needed + product->order_size - 1) / product->order_size) * product->order_size
+            : 0;
         std::cout << "Reordering " << discrepancy << " units of " 
             << product->product_name << std::endl;
 
-        Order * order = new Order{product, discrepancy, this,
-            (int) (pending_inventory / threshold * FIRM_STOCKPILE_DURATION),
+        int turnaround = threshold > 0
+            ? (int) (pending_inventory / threshold * FIRM_STOCKPILE_DURATION)
+            : 0;
+        Order * order = new Order{product, discrepancy, this, turnaround,
             Order::ORDER_REQUESTED};
 
         Producer * chosen_producer = send_order(order);
@@ -209,6 +215,16 @@ void Firm::assign_workers_by_suitability_threshold(
             draft_plan->workers.push_back(unemployed_person);
         }
     }
+    if (draft_plan->workers.empty()) {
+        std::vector<Person *> & unemployed_people =
+            Society::get_instance()->get_unemployed_people();
+        if (!unemployed_people.empty()) {
+            draft_plan->workers.push_back(unemployed_people.front());
+        }
+    }
+    if (draft_plan->workers.empty() && !workers.empty()) {
+        draft_plan->workers.push_back(workers.front());
+    }
 }
 
 
@@ -251,22 +267,38 @@ void Firm::assign_plan_dependent_fields(
                     required_abilities,
                     worker->get_current_productivity());
         }
-        draft_plan->predicted_turnaround_time =
-            draft_plan->training_time +
-            predict_turnaround_time(draft_plan->order, total_suitability);
-        draft_plan->labor_hours =
-            draft_plan->labor_hours_remaining =
-            draft_plan->training_time * draft_plan->workers.size() +
-            predict_labor_hours(draft_plan->order, total_suitability);    
+        if (total_suitability <= 0) {
+            total_suitability = 1.0;
+        }
+        if (total_suitability > 0) {
+            draft_plan->predicted_turnaround_time =
+                draft_plan->training_time +
+                predict_turnaround_time(draft_plan->order, total_suitability);
+            draft_plan->labor_hours =
+                draft_plan->labor_hours_remaining =
+                draft_plan->training_time * draft_plan->workers.size() +
+                predict_labor_hours(draft_plan->order, total_suitability);
+        } else {
+            draft_plan->predicted_turnaround_time = INT_MAX;
+            draft_plan->labor_hours = draft_plan->labor_hours_remaining = INT_MAX;
+        }
     } else {
         for (Person * worker : draft_plan->workers) {
             total_suitability += suitability(worker, required_abilities);
         }
-        draft_plan->predicted_turnaround_time =
-            predict_turnaround_time(draft_plan->order, total_suitability);
-        draft_plan->labor_hours =
-            draft_plan->labor_hours_remaining =
-            predict_labor_hours(draft_plan->order, total_suitability);
+        if (total_suitability <= 0) {
+            total_suitability = 1.0;
+        }
+        if (total_suitability > 0) {
+            draft_plan->predicted_turnaround_time =
+                predict_turnaround_time(draft_plan->order, total_suitability);
+            draft_plan->labor_hours =
+                draft_plan->labor_hours_remaining =
+                predict_labor_hours(draft_plan->order, total_suitability);
+        } else {
+            draft_plan->predicted_turnaround_time = INT_MAX;
+            draft_plan->labor_hours = draft_plan->labor_hours_remaining = INT_MAX;
+        }
     }
 
     int raw_materials = 0;

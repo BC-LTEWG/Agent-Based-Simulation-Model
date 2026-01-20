@@ -22,29 +22,27 @@ Society * Society::get_instance() {
 
 Society::Society() {
     set_initial_products();
-    // note: no way to assign products to producers or suppliers
-    // to distributors yet
+    std::unordered_set<Product *> all_products(products.begin(), products.end());
     for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
-        Producer * producer = new Producer({products[i %
-                STARTING_NUM_PRODUCTS]});
+        Producer * producer = new Producer(all_products);
         producers.push_back(producer);
         firms.push_back(producer);
     }
     for (int i = 0; i < STARTING_NUM_DISTRIBUTORS; i++) {
-        Distributor * distributor =
-            new Distributor({products[i % STARTING_NUM_PRODUCTS]});
+        Distributor * distributor = new Distributor(all_products);
         distributors.push_back(distributor);
         firms.push_back(distributor);
     }
-    // add suppliers to firms
     for (Firm * firm : firms) {
         for (Producer * producer : producers) {
             if (producer != firm) {
                 firm->add_supplier(producer);
             }
         }
+        if (!machines.empty()) {
+            firm->machines.push_back(machines[std::rand() % machines.size()]);
+        }
     }
-    // people MUST come after products and distributors are created
     for (int i = 0; i < STARTING_NUM_PEOPLE; i++) {
         birth_person();	
     }

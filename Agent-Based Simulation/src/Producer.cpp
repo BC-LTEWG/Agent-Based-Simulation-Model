@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <iostream>
 
 #include "Distributor.h"
 #include "PriceController.h"
@@ -32,20 +33,19 @@ bool Producer::can_produce(Product * product) {
 }
 
 int Producer::draft_order(Order * order) {
-    bool enough_inputs = true;
+	if (order_to_draft_plan[order] != nullptr) {
+		return DRAFT_ORDER_REJECTED;
+	}
     for (auto &p : order->product->inputs_per_unit) {
         if (inventory[p.first] < p.second * order->quantity) {
-            enough_inputs = false;
+            inventory[p.first] = p.second * order->quantity;
         }
         add_demand_signal(p.first, p.second * order->quantity);
     }
-	if (!enough_inputs || order_to_draft_plan[order] != nullptr) {
-		return DRAFT_ORDER_REJECTED;
-	}
 	if (!can_produce(order->product)) {
 		catalog.insert(order->product);
 	}
-	Plan * draft_plan = new Plan();
+	Plan * draft_plan = new Plan{};
 	draft_plan->order = order;
 	draft_plan->firm = this;
 	draft_optimal_plan(draft_plan, order->product->required_abilities);
@@ -63,6 +63,7 @@ int Producer::draft_order(Order * order) {
     }
 
 	order_to_draft_plan[order] = draft_plan;
+	//std::cout << "Draft plan predicted turnaround time: " << draft_plan->predicted_turnaround_time << std::endl;
 	return draft_plan->predicted_turnaround_time;
 }
 
