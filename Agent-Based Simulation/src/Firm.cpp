@@ -65,10 +65,8 @@ Producer * Firm::send_order(Order * order) {
     int order_time = INT_MAX;
     Producer * chosen_producer = nullptr;
 
-    //std::cout << "Draft order times: " << std::endl;
-    for (auto * producer : suppliers) {
+    for (Producer * producer : suppliers) {
         int draft_order_time = producer->draft_order(order);
-        //std::cout << draft_order_time << std::endl;
         if (draft_order_time != DRAFT_ORDER_REJECTED &&
                 draft_order_time < order_time) {
             order_time = draft_order_time;

@@ -53,9 +53,6 @@ int Producer::draft_order(Order * order) {
     bool enough_inputs = true;
     for (auto &p : order->product->inputs_per_unit) {
         if (inventory[p.first] < p.second * order->quantity) {
-            //std::cout << "Not enough inventory of "
-            //          << p.first->product_name << ". Has: " << inventory[p.first] 
-            //          << ", needs: " << p.second * order->quantity << std::endl;
             enough_inputs = false;
         }
     }
@@ -97,7 +94,7 @@ bool Producer::drop_order(Order * order) {
 }
 
 bool Producer::pursue_order(Order * order) {
-    for (auto &p : order->product->inputs_per_unit) {
+    for (std::pair<Product *, double>& p : order->product->inputs_per_unit) {
         add_demand_signal(p.first, p.second * order->quantity);
     }
 	if (order_to_draft_plan[order] == nullptr) {

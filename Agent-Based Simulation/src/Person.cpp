@@ -96,8 +96,6 @@ float Person::avg_productivity_over_time_step(std::string product_name) {
 void Person::purchase_good(Product * p, int quantity) {
     for (Distributor * distributor : ranked_distributors) {
         if (distributor->has_product(p)) {
-            std::cout << "Person purchasing " << quantity << " units of "
-                 << p->product_name << " from distributor." << std::endl;
             distributor->sell_goods(*p, quantity, this);
             return;
         }
@@ -116,7 +114,7 @@ void Person::shop() {
         if (quantity > 0) {
             purchase_good(p.first, quantity);
             std::cout << "Person shopping for " << quantity << " of "
-                      << p.first->product_name << std::endl;
+                    << p.first->product_name << std::endl;
         }
     }
 }
@@ -153,7 +151,7 @@ void Person::on_time_step() {
     std::cout << "\tAge: " << age << std::endl;
     std::cout << "\tAccount balance: " << account << std::endl;
     std::cout << "\tHealth status: " << 
-        (health_status == HEALTHY ? "Healthy" : "Unhealthy") << std::endl;
+      (health_status == HEALTHY ? "Healthy" : "Unhealthy") << std::endl;
 }
 
 void Person::set_firm(Firm * workplace) {
