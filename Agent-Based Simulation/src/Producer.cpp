@@ -33,12 +33,11 @@ bool Producer::can_produce(Product * product) {
 }
 
 int Producer::draft_order(Order * order) {
-	if (order_to_draft_plan[order] != nullptr) {
-		return DRAFT_ORDER_REJECTED;
-	}
+	bool enough_inputs = true;	
     for (auto &p : order->product->inputs_per_unit) {
         if (inventory[p.first] < p.second * order->quantity) {
-            inventory[p.first] = p.second * order->quantity;
+			enough_inputs = false;
+			return DRAFT_ORDER_REJECTED;
         }
         add_demand_signal(p.first, p.second * order->quantity);
     }
