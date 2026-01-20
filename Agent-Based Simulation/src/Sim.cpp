@@ -12,6 +12,7 @@ int Sim::get_current_time_step() {
 void Sim::run(int time_steps) {
     for (std::size_t i = 0; i < time_steps; ++i) {
         society->on_time_step();
+        current_time_step++;
     }
 }
 

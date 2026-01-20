@@ -16,8 +16,8 @@
 Firm::Firm() {}
 
 Firm::Firm(std::unordered_set<Product *> initial_catalog) :
-    catalog(initial_catalog)
-{}
+    catalog(initial_catalog) {
+}
 
 void Firm::on_time_step() {
     apply_demand_window();
@@ -65,11 +65,13 @@ Producer * Firm::send_order(Order * order) {
     int order_time = INT_MAX;
     Producer * chosen_producer = nullptr;
 
+    //std::cout << "Draft order times: " << std::endl;
     for (auto * producer : suppliers) {
         int draft_order_time = producer->draft_order(order);
+        //std::cout << draft_order_time << std::endl;
         if (draft_order_time != DRAFT_ORDER_REJECTED &&
                 draft_order_time < order_time) {
-            order_time = producer->draft_order(order);
+            order_time = draft_order_time;
             chosen_producer = producer;
         }
     }
@@ -106,8 +108,8 @@ void Firm::reorder_product_to_threshold(
         ) {
     if (pending_inventory < threshold) {
         int discrepancy = product->order_size * 
-            ((int) std::ceil(threshold - pending_inventory) /
-             product->order_size);
+            ((int) std::ceil((threshold - pending_inventory) /
+             product->order_size));
         std::cout << "Reordering " << discrepancy << " units of " 
             << product->product_name << std::endl;
 
@@ -117,11 +119,11 @@ void Firm::reorder_product_to_threshold(
 
         Producer * chosen_producer = send_order(order);
         if (chosen_producer) {
-            std::cout << "Order accepted. Turnaround time: " 
-                << order->requested_turnaround_time << " days" <<
+            std::cout << "Order accepted. Requested turnaround time: " 
+                << order->requested_turnaround_time << " hours" <<
                 std::endl;
         } else {
-            std::cerr << "No producer found for product: " 
+            std::cout << "No producer found for product: " 
                 << product->product_name << std::endl;
         }
     }

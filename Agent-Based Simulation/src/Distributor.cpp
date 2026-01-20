@@ -10,8 +10,8 @@ Distributor::Distributor() : Firm() {}
 
 Distributor::Distributor(std::unordered_set<Product *> initial_catalog) :
     Firm(initial_catalog) {
-    for (Product * p : initial_catalog) {
-        inventory[p] = p->order_size * FIRM_INITIAL_INVENTORY_MULTIPLIER;
+    for (Product * p : get_products_to_reorder()) {
+        inventory[p] = get_reorder_threshold(p) * FIRM_INITIAL_INVENTORY_MULTIPLIER;
     }
 }
 

@@ -115,6 +115,8 @@ void Person::shop() {
         int quantity = std::round(p.second * PERSON_SHOPPING_PERIOD * std::abs(dist(Sim::gen)));
         if (quantity > 0) {
             purchase_good(p.first, quantity);
+            std::cout << "Person shopping for " << quantity << " of "
+                      << p.first->product_name << std::endl;
         }
     }
 }
