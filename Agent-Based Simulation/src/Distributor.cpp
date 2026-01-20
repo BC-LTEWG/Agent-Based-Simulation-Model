@@ -29,15 +29,6 @@ void Distributor::on_time_step() {
     }
 }
 
-double Distributor::get_output_ratio(Product& product) {
-    return 1.0 / product.order_size;
-}
-
-double Distributor::planned_satisfaction_per_person(Product& product, Person& person) {
-    return get_output_ratio(product) * person.get_purchase_frequencies()[&product];
-}
-
-
 void Distributor::sell_goods(Product& product, int quantity, Person * person) {
     add_demand_signal(&product, quantity);
 
@@ -60,15 +51,6 @@ void Distributor::sell_goods(Product& product, int quantity, Person * person) {
 
 
 
-
-bool Distributor::is_overproduced(Product* product) {
-    for(auto& products : plans_in_progress) {
-        if(products->order->product == product) {
-            return products->order->quantity > PRODUCTION_THRESHOLD * products->order->quantity;
-        }
-    }
-    return false;
-}
 
 std::unordered_set<Product *> Distributor::get_products_to_reorder() {
     return catalog;
