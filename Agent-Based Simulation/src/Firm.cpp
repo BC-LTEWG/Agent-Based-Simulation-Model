@@ -87,9 +87,8 @@ Producer * Firm::send_order(Order * order) {
 }
 
 double Firm::get_reorder_threshold(Product * product) {
-    double demand = std::min(inventory_demands[product], 10000.0);
     return std::max((double) product->order_size,
-        demand * FIRM_STOCKPILE_DURATION);
+        inventory_demands[product] * FIRM_STOCKPILE_DURATION);
 }
 
 int Firm::get_pending_inventory(Product * product) {
@@ -106,13 +105,9 @@ void Firm::reorder_product_to_threshold(
         int pending_inventory
         ) {
     if (pending_inventory < threshold) {
-        double diff = threshold - pending_inventory;
-        if (diff > INT_MAX / 2) diff = INT_MAX / 2;
-        int units_needed = (int) std::ceil(diff);
-        int discrepancy = product->order_size > 0
-            ? ((units_needed + product->order_size - 1) / product->order_size) * product->order_size
-            : 0;
-        std::cout << "Reordering " << discrepancy << " units of " 
+        int discrepancy = std::ceil(threshold - pending_inventory);
+        int units_needed = (int) std::ceil((double) (discrepancy / product->order_size)) * product->order_size;
+        std::cout << "Reordering " << units_needed << " units of " 
             << product->product_name << std::endl;
 
         int turnaround = threshold > 0
@@ -215,16 +210,7 @@ void Firm::assign_workers_by_suitability_threshold(
             draft_plan->workers.push_back(unemployed_person);
         }
     }
-    if (draft_plan->workers.empty()) {
-        std::vector<Person *> & unemployed_people =
-            Society::get_instance()->get_unemployed_people();
-        if (!unemployed_people.empty()) {
-            draft_plan->workers.push_back(unemployed_people.front());
-        }
-    }
-    if (draft_plan->workers.empty() && !workers.empty()) {
-        draft_plan->workers.push_back(workers.front());
-    }
+    
 }
 
 
