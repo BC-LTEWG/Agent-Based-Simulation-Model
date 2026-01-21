@@ -121,7 +121,11 @@ def Trade(ce_map, lte_map, time_step):
     # 7. Remove items when conditions disappear
     # 8. Use a trade algorithm to determine which product should be traded for what, how much it should be traded, and for what price 
     
-    # Question: What is a shortage? Is it when price > eq_price, output < eq_output, or both? I think it's both since it should happen at the same time. 
+    # Questions:
+    # Need to ask how to get data from LTE 
+    # How to develop an algorithm for trading? (Or we can do this next week?)
+    # (Note: If can't get data from LTE, I need data from LTE for testing if the trading function actually work. What kind of data should I use?) 
+    # What is a shortage? Is it when price > eq_price, output < eq_output, or both? I think it's both since it should happen at the same time. 
 
     print(f"[t={time_step}] Trade() executed")
 

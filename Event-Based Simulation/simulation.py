@@ -2,13 +2,9 @@ from parameters import Params
 from CapitalistEconomy import *
 from generate_dependency_matrix import *
 from random_events import load_event_table
-import os
 import matplotlib.pyplot as plt
 import numpy as np
 import csv
-
-# Making folder for graphs and the csv file with the data 
-os.makedirs("graphs", exist_ok=True)
 
 # generate A and l 
 deps = generate_dependencies()
