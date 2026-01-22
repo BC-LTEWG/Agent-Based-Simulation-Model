@@ -94,7 +94,7 @@ bool Producer::drop_order(Order * order) {
 }
 
 bool Producer::pursue_order(Order * order) {
-    for (std::pair<Product *, double>& p : order->product->inputs_per_unit) {
+    for (std::pair<Product *, double> p : order->product->inputs_per_unit) {
         add_demand_signal(p.first, p.second * order->quantity);
     }
 	if (order_to_draft_plan[order] == nullptr) {

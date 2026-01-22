@@ -37,29 +37,29 @@ double Distributor::planned_satisfaction_per_person(Product& product, Person& pe
     return get_output_ratio(product) * person.get_purchase_frequencies()[&product];
 }
 
-
 void Distributor::sell_goods(Product& product, int quantity, Person * person) {
     add_demand_signal(&product, quantity);
 
     if (!inventory[&product]) {
         std::cerr << "Inventory has no such product: " << product.product_name << std::endl;
+        return;
     }
     int available = inventory[&product];
-    int remainder = 0;
-    if (available >= quantity) {
-        inventory[&product] -= quantity;
-    } else {
-        inventory[&product] = 0;
-        remainder = quantity - available;
-        std::cout << "Shortfall in product " << product.product_name 
-            << " of " << remainder << " units. " << std::endl;
+    if (available < quantity) {
+        std::cerr << "Shortfall in product " << product.product_name 
+            << " of " << quantity - available << " units. " << std::endl;
+        return;
     }
-    double cost = (available - remainder) * product.price_per_unit;
-    person->charge(cost);
+    int sell_quantity = std::min(available, quantity);
+    double cost = sell_quantity * product.price_per_unit;
+    if (!person->charge(cost)) {
+        std::cerr << "Person cannot afford " << sell_quantity 
+            << " units of " << product.product_name << " costing " 
+            << cost << std::endl;
+        return;
+    } 
+    inventory[&product] -= std::min(available, quantity);
 }
-
-
-
 
 bool Distributor::is_overproduced(Product* product) {
     for(auto& products : plans_in_progress) {

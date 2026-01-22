@@ -106,8 +106,9 @@ void Firm::reorder_product_to_threshold(
         ) {
     if (pending_inventory < threshold) {
         int discrepancy = product->order_size * 
-            ((int) std::ceil((threshold - pending_inventory) /
-             product->order_size));
+            ((int) std::ceil((
+                threshold - static_cast<double>(pending_inventory)
+            ) / product->order_size));
         std::cout << "Reordering " << discrepancy << " units of " 
             << product->product_name << std::endl;
 

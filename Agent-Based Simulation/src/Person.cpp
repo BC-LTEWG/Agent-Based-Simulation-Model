@@ -65,8 +65,12 @@ void Person::register_hours_worked(double hours_worked) {
     account += hours_worked;
 }
 
-void Person::charge(double cost) {
+bool Person::charge(double cost) {
+    if (cost > account) {
+        return false;
+    }
     account -= cost; 
+    return true;
 }
 
 std::unordered_map<Product*, double>& Person::get_purchase_frequencies() { 
@@ -109,11 +113,19 @@ bool Person::will_shop() {
 void Person::shop() {
     std::cout << "Person shopping event." << std::endl;
     static std::normal_distribution<> dist(1, PERSON_SHOPPING_MULTIPLIER_STDDEV);
-    for (auto &p : purchase_frequencies) {
-        int quantity = std::round(p.second * PERSON_SHOPPING_PERIOD * std::abs(dist(Sim::gen)));
-        if (quantity > 0) {
-            purchase_good(p.first, quantity);
-            std::cout << "Person shopping for " << quantity << " of "
+    std::unordered_map<Product *, double> ideal_purchase_quantities;
+    double total_price = 0.0;
+    for (std::pair<Product *, double> p : purchase_frequencies) {
+        ideal_purchase_quantities[p.first] =
+            p.second * PERSON_SHOPPING_PERIOD * std::abs(dist(Sim::gen));
+        total_price += ideal_purchase_quantities[p.first] * p.first->price_per_unit;
+    }
+    for (std::pair<Product *, double> p : ideal_purchase_quantities) {
+        int affordable_quantity = (int) (account / total_price *
+                ideal_purchase_quantities[p.first]);
+        if (affordable_quantity > 0) {
+            purchase_good(p.first, affordable_quantity);
+            std::cout << "Person shopping for " << affordable_quantity << " of "
                     << p.first->product_name << std::endl;
         }
     }
