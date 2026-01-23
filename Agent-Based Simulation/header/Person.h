@@ -25,7 +25,7 @@ class Person : public Agent {
     float get_current_productivity();
     float avg_productivity_over_time_step(std::string product_name);
     void register_hours_worked(double hours_worked);
-    void charge(double cost);
+    bool charge(double cost);
     void purchase_good(Product * p, int quantity);
     void set_firm(Firm *);
   
