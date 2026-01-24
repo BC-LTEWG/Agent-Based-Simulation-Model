@@ -23,8 +23,6 @@ Society * Society::get_instance() {
 
 Society::Society() {
     set_initial_products();
-    // note: no way to assign goods to producers or suppliers
-    // to distributors yet
     for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
         Producer * producer = new Producer({goods[i %
                 STARTING_NUM_PRODUCTS]});
@@ -37,7 +35,6 @@ Society::Society() {
         distributors.push_back(distributor);
         firms.push_back(distributor);
     }
-    // add suppliers to firms
     for (Firm * firm : firms) {
         for (Producer * producer : producers) {
             if (producer != firm) {
@@ -45,7 +42,7 @@ Society::Society() {
             }
         }
     }
-    // people MUST come after goods and distributors are created
+    // People MUST come after products and distributors are created.
     for (int i = 0; i < STARTING_NUM_PEOPLE; i++) {
         birth_person();	
     }
@@ -70,9 +67,9 @@ void Society::set_initial_products() {
         products.push_back(new_machine);
         product_to_index[new_machine] = i;
     }
-    for (Product * good: goods) {
-        good->set_inputs(goods);
-        good->set_machines(machines);
+    for (Product * product: goods) {
+        product->set_inputs(goods);
+        product->set_machines(machines);
     }
     set_product_prices();
 }
