@@ -27,11 +27,9 @@ class Producer : public Firm {
 
   private:
 	std::unordered_map<Order *, Plan *> order_to_draft_plan;
-
 	void start_plan(Plan * plan);
 	void execute_plan(Plan * plan);
 	void end_plan(Plan * plan);
-
 	void execute_plans();
     std::unordered_set<Product *> get_products_to_reorder() override;
 };
