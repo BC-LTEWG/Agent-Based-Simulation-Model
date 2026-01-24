@@ -5,6 +5,9 @@ import os
 from CapitalistProduct import CapitalistProduct
 from LaborTimeProduct import LaborTimeProduct 
 
+CE_NUMBER_OF_PRODUCT_TYPES = 26
+LTE_NUMBER_OF_PRODUCT_TYPES = 26
+
 # Note: the prices are in ratios, not in any currency. 
 def build_ce_map(csv_path):
     """
@@ -33,7 +36,7 @@ def build_ce_map(csv_path):
     ce_map = {}
 
     # Build CE product objects for A–Z using equilibrium prices
-    for i in range(26):
+    for i in range(CE_NUMBER_OF_PRODUCT_TYPES):
         name = chr(ord("A") + i)  # Convert 0→A, 1→B, ..., 25→Z
         price_key = f"equilibrium_price_{name}"
         output_key = f"equilibrium_output_{name}"
@@ -71,7 +74,7 @@ def build_lte_map():
     lte_map = {}
 
     # Assign constant placeholder labor time to each commodity
-    for i in range(26):
+    for i in range(LTE_NUMBER_OF_PRODUCT_TYPES):
         name = chr(ord("A") + i)
         labor_time = 10.0  # Placeholder value
         lte_map[name] = LaborTimeProduct(name, labor_time)
@@ -123,9 +126,9 @@ def Trade(ce_map, lte_map, time_step):
     
     # Questions:
     # Need to ask how to get data from LTE 
-    # How to develop an algorithm for trading? (Or we can do this next week?)
+    # How to develop an algorithm for trading? (Or we can do this next week?) 
     # (Note: If can't get data from LTE, I need data from LTE for testing if the trading function actually work. What kind of data should I use?) 
-    # What is a shortage? Is it when price > eq_price, output < eq_output, or both? I think it's both since it should happen at the same time. 
+    # What is a shortage? Is it when price > eq_price, output < eq_output, or both? I think it's both since it should happen at the same time. (Use the output level to measure)
 
     print(f"[t={time_step}] Trade() executed")
 

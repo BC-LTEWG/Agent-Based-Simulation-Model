@@ -151,11 +151,11 @@ def plot_outputs(time, outputs, product_labels, equilibrium_time):
     plt.savefig("graphs/Output Trajectories for All 26 Commodities.png", dpi=300)
     plt.close()
 
-def plot_averages(time, avg_p, avg_q, equilibrium_time):
+def plot_averages(time, avg_price, avg_output, equilibrium_time):
     # 3. Plot average prices + average outputs 
     plt.figure(figsize=(10, 6))
-    plt.plot(time, avg_p, label="Average Price", color="gold")
-    plt.plot(time, avg_q, label="Average Output", color="black")
+    plt.plot(time, avg_price, label="Average Price", color="gold")
+    plt.plot(time, avg_output, label="Average Output", color="black")
 
     if equilibrium_time is not None:
         plt.axvline(x=equilibrium_time, color="red", linestyle="--",
@@ -177,8 +177,8 @@ def plot_graphs(traj, t, equilibrium_time):
     prices = np.array(traj["p"])
     outputs = np.array(traj["q"])
 
-    avg_p = np.mean(prices, axis=1)
-    avg_q = np.mean(outputs, axis=1)
+    avg_price = np.mean(prices, axis=1)
+    avg_output = np.mean(outputs, axis=1)
 
     # Use continuous time array t for x-axis
     time = np.array(t)
@@ -188,7 +188,7 @@ def plot_graphs(traj, t, equilibrium_time):
 
     plot_prices(time, prices, product_labels, equilibrium_time)
     plot_outputs(time, outputs, product_labels, equilibrium_time)
-    plot_averages(time, avg_p, avg_q, equilibrium_time)
+    plot_averages(time, avg_price, avg_output, equilibrium_time)
     
 def export_trajectories_with_equilibrium(traj, t, equilibrium_time,
                                          filename="graphs/trajectories_with_equilibrium.csv"):
