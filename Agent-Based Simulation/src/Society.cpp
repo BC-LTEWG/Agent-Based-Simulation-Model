@@ -67,7 +67,7 @@ void Society::set_initial_products() {
         products.push_back(new_machine);
         product_to_index[new_machine] = i;
     }
-    for (Product * product: goods) {
+    for (Product * product: products) {
         product->set_inputs(goods);
         product->set_machines(machines);
     }
