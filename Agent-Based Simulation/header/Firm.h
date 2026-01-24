@@ -55,9 +55,6 @@ struct DemandSignal {
 
 class Firm : public Agent {
   public:
-    std::vector<Machine*> machines;
-    std::vector<Person*> workers;
-	
 	Firm();
     Firm(std::unordered_set<Product *> initial_catalog);
     void on_time_step() override;
@@ -71,6 +68,9 @@ class Firm : public Agent {
     void receive_shipment(Order * order);
 
   protected:
+    std::vector<Machine*> machines;
+    std::vector<Person*> workers;
+	
     std::vector<Producer *> suppliers;
     std::unordered_map<Product *, int> inventory;
     std::unordered_set<Product *> catalog;
@@ -96,7 +96,11 @@ class Firm : public Agent {
 			           std::vector<Person::Ability>& required_abilities,
 					   float productivity);
 	int predict_workers_needed(Order * order);
-	void assign_workers_by_suitability_threshold(Plan * draft_plan, std::vector<Person::Ability>& required_abilities, double suitability_threshold);
+    void assign_workers_by_suitability_threshold(
+            Plan * draft_plan,
+            std::vector<Person::Ability>& required_abilities,
+            double suitability_threshold
+            );
 	int predict_turnaround_time(Order * order, double total_suitability); 
 	int predict_labor_hours(Order * order, double total_suitability);
 	void assign_plan_dependent_fields(Plan * draft_plan, std::vector<Person::Ability>& required_abilities);
