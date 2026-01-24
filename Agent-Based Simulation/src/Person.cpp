@@ -43,7 +43,7 @@ Person::Person(Society * society):
                 );
         static std::normal_distribution<>
             dist(1, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
-        for (Product * p : society->get_products()) {
+        for (Product * p : society->get_goods()) {
             purchase_frequencies[p] =
                 p->mean_consumption_frequency * std::abs(dist(Sim::gen));
         }

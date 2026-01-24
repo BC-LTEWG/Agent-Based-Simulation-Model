@@ -16,6 +16,7 @@ class Producer;
 class Society : public Agent {
     public:
         static Society * get_instance();
+        std::vector<Product *>& get_goods();
         std::vector<Product *>& get_products();
         std::vector<Distributor *>& get_distributors();
         std::vector<Person *>& get_unemployed_people();
@@ -40,9 +41,10 @@ class Society : public Agent {
         std::vector<Producer *> producers;
         std::unordered_map<Product *, std::vector<Distributor *>>
             product_to_distributors;
-        std::vector<Product *> products;
+        std::vector<Product *> goods;
         std::unordered_map<Product *, std::size_t> product_to_index;
         std::vector<Machine *> machines;
+        std::vector<Product *> products;
         std::vector<Distributor *> distributors;
         int current_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
 		int current_work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
