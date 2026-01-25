@@ -10,6 +10,7 @@ FLAGS = -Wall -Iheader -std=c++17
 
 ${APP} : ${BUILD_DIR}/Product.o \
 	${BUILD_DIR}/Machine.o \
+	${BUILD_DIR}/ConsumerGood.o \
 	${BUILD_DIR}/Person.o \
 	${BUILD_DIR}/Firm.o \
 	${BUILD_DIR}/Producer.o \
@@ -20,31 +21,34 @@ ${APP} : ${BUILD_DIR}/Product.o \
 	${SRC_DIR}/main.cpp
 	g++ ${FLAGS} $^ -o $@
 
-${BUILD_DIR}/Product.o : ${SRC_DIR}/Product.cpp ${HDR_DIR}/Product.h
+${BUILD_DIR}/Product.o : ${SRC_DIR}/Product.cpp ${HDR_DIR}/Product.h ${HDR_DIR}/Constants.h
 	g++ ${FLAGS} -c $< -o $@
 
-${BUILD_DIR}/Machine.o : ${SRC_DIR}/Machine.cpp ${HDR_DIR}/Machine.h
+${BUILD_DIR}/Machine.o : ${SRC_DIR}/Machine.cpp ${HDR_DIR}/Machine.h ${HDR_DIR}/Constants.h
 	g++ ${FLAGS} -c $< -o $@
 
-${BUILD_DIR}/Person.o : ${SRC_DIR}/Person.cpp ${HDR_DIR}/Person.h
+${BUILD_DIR}/ConsumerGood.o : ${SRC_DIR}/ConsumerGood.cpp ${HDR_DIR}/ConsumerGood.h ${HDR_DIR}/Constants.h
 	g++ ${FLAGS} -c $< -o $@
 
-${BUILD_DIR}/Firm.o : ${SRC_DIR}/Firm.cpp ${HDR_DIR}/Firm.h
+${BUILD_DIR}/Person.o : ${SRC_DIR}/Person.cpp ${HDR_DIR}/Person.h ${HDR_DIR}/Constants.h
 	g++ ${FLAGS} -c $< -o $@
 
-${BUILD_DIR}/Producer.o : ${SRC_DIR}/Producer.cpp ${HDR_DIR}/Producer.h
+${BUILD_DIR}/Firm.o : ${SRC_DIR}/Firm.cpp ${HDR_DIR}/Firm.h ${HDR_DIR}/Constants.h
 	g++ ${FLAGS} -c $< -o $@
 
-${BUILD_DIR}/Distributor.o : ${SRC_DIR}/Distributor.cpp ${HDR_DIR}/Distributor.h
+${BUILD_DIR}/Producer.o : ${SRC_DIR}/Producer.cpp ${HDR_DIR}/Producer.h ${HDR_DIR}/Constants.h
 	g++ ${FLAGS} -c $< -o $@
 
-${BUILD_DIR}/PriceController.o : ${SRC_DIR}/PriceController.cpp ${HDR_DIR}/PriceController.h
+${BUILD_DIR}/Distributor.o : ${SRC_DIR}/Distributor.cpp ${HDR_DIR}/Distributor.h ${HDR_DIR}/Constants.h
 	g++ ${FLAGS} -c $< -o $@
 
-${BUILD_DIR}/Society.o : ${SRC_DIR}/Society.cpp ${HDR_DIR}/Society.h
+${BUILD_DIR}/PriceController.o : ${SRC_DIR}/PriceController.cpp ${HDR_DIR}/PriceController.h ${HDR_DIR}/Constants.h
 	g++ ${FLAGS} -c $< -o $@
 
-${BUILD_DIR}/Sim.o : ${SRC_DIR}/Sim.cpp ${HDR_DIR}/Sim.h
+${BUILD_DIR}/Society.o : ${SRC_DIR}/Society.cpp ${HDR_DIR}/Society.h ${HDR_DIR}/Constants.h
+	g++ ${FLAGS} -c $< -o $@
+
+${BUILD_DIR}/Sim.o : ${SRC_DIR}/Sim.cpp ${HDR_DIR}/Sim.h ${HDR_DIR}/Constants.h
 	g++ ${FLAGS} -c $< -o $@
 
 TEST_DEPS_RAW = $(wildcard ${SRC_DIR}/*.cpp)
