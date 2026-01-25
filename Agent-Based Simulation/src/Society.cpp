@@ -3,6 +3,7 @@
 #include <Eigen/Eigenvalues>
 #include <iostream>
 #include <numeric>
+#include <sstream>
 #include <stdexcept>
 #include <unordered_map>
 
@@ -22,21 +23,18 @@ Society * Society::get_instance() {
 
 Society::Society() {
     set_initial_products();
-    // note: no way to assign products to producers or suppliers
-    // to distributors yet
     for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
-        Producer * producer = new Producer({products[i %
+        Producer * producer = new Producer({goods[i %
                 STARTING_NUM_PRODUCTS]});
         producers.push_back(producer);
         firms.push_back(producer);
     }
     for (int i = 0; i < STARTING_NUM_DISTRIBUTORS; i++) {
         Distributor * distributor =
-            new Distributor({products[i % STARTING_NUM_PRODUCTS]});
+            new Distributor({goods[i % STARTING_NUM_PRODUCTS]});
         distributors.push_back(distributor);
         firms.push_back(distributor);
     }
-    // add suppliers to firms
     for (Firm * firm : firms) {
         for (Producer * producer : producers) {
             if (producer != firm) {
@@ -44,7 +42,7 @@ Society::Society() {
             }
         }
     }
-    // people MUST come after products and distributors are created
+    // People MUST come after products and distributors are created.
     for (int i = 0; i < STARTING_NUM_PEOPLE; i++) {
         birth_person();	
     }
@@ -54,6 +52,7 @@ void Society::set_initial_products() {
     std::size_t i = 0;
     for (; i < STARTING_NUM_PRODUCTS; ++i) {
         Product * new_product = new Product("Product " + std::to_string(i));
+        goods.push_back(new_product);
         products.push_back(new_product);
         product_to_index[new_product] = i;
     }
@@ -69,7 +68,7 @@ void Society::set_initial_products() {
         product_to_index[new_machine] = i;
     }
     for (Product * product: products) {
-        product->set_inputs(products);
+        product->set_inputs(goods);
         product->set_machines(machines);
     }
     set_product_prices();
@@ -156,8 +155,10 @@ void Society::set_product_prices() {
     }
     Eigen::VectorXd values = get_leontief_function(A, l);
     for (std::size_t i = 0; i < dim; ++i) {
-        if (values(i) < 0.0) {
-            throw std::domain_error("Value < 0.");
+        if (values(i) <= 0.0) {
+            std::stringstream message;
+            message << "Value of item " << i << " <= 0.";
+            throw std::domain_error(message.str());
         }
         products[i]->price_per_unit = values(i);
     }
@@ -165,6 +166,10 @@ void Society::set_product_prices() {
 
 std::vector<Product *>& Society::get_products() {
     return products;
+}
+
+std::vector<Product *>& Society::get_goods() {
+    return goods;
 }
 
 std::vector<Distributor *>& Society::get_distributors() {

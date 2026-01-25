@@ -13,9 +13,20 @@
 Producer::Producer() : Firm() {}
 
 Producer::Producer(std::unordered_set<Product *> initial_catalog) :
-    Firm(initial_catalog) {
-    for (Product * p : get_products_to_reorder()) {
-        inventory[p] = get_reorder_threshold(p) * FIRM_INITIAL_INVENTORY_MULTIPLIER;
+    Firm(initial_catalog)
+{
+    std::unordered_set<Machine *> initial_machines;
+    for (Product * product : initial_catalog) {
+        for (Machine * machine : product->machines_needed) {
+            initial_machines.insert(machine);
+        }
+    }
+    for (Machine * machine : initial_machines) {
+        machines.push_back(machine);
+    }
+    for (Product * product : get_products_to_reorder()) {
+        inventory[product] =
+            get_reorder_threshold(product) * FIRM_INITIAL_INVENTORY_MULTIPLIER;
     }
 }
 

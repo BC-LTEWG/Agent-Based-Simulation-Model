@@ -62,9 +62,9 @@ void Distributor::sell_goods(Product& product, int quantity, Person * person) {
 }
 
 bool Distributor::is_overproduced(Product* product) {
-    for(auto& products : plans_in_progress) {
-        if(products->order->product == product) {
-            return products->order->quantity > PRODUCTION_THRESHOLD * products->order->quantity;
+    for(auto& goods : plans_in_progress) {
+        if(goods->order->product == product) {
+            return goods->order->quantity > PRODUCTION_THRESHOLD * goods->order->quantity;
         }
     }
     return false;
