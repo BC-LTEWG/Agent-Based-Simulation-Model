@@ -9,6 +9,7 @@
 
 #define PRODUCTION_THRESHOLD 1.5
 
+struct Plan;
 struct Product;
 class Distributor;
 class Person;
@@ -16,8 +17,8 @@ class Producer;
 
 class Distributor : public Firm {
   public:
-    Distributor();
-    Distributor(std::unordered_set<Product *> initial_catalog);
+    Distributor(Society * society);
+    Distributor(Society * society, std::unordered_set<Product *> initial_catalog);
     void on_time_step() override;
 
     double get_output_ratio(Product& product);
@@ -27,4 +28,5 @@ class Distributor : public Firm {
 
   private:
     std::unordered_set<Product *> get_products_to_reorder() override;
+    std::unordered_map<Product *, Plan *> product_to_plan;
 };

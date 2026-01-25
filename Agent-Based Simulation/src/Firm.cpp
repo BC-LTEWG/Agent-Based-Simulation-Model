@@ -13,11 +13,12 @@
 #include "Sim.h"
 #include "Society.h"
 
-Firm::Firm() {}
+Firm::Firm(Society * society) : society{society} {}
 
-Firm::Firm(std::unordered_set<Product *> initial_catalog) :
-    catalog(initial_catalog) {
-}
+Firm::Firm(Society * society, std::unordered_set<Product *> initial_catalog) :
+    society{society},
+    catalog(initial_catalog)
+{}
 
 void Firm::on_time_step() {
     apply_demand_window();
@@ -168,7 +169,7 @@ int Firm::predict_workers_needed(Order * order) {
             order->quantity *
             order->product->living_labor_per_unit *
             DAY /
-            Society::get_instance()->get_current_work_hours_daily() /
+            society->get_current_work_hours_daily() /
             order->requested_turnaround_time
             );
 }
@@ -199,7 +200,7 @@ void Firm::assign_workers_by_suitability_threshold(
     }
     for (
             Person * unemployed_person :
-            Society::get_instance()->get_unemployed_people()
+            society->get_unemployed_people()
         ) {    
         if (draft_plan->workers.size() >= max_workers) {
             break;
@@ -219,7 +220,7 @@ int Firm::predict_turnaround_time(Order * order, double total_suitability) {
             order->product->living_labor_per_unit *
             DAY /
             total_suitability /
-            Society::get_instance()->get_current_work_hours_daily()
+            society->get_current_work_hours_daily()
             );
 }
 

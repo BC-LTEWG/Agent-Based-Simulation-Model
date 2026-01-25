@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <unordered_map>
 
+#include "ConsumerGood.h"
 #include "Distributor.h"
 #include "Firm.h"
 #include "Machine.h"
@@ -24,14 +25,14 @@ Society * Society::get_instance() {
 Society::Society() {
     set_initial_products();
     for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
-        Producer * producer = new Producer({goods[i %
+        Producer * producer = new Producer(this, {goods[i %
                 STARTING_NUM_PRODUCTS]});
         producers.push_back(producer);
         firms.push_back(producer);
     }
     for (int i = 0; i < STARTING_NUM_DISTRIBUTORS; i++) {
         Distributor * distributor =
-            new Distributor({goods[i % STARTING_NUM_PRODUCTS]});
+            new Distributor(this, {goods[i % STARTING_NUM_PRODUCTS]});
         distributors.push_back(distributor);
         firms.push_back(distributor);
     }
@@ -170,6 +171,20 @@ std::vector<Product *>& Society::get_products() {
 
 std::vector<Product *>& Society::get_goods() {
     return goods;
+}
+
+ConsumerGood * Society::get_consumer_good(Product * product) {
+    if (consumer_goods.count(product)) {
+        return consumer_goods[product];
+    } else {
+        return NULL;
+    }
+}
+
+void Society::add_consumer_good(Product * product) {
+    if (!consumer_goods.count(product)) {
+        consumer_goods[product] = new ConsumerGood(product);
+    }
 }
 
 std::vector<Distributor *>& Society::get_distributors() {
