@@ -21,3 +21,4 @@ struct Product {
 	std::vector<Person::Ability> required_abilities;
 	double mean_consumption_frequency;
 };
+

@@ -10,10 +10,13 @@
 #include "Sim.h"
 #include "Society.h"
 
-Producer::Producer() : Firm() {}
+Producer::Producer(Society * society) : Firm{society} {}
 
-Producer::Producer(std::unordered_set<Product *> initial_catalog) :
-    Firm(initial_catalog)
+Producer::Producer(
+        Society * society,
+        std::unordered_set<Product *> initial_catalog
+        ) :
+    Firm(society, initial_catalog)
 {
     std::unordered_set<Machine *> initial_machines;
     for (Product * product : initial_catalog) {
@@ -119,12 +122,12 @@ bool Producer::pursue_order(Order * order) {
 			workers.erase(it);
 		}
 		it = std::find(
-                Society::get_instance()->get_unemployed_people().begin(),
-                Society::get_instance()->get_unemployed_people().end(),
+                society->get_unemployed_people().begin(),
+                society->get_unemployed_people().end(),
                 worker
                 );
-		if (it != Society::get_instance()->get_unemployed_people().end()) {
-			Society::get_instance()->get_unemployed_people().erase(it);
+		if (it != society->get_unemployed_people().end()) {
+			society->get_unemployed_people().erase(it);
 		}
 	}
 	// move draft_plan to plans_in_progress
@@ -199,8 +202,8 @@ void Producer::execute_plans() {
 			start_plan(plan);
 		}
 		if (plan->total_hours_remaining > 0 &&
-			Sim::get_current_time_step() % DAY < Society::get_instance()->get_current_work_hours_daily() && 
-			Sim::get_current_time_step() / DAY % 7 < Society::get_instance()->get_current_work_days_weekly()) {
+			Sim::get_current_time_step() % DAY < society->get_current_work_hours_daily() && 
+			Sim::get_current_time_step() / DAY % 7 < society->get_current_work_days_weekly()) {
 			execute_plan(plan);
 		}
 		if (plan->total_hours_remaining == 0) {

@@ -26,10 +26,10 @@ struct Plan {
 
 	// dependent/output fields	
 	int predicted_turnaround_time;
-    double prd;
     int labor_hours;
     double raw_materials;
     double total_hours;
+    double prd;
     double m;
     int labor_hours_remaining;
     double raw_materials_remaining;
@@ -55,8 +55,8 @@ struct DemandSignal {
 
 class Firm : public Agent {
   public:
-	Firm();
-    Firm(std::unordered_set<Product *> initial_catalog);
+	Firm(Society * society);
+    Firm(Society * society, std::unordered_set<Product *> initial_catalog);
     void on_time_step() override;
 
     void initialize_inventory(std::unordered_map<Product *, int>& inventory_items);
@@ -68,6 +68,7 @@ class Firm : public Agent {
     void receive_shipment(Order * order);
 
   protected:
+    Society * society;
     std::vector<Machine*> machines;
     std::vector<Person*> workers;
 	
@@ -78,8 +79,8 @@ class Firm : public Agent {
     std::queue<DemandSignal> demand_signals;
     std::unordered_map<Product *, double> inventory_demands;
     std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
-    std::unordered_map<Product*, std::vector<Plan*>> plan_history; // unused and prob need to change later
-    std::vector<Plan*> plans_in_progress;
+    std::unordered_map<Product *, std::vector<Plan *>> plan_history; // unused and prob need to change later
+    std::vector<Plan *> plans_in_progress;
 
     Producer * send_order(Order * order);
     double get_reorder_threshold(Product * product);
