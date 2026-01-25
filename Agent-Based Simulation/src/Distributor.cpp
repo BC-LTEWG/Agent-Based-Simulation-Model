@@ -1,5 +1,7 @@
-#include <iostream>
 #include <climits>
+#include <iostream>
+
+#include "ConsumerGood.h"
 #include "Distributor.h"
 #include "Machine.h"
 #include "Person.h"
@@ -74,7 +76,12 @@ void Distributor::sell_goods(Product& product, int quantity, Person * person) {
             << " of " << quantity - available << " units. " << std::endl;
         return;
     }
-    double cost = quantity * product.price_per_unit;
+    ConsumerGood * consumer_good = society->get_consumer_good(&product);
+    if (!consumer_good) {
+        std::cerr << "No consumer good for product " << product.product_name << std::endl;
+        return;
+    }
+    double cost = quantity * consumer_good->price_per_unit;
     if (!person->charge(cost)) {
         std::cerr << "Person cannot afford " << quantity 
             << " units of " << product.product_name << " costing " 
