@@ -100,7 +100,10 @@ LTE_Import = []
 CE_Export = []
 LTE_Export = []
 
-# Placeholder function
+# Note: This trade function only handles trade on a perticular time step. 
+# If an item on the trading list can not be traded, then the shortage/surplus persists 
+# On the next time step, the trade function will be called again and attempt to resolve the 
+# previous shortage/surplus issue while the economy adjusts itself to try to satisfy its own needs 
 def Trade(ce_map, lte_map, time_step):
     """
     Called every simulation time step.
@@ -113,15 +116,47 @@ def Trade(ce_map, lte_map, time_step):
     Updates:
         CE_Import, LTE_Import, CE_Export, LTE_Export
     """
+    
+    global CE_Import, LTE_Import, CE_Export, LTE_Export
+
+    # Reset lists every timestep
+    CE_Import.clear()
+    LTE_Import.clear()
+    CE_Export.clear()
+    LTE_Export.clear()
+
+    # Convert keys to sets for fast comparison
+    ce_products = set(ce_map.keys())
+    lte_products = set(lte_map.keys())
+    
+    # CE has but LTE doesn't - LTE must import
+    for name in ce_products - lte_products:
+        LTE_Import.append(name)
+
+    # LTE has but CE doesn't - CE must import
+    for name in lte_products - ce_products:
+        CE_Import.append(name)
+        
+    for name in ce_map:                     # loop over product names
+        product = ce_map[name]             # get the CapitalistProduct object
+
+        # CE shortage detection 
+        if product.output < product.eq_output:
+            if name not in CE_Import:
+                CE_Import.append(name)
+
+        # CE Surplus detection 
+        elif product.output > product.eq_output:
+            CE_Export.append(name)
 
     # TODO:
-    # 1. Check which products CE is missing - add to CE_Import
-    # 2. Check which products LTE is missing - add to LTE_Import
-    # 3. Detect shortages (CE) - add to CE_Import
+    # 1. Check which products CE is missing - add to CE_Import - implemented 
+    # 2. Check which products LTE is missing - add to LTE_Import - implemented 
+    # 3. Detect shortages (CE) - add to CE_Import - implemented 
     # 4. Detect social needs (LTE) - add to LTE_Import
-    # 5. Detect surpluses (CE) - add to CE_Export
+    # 5. Detect surpluses (CE) - add to CE_Export - implemented 
     # 6. Detect surpluses (LTE) - add to LTE_Export
-    # 7. Remove items when conditions disappear
+    # 7. Remove items when conditions disappear - implemented (by the design)
     # 8. Use a trade algorithm to determine which product should be traded for what, how much it should be traded, and for what price 
     
     # Questions:
