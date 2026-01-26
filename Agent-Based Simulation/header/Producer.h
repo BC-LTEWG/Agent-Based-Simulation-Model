@@ -21,7 +21,7 @@ class Producer : public Firm {
     void on_time_step() override;
 
     bool can_produce(Product * product);
-	int draft_order(Order * order);
+	int draft_plan(Order * order);
 	bool drop_order(Order * order);
 	bool pursue_order(Order * order);
 

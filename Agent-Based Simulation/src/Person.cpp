@@ -5,8 +5,9 @@
 #include <random>
 
 #include "Constants.h"
-#include "Firm.h"
 #include "Distributor.h"
+#include "Firm.h"
+#include "Logger.h"
 #include "Person.h"
 #include "Product.h"
 #include "Sim.h"
@@ -61,7 +62,7 @@ void Person::train(std::unordered_map<Person::Ability, double> target_abilities)
 }
 
 void Person::register_hours_worked(double hours_worked) {
-    std::cout << "Person paid " << hours_worked << " labor hours." << std::endl;
+    Logger::log_person_payment(hours_worked);
     account += hours_worked;
 }
 
@@ -111,7 +112,7 @@ bool Person::will_shop() {
 }
 
 void Person::shop() {
-    std::cout << "Person shopping event." << std::endl;
+    Logger::log_event("Person shopping event.");
     static std::normal_distribution<> dist(1, PERSON_SHOPPING_MULTIPLIER_STDDEV);
     std::unordered_map<Product *, double> ideal_purchase_quantities;
     double total_price = 0.0;
@@ -125,8 +126,7 @@ void Person::shop() {
                 ideal_purchase_quantities[p.first]);
         if (affordable_quantity > 0) {
             purchase_good(p.first, affordable_quantity);
-            std::cout << "Person shopping for " << affordable_quantity << " of "
-                    << p.first->product_name << std::endl;
+            Logger::log_person_shopping(p.first->product_name, affordable_quantity);
         }
     }
 }
@@ -158,12 +158,7 @@ void Person::on_time_step() {
 	if (will_shop()) { shop(); }
 	if (will_retire()) { retire(); }
 	update_health_status();
-    std::cout << "At time step " << Sim::get_current_time_step() 
-              << ", Person has:" << std::endl;
-    std::cout << "\tAge: " << age << std::endl;
-    std::cout << "\tAccount balance: " << account << std::endl;
-    std::cout << "\tHealth status: " << 
-      (health_status == HEALTHY ? "Healthy" : "Unhealthy") << std::endl;
+    Logger::log_person_state(age, account, health_status);
 }
 
 void Person::set_firm(Firm * workplace) {
