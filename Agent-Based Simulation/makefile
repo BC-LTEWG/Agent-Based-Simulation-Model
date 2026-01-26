@@ -6,7 +6,7 @@ TEST_DIR = test
 TEST_SRCS = $(wildcard ${TEST_DIR}/*.cpp)
 TEST_EXECS = $(patsubst %.cpp, %.test, ${TEST_SRCS})
 APP = ${BIN_DIR}/sim
-FLAGS = -Wall -Iheader -std=c++17
+FLAGS = -Wall -Iheader -std=c++17 -DLOG_DBG=1
 
 ${APP} : ${BUILD_DIR}/Product.o \
 	${BUILD_DIR}/Machine.o \
@@ -17,6 +17,7 @@ ${APP} : ${BUILD_DIR}/Product.o \
 	${BUILD_DIR}/Distributor.o \
 	${BUILD_DIR}/PriceController.o \
 	${BUILD_DIR}/Society.o \
+	${BUILD_DIR}/Logger.o \
 	${BUILD_DIR}/Sim.o \
 	${SRC_DIR}/main.cpp
 	g++ ${FLAGS} $^ -o $@
@@ -46,6 +47,9 @@ ${BUILD_DIR}/PriceController.o : ${SRC_DIR}/PriceController.cpp ${HDR_DIR}/Price
 	g++ ${FLAGS} -c $< -o $@
 
 ${BUILD_DIR}/Society.o : ${SRC_DIR}/Society.cpp ${HDR_DIR}/Society.h ${HDR_DIR}/Constants.h
+	g++ ${FLAGS} -c $< -o $@
+
+${BUILD_DIR}/Logger.o : ${SRC_DIR}/Logger.cpp ${HDR_DIR}/Logger.h ${HDR_DIR}/Constants.h
 	g++ ${FLAGS} -c $< -o $@
 
 ${BUILD_DIR}/Sim.o : ${SRC_DIR}/Sim.cpp ${HDR_DIR}/Sim.h ${HDR_DIR}/Constants.h

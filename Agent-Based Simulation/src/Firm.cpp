@@ -6,6 +6,7 @@
 #include "Constants.h"
 #include "Distributor.h"
 #include "Firm.h"
+#include "Logger.h"
 #include "Person.h"
 #include "PriceController.h"
 #include "Producer.h"
@@ -57,9 +58,14 @@ void Firm::receive_shipment(Order * order) {
     }
     inventory[order->product] += order->quantity;
     product_to_outbound_orders[order->product].erase(order);
-    std::cout << "Received " << order->quantity << " units of " 
-        << order->product->product_name << ". New inventory level: " 
-        << inventory[order->product] << std::endl;
+    Logger::log_firm_shipment_received(
+            order->product->product_name,
+            order->quantity
+            );
+    Logger::log_firm_inventory_level(
+            order->product->product_name,
+            inventory[order->product]
+            );
 }
 
 Producer * Firm::send_order(Order * order) {
@@ -67,10 +73,10 @@ Producer * Firm::send_order(Order * order) {
     Producer * chosen_producer = nullptr;
 
     for (Producer * producer : suppliers) {
-        int draft_order_time = producer->draft_order(order);
-        if (draft_order_time != DRAFT_ORDER_REJECTED &&
-                draft_order_time < order_time) {
-            order_time = draft_order_time;
+        int draft_plan_time = producer->draft_plan(order);
+        if (draft_plan_time != DRAFT_ORDER_REJECTED &&
+                draft_plan_time < order_time) {
+            order_time = draft_plan_time;
             chosen_producer = producer;
         }
     }
@@ -110,22 +116,16 @@ void Firm::reorder_product_to_threshold(
             ((int) std::ceil((
                 threshold - static_cast<double>(pending_inventory)
             ) / product->order_size));
-        std::cout << "Reordering " << discrepancy << " units of " 
-            << product->product_name << std::endl;
-
+        Logger::log_firm_reorder(product->product_name, discrepancy);
         Order * order = new Order{product, discrepancy, this,
             (int) (pending_inventory / threshold * FIRM_STOCKPILE_DURATION),
             Order::ORDER_REQUESTED};
-
         Producer * chosen_producer = send_order(order);
-        if (chosen_producer) {
-            std::cout << "Order accepted. Requested turnaround time: " 
-                << order->requested_turnaround_time << " hours" <<
-                std::endl;
-        } else {
-            std::cout << "No producer found for product: " 
-                << product->product_name << std::endl;
-        }
+        Logger::log_firm_accepted_order(
+                product->product_name,
+                order->requested_turnaround_time,
+                chosen_producer != NULL
+                );
     }
 }
 

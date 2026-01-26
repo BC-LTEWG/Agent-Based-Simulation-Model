@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "Distributor.h"
+#include "Logger.h"
 #include "PriceController.h"
 #include "Machine.h"
 #include "Person.h"
@@ -36,24 +37,8 @@ Producer::Producer(
 void Producer::on_time_step() {
     Firm::on_time_step();
 	execute_plans();
-    std::cout << "At time step " << Sim::get_current_time_step() 
-            << ", Producer has these plans in progress:" << std::endl;
-    for (Plan * plan : plans_in_progress) {
-        std::cout << "Plan for order of " << plan->order->quantity << " units of "
-            << plan->order->product->product_name << std::endl;
-        std::cout << "\tTraining time remaining: " << plan->training_time_remaining 
-            << std::endl;
-        std::cout << "\tTotal hours: " << plan->total_hours_remaining << "/" << 
-            plan->total_hours << std::endl;
-        std::cout << "\tLabor hours: " << plan->labor_hours_remaining << "/" << 
-            plan->labor_hours << std::endl;
-        std::cout << "\tRaw materials: " << plan->raw_materials_remaining << "/" << 
-            plan->raw_materials << std::endl;
-        std::cout << "\tPredicted turnaround time: " << 
-            plan->predicted_turnaround_time << std::endl;
-        std::cout << "\tMachine account: " << plan->m << std::endl;
-        std::cout << "\tOutgoing units consumed: " << 
-            plan->outgoing_units_consumed << std::endl;
+    if (plans_in_progress.size()) {
+        Logger::log_producer_plans(plans_in_progress);
     }
 }
 
@@ -61,9 +46,8 @@ bool Producer::can_produce(Product * product) {
     return catalog.count(product);
 }
 
-int Producer::draft_order(Order * order) {
-    std::cout << "Drafting order for " << order->quantity << " units of "
-         << order->product->product_name << std::endl;
+int Producer::draft_plan(Order * order) {
+    Logger::log_producer_draft_plan(order->product->product_name, order->quantity);
     bool enough_inputs = true;
     for (auto &p : order->product->inputs_per_unit) {
         if (inventory[p.first] < p.second * order->quantity) {
@@ -98,8 +82,7 @@ int Producer::draft_order(Order * order) {
 }
 
 bool Producer::drop_order(Order * order) {
-    std::cout << "Dropping order for " << order->quantity << " units of "
-         << order->product->product_name << std::endl;
+    Logger::log_producer_dropped_order(order->product->product_name, order->quantity);
 	if (order_to_draft_plan[order] == nullptr) {
 		return false;
 	}
@@ -133,15 +116,7 @@ bool Producer::pursue_order(Order * order) {
 	// move draft_plan to plans_in_progress
 	order_to_draft_plan[order] = nullptr;
 	plans_in_progress.push_back(draft_plan);
-
-    std::cout << "Producer " << "is pursuing order of "
-              << order->quantity << " units of " 
-              << order->product->product_name << " with "
-              << draft_plan->workers.size() << " workers. "
-              << " Predicted turnaround time: "
-              << draft_plan->predicted_turnaround_time << " hours."
-              << std::endl;
-
+    Logger::log_producer_pursued_plan(draft_plan);
 	return true;
 }
 

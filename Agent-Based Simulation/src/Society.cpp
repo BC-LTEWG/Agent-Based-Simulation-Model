@@ -215,7 +215,6 @@ void Society::retire_person(Person * person) {
 }
 
 void Society::on_time_step() {
-    std::cout << "Society::on_time_step" << std::endl;
     for (Person * person : people) {
         person->on_time_step();
     }
