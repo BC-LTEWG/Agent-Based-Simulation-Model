@@ -2,7 +2,7 @@
 Persons are the smallest agents in the Society, and have 3 primary mechanisms, listed below.
 
 ## Aging and Retirement
-Persons are not instantiated at the moment they are born, but rather at a constant `INITIAL_AGE`, in timesteps of hours. We assume that before this point, they neither consume labor hours (buying goods) nor produce them (work). 
+Persons are not instantiated at the moment they are born, but rather at a constant `INITIAL_AGE`, in time steps of hours. We assume that before this point, they neither consume labor hours (buying goods) nor produce them (work). 
  - Ex: If `INITIAL_AGE = 157680`, they effectively "enter" the society at 18 years of age.
 
 Retiring consists of a Person being removed from Society. On every timestep after instantiation, Persons have a probability of `RANDOM_RETIREMENT_CHANCE` to retire before `GUARANTEED_RETIREMENT_AGE`. On attaining `GUARANTEED_RETIREMENT_AGE`, they automatically retire. 
