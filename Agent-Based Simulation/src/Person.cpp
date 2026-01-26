@@ -5,6 +5,7 @@
 #include <random>
 
 #include "Constants.h"
+#include "ConsumerGood.h"
 #include "Distributor.h"
 #include "Firm.h"
 #include "Logger.h"
@@ -48,6 +49,7 @@ Person::Person(Society * society):
             purchase_frequencies[p] =
                 p->mean_consumption_frequency * std::abs(dist(Sim::gen));
         }
+        account = society->get_initial_account();
     }
 
 std::unordered_map<Person::Ability, double>& Person::get_abilities() {
@@ -119,7 +121,8 @@ void Person::shop() {
     for (std::pair<Product *, double> p : purchase_frequencies) {
         ideal_purchase_quantities[p.first] =
             p.second * PERSON_SHOPPING_PERIOD * std::abs(dist(Sim::gen));
-        total_price += ideal_purchase_quantities[p.first] * p.first->price_per_unit;
+        total_price += ideal_purchase_quantities[p.first] * 
+            Society::get_instance()->get_consumer_good(p.first)->price_per_unit;
     }
     for (std::pair<Product *, double> p : ideal_purchase_quantities) {
         int affordable_quantity = (int) (account / total_price *
