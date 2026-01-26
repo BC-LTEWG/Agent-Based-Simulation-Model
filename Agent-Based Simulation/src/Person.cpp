@@ -122,7 +122,7 @@ void Person::shop() {
         ideal_purchase_quantities[p.first] =
             p.second * PERSON_SHOPPING_PERIOD * std::abs(dist(Sim::gen));
         total_price += ideal_purchase_quantities[p.first] * 
-            Society::get_instance()->get_consumer_good(p.first)->price_per_unit;
+            society->get_consumer_good(p.first)->price_per_unit;
     }
     for (std::pair<Product *, double> p : ideal_purchase_quantities) {
         int affordable_quantity = (int) (account / total_price *

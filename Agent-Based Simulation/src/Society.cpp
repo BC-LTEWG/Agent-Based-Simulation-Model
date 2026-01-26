@@ -209,7 +209,7 @@ void Society::set_initial_account() {
     for (Product * product : products) {
         ConsumerGood * consumer_good = get_consumer_good(product);
         if (consumer_good) {
-            initial_account += consumer_good->price_per_unit*
+            initial_account += consumer_good->price_per_unit *
                 consumer_good->mean_consumption_frequency *
                 PERSON_SHOPPING_PERIOD; 
         }
