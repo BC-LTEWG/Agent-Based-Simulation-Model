@@ -54,11 +54,11 @@ void Distributor::on_time_step() {
 void Distributor::sell_goods(Product& product, int quantity, Person * person) {
     add_demand_signal(&product, quantity);
 
-    if (!inventory[&product]) {
+    auto inventory_it = inventory.find(&product);
+    int available = inventory_it == inventory.end() ? 0 : inventory_it->second;
+    if (inventory_it == inventory.end()) {
         std::cerr << "Inventory has no such product: " << product.product_name << std::endl;
-        return;
     }
-    int available = inventory[&product];
     int remainder = 0;
     int sell_quantity = std::min(available, quantity);
     if (available < quantity) {
