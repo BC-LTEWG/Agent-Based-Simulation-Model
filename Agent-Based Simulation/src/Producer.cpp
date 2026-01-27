@@ -142,7 +142,9 @@ void Producer::end_plan(Plan * plan) {
 	// simplification: product shipped instantly
 	inventory[plan->order->product] -= plan->order->quantity;
 	plan->order->customer->receive_shipment(plan->order);
-    plan->prd += plan->order->product->price_per_unit * plan->order->quantity;
+	double cost = plan->order->product->price_per_unit * plan->order->quantity;
+	plan->raw_materials -= cost;
+	plan->prd += cost;
     PriceController::update_price(plan);
 }
 
