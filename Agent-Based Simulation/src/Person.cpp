@@ -1,11 +1,13 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cmath>
+#include <iostream>
 #include <random>
 
 #include "Constants.h"
-#include "Firm.h"
 #include "Distributor.h"
+#include "Firm.h"
+#include "Logger.h"
 #include "Person.h"
 #include "Product.h"
 #include "Sim.h"
@@ -42,7 +44,7 @@ Person::Person(Society * society):
                 );
         static std::normal_distribution<>
             dist(1, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
-        for (Product * p : society->get_products()) {
+        for (Product * p : society->get_goods()) {
             purchase_frequencies[p] =
                 p->mean_consumption_frequency * std::abs(dist(Sim::gen));
         }
@@ -60,11 +62,16 @@ void Person::train(std::unordered_map<Person::Ability, double> target_abilities)
 }
 
 void Person::register_hours_worked(double hours_worked) {
+    Logger::log_person_payment(hours_worked);
     account += hours_worked;
 }
 
-void Person::charge(double cost) {
+bool Person::charge(double cost) {
+    if (cost > account) {
+        return false;
+    }
     account -= cost; 
+    return true;
 }
 
 std::unordered_map<Product*, double>& Person::get_purchase_frequencies() { 
@@ -105,11 +112,21 @@ bool Person::will_shop() {
 }
 
 void Person::shop() {
+    Logger::log_event("Person shopping event.");
     static std::normal_distribution<> dist(1, PERSON_SHOPPING_MULTIPLIER_STDDEV);
-    for (auto &p : purchase_frequencies) {
-        int quantity = std::round(p.second * PERSON_SHOPPING_PERIOD * std::abs(dist(Sim::gen)));
-        if (quantity > 0) {
-            purchase_good(p.first, quantity);
+    std::unordered_map<Product *, double> ideal_purchase_quantities;
+    double total_price = 0.0;
+    for (std::pair<Product *, double> p : purchase_frequencies) {
+        ideal_purchase_quantities[p.first] =
+            p.second * PERSON_SHOPPING_PERIOD * std::abs(dist(Sim::gen));
+        total_price += ideal_purchase_quantities[p.first] * p.first->price_per_unit;
+    }
+    for (std::pair<Product *, double> p : ideal_purchase_quantities) {
+        int affordable_quantity = (int) (account / total_price *
+                ideal_purchase_quantities[p.first]);
+        if (affordable_quantity > 0) {
+            purchase_good(p.first, affordable_quantity);
+            Logger::log_person_shopping(p.first->product_name, affordable_quantity);
         }
     }
 }
@@ -141,6 +158,7 @@ void Person::on_time_step() {
 	if (will_shop()) { shop(); }
 	if (will_retire()) { retire(); }
 	update_health_status();
+    Logger::log_person_state(age, account, health_status);
 }
 
 void Person::set_firm(Firm * workplace) {

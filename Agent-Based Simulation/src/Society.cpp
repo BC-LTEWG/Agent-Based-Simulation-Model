@@ -3,9 +3,11 @@
 #include <Eigen/Eigenvalues>
 #include <iostream>
 #include <numeric>
+#include <sstream>
 #include <stdexcept>
 #include <unordered_map>
 
+#include "ConsumerGood.h"
 #include "Distributor.h"
 #include "Firm.h"
 #include "Machine.h"
@@ -24,12 +26,12 @@ Society::Society() {
     set_initial_products();
     std::unordered_set<Product *> all_products(products.begin(), products.end());
     for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
-        Producer * producer = new Producer(all_products);
+        Producer * producer = new Producer(this, all_products);
         producers.push_back(producer);
         firms.push_back(producer);
     }
     for (int i = 0; i < STARTING_NUM_DISTRIBUTORS; i++) {
-        Distributor * distributor = new Distributor(all_products);
+        Distributor * distributor = new Distributor(this, all_products);
         distributors.push_back(distributor);
         firms.push_back(distributor);
     }
@@ -43,6 +45,7 @@ Society::Society() {
             firm->machines.push_back(machines[std::rand() % machines.size()]);
         }
     }
+    // People MUST come after products and distributors are created.
     for (int i = 0; i < STARTING_NUM_PEOPLE; i++) {
         birth_person();	
     }
@@ -52,6 +55,7 @@ void Society::set_initial_products() {
     std::size_t i = 0;
     for (; i < STARTING_NUM_PRODUCTS; ++i) {
         Product * new_product = new Product("Product " + std::to_string(i));
+        goods.push_back(new_product);
         products.push_back(new_product);
         product_to_index[new_product] = i;
     }
@@ -67,7 +71,7 @@ void Society::set_initial_products() {
         product_to_index[new_machine] = i;
     }
     for (Product * product: products) {
-        product->set_inputs(products);
+        product->set_inputs(goods);
         product->set_machines(machines);
     }
     set_product_prices();
@@ -154,8 +158,10 @@ void Society::set_product_prices() {
     }
     Eigen::VectorXd values = get_leontief_function(A, l);
     for (std::size_t i = 0; i < dim; ++i) {
-        if (values(i) < 0.0) {
-            throw std::domain_error("Value < 0.");
+        if (values(i) <= 0.0) {
+            std::stringstream message;
+            message << "Value of item " << i << " <= 0.";
+            throw std::domain_error(message.str());
         }
         products[i]->price_per_unit = values(i);
     }
@@ -163,6 +169,24 @@ void Society::set_product_prices() {
 
 std::vector<Product *>& Society::get_products() {
     return products;
+}
+
+std::vector<Product *>& Society::get_goods() {
+    return goods;
+}
+
+ConsumerGood * Society::get_consumer_good(Product * product) {
+    if (consumer_goods.count(product)) {
+        return consumer_goods[product];
+    } else {
+        return NULL;
+    }
+}
+
+void Society::add_consumer_good(Product * product) {
+    if (!consumer_goods.count(product)) {
+        consumer_goods[product] = new ConsumerGood(product);
+    }
 }
 
 std::vector<Distributor *>& Society::get_distributors() {
@@ -193,7 +217,6 @@ void Society::retire_person(Person * person) {
 }
 
 void Society::on_time_step() {
-    std::cout << "Society::on_time_step" << std::endl;
     for (Person * person : people) {
         person->on_time_step();
     }

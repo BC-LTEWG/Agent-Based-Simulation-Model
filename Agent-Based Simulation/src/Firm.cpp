@@ -6,6 +6,7 @@
 #include "Constants.h"
 #include "Distributor.h"
 #include "Firm.h"
+#include "Logger.h"
 #include "Person.h"
 #include "PriceController.h"
 #include "Producer.h"
@@ -13,9 +14,10 @@
 #include "Sim.h"
 #include "Society.h"
 
-Firm::Firm() {}
+Firm::Firm(Society * society) : society{society} {}
 
-Firm::Firm(std::unordered_set<Product *> initial_catalog) :
+Firm::Firm(Society * society, std::unordered_set<Product *> initial_catalog) :
+    society{society},
     catalog(initial_catalog)
 {}
 
@@ -56,9 +58,14 @@ void Firm::receive_shipment(Order * order) {
     }
     inventory[order->product] += order->quantity;
     product_to_outbound_orders[order->product].erase(order);
-    std::cout << "Received " << order->quantity << " units of " 
-        << order->product->product_name << ". New inventory level: " 
-        << inventory[order->product] << std::endl;
+    Logger::log_firm_shipment_received(
+            order->product->product_name,
+            order->quantity
+            );
+    Logger::log_firm_inventory_level(
+            order->product->product_name,
+            inventory[order->product]
+            );
 }
 
 Producer * Firm::send_order(Order * order) {
@@ -66,10 +73,10 @@ Producer * Firm::send_order(Order * order) {
     Producer * chosen_producer = nullptr;
 
     for (Producer * producer : suppliers) {
-        int draft_order_time = producer->draft_order(order);
-        if (draft_order_time != DRAFT_ORDER_REJECTED &&
-            draft_order_time < order_time) {
-            order_time = draft_order_time;
+        int draft_plan_time = producer->draft_plan(order);
+        if (draft_plan_time != DRAFT_ORDER_REJECTED &&
+                draft_plan_time < order_time) {
+            order_time = draft_plan_time;
             chosen_producer = producer;
         }
     }
@@ -105,25 +112,23 @@ void Firm::reorder_product_to_threshold(
         int pending_inventory
         ) {
     if (pending_inventory < threshold) {
-        int discrepancy = std::ceil(threshold - pending_inventory);
-        int units_needed = (int) std::ceil((double) (discrepancy / product->order_size)) * product->order_size;
-        std::cout << "Reordering " << units_needed << " units of " 
-            << product->product_name << std::endl;
-
-        int turnaround = threshold > 0
-            ? (int) (pending_inventory / threshold * FIRM_STOCKPILE_DURATION)
-            : 0;
-        Order * order = new Order(product, units_needed, this, turnaround);
-
+        int discrepancy = product->order_size * 
+            ((int) std::ceil((
+                threshold - static_cast<double>(pending_inventory)
+            ) / product->order_size));
+        Logger::log_firm_reorder(product->product_name, discrepancy);
+        Order * order = new Order(
+                product,
+                discrepancy,
+                this,
+                (int) (pending_inventory / threshold * FIRM_STOCKPILE_DURATION)
+                );
         Producer * chosen_producer = send_order(order);
-        if (chosen_producer) {
-            std::cout << "Order accepted. Turnaround time: " 
-                << order->requested_turnaround_time << " days" <<
-                std::endl;
-        } else {
-            std::cerr << "No producer found for product: " 
-                << product->product_name << std::endl;
-        }
+        Logger::log_firm_accepted_order(
+                product->product_name,
+                order->requested_turnaround_time,
+                chosen_producer != NULL
+                );
     }
 }
 
@@ -167,7 +172,7 @@ int Firm::predict_workers_needed(Order * order) {
             order->quantity *
             order->product->living_labor_per_unit *
             DAY /
-            Society::get_instance()->get_current_work_hours_daily() /
+            society->get_current_work_hours_daily() /
             order->requested_turnaround_time
             );
 }
@@ -198,7 +203,7 @@ void Firm::assign_workers_by_suitability_threshold(
     }
     for (
             Person * unemployed_person :
-            Society::get_instance()->get_unemployed_people()
+            society->get_unemployed_people()
         ) {    
         if (draft_plan->workers.size() >= max_workers) {
             break;
@@ -219,7 +224,7 @@ int Firm::predict_turnaround_time(Order * order, double total_suitability) {
             order->product->living_labor_per_unit *
             DAY /
             total_suitability /
-            Society::get_instance()->get_current_work_hours_daily()
+            society->get_current_work_hours_daily()
             );
 }
 

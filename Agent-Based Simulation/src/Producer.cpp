@@ -10,10 +10,13 @@
 #include "Sim.h"
 #include "Society.h"
 
-Producer::Producer() : Firm() {}
+Producer::Producer(Society * society) : Firm(society) {}
 
-Producer::Producer(std::unordered_set<Product *> initial_catalog) :
-    Firm(initial_catalog) {
+Producer::Producer(
+        Society * society,
+        std::unordered_set<Product *> initial_catalog
+        ) :
+    Firm(society, initial_catalog) {
     for (Product * product : initial_catalog) {
         for (auto& p : product->inputs_per_unit) {
             inventory[p.first] += p.second *
@@ -32,7 +35,7 @@ bool Producer::can_produce(Product * product) {
     return catalog.count(product);
 }
 
-int Producer::draft_order(Order * order) {
+int Producer::draft_plan(Order * order) {
 	bool enough_inputs = true;	
     for (auto &p : order->product->inputs_per_unit) {
         if (inventory[p.first] < p.second * order->quantity) {
@@ -141,10 +144,8 @@ void Producer::end_plan(Plan * plan) {
 	inventory[plan->order->product] += plan->order->quantity;
 	// simplification: product shipped instantly
 	inventory[plan->order->product] -= plan->order->quantity;
-	plan->order->customer->receive_shipment(plan->order);
-	double cost = plan->order->product->price_per_unit * plan->order->quantity;
-	plan->raw_materials -= cost;
-	plan->prd += cost;
+    plan->order->customer->receive_shipment(plan->order);
+    plan->prd += plan->order->product->price_per_unit * plan->order->quantity;
     PriceController::update_price(plan);
 }
 
