@@ -45,6 +45,19 @@ struct Order {
     Firm * customer;
     int requested_turnaround_time;
     OrderStatus status;
+    
+    Order(Product * p,
+          int q,
+          Firm * c,
+          int turnaround)
+        : product(p),
+          quantity(q),
+          customer(c),
+          requested_turnaround_time(turnaround),
+          status(ORDER_REQUESTED)
+    {}
+
+
 };
 
 struct DemandSignal {

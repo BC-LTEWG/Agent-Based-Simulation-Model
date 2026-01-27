@@ -113,8 +113,7 @@ void Firm::reorder_product_to_threshold(
         int turnaround = threshold > 0
             ? (int) (pending_inventory / threshold * FIRM_STOCKPILE_DURATION)
             : 0;
-        Order * order = new Order{product, discrepancy, {this}, turnaround,
-            Order::ORDER_REQUESTED};
+        Order * order = new Order(product, units_needed, this, turnaround);
 
         Producer * chosen_producer = send_order(order);
         if (chosen_producer) {

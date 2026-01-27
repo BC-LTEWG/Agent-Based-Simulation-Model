@@ -17,7 +17,6 @@ class Distributor : public Firm {
     Distributor();
     Distributor(std::unordered_set<Product *> initial_catalog);
     void on_time_step() override;
-
     void sell_goods(Product& product, int quantity, Person * person);
 
   private:

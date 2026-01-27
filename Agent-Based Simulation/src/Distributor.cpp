@@ -1,5 +1,6 @@
 #include <iostream>
 #include <climits>
+#include "Constants.h"
 #include "Distributor.h"
 #include "Machine.h"
 #include "Person.h"
@@ -41,13 +42,19 @@ void Distributor::sell_goods(Product& product, int quantity, Person * person) {
         inventory[&product] -= quantity;
     } else {
         inventory[&product] = 0;
-        remainder = quantity - available;
+        remainder = quantity - available; 
         std::cout << "Shortfall in product " << product.product_name 
             << " of " << remainder << " units. " << std::endl;
+        
+        int turnaround_time = product.living_labor_per_unit * (quantity);
+        std::unique_ptr<Order> new_order =
+            std::make_unique<Order>(&product, quantity, this, turnaround_time); 
+        
     }
     double cost = (available - remainder) * product.price_per_unit;
     person->charge(cost);
 }
+
 
 
 
