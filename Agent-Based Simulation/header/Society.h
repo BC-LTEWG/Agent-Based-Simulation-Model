@@ -10,6 +10,7 @@ struct Product;
 class Distributor;
 class Firm;
 struct Machine;
+struct ConsumerGood;
 class Person;
 class Producer;
 
@@ -18,11 +19,14 @@ class Society : public Agent {
         static Society * get_instance();
         std::vector<Product *>& get_goods();
         std::vector<Product *>& get_products();
+        ConsumerGood * get_consumer_good(Product * product);
+        void add_consumer_good(Product * product);
         std::vector<Distributor *>& get_distributors();
         std::vector<Person *>& get_unemployed_people();
         void retire_person(Person * person);
         int get_current_work_hours_daily();
 		int get_current_work_days_weekly();
+        int get_initial_account();
         void on_time_step() override;
     private:
         Society();
@@ -36,17 +40,20 @@ class Society : public Agent {
                 Eigen::VectorXd&
                 );
         void adjust_io_matrix(Eigen::MatrixXd&, double max_eigenvalue);
+        void set_initial_account();
         std::vector<Person *> people;
-        std::vector<Firm *> firms;
-        std::vector<Producer *> producers;
-        std::unordered_map<Product *, std::vector<Distributor *>>
-            product_to_distributors;
         std::vector<Product *> goods;
-        std::unordered_map<Product *, std::size_t> product_to_index;
         std::vector<Machine *> machines;
         std::vector<Product *> products;
+        std::unordered_map<Product *, std::size_t> product_to_index;
+        std::unordered_map<Product *, ConsumerGood *> consumer_goods;
+        std::vector<Firm *> firms;
+        std::vector<Producer *> producers;
         std::vector<Distributor *> distributors;
+        std::unordered_map<Product *, std::vector<Distributor *>>
+            product_to_distributors;
         int current_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
 		int current_work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
         std::vector<Person *> unemployed_people;
+        double initial_account;
 };

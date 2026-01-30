@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <unordered_map>
 
+#include "ConsumerGood.h"
 #include "Distributor.h"
 #include "Firm.h"
 #include "Machine.h"
@@ -24,14 +25,14 @@ Society * Society::get_instance() {
 Society::Society() {
     set_initial_products();
     for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
-        Producer * producer = new Producer({goods[i %
+        Producer * producer = new Producer(this, {goods[i %
                 STARTING_NUM_PRODUCTS]});
         producers.push_back(producer);
         firms.push_back(producer);
     }
     for (int i = 0; i < STARTING_NUM_DISTRIBUTORS; i++) {
         Distributor * distributor =
-            new Distributor({goods[i % STARTING_NUM_PRODUCTS]});
+            new Distributor(this, {goods[i % STARTING_NUM_PRODUCTS]});
         distributors.push_back(distributor);
         firms.push_back(distributor);
     }
@@ -42,6 +43,7 @@ Society::Society() {
             }
         }
     }
+    set_initial_account();
     // People MUST come after products and distributors are created.
     for (int i = 0; i < STARTING_NUM_PEOPLE; i++) {
         birth_person();	
@@ -172,6 +174,20 @@ std::vector<Product *>& Society::get_goods() {
     return goods;
 }
 
+ConsumerGood * Society::get_consumer_good(Product * product) {
+    if (consumer_goods.count(product)) {
+        return consumer_goods[product];
+    } else {
+        return NULL;
+    }
+}
+
+void Society::add_consumer_good(Product * product) {
+    if (!consumer_goods.count(product)) {
+        consumer_goods[product] = new ConsumerGood(product);
+    }
+}
+
 std::vector<Distributor *>& Society::get_distributors() {
     return distributors;
 }
@@ -188,6 +204,22 @@ int Society::get_current_work_days_weekly() {
 	return current_work_days_weekly;
 }
 
+void Society::set_initial_account() {
+    initial_account = 0.0;
+    for (Product * product : products) {
+        ConsumerGood * consumer_good = get_consumer_good(product);
+        if (consumer_good) {
+            initial_account += consumer_good->price_per_unit *
+                consumer_good->mean_consumption_frequency *
+                PERSON_SHOPPING_PERIOD; 
+        }
+    }
+}
+
+int Society::get_initial_account() {
+    return initial_account;
+}
+
 Person * Society::birth_person() {
     Person * person = new Person(this);
     people.push_back(person);
@@ -200,7 +232,6 @@ void Society::retire_person(Person * person) {
 }
 
 void Society::on_time_step() {
-    std::cout << "Society::on_time_step" << std::endl;
     for (Person * person : people) {
         person->on_time_step();
     }
