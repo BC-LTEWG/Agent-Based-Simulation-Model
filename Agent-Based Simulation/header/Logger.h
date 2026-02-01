@@ -1,4 +1,6 @@
 #include <cstdarg>
+#include <fstream>
+#include <map>
 #include <tuple>
 #include <variant>
 #include <unordered_map>
@@ -9,11 +11,14 @@ using TupleDouble = std::tuple<double>;
 using TupleStringInt = std::tuple<std::string, int>;
 using TupleStringDouble = std::tuple<std::string, double>;
 using TupleIntDoubleInt = std::tuple<int, double, int>;
+using TupleStringStringInt = std::tuple<std::string, std::string, int>;
 using Tuple = std::variant<TupleNone,
       TupleDouble,
       TupleStringInt,
       TupleStringDouble,
-      TupleIntDoubleInt>;
+      TupleIntDoubleInt,
+      TupleStringStringInt
+      >;
 
 class Logger {
     public:
@@ -27,42 +32,68 @@ class Logger {
             ERROR
         };
         static Logger * get_instance();
-        void log(const Client client, const std::string label);
         void log(
                 const Client client,
                 const std::string label,
+                const unsigned int id
+                );
+        void log(
+                const Client client,
+                const std::string label,
+                const unsigned int id,
                 const int value
                 );
         void log(
                 const Client client,
                 const std::string label,
+                const unsigned int id,
                 const double measure
                 );
         void log(
                 const Client client,
                 const std::string label,
+                const unsigned int id,
                 const std::string name,
                 const int quantity
                 );
         void log(
                 const Client client,
                 const std::string label,
+                const unsigned int id,
                 const std::string name,
                 const double measure
                 );
+        void log(
+                const Client client,
+                const std::string label,
+                const unsigned int id,
+                const std::string name1,
+                const std::string name2,
+                const int quantity
+                );
+        void write_data();
     private:
         Logger();
+        void log(
+                const Client client,
+                const std::string label,
+                const unsigned int id,
+                const Tuple& values
+                );
         static void trace(
                 const int time_step,
                 const Client client,
                 std::string label,
+                unsigned int id,
                 const Tuple& values
                 );
         template<typename TupleT>
             static void trace_tuple(const TupleT& values);
+        template<typename TupleT>
+            static void write_tuple(std::ofstream& file, const TupleT& values);
         static const char * clients[];
         std::unordered_map<Client,
             std::unordered_map<std::string,
-            std::unordered_map<int,
-            Tuple>>> data;
+            std::map<unsigned int,
+            std::map<int, Tuple>>>> data;
 };

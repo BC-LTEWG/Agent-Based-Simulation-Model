@@ -17,9 +17,8 @@ bool arg_present(
 
 int main(int argc, const char ** argv) {
 	Sim simulation;
-    if (arg_present("trace", argc, argv)) {
-        simulation.set_trace_logging(true);
-    }
+    simulation.set_trace_logging(arg_present("trace", argc, argv));
+    simulation.set_write_data(arg_present("write", argc, argv));
     simulation.run(1000);
 	return EXIT_SUCCESS;
 }

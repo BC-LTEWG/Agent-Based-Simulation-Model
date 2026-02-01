@@ -16,39 +16,46 @@
 Person::Person(Society * society):
     society{society},
     age(INITIAL_AGE),
-    health_status(HEALTHY) {
-        static std::normal_distribution<>
-            shopping_dist(
-                    PERSON_SHOPPING_PERIOD / 2, PERSON_SHOPPING_OFFSET_STDDEV
-                    );
-        shopping_offset =
-            (((int) shopping_dist(Sim::gen)) +
-             PERSON_SHOPPING_PERIOD) % PERSON_SHOPPING_PERIOD;
-
-        static std::normal_distribution<>
-            ability_dist(1.0, PERSON_ABILITY_STDDEV);
-        std::vector<Person::Ability> all_abilities;
-        for (int i = 0; i < Person::NUM_ABILITIES; i++) {
-            all_abilities.push_back((Person::Ability) i);
-        }
-        std::shuffle(all_abilities.begin(), all_abilities.end(), Sim::gen);
-        all_abilities.resize(PERSON_ABILITY_COUNT_MAX);
-        for (Person::Ability ability : all_abilities) {
-            abilities[ability] = std::max(0.0, ability_dist(Sim::gen));
-        }
-        ranked_distributors = society->get_distributors();
-        std::shuffle(
-                ranked_distributors.begin(),
-                ranked_distributors.end(),
-                Sim::gen
+    health_status(HEALTHY)
+{
+    static unsigned int unique_id = 0;
+    id = unique_id++;
+    static std::normal_distribution<>
+        shopping_dist(
+                PERSON_SHOPPING_PERIOD / 2, PERSON_SHOPPING_OFFSET_STDDEV
                 );
-        static std::normal_distribution<>
-            dist(1, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
-        for (Product * p : society->get_goods()) {
-            purchase_frequencies[p] =
-                p->mean_consumption_frequency * std::abs(dist(Sim::gen));
-        }
+    shopping_offset =
+        (((int) shopping_dist(Sim::gen)) +
+         PERSON_SHOPPING_PERIOD) % PERSON_SHOPPING_PERIOD;
+
+    static std::normal_distribution<>
+        ability_dist(1.0, PERSON_ABILITY_STDDEV);
+    std::vector<Person::Ability> all_abilities;
+    for (int i = 0; i < Person::NUM_ABILITIES; i++) {
+        all_abilities.push_back((Person::Ability) i);
     }
+    std::shuffle(all_abilities.begin(), all_abilities.end(), Sim::gen);
+    all_abilities.resize(PERSON_ABILITY_COUNT_MAX);
+    for (Person::Ability ability : all_abilities) {
+        abilities[ability] = std::max(0.0, ability_dist(Sim::gen));
+    }
+    ranked_distributors = society->get_distributors();
+    std::shuffle(
+            ranked_distributors.begin(),
+            ranked_distributors.end(),
+            Sim::gen
+            );
+    static std::normal_distribution<>
+        dist(1, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
+    for (Product * p : society->get_goods()) {
+        purchase_frequencies[p] =
+            p->mean_consumption_frequency * std::abs(dist(Sim::gen));
+    }
+}
+
+unsigned int Person::get_id() {
+    return id;
+}
 
 std::unordered_map<Person::Ability, double>& Person::get_abilities() {
     return this->abilities;
@@ -165,16 +172,16 @@ void Person::set_firm(Firm * workplace) {
 }
 
 void Person::log_hours(const double hours) {
-    Logger::get_instance()->log(Logger::PERSON, "hours worked", hours);
+    Logger::get_instance()->log(Logger::PERSON, "hours", id, hours);
 }
 
 void Person::log_shopping(const std::string product_name, const int quantity) {
-    Logger::get_instance()->log(Logger::PERSON, "shopping", product_name, quantity);
+    Logger::get_instance()->log(Logger::PERSON, "shopping", id, product_name, quantity);
 }
 
 void Person::log_state() {
-    Logger::get_instance()->log(Logger::PERSON, "age", age);
-    Logger::get_instance()->log(Logger::PERSON, "account", account);
-    Logger::get_instance()->log(Logger::PERSON, "health_status", health_status);
+    Logger::get_instance()->log(Logger::PERSON, "age", id, age);
+    Logger::get_instance()->log(Logger::PERSON, "account", id, account);
+    Logger::get_instance()->log(Logger::PERSON, "health_status", id, health_status);
 }
 

@@ -17,6 +17,8 @@ class Producer;
 class Society : public Agent {
     public:
         static Society * get_instance();
+        unsigned int get_id() override;
+        void on_time_step() override;
         std::vector<Product *>& get_goods();
         std::vector<Product *>& get_products();
         ConsumerGood * get_consumer_good(Product * product);
@@ -26,9 +28,9 @@ class Society : public Agent {
         void retire_person(Person * person);
         int get_current_work_hours_daily();
 		int get_current_work_days_weekly();
-        void on_time_step() override;
     private:
         Society();
+        unsigned int id;
         Person * birth_person();
         void set_initial_products();
         void set_product_prices();

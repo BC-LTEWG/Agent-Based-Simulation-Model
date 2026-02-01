@@ -56,6 +56,7 @@ class Firm : public Agent {
   public:
 	Firm(Society * society);
     Firm(Society * society, std::unordered_set<Product *> initial_catalog);
+    unsigned int get_id() override;
     virtual void on_time_step() override;
 
     void initialize_inventory(std::unordered_map<Product *, int>& inventory_items);
@@ -68,6 +69,7 @@ class Firm : public Agent {
 
   protected:
     Society * society;
+    unsigned int id;
     std::vector<Machine*> machines;
     std::vector<Person*> workers;
 	

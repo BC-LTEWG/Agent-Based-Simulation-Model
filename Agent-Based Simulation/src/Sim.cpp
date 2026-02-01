@@ -1,4 +1,5 @@
 #include "Constants.h"
+#include "Logger.h"
 #include "Sim.h"
 
 Sim::Sim() {
@@ -13,6 +14,10 @@ void Sim::set_trace_logging(bool should_trace) {
     trace_logging = should_trace; 
 }
 
+void Sim::set_write_data(bool should_write) {
+    write_data = should_write; 
+}
+
 int Sim::get_current_time_step() {
 	return current_time_step;
 }
@@ -22,11 +27,16 @@ void Sim::run(int time_steps) {
         society->on_time_step();
         current_time_step++;
     }
+    if (write_data) {
+        Logger::get_instance()->write_data();
+    }
 }
 
 int Sim::current_time_step = 0;
 
 bool Sim::trace_logging = false;
+
+bool Sim::write_data = false;
 
 std::random_device Sim::rd;
 

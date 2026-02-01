@@ -24,6 +24,8 @@ Society * Society::get_instance() {
 }
 
 Society::Society() {
+    static unsigned int unique_id = 0;
+    id = unique_id++;
     set_initial_products();
     for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
         Producer * producer = new Producer(this, {goods[i %
@@ -47,6 +49,22 @@ Society::Society() {
     // People MUST come after products and distributors are created.
     for (int i = 0; i < STARTING_NUM_PEOPLE; i++) {
         birth_person();	
+    }
+}
+
+unsigned int Society::get_id() {
+    if (id) {
+        throw std::invalid_argument("Society should be a singleton.");
+    }
+    return id;
+}
+
+void Society::on_time_step() {
+    for (Person * person : people) {
+        person->on_time_step();
+    }
+    for (Firm * firm : firms) {
+        firm->on_time_step();
     }
 }
 
@@ -213,14 +231,5 @@ Person * Society::birth_person() {
 
 void Society::retire_person(Person * person) {
     // unimplemented until hiring/reallocation is done
-}
-
-void Society::on_time_step() {
-    for (Person * person : people) {
-        person->on_time_step();
-    }
-    for (Firm * firm : firms) {
-        firm->on_time_step();
-    }
 }
 

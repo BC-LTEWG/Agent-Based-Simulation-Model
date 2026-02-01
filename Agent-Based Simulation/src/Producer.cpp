@@ -204,6 +204,7 @@ void Producer::log_plans() {
         Logger::get_instance()->log(
                 Logger::PRODUCER,
                 "plan",
+                id,
                 plan->order->product->product_name,
                 plan->order->quantity
                 );
@@ -213,7 +214,8 @@ void Producer::log_plans() {
 void Producer::log_draft_plan(const Plan * draft_plan) {
     Logger::get_instance()->log(
             Logger::PRODUCER,
-            "draft plan",
+            "draft_plan",
+            id,
             draft_plan->order->product->product_name,
             draft_plan->order->quantity
             );
@@ -222,7 +224,8 @@ void Producer::log_draft_plan(const Plan * draft_plan) {
 void Producer::log_dropped_order(const Order * order) {
     Logger::get_instance()->log(
             Logger::PRODUCER,
-            "dropped order",
+            "dropped_order",
+            id,
             order->product->product_name,
             order->quantity
             );
@@ -231,7 +234,8 @@ void Producer::log_dropped_order(const Order * order) {
 void Producer::log_pursued_plan(const Plan * draft_plan) {
     Logger::get_instance()->log(
             Logger::PRODUCER,
-            "pursued plan",
+            "pursued_plan",
+            id,
             draft_plan->order->product->product_name,
             draft_plan->order->quantity
             );
