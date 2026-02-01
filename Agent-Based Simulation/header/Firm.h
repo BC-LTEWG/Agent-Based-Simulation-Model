@@ -26,11 +26,11 @@ struct Plan {
 
 	// dependent/output fields	
 	int predicted_turnaround_time;
+    double machinery_cost;
     int labor_hours;
     double raw_materials;
     double total_hours;
     double prd;
-    double m;
     int labor_hours_remaining;
     double raw_materials_remaining;
     double total_hours_remaining;

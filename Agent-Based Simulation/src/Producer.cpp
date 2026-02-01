@@ -69,11 +69,11 @@ int Producer::draft_plan(Order * order) {
         machinery_cost_per_hour += machine->price_per_unit / machine->lifetime;
     }
     if (!draft_plan->workers.empty()) {
-        draft_plan->m = machinery_cost_per_hour *
+        draft_plan->machinery_cost = machinery_cost_per_hour *
                         (static_cast<double>(draft_plan->labor_hours) /
                          draft_plan->workers.size());
     } else {
-        draft_plan->m = 0.0;
+        draft_plan->machinery_cost = 0.0;
     }
 
 	order_to_draft_plan[order] = draft_plan;
