@@ -58,14 +58,8 @@ void Firm::receive_shipment(Order * order) {
     }
     inventory[order->product] += order->quantity;
     product_to_outbound_orders[order->product].erase(order);
-    Logger::log_firm_shipment_received(
-            order->product->product_name,
-            order->quantity
-            );
-    Logger::log_firm_inventory_level(
-            order->product->product_name,
-            inventory[order->product]
-            );
+    log_shipment_received(order->product->product_name, order->quantity);
+    log_inventory_level(order->product->product_name, inventory[order->product]);
 }
 
 Producer * Firm::send_order(Order * order) {
@@ -116,16 +110,14 @@ void Firm::reorder_product_to_threshold(
             ((int) std::ceil((
                 threshold - static_cast<double>(pending_inventory)
             ) / product->order_size));
-        Logger::log_firm_reorder(product->product_name, discrepancy);
+        log_reorder(product->product_name, discrepancy);
         Order * order = new Order{product, discrepancy, this,
             (int) (pending_inventory / threshold * FIRM_STOCKPILE_DURATION),
             Order::ORDER_REQUESTED};
         Producer * chosen_producer = send_order(order);
-        Logger::log_firm_accepted_order(
-                product->product_name,
-                order->requested_turnaround_time,
-                chosen_producer != NULL
-                );
+        if (chosen_producer) {
+            log_accepted_order(product->product_name, order->requested_turnaround_time);
+        }
     }
 }
 
@@ -360,5 +352,38 @@ void Firm::apply_demand_window() {
     }
 }
 
+void Firm::log_shipment_received(std::string product_name, int quantity) {
+    Logger::get_instance()->log(
+            Logger::FIRM,
+            "shipment received",
+            product_name,
+            quantity
+            );
+}
 
+void Firm::log_inventory_level(std::string product_name, int quantity) {
+    Logger::get_instance()->log(
+            Logger::FIRM,
+            "inventory level",
+            product_name,
+            quantity
+            );
+}
 
+void Firm::log_reorder(std::string product_name, int quantity) {
+    Logger::get_instance()->log(
+            Logger::FIRM,
+            "reorder",
+            product_name,
+            quantity
+            );
+}
+
+void Firm::log_accepted_order(std::string product_name, int requested_turnaround_time) {
+    Logger::get_instance()->log(
+            Logger::FIRM,
+            "accepted order",
+            product_name,
+            requested_turnaround_time
+            );
+}

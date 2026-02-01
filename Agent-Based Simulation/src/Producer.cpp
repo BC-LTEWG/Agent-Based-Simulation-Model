@@ -38,7 +38,7 @@ void Producer::on_time_step() {
     Firm::on_time_step();
 	execute_plans();
     if (plans_in_progress.size()) {
-        Logger::log_producer_plans(plans_in_progress);
+        // Logger::log_producer_plans(plans_in_progress);
     }
 }
 
@@ -47,7 +47,7 @@ bool Producer::can_produce(Product * product) {
 }
 
 int Producer::draft_plan(Order * order) {
-    Logger::log_producer_draft_plan(order->product->product_name, order->quantity);
+    // Logger::log_producer_draft_plan(order->product->product_name, order->quantity);
     bool enough_inputs = true;
     for (auto &p : order->product->inputs_per_unit) {
         if (inventory[p.first] < p.second * order->quantity) {
@@ -82,7 +82,7 @@ int Producer::draft_plan(Order * order) {
 }
 
 bool Producer::drop_order(Order * order) {
-    Logger::log_producer_dropped_order(order->product->product_name, order->quantity);
+    // Logger::log_producer_dropped_order(order->product->product_name, order->quantity);
 	if (order_to_draft_plan[order] == nullptr) {
 		return false;
 	}
@@ -116,7 +116,7 @@ bool Producer::pursue_order(Order * order) {
 	// move draft_plan to plans_in_progress
 	order_to_draft_plan[order] = nullptr;
 	plans_in_progress.push_back(draft_plan);
-    Logger::log_producer_pursued_plan(draft_plan);
+    // Logger::log_producer_pursued_plan(draft_plan);
 	return true;
 }
 

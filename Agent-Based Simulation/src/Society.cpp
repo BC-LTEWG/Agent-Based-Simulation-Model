@@ -10,6 +10,7 @@
 #include "ConsumerGood.h"
 #include "Distributor.h"
 #include "Firm.h"
+#include "Logger.h"
 #include "Machine.h"
 #include "Person.h"
 #include "Product.h"

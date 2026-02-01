@@ -1,42 +1,68 @@
-#include "Person.h"
+#include <cstdarg>
+#include <tuple>
+#include <variant>
+#include <unordered_map>
 
-struct Plan;
+using TupleNone = std::tuple<>;
+using TupleInt = std::tuple<int>;
+using TupleDouble = std::tuple<double>;
+using TupleStringInt = std::tuple<std::string, int>;
+using TupleStringDouble = std::tuple<std::string, double>;
+using TupleIntDoubleInt = std::tuple<int, double, int>;
+using Tuple = std::variant<TupleNone,
+      TupleDouble,
+      TupleStringInt,
+      TupleStringDouble,
+      TupleIntDoubleInt>;
 
 class Logger {
     public:
+        enum Client {
+            FIRM,
+            DISTRIBUTOR,
+            PERSON,
+            PRODUCER,
+            PRODUCT,
+            SOCIETY,
+            ERROR
+        };
         static Logger * get_instance();
-        static void log_event(std::string message);
-        static void log_firm_shipment_received(std::string product_name, int quantity);
-        static void log_firm_inventory_level(std::string product_name, int level);
-        static void log_firm_reorder(std::string product_name, int quantity);
-        static void log_firm_accepted_order(
-                std::string product_name,
-                int turnaround_time,
-                bool accepted
+        void log(const Client client, const std::string label);
+        void log(
+                const Client client,
+                const std::string label,
+                const int value
                 );
-        static void log_person_payment(int payment);
-        static void log_person_shopping(std::string product_name, int quantity);
-        static void log_person_state(
-                int age,
-                double account,
-                Person::HealthStatus health_status
+        void log(
+                const Client client,
+                const std::string label,
+                const double measure
                 );
-        static void log_producer_plans(std::vector<Plan *> plans);
-        static void log_producer_draft_plan(std::string product_name, int quantity);
-        static void log_producer_dropped_order(std::string product_name, int quantity);
-        static void log_producer_pursued_plan(Plan * draft_plan);
+        void log(
+                const Client client,
+                const std::string label,
+                const std::string name,
+                const int quantity
+                );
+        void log(
+                const Client client,
+                const std::string label,
+                const std::string name,
+                const double measure
+                );
     private:
         Logger();
-        std::vector<std::tuple<int, std::string, int>> firm_shipments_received;
-        std::vector<std::tuple<int, std::string, int>> firm_inventory_levels;
-        std::vector<std::tuple<int, std::string, int>> firm_reorders;
-        std::vector<std::tuple<int, std::string, int>> firm_accepted_orders;
-        std::vector<std::tuple<int, std::string, int>> firm_no_producer_found;
-        std::vector<std::pair<int, int>> person_payments;
-        std::vector<std::tuple<int, std::string, int>> person_shopping;
-        std::vector<std::tuple<int, int, double, Person::HealthStatus>> person_state;
-        std::vector<std::pair<int, Plan *>> producer_plans;
-        std::vector<std::tuple<int, std::string, int>> producer_draft_plans;
-        std::vector<std::tuple<int, std::string, int>> producer_dropped_orders;
-        std::vector<std::tuple<int, Plan *>> producer_pursued_draft_plans;
+        static void trace(
+                const int time_step,
+                const Client client,
+                std::string label,
+                const Tuple& values
+                );
+        template<typename TupleT>
+            static void trace_tuple(const TupleT& values);
+        static const char * clients[];
+        std::unordered_map<Client,
+            std::unordered_map<std::string,
+            std::unordered_map<int,
+            Tuple>>> data;
 };

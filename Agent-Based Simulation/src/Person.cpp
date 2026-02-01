@@ -62,7 +62,7 @@ void Person::train(std::unordered_map<Person::Ability, double> target_abilities)
 }
 
 void Person::register_hours_worked(double hours_worked) {
-    Logger::log_person_payment(hours_worked);
+    log_hours(hours_worked);
     account += hours_worked;
 }
 
@@ -112,7 +112,6 @@ bool Person::will_shop() {
 }
 
 void Person::shop() {
-    Logger::log_event("Person shopping event.");
     static std::normal_distribution<> dist(1, PERSON_SHOPPING_MULTIPLIER_STDDEV);
     std::unordered_map<Product *, double> ideal_purchase_quantities;
     double total_price = 0.0;
@@ -126,7 +125,7 @@ void Person::shop() {
                 ideal_purchase_quantities[p.first]);
         if (affordable_quantity > 0) {
             purchase_good(p.first, affordable_quantity);
-            Logger::log_person_shopping(p.first->product_name, affordable_quantity);
+            log_shopping(p.first->product_name, affordable_quantity);
         }
     }
 }
@@ -158,9 +157,24 @@ void Person::on_time_step() {
 	if (will_shop()) { shop(); }
 	if (will_retire()) { retire(); }
 	update_health_status();
-    Logger::log_person_state(age, account, health_status);
+    log_state();
 }
 
 void Person::set_firm(Firm * workplace) {
     firm = workplace;
 }
+
+void Person::log_hours(const double hours) {
+    Logger::get_instance()->log(Logger::PERSON, "hours worked", hours);
+}
+
+void Person::log_shopping(const std::string product_name, const int quantity) {
+    Logger::get_instance()->log(Logger::PERSON, "shopping", product_name, quantity);
+}
+
+void Person::log_state() {
+    Logger::get_instance()->log(Logger::PERSON, "age", age);
+    Logger::get_instance()->log(Logger::PERSON, "account", account);
+    Logger::get_instance()->log(Logger::PERSON, "health_status", health_status);
+}
+

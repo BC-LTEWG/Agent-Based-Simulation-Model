@@ -5,6 +5,14 @@ Sim::Sim() {
 	society = Society::get_instance();
 }
 
+bool Sim::is_trace_logging() {
+    return trace_logging;
+}
+
+void Sim::set_trace_logging(bool should_trace) {
+    trace_logging = should_trace; 
+}
+
 int Sim::get_current_time_step() {
 	return current_time_step;
 }
@@ -17,6 +25,8 @@ void Sim::run(int time_steps) {
 }
 
 int Sim::current_time_step = 0;
+
+bool Sim::trace_logging = false;
 
 std::random_device Sim::rd;
 

@@ -6,7 +6,7 @@ TEST_DIR = test
 TEST_SRCS = $(wildcard ${TEST_DIR}/*.cpp)
 TEST_EXECS = $(patsubst %.cpp, %.test, ${TEST_SRCS})
 APP = ${BIN_DIR}/sim
-FLAGS = -Wall -Iheader -std=c++17 -DLOG_DBG=1
+FLAGS = -Wall -Iheader -std=c++17
 
 ${APP} : ${BUILD_DIR}/Product.o \
 	${BUILD_DIR}/Machine.o \

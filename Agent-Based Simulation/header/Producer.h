@@ -32,4 +32,5 @@ class Producer : public Firm {
 	void end_plan(Plan * plan);
 	void execute_plans();
     std::unordered_set<Product *> get_products_to_reorder() override;
+    void log_plans();
 };
