@@ -12,6 +12,7 @@ class Sim {
 	static std::mt19937 gen;
     Sim();
     static bool is_trace_logging();
+    static bool is_writing_data();
     static void set_trace_logging(bool should_log);
     static void set_write_data(bool should_log);
 	static int get_current_time_step();

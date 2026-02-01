@@ -14,6 +14,10 @@ void Sim::set_trace_logging(bool should_trace) {
     trace_logging = should_trace; 
 }
 
+bool Sim::is_writing_data() {
+    return write_data;
+}
+
 void Sim::set_write_data(bool should_write) {
     write_data = should_write; 
 }

@@ -79,7 +79,9 @@ void Logger::log(
     if (Sim::is_trace_logging()) {
         Logger::trace(time_step, client, label, id, values);
     }
-    data[client][label][id][time_step] = values;
+    if (Sim::is_writing_data()) {
+        data[client][label][id][time_step] = values;
+    }
 }
 
 void Logger::trace(
