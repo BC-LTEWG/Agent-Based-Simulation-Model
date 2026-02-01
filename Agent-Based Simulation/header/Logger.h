@@ -16,8 +16,7 @@ using Tuple = std::variant<TupleNone,
       TupleDouble,
       TupleStringInt,
       TupleStringDouble,
-      TupleIntDoubleInt,
-      TupleStringStringInt
+      TupleIntDoubleInt
       >;
 
 class Logger {
@@ -62,14 +61,6 @@ class Logger {
                 const unsigned int id,
                 const std::string name,
                 const double measure
-                );
-        void log(
-                const Client client,
-                const std::string label,
-                const unsigned int id,
-                const std::string name1,
-                const std::string name2,
-                const int quantity
                 );
         void write_data();
     private:

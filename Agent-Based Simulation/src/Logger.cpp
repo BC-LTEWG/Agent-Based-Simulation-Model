@@ -65,18 +65,6 @@ void Logger::log(
     log(client, label, id, tuple);
 }
 
-void Logger::log(
-        const Client client,
-        const std::string label,
-        const unsigned int id,
-        const std::string name1,
-        const std::string name2,
-        const int quantity
-        ) {
-    TupleStringStringInt tuple = std::make_tuple(name1, name2, quantity);
-    log(client, label, id, tuple);
-}
-
 const char * Logger::clients[] = {"Firm", "Distributor", "Person", "Producer", "Product", "Society"};
 
 const char * Logger::logging_dir = "data";
