@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stdexcept>
 
+#include "Constants.h"
 #include "Firm.h"
 #include "Logger.h"
 #include "Person.h"
@@ -78,6 +79,8 @@ void Logger::log(
 
 const char * Logger::clients[] = {"Firm", "Distributor", "Person", "Producer", "Product", "Society"};
 
+const char * Logger::logging_dir = "data";
+
 void Logger::log(
         const Client client,
         const std::string label,
@@ -129,7 +132,8 @@ void Logger::write_data() {
     for (auto& client_map : data) {
         std::string client_prefix = clients[client_map.first];
         for (auto& label_map : client_map.second) {
-            std::string file_name = client_prefix + "_" + label_map.first + ".csv";
+            std::string file_name = std::string(logging_dir) + "/" +
+                client_prefix + "_" + label_map.first + ".csv";
             std::ofstream out_file(file_name);
             auto visitor = [&out_file](auto&& arg) {
                 Logger::write_tuple(out_file, arg);

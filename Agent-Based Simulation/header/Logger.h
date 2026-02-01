@@ -92,6 +92,7 @@ class Logger {
         template<typename TupleT>
             static void write_tuple(std::ofstream& file, const TupleT& values);
         static const char * clients[];
+        static const char * logging_dir;
         std::unordered_map<Client,
             std::unordered_map<std::string,
             std::map<unsigned int,

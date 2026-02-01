@@ -1,8 +1,9 @@
-BIN_DIR = bin
 HDR_DIR = header
 SRC_DIR = src
 BUILD_DIR = build
 TEST_DIR = test
+DATA_DIR = data
+BIN_DIR = bin
 TEST_SRCS = $(wildcard ${TEST_DIR}/*.cpp)
 TEST_EXECS = $(patsubst %.cpp, %.test, ${TEST_SRCS})
 APP = ${BIN_DIR}/sim
@@ -65,5 +66,6 @@ test/%.test: test/%.cpp ${TEST_DEPS}
 
 
 clean:
-	rm -rf $(wildcard ${BIN_DIR}/*) $(wildcard ${BUILD_DIR}/*) $(wildcard ${TEST_DIR}/*.test)
+	rm -rf $(wildcard ${BIN_DIR}/*) $(wildcard ${BUILD_DIR}/*) $(wildcard ${TEST_DIR}/*.test) \
+		$(wildcard ${DATA_DIR}/*)
 

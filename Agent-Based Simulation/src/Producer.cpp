@@ -11,8 +11,6 @@
 #include "Sim.h"
 #include "Society.h"
 
-Producer::Producer(Society * society) : Firm{society} {}
-
 Producer::Producer(
         Society * society,
         std::unordered_set<Product *> initial_catalog
