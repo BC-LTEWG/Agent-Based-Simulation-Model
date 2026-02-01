@@ -38,7 +38,7 @@ void Producer::on_time_step() {
     Firm::on_time_step();
 	execute_plans();
     if (plans_in_progress.size()) {
-        // Logger::log_producer_plans(plans_in_progress);
+        log_plans();
     }
 }
 
@@ -47,7 +47,6 @@ bool Producer::can_produce(Product * product) {
 }
 
 int Producer::draft_plan(Order * order) {
-    // Logger::log_producer_draft_plan(order->product->product_name, order->quantity);
     bool enough_inputs = true;
     for (auto &p : order->product->inputs_per_unit) {
         if (inventory[p.first] < p.second * order->quantity) {
@@ -78,11 +77,12 @@ int Producer::draft_plan(Order * order) {
     }
 
 	order_to_draft_plan[order] = draft_plan;
+    log_draft_plan(draft_plan);
 	return draft_plan->predicted_turnaround_time;
 }
 
 bool Producer::drop_order(Order * order) {
-    // Logger::log_producer_dropped_order(order->product->product_name, order->quantity);
+    log_dropped_order(order);
 	if (order_to_draft_plan[order] == nullptr) {
 		return false;
 	}
@@ -116,7 +116,7 @@ bool Producer::pursue_order(Order * order) {
 	// move draft_plan to plans_in_progress
 	order_to_draft_plan[order] = nullptr;
 	plans_in_progress.push_back(draft_plan);
-    // Logger::log_producer_pursued_plan(draft_plan);
+    log_pursued_plan(draft_plan);
 	return true;
 }
 
@@ -198,3 +198,42 @@ std::unordered_set<Product *> Producer::get_products_to_reorder() {
     }
     return products_to_reorder;
 }
+
+void Producer::log_plans() {
+    for (Plan * plan : plans_in_progress) {
+        Logger::get_instance()->log(
+                Logger::PRODUCER,
+                "plan",
+                plan->order->product->product_name,
+                plan->order->quantity
+                );
+    }
+}
+
+void Producer::log_draft_plan(const Plan * draft_plan) {
+    Logger::get_instance()->log(
+            Logger::PRODUCER,
+            "draft plan",
+            draft_plan->order->product->product_name,
+            draft_plan->order->quantity
+            );
+}
+
+void Producer::log_dropped_order(const Order * order) {
+    Logger::get_instance()->log(
+            Logger::PRODUCER,
+            "dropped order",
+            order->product->product_name,
+            order->quantity
+            );
+}
+
+void Producer::log_pursued_plan(const Plan * draft_plan) {
+    Logger::get_instance()->log(
+            Logger::PRODUCER,
+            "pursued plan",
+            draft_plan->order->product->product_name,
+            draft_plan->order->quantity
+            );
+}
+
