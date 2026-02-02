@@ -35,11 +35,11 @@ The trade interface aims to implement a discrete-time simulation of exchange bet
 - Constructs import demand lists for each economy based on detected shortages
 - Constructs export supply lists for the capitalist economy based on detected surpluses
 - Removes import and export entries automatically when shortages or surpluses disappear
-- Assumes that the labor-time economy would only overproduce (with respect to its own needs) in order to trade exports with imports that it cannot currently produce and import from the CE, such as scarce raw materials. 
+- Assumes that the LTE would never overproduce (with respect to its own needs) unless it needs to trade with the CE to obtain scarce resources (raw materials) that it cannot currently produce by itself. 
 - Computes desired trade magnitudes in value terms rather than physical quantities
 - Converts labor-time values into monetary equivalents using a dynamic MELT parameter
 - Applies a trade-matching algorithm to determine feasible exchanges subject to value constraints
 - Executes trades only when mutually compatible value bundles can be assembled
-- Applies the effects of completed trades directly to the capitalist economy’s state
-- Recomputes trade demands and opportunities independently at each subsequent time step
+- Applies the effects of completed trades directly to the CE’s state
+- Recomputes trade demands and opportunities independently at each subsequent time step.
 
