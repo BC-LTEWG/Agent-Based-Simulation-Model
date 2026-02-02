@@ -91,15 +91,15 @@ def get_trajectories_supply_shock(params):
     return traj, t, e
 
 def detect_price_equilibrium(economy):
-    # Returns True if equilibrium (no change in prices and outputs)
+    # Returns True if equilibrium (no change in prices and supplies)
     # is reached at any time step, otherwise returns False.
     if len(economy.history["p"]) < 2:
         return False
     
     dp = economy.history["p"][-1] - economy.history["p"][-2]
-    dq = economy.history["q"][-1] - economy.history["q"][-2]
-    
-    return np.all(dp == 0) and np.all(dq == 0)
+    ds = economy.history["s"][-1] - economy.history["s"][-2]
+
+    return np.all(dp == 0) and np.all(ds == 0)
 
 def plot_prices(time, prices, product_labels, equilibrium_time):
     # 1. Plot individual prices
@@ -126,36 +126,48 @@ def plot_prices(time, prices, product_labels, equilibrium_time):
     plt.savefig("graphs/Price Trajectories for All 26 Commodities.png", dpi=300)
     plt.close()
 
-
-def plot_outputs(time, outputs, product_labels, equilibrium_time):
-    # 2. Plot individual outputs 
+def plot_supply(time, supply, product_labels, equilibrium_time):
+    # 2. Plot individual supplies
     plt.figure(figsize=(12, 7))
 
-    num_products = outputs.shape[1]
+    num_products = supply.shape[1]
 
     for i in range(num_products):
-        plt.plot(time, outputs[:, i], linewidth=1, alpha=0.7,
-                 label=f"Output {product_labels[i]}")
+        plt.plot(
+            time,
+            supply[:, i],
+            linewidth=1,
+            alpha=0.7,
+            label=f"Supply {product_labels[i]}"
+        )
 
     if equilibrium_time is not None:
-        plt.axvline(x=equilibrium_time, color="red", linestyle="--", linewidth=2)
+        plt.axvline(
+            x=equilibrium_time,
+            color="red",
+            linestyle="--",
+            linewidth=2
+        )
 
     plt.xlabel("Continuous Time (t)")
-    plt.ylabel("Output Level")
-    plt.title("Output Trajectories for All 26 Commodities")
+    plt.ylabel("Supply Level")
+    plt.title("Supply Trajectories for All 26 Commodities")
     plt.grid(True)
     plt.legend(loc="upper right", fontsize=8, ncol=2)
 
-    # Show all 200 time steps
+    # Show all time steps
     plt.xlim(0, time[-1])
-    plt.savefig("graphs/Output Trajectories for All 26 Commodities.png", dpi=300)
+    plt.savefig(
+        "graphs/Supply Trajectories for All 26 Commodities.png",
+        dpi=300
+    )
     plt.close()
 
-def plot_averages(time, avg_price, avg_output, equilibrium_time):
+def plot_averages(time, avg_price, avg_supply, equilibrium_time):
     # 3. Plot average prices + average outputs 
     plt.figure(figsize=(10, 6))
     plt.plot(time, avg_price, label="Average Price", color="gold")
-    plt.plot(time, avg_output, label="Average Output", color="black")
+    plt.plot(time, avg_supply, label="Average Supply", color="black")
 
     if equilibrium_time is not None:
         plt.axvline(x=equilibrium_time, color="red", linestyle="--",
@@ -163,22 +175,22 @@ def plot_averages(time, avg_price, avg_output, equilibrium_time):
 
     plt.xlabel("Continuous Time (t)")
     plt.ylabel("Value")
-    plt.title("Average Price and Average Output")
+    plt.title("Average Price and Average Supply")
     plt.legend()
     plt.grid(True)
 
     # Show all 200 time steps
     plt.xlim(0, time[-1])
-    plt.savefig("graphs/Average Price and Average Output.png", dpi=300)
+    plt.savefig("graphs/Average Price and Average Supply.png", dpi=300)
     plt.close()
 
 # Plot graphs for visualization 
 def plot_graphs(traj, t, equilibrium_time):
     prices = np.array(traj["p"])
-    outputs = np.array(traj["q"])
+    Supplies = np.array(traj["s"])
 
     avg_price = np.mean(prices, axis=1)
-    avg_output = np.mean(outputs, axis=1)
+    avg_supply = np.mean(Supplies, axis=1)
 
     # Use continuous time array t for x-axis
     time = np.array(t)
@@ -187,32 +199,30 @@ def plot_graphs(traj, t, equilibrium_time):
     product_labels = [chr(ord('A') + i) for i in range(num_products)]
 
     plot_prices(time, prices, product_labels, equilibrium_time)
-    plot_outputs(time, outputs, product_labels, equilibrium_time)
-    plot_averages(time, avg_price, avg_output, equilibrium_time)
-    
-def export_trajectories_with_equilibrium(traj, t, equilibrium_time,
-                                         filename="graphs/trajectories_with_equilibrium.csv"):
-    prices = np.array(traj["p"])   # (T, 26)
-    outputs = np.array(traj["q"])  # (T, 26)
+    plot_supply(time, Supplies, product_labels, equilibrium_time)
+    plot_averages(time, avg_price, avg_supply, equilibrium_time)
+
+def export_trajectories_with_equilibrium(
+    traj, t, equilibrium_time,
+    filename="graphs/trajectories_with_equilibrium.csv"
+):
+    prices = np.array(traj["p"])
+    supply = np.array(traj["s"])
     time = np.array(t)
 
     num_products = prices.shape[1]
     labels = [chr(ord('A') + i) for i in range(num_products)]
 
-    # Find equilibrium index (closest time)
     eq_index = None
     if equilibrium_time is not None:
         eq_index = int(np.argmin(np.abs(time - equilibrium_time)))
 
-    # Build header
     header = ["time", "is_equilibrium_step"]
     header += [f"price_{lbl}" for lbl in labels]
-    header += [f"output_{lbl}" for lbl in labels]
-
-    # Extra equilibrium summary columns
+    header += [f"supply_{lbl}" for lbl in labels]
     header += ["equilibrium_time"]
     header += [f"equilibrium_price_{lbl}" for lbl in labels]
-    header += [f"equilibrium_output_{lbl}" for lbl in labels]
+    header += [f"equilibrium_supply_{lbl}" for lbl in labels]
 
     with open(filename, "w", newline="") as f:
         writer = csv.writer(f)
@@ -223,13 +233,12 @@ def export_trajectories_with_equilibrium(traj, t, equilibrium_time,
 
             row = [time[i], is_eq]
             row += prices[i].tolist()
-            row += outputs[i].tolist()
+            row += supply[i].tolist()
 
-            # Only record equilibrium data at the exact equilibrium step
             if eq_index is not None and i == eq_index:
                 row.append(time[eq_index])
                 row += prices[eq_index].tolist()
-                row += outputs[eq_index].tolist()
+                row += supply[eq_index].tolist()
             else:
                 row.append("")
                 row += [""] * num_products
@@ -247,7 +256,7 @@ if __name__ == "__main__":
     else:
         print("Simulation complete.")
         print("Final prices:", traj["p"][-1])
-        print("Final outputs:", traj["q"][-1])
+        print("Final supplies:", traj["s"][-1])
     
     total_steps = len(t)
     print(f"\nTotal discrete time steps recorded: {total_steps}")
