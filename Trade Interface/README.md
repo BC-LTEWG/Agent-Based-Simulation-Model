@@ -3,7 +3,7 @@
 ## The Event-Based Simulation: A Dynamic Capitalist Economy Backend for the Trade Simulation
 ### Description / Overview
 
-The Event-Based Simulation implements a dynamic capitalist economy model designed to serve as the price- and supply-generating backend for this trade interface. Its purpose is to generate internally consistent trajectories of prices, outputs, supplies, labor usage, and value magnitudes under capitalist production relations, which can then be used by this trading system. It is built as a production-grounded and class-structured model. 
+The Event-Based Simulation implements a dynamic capitalist economy model designed to serve as the price- and supply-generating backend for an interface for trade between this capitalist economy and another economy based on labor-time accounting. Its purpose is to generate internally consistent trajectories of prices, outputs, supplies, labor usage rates, and value magnitudes under capitalist production relations, which can then be used by this trading system. It is built as a production-grounded and class-structured model. 
 
 ### Simulation Design
 
@@ -35,8 +35,7 @@ The Trade Interface aims to implement a discrete-time simulation of exchange bet
 - Constructs import demand lists for each economy based on detected shortages
 - Constructs export supply lists for the capitalist economy based on detected surpluses
 - Removes import and export entries automatically when shortages or surpluses disappear
-- Restricts the labor-time economy to trading only when it is missing required goods
-- Treats overproduction in the labor-time economy as conditional on trade necessity
+- Assumes that the labor-time economy would only overproduce (with respect to its own needs) in order to trade exports with imports that it cannot currently produce and import from the CE, such as scarce raw materials. 
 - Computes desired trade magnitudes in value terms rather than physical quantities
 - Converts labor-time values into monetary equivalents using a dynamic MELT parameter
 - Applies a trade-matching algorithm to determine feasible exchanges subject to value constraints
