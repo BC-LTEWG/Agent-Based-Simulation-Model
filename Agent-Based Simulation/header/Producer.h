@@ -22,7 +22,7 @@ class Producer : public Firm {
 
     bool can_produce(Product * product);
 	int draft_plan(Order * order);
-	bool drop_order(Order * order);
+	void drop_order(Order * order);
 	bool pursue_order(Order * order);
 
   private:

@@ -56,25 +56,18 @@ int Producer::draft_plan(Order * order) {
     for (Machine * machine : machines) {
         machinery_cost_per_hour += machine->price_per_unit / machine->lifetime;
     }
-    if (!draft_plan->workers.empty()) {
-        draft_plan->m = machinery_cost_per_hour *
-                        (static_cast<double>(draft_plan->labor_hours) /
-                         draft_plan->workers.size());
-    } else {
-        draft_plan->m = 0.0;
-    }
+    const std::size_t worker_count = draft_plan->workers.size();
+    draft_plan->m = worker_count == 0 ? 0.0 :
+        machinery_cost_per_hour *
+            (static_cast<double>(draft_plan->labor_hours) / worker_count);
 
 	order_to_draft_plan[order] = draft_plan;
 	//std::cout << "Draft plan predicted turnaround time: " << draft_plan->predicted_turnaround_time << std::endl;
 	return draft_plan->predicted_turnaround_time;
 }
 
-bool Producer::drop_order(Order * order) {
-	if (order_to_draft_plan[order] == nullptr) {
-		return false;
-	}
-	order_to_draft_plan[order] = nullptr;
-	return true;
+void Producer::drop_order(Order * order) {
+	order_to_draft_plan.erase(order);
 }
 
 bool Producer::pursue_order(Order * order) {
@@ -146,7 +139,6 @@ void Producer::end_plan(Plan * plan) {
 	inventory[plan->order->product] -= plan->order->quantity;
     plan->order->customer->receive_shipment(plan->order);
     double revenue = plan->order->product->price_per_unit * plan->order->quantity;
-    plan->raw_materials -= revenue;
     plan->prd += revenue;
     PriceController::update_price(plan);
 }
