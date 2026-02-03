@@ -108,14 +108,15 @@ void Firm::reorder_product_to_threshold(
         int pending_inventory
         ) {
     if (pending_inventory < threshold) {
-        int discrepancy = product->order_size * 
-            ((int) std::ceil((
-                threshold - static_cast<double>(pending_inventory)
-            ) / product->order_size));
-        Logger::log_firm_reorder(product->product_name, discrepancy);
-        Order * order = new Order{product, discrepancy, this,
-            (int) (pending_inventory / threshold * FIRM_STOCKPILE_DURATION),
-            Order::ORDER_REQUESTED};
+        int reorder_quantity = static_cast<int>(std::ceil(threshold));
+        int reorder_deadline = static_cast<int>(
+            pending_inventory *
+            FIRM_STOCKPILE_DURATION *
+            DEADLINE_SAFETY_MULTIPLIER /
+            threshold
+            );
+        Logger::log_firm_reorder(product->product_name, reorder_quantity);
+        Order * order = new Order{product, reorder_quantity, this, reorder_deadline, Order::ORDER_REQUESTED};
         Producer * chosen_producer = send_order(order);
         Logger::log_firm_accepted_order(
                 product->product_name,
