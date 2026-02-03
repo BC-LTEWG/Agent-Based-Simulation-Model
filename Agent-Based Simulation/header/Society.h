@@ -41,6 +41,7 @@ class Society : public Agent {
                 Eigen::VectorXd&
                 );
         void adjust_io_matrix(Eigen::MatrixXd&, double max_eigenvalue);
+        void set_initial_account();
         std::vector<Person *> people;
         std::vector<Product *> goods;
         std::vector<Machine *> machines;
@@ -55,4 +56,5 @@ class Society : public Agent {
         int current_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
 		int current_work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
         std::vector<Person *> unemployed_people;
+        double initial_account;
 };

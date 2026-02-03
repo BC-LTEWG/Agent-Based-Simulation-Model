@@ -158,12 +158,27 @@ def Trade(ce_map, lte_map, time_step):
     # 6. Detect surpluses (LTE) - add to LTE_Export
     # 7. Remove items when conditions disappear - implemented (by the design)
     # 8. Use a trade algorithm to determine which product should be traded for what, how much it should be traded, and for what price 
+    # Ideas for 8: 
+    # 1. Calculate the price/value of each commodity 
+    # 2. Build the LTE structures + try to trade the amount of values 
+    
+    # Note: The LTE is only going to trade if it is missing something. It will only overproduce when it needs to trade. 
+    # We will make the LTE to be missing a few base products, put placeholders for the quantities of societal needs of that base product 
+    # For the algorithm, each time step the LTE will be wanting to trade an amount of the base product which has a value of x labor time that can be converted to currency using MELT
+    # Using the amount of total value, we can trade with the CE who has the list of things it wants to trade and try to add up everything 
+    # We then apply the effects back to the CE, and CE will be wanting to trade for a new list of items each time step 
     
     # Questions:
     # Need to ask how to get data from LTE 
     # How to develop an algorithm for trading? (Or we can do this next week?) 
     # (Note: If can't get data from LTE, I need data from LTE for testing if the trading function actually work. What kind of data should I use?) 
     # What is a shortage? Is it when price > eq_price, output < eq_output, or both? I think it's both since it should happen at the same time. (Use the output level to measure)
+    
+    # What is the equilibrium price and output when it stablizes? 
+    
+    # A shortage for CE is when the output level of a product is less than its equilibrium output level 
+    # Shortage should be detected by equilibrium supply  
+    # Output is the activity level 
 
     print(f"[t={time_step}] Trade() executed")
 

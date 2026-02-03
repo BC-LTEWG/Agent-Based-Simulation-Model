@@ -5,6 +5,7 @@
 #include <random>
 
 #include "Constants.h"
+#include "ConsumerGood.h"
 #include "Distributor.h"
 #include "Firm.h"
 #include "Logger.h"
@@ -38,6 +39,13 @@ Person::Person(Society * society):
     all_abilities.resize(PERSON_ABILITY_COUNT_MAX);
     for (Person::Ability ability : all_abilities) {
         abilities[ability] = std::max(0.0, ability_dist(Sim::gen));
+        static std::normal_distribution<>
+            dist(1, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
+        for (Product * p : society->get_goods()) {
+            purchase_frequencies[p] =
+                p->mean_consumption_frequency * std::abs(dist(Sim::gen));
+        }
+        account = society->get_initial_account();
     }
     ranked_distributors = society->get_distributors();
     std::shuffle(
@@ -125,7 +133,8 @@ void Person::shop() {
     for (std::pair<Product *, double> p : purchase_frequencies) {
         ideal_purchase_quantities[p.first] =
             p.second * PERSON_SHOPPING_PERIOD * std::abs(dist(Sim::gen));
-        total_price += ideal_purchase_quantities[p.first] * p.first->price_per_unit;
+        total_price += ideal_purchase_quantities[p.first] * 
+            society->get_consumer_good(p.first)->price_per_unit;
     }
     for (std::pair<Product *, double> p : ideal_purchase_quantities) {
         int affordable_quantity = (int) (account / total_price *
