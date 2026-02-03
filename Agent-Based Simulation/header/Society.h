@@ -26,6 +26,7 @@ class Society : public Agent {
         void retire_person(Person * person);
         int get_current_work_hours_daily();
 		int get_current_work_days_weekly();
+        int get_initial_account();
         void on_time_step() override;
     private:
         Society();
@@ -39,6 +40,7 @@ class Society : public Agent {
                 Eigen::VectorXd&
                 );
         void adjust_io_matrix(Eigen::MatrixXd&, double max_eigenvalue);
+        void set_initial_account();
         std::vector<Person *> people;
         std::vector<Product *> goods;
         std::vector<Machine *> machines;
@@ -53,4 +55,5 @@ class Society : public Agent {
         int current_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
 		int current_work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
         std::vector<Person *> unemployed_people;
+        double initial_account;
 };
