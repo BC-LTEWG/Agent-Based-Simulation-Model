@@ -16,7 +16,6 @@ class Person;
 
 class Producer : public Firm {
   public:
-    Producer(Society * society);
     Producer(Society * society, std::unordered_set<Product *> initial_catalog);
     void on_time_step() override;
 
@@ -32,4 +31,8 @@ class Producer : public Firm {
 	void end_plan(Plan * plan);
 	void execute_plans();
     std::unordered_set<Product *> get_products_to_reorder() override;
+    void log_plans();
+    void log_draft_plan(const Plan * draft_plan);
+    void log_dropped_order(const Order * order);
+    void log_pursued_plan(const Plan * draft_plan);
 };

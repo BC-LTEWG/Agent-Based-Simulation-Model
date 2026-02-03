@@ -38,7 +38,7 @@ Distributor::Distributor(
             plan->labor_hours + plan->raw_materials;
         plan->prd = -(plan->total_hours);
         plan->outgoing_units_consumed = 0;
-        plan->m = 0;
+        plan->machinery_cost = 0.0;
         plans_in_progress.push_back(plan);
         product_to_plan[product] = plan;
         inventory[product] = quantity;
