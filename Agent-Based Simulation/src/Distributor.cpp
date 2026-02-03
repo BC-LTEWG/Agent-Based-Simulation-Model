@@ -88,6 +88,7 @@ void Distributor::sell_goods(Product& product, int quantity, Person * person) {
     Plan * plan = product_to_plan[&product];
     plan->outgoing_units_consumed += sell_quantity;
     product_to_plan[&product]->prd += cost;
+    this->pooled_account -= cost;
     inventory[&product] -= sell_quantity;
 }
 

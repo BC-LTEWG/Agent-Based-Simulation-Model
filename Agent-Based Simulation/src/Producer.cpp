@@ -120,7 +120,6 @@ void Producer::execute_plan(Plan * plan) {
             plan->raw_materials *
             labor_hours_done /
             (plan->labor_hours - plan->workers.size() * plan->training_time);
-		this->pooled_account += raw_materials_used;
 	}
 	//pay workers
 	for (Person * worker : plan->workers) {
@@ -129,6 +128,7 @@ void Producer::execute_plan(Plan * plan) {
 	plan->labor_hours_remaining -= labor_hours_done;
 	plan->raw_materials_remaining -= raw_materials_used;
 	plan->total_hours_remaining -= labor_hours_done + raw_materials_used;
+	this->pooled_account += raw_materials_used;
 }
 
 void Producer::end_plan(Plan * plan) {
