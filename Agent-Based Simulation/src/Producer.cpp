@@ -120,6 +120,7 @@ void Producer::execute_plan(Plan * plan) {
             plan->raw_materials *
             labor_hours_done /
             (plan->labor_hours - plan->workers.size() * plan->training_time);
+		this->pooled_account += raw_materials_used;
 	}
 	//pay workers
 	for (Person * worker : plan->workers) {
@@ -140,6 +141,7 @@ void Producer::end_plan(Plan * plan) {
     plan->order->customer->receive_shipment(plan->order);
     double revenue = plan->order->product->price_per_unit * plan->order->quantity;
     plan->prd += revenue;
+	this->pooled_account -= revenue;
     PriceController::update_price(plan);
 }
 
