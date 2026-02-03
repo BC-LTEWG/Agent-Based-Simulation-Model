@@ -81,7 +81,7 @@ class Firm : public Agent {
     void receive_shipment(Order * order);
 
   protected:
-    int pooled_account;
+    double pooled_account;
     Society * society;
     std::vector<Machine*> machines;
     std::vector<Person*> workers;
