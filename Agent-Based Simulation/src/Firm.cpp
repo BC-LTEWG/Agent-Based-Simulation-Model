@@ -38,10 +38,6 @@ double Firm::get_avg_productivity() {
     return 0.0;
 }
 
-bool Firm::has_product(Product * product) {
-    return catalog.count(product) && inventory[product];
-}
-
 int Firm::get_inventory(Product * product) {
     return inventory.find(product)->second;
 }
