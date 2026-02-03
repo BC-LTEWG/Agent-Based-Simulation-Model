@@ -27,7 +27,8 @@ class Society : public Agent {
         std::vector<Person *>& get_unemployed_people();
         void retire_person(Person * person);
         int get_current_work_hours_daily();
-		int get_current_work_days_weekly();
+        int get_current_work_days_weekly();
+        int get_initial_account();
     private:
         Society();
         unsigned int id;
