@@ -141,7 +141,7 @@ void Producer::end_plan(Plan * plan) {
     plan->order->customer->receive_shipment(plan->order);
     double revenue = plan->order->product->price_per_unit * plan->order->quantity;
     plan->prd += revenue;
-	this->pooled_account -= revenue;
+	plan->order->customer->pooled_account -= revenue;
     PriceController::update_price(plan);
 }
 

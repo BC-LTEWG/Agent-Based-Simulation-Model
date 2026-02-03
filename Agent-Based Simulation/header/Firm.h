@@ -80,8 +80,9 @@ class Firm : public Agent {
     void add_supplier(Producer * producer);
     void receive_shipment(Order * order);
 
+    double pooled_account = 0.0;
+
   protected:
-    double pooled_account;
     Society * society;
     std::vector<Machine*> machines;
     std::vector<Person*> workers;
