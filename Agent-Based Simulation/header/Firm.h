@@ -26,11 +26,11 @@ struct Plan {
 
 	// dependent/output fields	
 	int predicted_turnaround_time;
+    double machinery_cost;
     int labor_hours;
     double raw_materials;
     double total_hours;
     double prd;
-    double m;
     int labor_hours_remaining;
     double raw_materials_remaining;
     double total_hours_remaining;
@@ -39,7 +39,6 @@ struct Plan {
 
 struct Order {
     enum OrderStatus { ORDER_REQUESTED, ORDER_FINISHED };
-
     Product * product;
     int quantity;
     Firm * customer;
@@ -57,6 +56,7 @@ class Firm : public Agent {
   public:
 	Firm(Society * society);
     Firm(Society * society, std::unordered_set<Product *> initial_catalog);
+    unsigned int get_id() override;
     virtual void on_time_step() override;
 
     void initialize_inventory(std::unordered_map<Product *, int>& inventory_items);
@@ -68,6 +68,7 @@ class Firm : public Agent {
 
   protected:
     Society * society;
+    unsigned int id;
     std::vector<Machine*> machines;
     std::vector<Person*> workers;
 	
@@ -109,4 +110,8 @@ class Firm : public Agent {
     void add_demand_signal(Product * product, int quantity);
     void apply_demand_window();
     virtual std::unordered_set<Product *> get_products_to_reorder() = 0;
+    void log_shipment_received(std::string product_name, int quantity);
+    void log_inventory_level(std::string product_name, int quantity);
+    void log_reorder(std::string product_name, int quantity);
+    void log_accepted_order(std::string product_name, int requested_turnaround_time);
 };
