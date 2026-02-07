@@ -116,7 +116,7 @@ void Firm::reorder_product_to_threshold(
             DEADLINE_SAFETY_MULTIPLIER /
             threshold
             );
-        Logger::log_firm_reorder(product->product_name, reorder_quantity);
+        log_reorder(product->product_name, reorder_quantity);
         Order * order = new Order{product, reorder_quantity, this, reorder_deadline, Order::ORDER_REQUESTED};
         Producer * chosen_producer = send_order(order);
         if (chosen_producer) {
