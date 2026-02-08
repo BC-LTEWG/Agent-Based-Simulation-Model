@@ -59,7 +59,7 @@ double Firm::get_avg_productivity() {
 }
 
 int Firm::get_inventory(Product * product) {
-    return inventory.find(product)->second;
+    return this->inventory[product];
 }
 
 void Firm::add_supplier(Producer * producer) {
@@ -139,6 +139,14 @@ void Firm::reorder_product_to_threshold(
         Producer * chosen_producer = send_order(order);
         if (chosen_producer) {
             log_accepted_order(product->product_name, order->requested_turnaround_time);
+            pooled_account += order->product->living_labor_per_unit + std::accumulate(
+                order->product->inputs_per_unit.begin(),
+                order->product->inputs_per_unit.end(),
+                0.0,
+                [](double acc, const std::pair<Product *, double>& p) {
+                    return acc + p.second;
+                }
+                ) * order->quantity;
         }
     }
 }
@@ -149,7 +157,7 @@ void Firm::check_and_reorder() {
     for (Product * product : products_to_reorder) {
         double threshold = get_reorder_threshold(product);
         int pending_inventory = get_pending_inventory(product);
-        if (pending_inventory < threshold) {
+        if (pending_inventory < threshold || pooled_account == 0.0) {
             reorder_product_to_threshold(product, threshold, pending_inventory);
         }
     }
