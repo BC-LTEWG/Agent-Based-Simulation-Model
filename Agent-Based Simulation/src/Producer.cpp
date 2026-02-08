@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <iostream>
 #include <unordered_set>
+#include <numeric>
 
 #include "Distributor.h"
 #include "Logger.h"
@@ -122,7 +123,8 @@ void Producer::start_plan(Plan * plan) {
 void Producer::execute_plan(Plan * plan) {
 	int labor_hours_done =
         std::min((int) plan->workers.size(), plan->labor_hours_remaining);
-	double raw_materials_used = 0.0; 
+	double raw_materials_used = 0.0;
+    double inputs_used = 0.0;
 	if (plan->training_time_remaining > 0) {
 		plan->training_time_remaining--;
 		if (plan->training_time_remaining == 0) {
@@ -136,6 +138,14 @@ void Producer::execute_plan(Plan * plan) {
             plan->raw_materials *
             labor_hours_done /
             (plan->labor_hours - plan->workers.size() * plan->training_time);
+        inputs_used = std::accumulate(
+                plan->order->product->inputs_per_unit.begin(),
+                plan->order->product->inputs_per_unit.end(),
+                0.0,
+                [plan](double acc, const std::pair<Product *, double>& p) {
+                    return acc + (p.second * plan->order->quantity);
+                }
+                );
 	}
 	//pay workers
 	for (Person * worker : plan->workers) {
@@ -144,7 +154,7 @@ void Producer::execute_plan(Plan * plan) {
 	plan->labor_hours_remaining -= labor_hours_done;
 	plan->raw_materials_remaining -= raw_materials_used;
 	plan->total_hours_remaining -= labor_hours_done + raw_materials_used;
-	this->pooled_account += raw_materials_used;
+	this->pooled_account -= labor_hours_done + inputs_used;
 }
 
 void Producer::end_plan(Plan * plan) {
@@ -155,10 +165,8 @@ void Producer::end_plan(Plan * plan) {
 	// simplification: product shipped instantly
 	inventory[plan->order->product] -= plan->order->quantity;
     plan->order->customer->receive_shipment(plan->order);
-    double revenue = plan->order->product->price_per_unit * plan->order->quantity;
-    plan->order->customer->pooled_account -= revenue;
-    pooled_account += revenue;
-    plan->prd += revenue;
+    double total = plan->order->product->price_per_unit * plan->order->quantity;
+    plan->prd += total;
     PriceController::update_price(plan);
 }
 
