@@ -46,7 +46,10 @@ double Firm::get_avg_productivity() {
 }
 
 int Firm::get_inventory(Product * product) {
-    return inventory.find(product)->second;
+    if (!inventory.count(product)) {
+        return 0;
+    }
+    return inventory[product];
 }
 
 void Firm::add_supplier(Producer * producer) {

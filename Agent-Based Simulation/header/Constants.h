@@ -68,3 +68,6 @@ const double DAILY_RECOVERY_CHANCE = 0.1;
 const int PERSON_ABILITY_COUNT_MAX = 3;
 const int PRODUCT_ABILITY_COUNT_MAX = 3;
 
+const char * const LOGGING_DIR = "data";
+const char * const LOG_FILE = "data/lte.db";
+
