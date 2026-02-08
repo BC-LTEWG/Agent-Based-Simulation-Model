@@ -1,9 +1,11 @@
 #include <algorithm>
 #include <climits>
 #include <iostream>
+#include <string>
 
 #include "ConsumerGood.h"
 #include "Distributor.h"
+#include "Logger.h"
 #include "Machine.h"
 #include "Person.h"
 #include "Producer.h"
@@ -34,7 +36,7 @@ Distributor::Distributor(
             plan->labor_hours + plan->raw_materials;
         plan->prd = -(plan->total_hours);
         plan->outgoing_units_consumed = 0;
-        plan->m = 0;
+        plan->machinery_cost = 0.0;
         plans_in_progress.push_back(plan);
         product_to_plan[product] = plan;
         inventory[product] = quantity;
@@ -54,21 +56,28 @@ void Distributor::on_time_step() {
 void Distributor::sell_goods(Product& product, int quantity, Person * person) {
     add_demand_signal(&product, quantity);
 
-    auto inventory_it = inventory.find(&product);
-    int available = inventory_it == inventory.end() ? 0 : inventory_it->second;
-    if (inventory_it == inventory.end()) {
-        std::cerr << "Inventory has no such product: " << product.product_name << std::endl;
+    bool has_inventory = inventory.count(&product) > 0;
+    int available = has_inventory ? inventory[&product] : 0;
+    if (!has_inventory) {
+        Logger::get_instance()->log(
+                Logger::DISTRIBUTOR,
+                "inventory_missing",
+                id,
+                product.product_name,
+                0
+                );
     }
     int remainder = 0;
     int sell_quantity = std::min(available, quantity);
     if (available < quantity) {
         remainder = quantity - available;
-        std::cout << "Shortfall in product " << product.product_name 
-            << " of " << remainder << " units. " << std::endl;
-        
-        int turnaround_time = product.living_labor_per_unit * remainder;
-        Order * order = new Order(&product, remainder, this, turnaround_time);
-        send_order(order);
+        Logger::get_instance()->log(
+                Logger::DISTRIBUTOR,
+                "shortfall",
+                id,
+                product.product_name,
+                remainder
+                );
     }
     if (sell_quantity == 0) {
         return;
@@ -87,7 +96,7 @@ void Distributor::sell_goods(Product& product, int quantity, Person * person) {
     } 
     Plan * plan = product_to_plan[&product];
     plan->outgoing_units_consumed += sell_quantity;
-    product_to_plan[&product]->prd += cost;
+    plan->prd += cost;
     this->pooled_account -= cost;
     inventory[&product] -= sell_quantity;
 }

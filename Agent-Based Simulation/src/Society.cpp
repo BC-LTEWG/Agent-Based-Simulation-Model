@@ -10,6 +10,7 @@
 #include "ConsumerGood.h"
 #include "Distributor.h"
 #include "Firm.h"
+#include "Logger.h"
 #include "Machine.h"
 #include "Person.h"
 #include "Product.h"
@@ -23,26 +24,18 @@ Society * Society::get_instance() {
 }
 
 Society::Society() {
+    static unsigned int unique_id = 0;
+    id = unique_id++;
     set_initial_products();
-<<<<<<< HEAD
-    std::unordered_set<Product *> all_products(products.begin(), products.end());
-    for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
-        Producer * producer = new Producer(all_products);
-=======
     for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
         Producer * producer = new Producer(this, {goods[i %
                 STARTING_NUM_PRODUCTS]});
->>>>>>> 479da2b5312833cba53251e4da87ac5a37987b9a
         producers.push_back(producer);
         firms.push_back(producer);
     }
     for (int i = 0; i < STARTING_NUM_DISTRIBUTORS; i++) {
-<<<<<<< HEAD
-        Distributor * distributor = new Distributor(all_products);
-=======
         Distributor * distributor =
             new Distributor(this, {goods[i % STARTING_NUM_PRODUCTS]});
->>>>>>> 479da2b5312833cba53251e4da87ac5a37987b9a
         distributors.push_back(distributor);
         firms.push_back(distributor);
     }
@@ -52,16 +45,26 @@ Society::Society() {
                 firm->add_supplier(producer);
             }
         }
-        if (!machines.empty()) {
-            firm->machines.push_back(machines[std::rand() % machines.size()]);
-        }
     }
-<<<<<<< HEAD
-=======
     // People MUST come after products and distributors are created.
->>>>>>> 479da2b5312833cba53251e4da87ac5a37987b9a
     for (int i = 0; i < STARTING_NUM_PEOPLE; i++) {
         birth_person();	
+    }
+}
+
+unsigned int Society::get_id() {
+    if (id) {
+        throw std::invalid_argument("Society should be a singleton.");
+    }
+    return id;
+}
+
+void Society::on_time_step() {
+    for (Person * person : people) {
+        person->on_time_step();
+    }
+    for (Firm * firm : firms) {
+        firm->on_time_step();
     }
 }
 
@@ -228,14 +231,5 @@ Person * Society::birth_person() {
 
 void Society::retire_person(Person * person) {
     // unimplemented until hiring/reallocation is done
-}
-
-void Society::on_time_step() {
-    for (Person * person : people) {
-        person->on_time_step();
-    }
-    for (Firm * firm : firms) {
-        firm->on_time_step();
-    }
 }
 

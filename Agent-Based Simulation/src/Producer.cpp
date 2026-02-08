@@ -1,7 +1,9 @@
 #include <algorithm>
 #include <iostream>
+#include <unordered_set>
 
 #include "Distributor.h"
+#include "Logger.h"
 #include "PriceController.h"
 #include "Machine.h"
 #include "Person.h"
@@ -10,25 +12,32 @@
 #include "Sim.h"
 #include "Society.h"
 
-Producer::Producer(Society * society) : Firm(society) {}
-
 Producer::Producer(
         Society * society,
         std::unordered_set<Product *> initial_catalog
         ) :
     Firm(society, initial_catalog) {
+    std::unordered_set<Machine *> initial_machines;
     for (Product * product : initial_catalog) {
-        for (auto& p : product->inputs_per_unit) {
-            inventory[p.first] += p.second *
-                                  product->order_size *
-                                  FIRM_INITIAL_INVENTORY_MULTIPLIER;
+        for (Machine * machine : product->machines_needed) {
+            initial_machines.insert(machine);
         }
+    }
+    for (Machine * machine : initial_machines) {
+        machines.push_back(machine);
+    }
+    for (Product * product : get_products_to_reorder()) {
+        inventory[product] =
+            get_reorder_threshold(product) * FIRM_INITIAL_INVENTORY_MULTIPLIER;
     }
 }
 
 void Producer::on_time_step() {
     Firm::on_time_step();
 	execute_plans();
+    if (plans_in_progress.size()) {
+        log_plans();
+    }
 }
 
 bool Producer::can_produce(Product * product) {
@@ -36,13 +45,14 @@ bool Producer::can_produce(Product * product) {
 }
 
 int Producer::draft_plan(Order * order) {
-	bool enough_inputs = true;	
-    for (auto &p : order->product->inputs_per_unit) {
-        if (inventory[p.first] < p.second * order->quantity) {
+    bool enough_inputs = true;
+    for (std::pair<Product * const, double>& input :
+            order->product->inputs_per_unit) {
+        if (inventory[input.first] < input.second * order->quantity) {
 			enough_inputs = false;
 			return DRAFT_ORDER_REJECTED;
         }
-        add_demand_signal(p.first, p.second * order->quantity);
+        add_demand_signal(input.first, input.second * order->quantity);
     }
 	if (!can_produce(order->product)) {
 		catalog.insert(order->product);
@@ -56,17 +66,21 @@ int Producer::draft_plan(Order * order) {
     for (Machine * machine : machines) {
         machinery_cost_per_hour += machine->price_per_unit / machine->lifetime;
     }
-    const std::size_t worker_count = draft_plan->workers.size();
-    draft_plan->m = worker_count == 0 ? 0.0 :
-        machinery_cost_per_hour *
-            (static_cast<double>(draft_plan->labor_hours) / worker_count);
+    if (!draft_plan->workers.empty()) {
+        draft_plan->machinery_cost = machinery_cost_per_hour *
+                        (static_cast<double>(draft_plan->labor_hours) /
+                         draft_plan->workers.size());
+    } else {
+        draft_plan->machinery_cost = 0.0;
+    }
 
 	order_to_draft_plan[order] = draft_plan;
-	//std::cout << "Draft plan predicted turnaround time: " << draft_plan->predicted_turnaround_time << std::endl;
+    log_draft_plan(draft_plan);
 	return draft_plan->predicted_turnaround_time;
 }
 
 void Producer::drop_order(Order * order) {
+    log_dropped_order(order);
 	order_to_draft_plan.erase(order);
 }
 
@@ -93,13 +107,15 @@ bool Producer::pursue_order(Order * order) {
 	// move draft_plan to plans_in_progress
 	order_to_draft_plan[order] = nullptr;
 	plans_in_progress.push_back(draft_plan);
+    log_pursued_plan(draft_plan);
 	return true;
 }
 
 void Producer::start_plan(Plan * plan) {
 	// simplification: consume all raw materials at start of plan
-	for (auto &p : plan->order->product->inputs_per_unit) {
-		inventory[p.first] -= p.second * plan->order->quantity;
+	for (std::pair<Product * const, double>& input :
+            plan->order->product->inputs_per_unit) {
+		inventory[input.first] -= input.second * plan->order->quantity;
 	}
 }
 
@@ -140,8 +156,9 @@ void Producer::end_plan(Plan * plan) {
 	inventory[plan->order->product] -= plan->order->quantity;
     plan->order->customer->receive_shipment(plan->order);
     double revenue = plan->order->product->price_per_unit * plan->order->quantity;
+    plan->order->customer->pooled_account -= revenue;
+    pooled_account += revenue;
     plan->prd += revenue;
-	plan->order->customer->pooled_account -= revenue;
     PriceController::update_price(plan);
 }
 
@@ -171,9 +188,53 @@ void Producer::execute_plans() {
 std::unordered_set<Product *> Producer::get_products_to_reorder() {
     std::unordered_set<Product *> products_to_reorder;
     for (Product * product : catalog) {
-        for (auto &p : product->inputs_per_unit) {
-            products_to_reorder.insert(p.first);
+        for (std::pair<Product * const, double>& input :
+                product->inputs_per_unit) {
+            products_to_reorder.insert(input.first);
         }
     }
     return products_to_reorder;
 }
+
+void Producer::log_plans() {
+    for (Plan * plan : plans_in_progress) {
+        Logger::get_instance()->log(
+                Logger::PRODUCER,
+                "plan",
+                id,
+                plan->order->product->product_name,
+                plan->order->quantity
+                );
+    }
+}
+
+void Producer::log_draft_plan(const Plan * draft_plan) {
+    Logger::get_instance()->log(
+            Logger::PRODUCER,
+            "draft_plan",
+            id,
+            draft_plan->order->product->product_name,
+            draft_plan->order->quantity
+            );
+}
+
+void Producer::log_dropped_order(const Order * order) {
+    Logger::get_instance()->log(
+            Logger::PRODUCER,
+            "dropped_order",
+            id,
+            order->product->product_name,
+            order->quantity
+            );
+}
+
+void Producer::log_pursued_plan(const Plan * draft_plan) {
+    Logger::get_instance()->log(
+            Logger::PRODUCER,
+            "pursued_plan",
+            id,
+            draft_plan->order->product->product_name,
+            draft_plan->order->quantity
+            );
+}
+

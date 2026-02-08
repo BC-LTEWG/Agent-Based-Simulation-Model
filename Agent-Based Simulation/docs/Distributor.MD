@@ -15,9 +15,20 @@ The Distributor holds inventory of consumer goods and fulfills purchases from pe
 ## Selling goods
 `sell_goods(Product& product, int quantity, Person * person)`:
 - Adds a demand signal for the requested quantity.
-- If inventory is short, creates a new order for the remainder and sends it to producers.
+- If inventory is short, logs the shortfall and relies on the standard reorder
+  logic (triggered by low inventory) instead of ordering immediately.
 - Charges the buyer for the portion actually sold and records revenue on the product's plan.
 - Reduces inventory by the quantity sold.
 
 ## Reordering
-The Distributor reorders only for products in its catalog.
+The Distributor reorders only for products in its catalog. The reorder threshold
+is the max of `order_size` and demand-based stockpiling. Demand is tracked via
+`add_demand_signal()` and decays in `apply_demand_window()` over
+`FIRM_DEMAND_WINDOW`, resulting in `inventory_demands[product] *
+FIRM_STOCKPILE_DURATION` as the demand component.
+
+## Plans and workforce
+Each catalog product has a distribution `Plan` created at initialization to
+track labor hours, outgoing units consumed, and revenue; the "raw material" for
+distribution is the product itself. Plans start with zero workers and are
+staffed via the shared firm worker-assignment logic.
