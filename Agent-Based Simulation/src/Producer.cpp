@@ -35,7 +35,7 @@ Producer::Producer(
 
 void Producer::on_time_step() {
     Firm::on_time_step();
-	execute_plans();
+	move_plans_forward_one_step();
     if (plans_in_progress.size()) {
         log_plans();
     }
@@ -55,9 +55,6 @@ int Producer::draft_plan(Order * order) {
         }
         add_demand_signal(input.first, input.second * order->quantity);
     }
-	if (!can_produce(order->product)) {
-		catalog.insert(order->product);
-	}
 	Plan * draft_plan = new Plan{};
 	draft_plan->order = order;
 	draft_plan->firm = this;
@@ -86,23 +83,24 @@ void Producer::drop_order(Order * order) {
 }
 
 bool Producer::pursue_order(Order * order) {
-	if (order_to_draft_plan[order] == nullptr) {
+	if (!order_to_draft_plan.count(order)) {
 		return false;
 	}
 	Plan * draft_plan = order_to_draft_plan[order];
 	// remove all workers from their current pools
+    Society * society = Society::get_instance();
 	for (Person * worker : draft_plan->workers) {
 		auto it = std::find(workers.begin(), workers.end(), worker);
 		if (it != workers.end()) {
 			workers.erase(it);
 		}
 		it = std::find(
-                Society::get_instance()->get_unemployed_people().begin(),
-                Society::get_instance()->get_unemployed_people().end(),
+                society->get_unemployed_people().begin(),
+                society->get_unemployed_people().end(),
                 worker
                 );
-		if (it != Society::get_instance()->get_unemployed_people().end()) {
-			Society::get_instance()->get_unemployed_people().erase(it);
+		if (it != society->get_unemployed_people().end()) {
+			society->get_unemployed_people().erase(it);
 		}
 	}
 	// move draft_plan to plans_in_progress
@@ -120,7 +118,7 @@ void Producer::start_plan(Plan * plan) {
 	}
 }
 
-void Producer::execute_plan(Plan * plan) {
+void Producer::move_plan_forward_one_step(Plan * plan) {
 	int labor_hours_done =
         std::min((int) plan->workers.size(), plan->labor_hours_remaining);
 	double raw_materials_used = 0.0;
@@ -170,7 +168,7 @@ void Producer::end_plan(Plan * plan) {
     PriceController::update_price(plan);
 }
 
-void Producer::execute_plans() {
+void Producer::move_plans_forward_one_step() {
 	for (
             auto iter = plans_in_progress.begin();
             iter != plans_in_progress.end();
@@ -183,7 +181,7 @@ void Producer::execute_plans() {
 		if (plan->total_hours_remaining > 0 &&
 			Sim::get_current_time_step() % DAY < Society::get_instance()->get_current_work_hours_daily() && 
 			Sim::get_current_time_step() / DAY % 7 < Society::get_instance()->get_current_work_days_weekly()) {
-			execute_plan(plan);
+			move_plan_forward_one_step(plan);
 		}
 		if (plan->total_hours_remaining == 0) {
 			end_plan(plan);
