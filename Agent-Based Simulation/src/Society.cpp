@@ -222,6 +222,22 @@ int Society::get_current_work_days_weekly() {
 	return current_work_days_weekly;
 }
 
+void Society::set_initial_account() {
+    initial_account = 0.0;
+    for (Product * product : products) {
+        ConsumerGood * consumer_good = get_consumer_good(product);
+        if (consumer_good) {
+            initial_account += consumer_good->price_per_unit *
+                consumer_good->mean_consumption_frequency *
+                PERSON_SHOPPING_PERIOD; 
+        }
+    }
+}
+
+int Society::get_initial_account() {
+    return initial_account;
+}
+
 Person * Society::birth_person() {
     Person * person = new Person(this);
     people.push_back(person);

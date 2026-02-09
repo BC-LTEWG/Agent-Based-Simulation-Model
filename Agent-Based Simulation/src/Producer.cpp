@@ -46,11 +46,9 @@ bool Producer::can_produce(Product * product) {
 }
 
 int Producer::draft_plan(Order * order) {
-    bool enough_inputs = true;
     for (std::pair<Product * const, double>& input :
             order->product->inputs_per_unit) {
         if (inventory[input.first] < input.second * order->quantity) {
-			enough_inputs = false;
 			return DRAFT_ORDER_REJECTED;
         }
         add_demand_signal(input.first, input.second * order->quantity);
