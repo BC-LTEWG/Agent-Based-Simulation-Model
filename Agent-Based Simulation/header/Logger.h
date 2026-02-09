@@ -65,7 +65,7 @@ class Logger {
         void write_data();
     private:
         Logger();
-        void log(
+        void log_impl(
                 const Client client,
                 const std::string label,
                 const unsigned int id,

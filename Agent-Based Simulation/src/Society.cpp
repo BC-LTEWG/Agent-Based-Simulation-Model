@@ -27,6 +27,10 @@ Society::Society() {
     static unsigned int unique_id = 0;
     id = unique_id++;
     set_initial_products();
+    for (Product * product : products) {
+        Logger::get_instance()->log(Logger::SOCIETY, "price", product->id, product->price_per_unit); 
+        Logger::get_instance()->log(Logger::SOCIETY, "order_size", product->id, product->order_size);
+    }
     for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
         Producer * producer = new Producer(this, {goods[i %
                 STARTING_NUM_PRODUCTS]});
@@ -72,6 +76,7 @@ void Society::set_initial_products() {
     std::size_t i = 0;
     for (; i < STARTING_NUM_PRODUCTS; ++i) {
         Product * new_product = new Product("Product " + std::to_string(i));
+        new_product->id = i;
         goods.push_back(new_product);
         products.push_back(new_product);
         product_to_index[new_product] = i;
