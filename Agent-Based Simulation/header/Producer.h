@@ -21,15 +21,15 @@ class Producer : public Firm {
 
     bool can_produce(Product * product);
 	int draft_plan(Order * order);
-	bool drop_order(Order * order);
+	void drop_order(Order * order);
 	bool pursue_order(Order * order);
 
   private:
 	std::unordered_map<Order *, Plan *> order_to_draft_plan;
 	void start_plan(Plan * plan);
-	void execute_plan(Plan * plan);
+	void move_plan_forward_one_step(Plan * plan);
 	void end_plan(Plan * plan);
-	void execute_plans();
+	void move_plans_forward_one_step();
     std::unordered_set<Product *> get_products_to_reorder() override;
     void log_plans();
     void log_draft_plan(const Plan * draft_plan);
