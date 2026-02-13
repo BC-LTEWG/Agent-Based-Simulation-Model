@@ -1,8 +1,11 @@
+#include <algorithm>
 #include <climits>
 #include <iostream>
+#include <string>
 
 #include "ConsumerGood.h"
 #include "Distributor.h"
+#include "Logger.h"
 #include "Machine.h"
 #include "Person.h"
 #include "Producer.h"
@@ -21,12 +24,7 @@ Distributor::Distributor(
         society->add_consumer_good(product);
         int quantity =
             get_reorder_threshold(product) * FIRM_INITIAL_INVENTORY_MULTIPLIER;
-        Order * order = new Order;
-        order->product = product;
-        order->quantity = quantity;
-        order->customer = this;
-        order->requested_turnaround_time = 0;
-        order->status = Order::ORDER_REQUESTED;
+        Order * order = new Order(product, quantity, this, 0);
         Plan * plan = new Plan;
         plan->order = order;
         plan->firm = this;
@@ -55,25 +53,33 @@ void Distributor::on_time_step() {
     }
 }
 
-double Distributor::get_output_ratio(Product& product) {
-    return 1.0 / product.order_size;
-}
-
-double Distributor::planned_satisfaction_per_person(Product& product, Person& person) {
-    return get_output_ratio(product) * person.get_purchase_frequencies()[&product];
-}
-
 void Distributor::sell_goods(Product& product, int quantity, Person * person) {
     add_demand_signal(&product, quantity);
 
-    if (!inventory[&product]) {
-        std::cerr << "Inventory has no such product: " << product.product_name << std::endl;
-        return;
+    bool has_inventory = inventory.count(&product) > 0;
+    int available = has_inventory ? inventory[&product] : 0;
+    if (!has_inventory) {
+        Logger::get_instance()->log(
+                Logger::DISTRIBUTOR,
+                "inventory_missing",
+                id,
+                product.product_name,
+                0
+                );
     }
-    int available = inventory[&product];
+    int remainder = 0;
+    int sell_quantity = std::min(available, quantity);
     if (available < quantity) {
-        std::cerr << "Shortfall in product " << product.product_name 
-            << " of " << quantity - available << " units. " << std::endl;
+        remainder = quantity - available;
+        Logger::get_instance()->log(
+                Logger::DISTRIBUTOR,
+                "shortfall",
+                id,
+                product.product_name,
+                remainder
+                );
+    }
+    if (sell_quantity == 0) {
         return;
     }
     ConsumerGood * consumer_good = society->get_consumer_good(&product);
@@ -81,26 +87,18 @@ void Distributor::sell_goods(Product& product, int quantity, Person * person) {
         std::cerr << "No consumer good for product " << product.product_name << std::endl;
         return;
     }
-    double cost = quantity * consumer_good->price_per_unit;
+    double cost = sell_quantity * consumer_good->price_per_unit;
     if (!person->charge(cost)) {
-        std::cerr << "Person cannot afford " << quantity 
+        std::cerr << "Person cannot afford " << sell_quantity
             << " units of " << product.product_name << " costing " 
             << cost << std::endl;
         return;
     } 
     Plan * plan = product_to_plan[&product];
-    plan->outgoing_units_consumed += quantity;
-    product_to_plan[&product]->prd += cost;
-    inventory[&product] -= quantity;
-}
-
-bool Distributor::is_overproduced(Product* product) {
-    for(auto& goods : plans_in_progress) {
-        if(goods->order->product == product) {
-            return goods->order->quantity > PRODUCTION_THRESHOLD * goods->order->quantity;
-        }
-    }
-    return false;
+    plan->outgoing_units_consumed += sell_quantity;
+    plan->prd += cost;
+    this->pooled_account -= cost;
+    inventory[&product] -= sell_quantity;
 }
 
 std::unordered_set<Product *> Distributor::get_products_to_reorder() {

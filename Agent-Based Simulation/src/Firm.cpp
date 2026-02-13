@@ -14,6 +14,19 @@
 #include "Sim.h"
 #include "Society.h"
 
+Order::Order(
+        Product * product,
+        int quantity,
+        Firm * customer,
+        int requested_turnaround_time
+        )
+    : product(product),
+      quantity(quantity),
+      customer(customer),
+      requested_turnaround_time(requested_turnaround_time),
+      status(ORDER_REQUESTED)
+{}
+
 Firm::Firm(Society * society) : society{society} {}
 
 Firm::Firm(Society * society, std::unordered_set<Product *> initial_catalog) :
@@ -94,8 +107,8 @@ Producer * Firm::send_order(Order * order) {
 }
 
 double Firm::get_reorder_threshold(Product * product) {
-    return std::max((double) product->order_size, 
-            inventory_demands[product] * FIRM_STOCKPILE_DURATION);
+    return std::max((double) product->order_size,
+        inventory_demands[product] * FIRM_STOCKPILE_DURATION);
 }
 
 int Firm::get_pending_inventory(Product * product) {
@@ -120,10 +133,23 @@ void Firm::reorder_product_to_threshold(
             threshold
             );
         log_reorder(product->product_name, reorder_quantity);
-        Order * order = new Order{product, reorder_quantity, this, reorder_deadline, Order::ORDER_REQUESTED};
+        Order * order = new Order(
+                product,
+                reorder_quantity,
+                this,
+                reorder_deadline
+                );
         Producer * chosen_producer = send_order(order);
         if (chosen_producer) {
             log_accepted_order(product->product_name, order->requested_turnaround_time);
+            pooled_account += order->product->living_labor_per_unit + std::accumulate(
+                order->product->inputs_per_unit.begin(),
+                order->product->inputs_per_unit.end(),
+                0.0,
+                [](double acc, const std::pair<Product *, double>& p) {
+                    return acc + p.second;
+                }
+                ) * order->quantity;
         }
     }
 }
@@ -134,7 +160,7 @@ void Firm::check_and_reorder() {
     for (Product * product : products_to_reorder) {
         double threshold = get_reorder_threshold(product);
         int pending_inventory = get_pending_inventory(product);
-        if (pending_inventory < threshold) {
+        if (pending_inventory < threshold || pooled_account == 0.0) {
             reorder_product_to_threshold(product, threshold, pending_inventory);
         }
     }
@@ -252,16 +278,22 @@ void Firm::assign_plan_dependent_fields(
                     required_abilities,
                     worker->get_current_productivity());
         }
+        if (total_suitability <= 0) {
+            total_suitability = 1.0;
+        }
         draft_plan->predicted_turnaround_time =
             draft_plan->training_time +
             predict_turnaround_time(draft_plan->order, total_suitability);
         draft_plan->labor_hours =
             draft_plan->labor_hours_remaining =
             draft_plan->training_time * draft_plan->workers.size() +
-            predict_labor_hours(draft_plan->order, total_suitability);    
+            predict_labor_hours(draft_plan->order, total_suitability);
     } else {
         for (Person * worker : draft_plan->workers) {
             total_suitability += suitability(worker, required_abilities);
+        }
+        if (total_suitability <= 0) {
+            total_suitability = 1.0;
         }
         draft_plan->predicted_turnaround_time =
             predict_turnaround_time(draft_plan->order, total_suitability);

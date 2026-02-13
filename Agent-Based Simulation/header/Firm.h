@@ -44,6 +44,15 @@ struct Order {
     Firm * customer;
     int requested_turnaround_time;
     OrderStatus status;
+    
+    Order(
+            Product * product,
+            int quantity,
+            Firm * customer,
+            int requested_turnaround_time
+    );
+
+
 };
 
 struct DemandSignal {
@@ -66,7 +75,9 @@ class Firm : public Agent {
     void add_supplier(Producer * producer);
     void receive_shipment(Order * order);
 
+
   protected:
+    double pooled_account;
     Society * society;
     unsigned int id;
     std::vector<Machine*> machines;

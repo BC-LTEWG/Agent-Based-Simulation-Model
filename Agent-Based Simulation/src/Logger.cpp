@@ -39,7 +39,7 @@ void Logger::log(
         const unsigned int id
         ) {
     TupleNone tuple;
-    log(client, label, id, tuple);
+    log_impl(client, label, id, tuple);
 }
 
 void Logger::log(const Client client,
@@ -48,7 +48,7 @@ void Logger::log(const Client client,
         const int value
         ) {
     TupleInt tuple = std::make_tuple(value);
-    log(client, label, id, tuple);
+    log_impl(client, label, id, tuple);
 }
 
 void Logger::log(const Client client,
@@ -57,7 +57,7 @@ void Logger::log(const Client client,
         const double measure
         ) {
     TupleDouble tuple = std::make_tuple(measure);
-    log(client, label, id, tuple);
+    log_impl(client, label, id, tuple);
 }
 
 void Logger::log(
@@ -68,7 +68,7 @@ void Logger::log(
         const int quantity
         ) {
     TupleStringInt tuple = std::make_tuple(name, quantity);
-    log(client, label, id, tuple);
+    log_impl(client, label, id, tuple);
 }
 
 void Logger::log(
@@ -79,12 +79,14 @@ void Logger::log(
         const double measure
         ) {
     TupleStringDouble tuple = std::make_tuple(name, measure);
-    log(client, label, id, tuple);
+    log_impl(client, label, id, tuple);
 }
 
 const char * Logger::clients[] = {"Firm", "Distributor", "Person", "Producer", "Product", "Society"};
 
-void Logger::log(
+const char * Logger::logging_dir = "data";
+
+void Logger::log_impl(
         const Client client,
         const std::string label,
         const unsigned int id,
@@ -94,12 +96,10 @@ void Logger::log(
     if (Sim::is_trace_logging()) {
         Logger::trace(time_step, client, label, id, values);
     }
-    if (Sim::is_writing_data()) {
-        data[client][label][id][time_step] = values;
-    }
     if (Sim::is_using_db()) {
         log_to_db(time_step, client, label, id, values);
     }
+    data[client][label][id][time_step] = values;
 }
 
 void Logger::trace(
@@ -137,6 +137,7 @@ void Logger::write_tuple(std::ofstream& out_file, const TupleT& values) {
 }
 
 void Logger::write_data() {
+    std::string s("price");
     for (auto& client_map : data) {
         std::string client_prefix = clients[client_map.first];
         for (auto& label_map : client_map.second) {

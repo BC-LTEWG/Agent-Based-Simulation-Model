@@ -39,7 +39,7 @@ void Sim::run(int time_steps) {
         society->on_time_step();
         current_time_step++;
     }
-    if (write_data) {
+    if (Sim::is_writing_data()) {
         Logger::get_instance()->write_data();
     }
 }

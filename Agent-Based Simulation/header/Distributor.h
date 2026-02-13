@@ -7,9 +7,7 @@
 
 #include "Firm.h"
 
-#define PRODUCTION_THRESHOLD 1.5
-
-struct Plan;
+constexpr double PRODUCTION_THRESHOLD = 1.5;
 struct Product;
 class Distributor;
 class Person;
@@ -20,11 +18,7 @@ class Distributor : public Firm {
     Distributor(Society * society);
     Distributor(Society * society, std::unordered_set<Product *> initial_catalog);
     void on_time_step() override;
-
-    double get_output_ratio(Product& product);
-    double planned_satisfaction_per_person(Product& product, Person& person);
     void sell_goods(Product& product, int quantity, Person * person);
-    bool is_overproduced(Product * product);
 
   private:
     std::unordered_set<Product *> get_products_to_reorder() override;
