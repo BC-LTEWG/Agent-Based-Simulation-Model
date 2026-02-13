@@ -84,8 +84,6 @@ void Logger::log(
 
 const char * Logger::clients[] = {"Firm", "Distributor", "Person", "Producer", "Product", "Society"};
 
-const char * Logger::logging_dir = "data";
-
 void Logger::log_impl(
         const Client client,
         const std::string label,
