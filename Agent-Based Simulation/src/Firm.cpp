@@ -8,7 +8,6 @@
 #include "Firm.h"
 #include "Logger.h"
 #include "Person.h"
-#include "PriceController.h"
 #include "Producer.h"
 #include "Product.h"
 #include "Sim.h"
