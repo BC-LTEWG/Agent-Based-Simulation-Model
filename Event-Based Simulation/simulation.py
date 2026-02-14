@@ -251,7 +251,8 @@ def export_trajectories_with_equilibrium(
     #        q = equilibrium output (production) vector
     intermediate_demand = params.A @ eq_output
 
-    # Total internal demand per product
+    # This is the the reproduction requirement, 
+    # as it measures how much the system can safely give up without harming reproduction.
     # total_demand = A·q + b + c
     # where:
     #   A·q = intermediate input demand from production,

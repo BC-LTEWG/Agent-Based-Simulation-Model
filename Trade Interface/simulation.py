@@ -250,9 +250,12 @@ def trade(ce_map, ce_time_series, lte_map, time_step):
     LTE_Export.clear()
     
     # Recalculate export capacity ratios for this time step.
+    # This is the the reproduction requirement, 
+    # as it measures how much the system can safely give up without harming reproduction.
     # For each CE product i,
     #   export_capacity_ratio_i(t) = current_supply_i(t) / equilibrium_total_demand_i
-    # where equilibrium_total_demand_i = A·q + b + c measures normal internal absorption instead of total ouput 
+    # where equilibrium_total_demand_i = A·q + b + c 
+    #  (What the letters represent is in simulation.py in the event based simulation)
     # The ratio therefore measures how much surplus supply capacity
     # is available for trade relative to internal needs.
     recalculate_export_capacity_ratio(ce_map, ce_time_series, time_step) 
