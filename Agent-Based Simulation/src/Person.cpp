@@ -137,6 +137,7 @@ void Person::shop() {
         total_price += ideal_purchase_quantities[p.first] * 
             society->get_consumer_good(p.first)->price_per_unit;
     }
+    log_shopping_deficit(std::max(0.0, (total_price - account) / total_price)); 
     for (std::pair<Product *, double> p : ideal_purchase_quantities) {
         int affordable_quantity = (int) (account / total_price *
                 ideal_purchase_quantities[p.first]);
@@ -187,6 +188,10 @@ void Person::log_hours(const double hours) {
 
 void Person::log_shopping(const std::string product_name, const int quantity) {
     Logger::get_instance()->log(Logger::PERSON, "shopping", id, product_name, quantity);
+}
+
+void Person::log_shopping_deficit(const double deficit) {
+    Logger::get_instance()->log(Logger::PERSON, "shopping_deficit", id, deficit);
 }
 
 void Person::log_state() {
