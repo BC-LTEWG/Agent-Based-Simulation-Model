@@ -257,7 +257,13 @@ def trade(ce_map, ce_time_series, lte_map, time_step):
     # where equilibrium_total_demand_i = A·q + b + c 
     #  (What the letters represent is in simulation.py in the event based simulation)
     # The ratio therefore measures how much surplus supply capacity
-    # is available for trade relative to internal needs.
+    # is available for trade relative to internal needs. 
+    # We then subtract 1 from the ratio. 
+    #   If the ratio is positive, then the CE is open to trade since it has surplus. 
+    #   If it's negative, then the CE will not trade this product type (it would instead want to import).
+    # We can time product type i's (export capacity ratio - 1) by 
+    #   the order size of product type i of the LTE to get 
+    #   the specific amount the CE can export.
     recalculate_export_capacity_ratio(ce_map, ce_time_series, time_step) 
     
     # Convert keys to sets for fast comparison
@@ -276,14 +282,22 @@ def trade(ce_map, ce_time_series, lte_map, time_step):
         product = ce_map[name]             # get the CapitalistProduct object
 
         # CE shortage detection 
-        if product.supply < product.eq_supply:
+        if product.supply < product.eq_total_demand:
             if name not in CE_Import:
                 CE_Import.append(name)
 
         # CE Surplus detection 
-        elif product.supply > product.eq_supply:
-            CE_Export.append(name)
-
+        elif product.supply > product.eq_total_demand:
+            if name not in CE_Export:
+                CE_Export.append(name)
+                
+    # TODO:
+    # 1. We need to give LTE MELT values to convert the prices.
+    # 2. We need to convert CE prices which are in ratios to actual currency values. 
+    # 3. We need to give LTE arbitrary shortage for random product types.
+    # 4. We need to use the trade algorithm developed to simulate trade. 
+    # 5. We need to record the change in currency between the two economies and graph it. 
+    
     # TODO:
     # 1. Check which products CE is missing - add to CE_Import - implemented 
     # 2. Check which products LTE is missing - add to LTE_Import - implemented 
