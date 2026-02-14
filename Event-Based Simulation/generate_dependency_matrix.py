@@ -10,6 +10,8 @@ BASE_COST_F = 1.8  # Silicon/electronic substrate
 BASE_COST_G = 2.5  # Rare mineral/alloy
 BASE_COST_H = 1.2  # Textile/biological base
 
+# Look up prices of each base product in real life and go from there 
+
 NUMBER_OF_TOTAL_PRODUCTS = 26
 NUMBER_OF_BASE_PRODUCTS = 8
 

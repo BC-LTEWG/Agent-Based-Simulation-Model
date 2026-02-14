@@ -216,6 +216,52 @@ def export_trajectories_with_equilibrium(
     eq_index = None
     if equilibrium_time is not None:
         eq_index = int(np.argmin(np.abs(time - equilibrium_time)))
+        
+    # Extract equilibrium state vectors
+    eq_prices = np.array(traj["p"])[eq_index]   # equilibrium prices
+    eq_output = np.array(traj["q"])[eq_index]   # equilibrium output
+
+    # Worker consumption at equilibrium
+    # b = (alpha_w * m_w) / (p · b_bar) * b_bar
+    # where: alpha_w = worker propensity to consume,
+    #        m_w = worker share of total money,
+    #        p = equilibrium price vector,
+    #        b_bar = baseline worker consumption bundle
+    worker_consumption = (
+        params.alpha_w * params.m_w0
+        / (eq_prices @ params.b_bar)
+        * params.b_bar
+    )
+
+    # Capitalist consumption at equilibrium
+    # c = (alpha_c * (1 - m_w)) / (p · c_bar) * c_bar
+    # where: alpha_c = capitalist propensity to consume,
+    #        (1 - m_w) = capitalist share of total money,
+    #        p = equilibrium price vector,
+    #        c_bar = baseline capitalist consumption bundle
+    capitalist_consumption = (
+        params.alpha_c * (1.0 - params.m_w0)
+        / (eq_prices @ params.c_bar)
+        * params.c_bar
+    )
+
+    # Intermediate input demand from production
+    # intermediate_demand = A · q
+    # where: A = input–output requirements matrix,
+    #        q = equilibrium output (production) vector
+    intermediate_demand = params.A @ eq_output
+
+    # Total internal demand per product
+    # total_demand = A·q + b + c
+    # where:
+    #   A·q = intermediate input demand from production,
+    #   b   = worker consumption demand,
+    #   c   = capitalist consumption demand
+    equilibrium_total_demand = (
+        intermediate_demand
+        + worker_consumption
+        + capitalist_consumption
+    )
 
     header = ["time", "is_equilibrium_step"]
     header += [f"price_{lbl}" for lbl in labels]
@@ -223,6 +269,8 @@ def export_trajectories_with_equilibrium(
     header += ["equilibrium_time"]
     header += [f"equilibrium_price_{lbl}" for lbl in labels]
     header += [f"equilibrium_supply_{lbl}" for lbl in labels]
+    header += [f"equilibrium_total_demand_{lbl}" for lbl in labels]
+
 
     with open(filename, "w", newline="") as f:
         writer = csv.writer(f)
@@ -239,10 +287,13 @@ def export_trajectories_with_equilibrium(
                 row.append(time[eq_index])
                 row += prices[eq_index].tolist()
                 row += supply[eq_index].tolist()
+                row += equilibrium_total_demand.tolist()
             else:
                 row.append("")
                 row += [""] * num_products
                 row += [""] * num_products
+                row += [""] * num_products
+
 
             writer.writerow(row)
 
