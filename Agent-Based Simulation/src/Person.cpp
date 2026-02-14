@@ -115,8 +115,7 @@ float Person::avg_productivity_over_time_step(std::string product_name) {
 
 void Person::purchase_good(Product * p, int quantity) {
     for (Distributor * distributor : ranked_distributors) {
-        if (distributor->get_inventory(p) >= quantity) {
-            distributor->sell_goods(*p, quantity, this);
+        if (distributor->try_sell_goods(*p, quantity, this)) {
             return;
         }
     }
