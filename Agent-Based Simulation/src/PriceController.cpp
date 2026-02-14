@@ -23,10 +23,13 @@ void PriceController::update_price(Plan * plan) {
         plan_history[product].erase(plan_history[product].begin());
     }
     int past_total_units = 0;
+    int num_workers = 0;
     for (std::pair<Plan *, int> entry : plan_history[product]) {
         past_total_units += entry.first->order->quantity;
+        num_workers += entry.first->workers.size();
     }
     int total_units = past_total_units + plan->order->quantity;
+    num_workers += plan->workers.size();
     double past_total_labor = product->living_labor_per_unit * past_total_units;
     double new_actual_labor =
         plan->labor_hours - plan->labor_hours_remaining;
