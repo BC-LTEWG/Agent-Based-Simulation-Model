@@ -2,6 +2,7 @@ import csv
 import os
 
 # Product classes for each economy
+from CapitalistEconomy import CapitalistEconomy
 from CapitalistProduct import CapitalistProduct
 from LaborTimeProduct import LaborTimeProduct 
 
@@ -223,12 +224,16 @@ def recalculate_export_capacity_ratio(ce_map, ce_time_series, time_step):
         product.export_capacity_ratio = (
             product.supply / product.eq_total_demand
         )
+        
+def compute_melt(ce):
+    # Compute MELT (money per labor-hour) using working population hours (incl. self-employed)
+    ce.melt = ce.gdp_ppp_per_capita / ce.avg_hours_worked_by_working_population
 
 # Note: This trade function only handles trade on a perticular time step. 
 # If an item on the trading list can not be traded, then the shortage/surplus persists 
 # On the next time step, the trade function will be called again and attempt to resolve the 
 # previous shortage/surplus issue while the economy adjusts itself to try to satisfy its own needs 
-def trade(ce_map, ce_time_series, lte_map, time_step):
+def trade(ce, lte, ce_map, ce_time_series, lte_map, time_step):
     """
     Called every simulation time step.
 
@@ -291,12 +296,16 @@ def trade(ce_map, ce_time_series, lte_map, time_step):
             if name not in CE_Export:
                 CE_Export.append(name)
                 
+    compute_melt(ce)
+                
     # TODO:
-    # 1. We need to give LTE MELT values to convert the prices.
+    # 1. We need to give LTE MELT values to convert the prices. - already done 
     # 2. We need to convert CE prices which are in ratios to actual currency values. 
     # 3. We need to give LTE arbitrary shortage for random product types.
     # 4. We need to use the trade algorithm developed to simulate trade. 
     # 5. We need to record the change in currency between the two economies and graph it. 
+    
+    # Note: I don't think I'll have time for applying the effect back to the economy. That will be for March and April. 
     
     # TODO:
     # 1. Check which products CE is missing - add to CE_Import - implemented 
@@ -331,7 +340,7 @@ def trade(ce_map, ce_time_series, lte_map, time_step):
     print(f"[t={time_step}] Trade() executed")
 
 if __name__ == "__main__":
-    ce_csv_path = os.path.join(
+    ce_data_path = os.path.join(
     "..",
     "Event-Based Simulation",
     "graphs",
@@ -344,16 +353,25 @@ if __name__ == "__main__":
         "data"
     )
     
+    usa = CapitalistEconomy(
+        name="United States",
+        total_currency=85809.900385,  # GDP per capita, PPP
+        melt=0.0,  # placeholder 
+        gdp_ppp_per_capita=85809.900385,
+        avg_hours_worked_by_working_population=1795.906,
+        avg_hours_worked_by_employees_only=1809.583,
+    )
+    
     # Build CE and LTE maps
-    ce_map = build_ce_map(ce_csv_path)
+    ce_map = build_ce_map(ce_data_path)
     lte_map = build_lte_map(lte_data_path)
     
     # Load CE data for access in O(1) time 
-    ce_time_series = load_ce_post_equilibrium_series(ce_csv_path)
+    ce_time_series = load_ce_post_equilibrium_series(ce_data_path)
 
     # Display results
     print_maps(ce_map, lte_map)
     
     for i in range (NUMBER_OF_TIME_STEPS):
         # Place holder 
-        trade(ce_map, ce_time_series, lte_map, i)
+        trade(usa, lte, ce_map, ce_time_series, lte_map, i)
