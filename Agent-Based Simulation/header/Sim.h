@@ -13,15 +13,18 @@ class Sim {
     Sim();
     static bool is_trace_logging();
     static bool is_writing_data();
+    static bool is_using_db();
     static void set_trace_logging(bool should_log);
     static void set_write_data(bool should_log);
+    static void set_using_db(bool should_log);
 	static int get_current_time_step();
     void time_step();
     void run(int time_steps);
 
   private:
+    static bool use_db;
     static bool trace_logging;
     static bool write_data;
-	static int current_time_step;
-	Society * society;
+    static int current_time_step;
+    Society * society;
 };

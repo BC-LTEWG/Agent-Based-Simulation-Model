@@ -8,7 +8,6 @@
 #include "Firm.h"
 #include "Logger.h"
 #include "Person.h"
-#include "PriceController.h"
 #include "Producer.h"
 #include "Product.h"
 #include "Sim.h"
@@ -59,7 +58,10 @@ double Firm::get_avg_productivity() {
 }
 
 int Firm::get_inventory(Product * product) {
-    return this->inventory[product];
+    if (!inventory.count(product)) {
+        return 0;
+    }
+    return inventory[product];
 }
 
 void Firm::add_supplier(Producer * producer) {
