@@ -114,14 +114,26 @@ float Person::avg_productivity_over_time_step(std::string product_name) {
 }
 
 void Person::purchase_good(Product * p, int quantity) {
+    Distributor * best_distributor = nullptr;
+    int max_available = 0;
     for (Distributor * distributor : ranked_distributors) {
-        if (distributor->get_inventory(p) >= quantity) {
-            distributor->sell_goods(*p, quantity, this);
-            return;
+        int available = distributor->get_inventory(p);
+        if (available > max_available) {
+            max_available = available;
+            best_distributor = distributor;
         }
     }
-    std::cerr << "No Distributor with " << quantity << "units of "
-        << p->product_name << " to buy" << std::endl;
+    if (best_distributor && max_available > 0) {
+        best_distributor->sell_goods(*p, quantity, this);
+        return;
+    }
+    Logger::get_instance()->log(
+            Logger::PERSON,
+            "no_distributor",
+            id,
+            p->product_name,
+            quantity
+            );
 }
 
 bool Person::will_shop() {

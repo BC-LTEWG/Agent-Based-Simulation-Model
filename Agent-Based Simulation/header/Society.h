@@ -29,6 +29,8 @@ class Society : public Agent {
         int get_current_work_hours_daily();
         int get_current_work_days_weekly();
         int get_initial_account();
+        std::vector<Producer *>& get_producers();
+
     private:
         Society();
         unsigned int id;

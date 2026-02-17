@@ -46,7 +46,6 @@ Society::Society() {
             }
         }
     }
-    // People MUST come after products and distributors are created.
     for (int i = 0; i < STARTING_NUM_PEOPLE; i++) {
         birth_person();	
     }
@@ -135,6 +134,10 @@ double get_max_eigenvalue(Eigen::MatrixXd& io_matrix) {
         }
     }
     return max_eigenvalue;
+}
+
+std::vector<Producer *>& Society::get_producers() {
+    return producers;
 }
 
 void Society::adjust_io_matrix(
@@ -226,11 +229,13 @@ void Society::set_initial_account() {
     initial_account = 0.0;
     for (Product * product : products) {
         ConsumerGood * consumer_good = get_consumer_good(product);
-        if (consumer_good) {
-            initial_account += consumer_good->price_per_unit *
-                consumer_good->mean_consumption_frequency *
-                PERSON_SHOPPING_PERIOD; 
+        if(!consumer_good) {
+            std::cerr << "consumer good DNE" << std::endl;
         }
+
+        initial_account += consumer_good->price_per_unit *
+            consumer_good->mean_consumption_frequency *
+            PERSON_SHOPPING_PERIOD; 
     }
 }
 

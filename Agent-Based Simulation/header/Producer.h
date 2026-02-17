@@ -23,9 +23,18 @@ class Producer : public Firm {
 	int draft_plan(Order * order);
 	void drop_order(Order * order);
 	bool pursue_order(Order * order);
+  void reorder_raw_materials(Plan * plan);
+  bool has_raw_materials();
+  void initialize_input_inventory(std::unordered_map<Product *, int>& inventory_items); 
+  void get_pending_input_inventory(Product * product);
+  void log_pending_input_inventory_level(Product * product);
+  int get_pooled_account();
 
   private:
+  std::unordered_map<Product *, int> input_inventory;
 	std::unordered_map<Order *, Plan *> order_to_draft_plan;
+  int pooled_account;
+
 	void start_plan(Plan * plan);
 	void move_plan_forward_one_step(Plan * plan);
 	void end_plan(Plan * plan);

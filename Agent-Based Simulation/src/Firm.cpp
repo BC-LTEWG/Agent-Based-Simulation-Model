@@ -59,7 +59,11 @@ double Firm::get_avg_productivity() {
 }
 
 int Firm::get_inventory(Product * product) {
-    return this->inventory[product];
+    auto it = inventory.find(product);
+    if (it == inventory.end()) {
+        return 0;
+    }
+    return it->second;
 }
 
 void Firm::add_supplier(Producer * producer) {
@@ -110,7 +114,7 @@ double Firm::get_reorder_threshold(Product * product) {
 
 int Firm::get_pending_inventory(Product * product) {
     int pending_inventory = inventory[product];
-    for (auto * order : product_to_outbound_orders[product]) {
+    for (Order * order : product_to_outbound_orders[product]) {
         pending_inventory += order->quantity;
     }
     return pending_inventory;
@@ -139,14 +143,6 @@ void Firm::reorder_product_to_threshold(
         Producer * chosen_producer = send_order(order);
         if (chosen_producer) {
             log_accepted_order(product->product_name, order->requested_turnaround_time);
-            pooled_account += order->product->living_labor_per_unit + std::accumulate(
-                order->product->inputs_per_unit.begin(),
-                order->product->inputs_per_unit.end(),
-                0.0,
-                [](double acc, const std::pair<Product *, double>& p) {
-                    return acc + p.second;
-                }
-                ) * order->quantity;
         }
     }
 }
@@ -157,7 +153,7 @@ void Firm::check_and_reorder() {
     for (Product * product : products_to_reorder) {
         double threshold = get_reorder_threshold(product);
         int pending_inventory = get_pending_inventory(product);
-        if (pending_inventory < threshold || pooled_account == 0.0) {
+        if (pending_inventory < threshold) {
             reorder_product_to_threshold(product, threshold, pending_inventory);
         }
     }

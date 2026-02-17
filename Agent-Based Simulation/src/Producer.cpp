@@ -114,6 +114,8 @@ void Producer::start_plan(Plan * plan) {
             plan->order->product->inputs_per_unit) {
 		inventory[input.first] -= input.second * plan->order->quantity;
 	}
+    pooled_account += plan->raw_materials;
+    plan->raw_materials = 0;
 }
 
 void Producer::move_plan_forward_one_step(Plan * plan) {
@@ -131,7 +133,7 @@ void Producer::move_plan_forward_one_step(Plan * plan) {
         }
 	} else {
 		raw_materials_used =
-            plan->raw_materials *
+            pooled_account *
             labor_hours_done /
             (plan->labor_hours - plan->workers.size() * plan->training_time);
         inputs_used = std::accumulate(
@@ -149,8 +151,27 @@ void Producer::move_plan_forward_one_step(Plan * plan) {
 	}
 	plan->labor_hours_remaining -= labor_hours_done;
 	plan->raw_materials_remaining -= raw_materials_used;
+    if (plan->raw_materials_remaining < RAW_MATERIAL_THRESHOLD) {
+        reorder_raw_materials(plan);
+
+    }
 	plan->total_hours_remaining -= labor_hours_done + raw_materials_used;
-	this->pooled_account -= labor_hours_done + inputs_used;
+}
+
+int Producer::get_pooled_account() {
+    return pooled_account;
+}
+
+void Producer::reorder_raw_materials(Plan * plan) {
+    Society * society = Society::get_instance();
+    for (Producer * producer : society->get_producers()) {
+        if ((producer->get_pooled_account() > RAW_MATERIAL_THRESHOLD * 1.5)) {
+            producer->pooled_account -= RAW_MATERIAL_THRESHOLD * 1.2;
+            plan->prd += RAW_MATERIAL_THRESHOLD * 1.2;
+            break;
+        }
+
+    }
 }
 
 void Producer::end_plan(Plan * plan) {
