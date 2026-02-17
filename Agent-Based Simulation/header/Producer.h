@@ -23,7 +23,7 @@ class Producer : public Firm {
 	int draft_plan(Order * order);
 	void drop_order(Order * order);
 	bool pursue_order(Order * order);
-  void reorder_raw_materials(Plan * plan);
+  void reorder_raw_materials(Plan * plan, Product * product);
   bool has_raw_materials();
   void initialize_input_inventory(std::unordered_map<Product *, int>& inventory_items); 
   void get_pending_input_inventory(Product * product);
