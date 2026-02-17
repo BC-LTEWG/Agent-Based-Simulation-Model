@@ -42,7 +42,7 @@ const int PRODUCT_LABOR_PER_UNIT_MAX = INITIAL_WORK_WEEK;
 const double DISTRIBUTION_LABOR_PER_UNIT = 0.2;
 const double PRODUCT_CONSUMPTION_FREQUENCY_MIN = 0;
 const double PRODUCT_CONSUMPTION_FREQUENCY_MAX = 1;
-const int PRICE_AVERAGING_WINDOW = 16;
+const int PRICE_AVERAGING_WINDOW = MONTH;
 
 const int MACHINE_LIFETIME_MIN = 1000;
 const int MACHINE_LIFETIME_MAX = MACHINE_LIFETIME_MIN * 10;
@@ -68,4 +68,7 @@ const double DAILY_RECOVERY_CHANCE = 0.1;
 
 const int PERSON_ABILITY_COUNT_MAX = 3;
 const int PRODUCT_ABILITY_COUNT_MAX = 3;
+
+const char * const LOGGING_DIR = "data";
+const char * const LOG_FILE = "data/lte.db";
 

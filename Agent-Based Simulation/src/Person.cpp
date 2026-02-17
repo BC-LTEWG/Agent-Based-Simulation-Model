@@ -119,8 +119,10 @@ void Person::purchase_good(Product * p, int quantity) {
             return;
         }
     }
+    /*
     std::cerr << "No Distributor with " << quantity << "units of "
         << p->product_name << " to buy" << std::endl;
+        */
 }
 
 bool Person::will_shop() {
