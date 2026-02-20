@@ -164,6 +164,10 @@ void Producer::end_plan(Plan * plan) {
     double total = plan->order->product->price_per_unit * plan->order->quantity;
     plan->prd += total;
     PriceController::get_instance()->update_price(plan);
+    
+    for (Person * worker : plan->workers) {
+        Society::get_instance()->get_unemployed_people().push_back(worker);
+    }
 }
 
 void Producer::move_plans_forward_one_step() {
