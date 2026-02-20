@@ -125,4 +125,5 @@ class Firm : public Agent {
     void log_inventory_level(std::string product_name, int quantity);
     void log_reorder(std::string product_name, int quantity);
     void log_accepted_order(std::string product_name, int requested_turnaround_time);
+    void log_demand(std::string product_name, double demand);
 };

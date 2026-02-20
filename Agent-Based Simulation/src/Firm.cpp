@@ -43,6 +43,12 @@ unsigned int Firm::get_id() {
 void Firm::on_time_step() {
     apply_demand_window();
     check_and_reorder();
+    for (Product * product : catalog) {
+        log_inventory_level(product->product_name, inventory[product]);
+    }
+    for (std::pair<Product *, double> product : inventory_demands) {
+        log_demand(product.first->product_name, product.second);
+    }
 }
 
 void Firm::initialize_inventory(
@@ -77,7 +83,6 @@ void Firm::receive_shipment(Order * order) {
     inventory[order->product] += order->quantity;
     product_to_outbound_orders[order->product].erase(order);
     log_shipment_received(order->product->product_name, order->quantity);
-    log_inventory_level(order->product->product_name, inventory[order->product]);
 }
 
 Producer * Firm::send_order(Order * order) {
@@ -189,7 +194,7 @@ double Firm::suitability(
 }
 
 int Firm::predict_workers_needed(Order * order) {
-    return ceil(
+    return std::ceil(
             order->quantity *
             order->product->living_labor_per_unit *
             DAY /
@@ -420,5 +425,15 @@ void Firm::log_accepted_order(std::string product_name, int requested_turnaround
             id,
             product_name,
             requested_turnaround_time
+            );
+}
+
+void Firm::log_demand(std::string product_name, double demand) {
+    Logger::get_instance()->log(
+            Logger::FIRM,
+            "demand",
+            id,
+            product_name,
+            demand
             );
 }

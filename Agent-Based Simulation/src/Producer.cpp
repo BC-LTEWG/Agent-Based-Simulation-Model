@@ -154,6 +154,7 @@ void Producer::move_plan_forward_one_step(Plan * plan) {
 }
 
 void Producer::end_plan(Plan * plan) {
+    log_ended_plan(plan);
     plan->order->status = Order::ORDER_FINISHED;
 	// simplification: whole product amount is added to inventory at the end of
     // a plan
@@ -246,3 +247,12 @@ void Producer::log_pursued_plan(const Plan * draft_plan) {
             );
 }
 
+void Producer::log_ended_plan(const Plan * plan) {
+    Logger::get_instance()->log(
+            Logger::PRODUCER,
+            "ended_plan",
+            id,
+            plan->order->product->product_name,
+            plan->order->quantity
+            );
+}
