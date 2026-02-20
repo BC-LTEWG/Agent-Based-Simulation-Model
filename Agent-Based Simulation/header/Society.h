@@ -29,12 +29,14 @@ class Society : public Agent {
         int get_current_work_hours_daily();
         int get_current_work_days_weekly();
         int get_initial_account();
+        std::unordered_map<Product *, double>& get_initial_production();
+
     private:
         Society();
         unsigned int id;
         Person * birth_person();
         void set_initial_products();
-        void set_product_prices();
+        void set_product_prices_and_production();
         std::unordered_map<Product *, std::size_t> get_product_to_index_map();
         void populate_io_matrix_and_labor_vector(
                 std::unordered_map<Product *, std::size_t>&,
@@ -58,4 +60,5 @@ class Society : public Agent {
 		int current_work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
         std::vector<Person *> unemployed_people;
         double initial_account;
+        std::unordered_map<Product *, double> initial_production;
 };

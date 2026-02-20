@@ -29,7 +29,9 @@ Producer::Producer(
     }
     for (Product * product : get_products_to_reorder()) {
         inventory[product] =
-            get_reorder_threshold(product) * FIRM_INITIAL_INVENTORY_MULTIPLIER;
+            (society->get_initial_production()[product] - product->mean_consumption_frequency) * 
+            (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW * FIRM_INITIAL_INVENTORY_MULT) * 
+            STARTING_NUM_PEOPLE;
     }
 }
 

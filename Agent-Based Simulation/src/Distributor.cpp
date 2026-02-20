@@ -23,7 +23,9 @@ Distributor::Distributor(
     for (Product * product : get_products_to_reorder()) {
         society->add_consumer_good(product);
         int quantity =
-            get_reorder_threshold(product) * FIRM_INITIAL_INVENTORY_MULTIPLIER;
+            product->mean_consumption_frequency *
+            (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW * FIRM_INITIAL_INVENTORY_MULT) * 
+            STARTING_NUM_PEOPLE;
         Order * order = new Order(product, quantity, this, 0);
         Plan * plan = new Plan;
         plan->order = order;
