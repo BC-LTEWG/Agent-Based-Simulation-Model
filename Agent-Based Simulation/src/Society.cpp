@@ -51,6 +51,7 @@ Society::Society() {
         }
     }
     // People MUST come after products and distributors are created.
+    set_initial_account();
     for (int i = 0; i < STARTING_NUM_PEOPLE; i++) {
         birth_person();	
     }

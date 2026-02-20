@@ -163,7 +163,7 @@ void Producer::end_plan(Plan * plan) {
     plan->order->customer->receive_shipment(plan->order);
     double total = plan->order->product->price_per_unit * plan->order->quantity;
     plan->prd += total;
-    PriceController::update_price(plan);
+    PriceController::get_instance()->update_price(plan);
 }
 
 void Producer::move_plans_forward_one_step() {

@@ -7,8 +7,25 @@
 #include "Person.h"
 #include "Product.h"
 #include "Sim.h"
+#include "sqlite3.h"
 
-Logger::Logger() {}
+Logger::Logger() {
+    if (Sim::is_using_db()) {
+        int return_code = sqlite3_open(LOG_FILE, &db);
+        if (return_code) {
+            throw std::runtime_error("Dztabase connection failure");
+        }
+        std::cout << "Opened DB" << std::endl;
+    } else {
+        db = NULL;
+    }
+}
+
+Logger::~Logger() {
+    if (db) {
+        sqlite3_close(db);
+    }
+}
 
 Logger * Logger::get_instance() {
     static Logger * instance = new Logger;
@@ -67,8 +84,6 @@ void Logger::log(
 
 const char * Logger::clients[] = {"Firm", "Distributor", "Person", "Producer", "Product", "Society"};
 
-const char * Logger::logging_dir = "data";
-
 void Logger::log_impl(
         const Client client,
         const std::string label,
@@ -78,6 +93,9 @@ void Logger::log_impl(
     int time_step = Sim::get_current_time_step();
     if (Sim::is_trace_logging()) {
         Logger::trace(time_step, client, label, id, values);
+    }
+    if (Sim::is_using_db()) {
+        log_to_db(time_step, client, label, id, values);
     }
     data[client][label][id][time_step] = values;
 }
@@ -121,7 +139,7 @@ void Logger::write_data() {
     for (auto& client_map : data) {
         std::string client_prefix = clients[client_map.first];
         for (auto& label_map : client_map.second) {
-            std::string file_name = std::string(logging_dir) + "/" +
+            std::string file_name = std::string(LOGGING_DIR) + "/" +
                 client_prefix + "_" + label_map.first + ".csv";
             std::ofstream out_file(file_name);
             auto visitor = [&out_file](auto&& arg) {
@@ -138,4 +156,13 @@ void Logger::write_data() {
             out_file.close();
         }
     }
+}
+
+void Logger::log_to_db(
+                const int time_step,
+                const Client client,
+                std::string label,
+                unsigned int id,
+                const Tuple& values
+                ) {
 }

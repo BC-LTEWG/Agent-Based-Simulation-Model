@@ -5,6 +5,8 @@
 #include <variant>
 #include <unordered_map>
 
+#include "sqlite3.h"
+
 using TupleNone = std::tuple<>;
 using TupleInt = std::tuple<int>;
 using TupleDouble = std::tuple<double>;
@@ -65,6 +67,7 @@ class Logger {
         void write_data();
     private:
         Logger();
+        ~Logger();
         void log_impl(
                 const Client client,
                 const std::string label,
@@ -78,12 +81,20 @@ class Logger {
                 unsigned int id,
                 const Tuple& values
                 );
+        static void log_to_db(
+                const int time_step,
+                const Client client,
+                std::string label,
+                unsigned int id,
+                const Tuple& values
+                );
         template<typename TupleT>
             static void trace_tuple(const TupleT& values);
         template<typename TupleT>
             static void write_tuple(std::ofstream& file, const TupleT& values);
         static const char * clients[];
-        static const char * logging_dir;
+        sqlite3 * db;
+        // client -> label -> id -> time step -> data
         std::unordered_map<Client,
             std::unordered_map<std::string,
             std::map<unsigned int,

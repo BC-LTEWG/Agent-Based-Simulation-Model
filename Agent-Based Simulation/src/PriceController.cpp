@@ -3,21 +3,49 @@
 #include "Constants.h"
 #include "Distributor.h"
 #include "Firm.h"
+#include "Logger.h"
+#include "Machine.h"
 #include "PriceController.h"
 #include "Product.h"
+#include "Sim.h"
+
+PriceController * PriceController::get_instance() {
+    static PriceController * instance = new PriceController;
+    return instance;
+}
+
+PriceController::PriceController() {}
 
 void PriceController::update_price(Plan * plan) {
     Product * product = plan->order->product;
-    double actual_labor =
-        (plan->labor_hours - plan->labor_hours_remaining) /
-        plan->order->quantity;
-    double new_average_labor =
-        (actual_labor +
-         product->living_labor_per_unit * (PRICE_AVERAGING_WINDOW - 1)) /
-        PRICE_AVERAGING_WINDOW;
-    double old_average_labor = product->living_labor_per_unit;
-    product->living_labor_per_unit = new_average_labor;
-    product->price_per_unit =
-        product->price_per_unit - old_average_labor + new_average_labor;
+    int now = Sim::get_current_time_step();
+    int end_time = now - PRICE_AVERAGING_WINDOW;
+    if (plan_history.count(product) && 
+            plan_history[product].begin()->second <= end_time) {
+        plan_history[product].erase(plan_history[product].begin());
+    }
+    plan_history[product].push_back(std::make_pair(plan, now));
+    int units = 0;
+    double hours = 0.0;
+    int workers = 0;
+    for (std::pair<Plan *, int> entry : plan_history[product]) {
+        Plan * plan = entry.first;
+        units += plan->order->quantity;
+        hours += plan->labor_hours - plan->labor_hours_remaining;
+        workers += plan->workers.size();
+    }
+    double price = product->living_labor_per_unit = hours / units;
+    for (std::pair<Product *, double> input : product->inputs_per_unit) {
+        price += input.first->price_per_unit * input.second;
+    }
+    double machine_use_hours = hours / workers;
+    double machine_hours_per_unit = machine_use_hours / units;
+    for (Machine * machine : product->machines_needed) {
+        double machine_cost_per_hour =
+            machine->price_per_unit / machine->lifetime;
+        price += machine_cost_per_hour * machine_hours_per_unit;
+    }
+    product->price_per_unit = price;
+    Logger::get_instance()->log(Logger::SOCIETY, "price", product->id, price);
 }
 
