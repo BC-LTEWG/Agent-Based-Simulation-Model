@@ -1,4 +1,5 @@
 import csv
+import random 
 import os
 
 # Product classes for each economy
@@ -14,7 +15,17 @@ from LaborTimeProduct import LaborTimeProduct
 CE_NUMBER_OF_PRODUCT_TYPES = 26
 LTE_NUMBER_OF_PRODUCT_TYPES = 26
 NUMBER_OF_TIME_STEPS = 40
-
+CE_PRICE_SCALE_FACTOR = 938.07
+# CE quantities are proportional (structurally real) units,
+# not physical units. The input-output (Leontief) system
+# determines production ratios but not absolute magnitude.
+#
+# Because the model does not fix the economy’s physical size,
+# I choose an arbitrary scaling factor to anchor abstract
+# production units to a physical magnitude.
+#
+# Scaling changes size, not structure.
+CE_PHYSICAL_SCALE = 1000
 
 # Note: the prices are in ratios, not in any currency. 
 def build_ce_map(ce_csv_path):
@@ -63,7 +74,7 @@ def build_ce_map(ce_csv_path):
         if demand_val in (None, ""):
             raise ValueError(f"Missing {demand_key} in equilibrium row.")
 
-        eq_price = float(price_val)
+        eq_price = float(price_val) * CE_PRICE_SCALE_FACTOR
         eq_supply = float(supply_val)
         eq_total_demand = float(demand_val)
 
@@ -75,6 +86,7 @@ def build_ce_map(ce_csv_path):
             name=name,
             price=current_price,
             supply=current_supply,
+            current_total_demand=eq_total_demand,
             eq_price=eq_price,
             eq_supply=eq_supply,
             eq_total_demand=eq_total_demand
@@ -180,18 +192,28 @@ def load_ce_post_equilibrium_series(csv_path, window_size=40):
     for row in window_rows:
         supply = {}
         price = {}
+        demand = {}
 
         for i in range(CE_NUMBER_OF_PRODUCT_TYPES):
             name = chr(ord("A") + i)
             supply[name] = float(row[f"supply_{name}"])
-            price[name] = float(row[f"price_{name}"])
+            price[name] = float(row[f"price_{name}"]) * CE_PRICE_SCALE_FACTOR
+            demand[name] = float(row[f"current_total_demand_{name}"])
 
         ce_time_series.append({
             "supply": supply,
-            "price": price
+            "price": price, 
+            "demand": demand
         })
 
     return ce_time_series
+
+# For debugging
+def print_equilibrium_total_demand(ce_map):
+    print("\n--- Equilibrium Total Demand (REAL UNITS) ---")
+    for name in sorted(ce_map.keys()):
+        product = ce_map[name]
+        print(f"{name}: {product.eq_total_demand:.4f} (real units)")
 
 # Lists for import/export         
 CE_Import = []
@@ -199,36 +221,70 @@ LTE_Import = []
 CE_Export = []
 LTE_Export = []
 
-def recalculate_export_capacity_ratio(ce_map, ce_time_series, time_step):
+def update_ce_map(ce_map, ce_time_series, time_step):
     """
-    Recalculate the export capacity ratio for each CE product at a given time step.
+    Update CE product state at a given time step.
 
-    The export capacity ratio measures how much of a product's *normal internal demand*
-    can be released for trade, given *current available supply*.
+    For each CE product i:
+        - Update current supply and price from simulation data.
+        - Compute net_excess_supply_i(t):
 
-    Formula (for each product i):
+            net_excess_supply_i(t)
+                = current_supply_i(t) - current_total_demand_i
 
-        export_capacity_ratio_i(t)
-            = current_supply_i(t) / equilibrium_total_demand_i
-
-    where:
-        current_supply_i(t) is the CE supply at time t
-        equilibrium_total_demand_i is fixed and structural
+    Interpretation:
+        If net_excess_supply_i(t) > 0:
+            The CE has excess stock available for export.
+        If net_excess_supply_i(t) < 0:
+            The CE has a deficit and requires imports.
+        If net_excess_supply_i(t) = 0:
+            The CE is exactly reproducing its internal requirements.
     """
 
     for name, product in ce_map.items():
         # Update current supply from the simulation time step
         product.supply = ce_time_series[time_step]["supply"][name]
-
-        # Recompute export capacity ratio using fixed equilibrium demand
-        product.export_capacity_ratio = (
-            product.supply / product.eq_total_demand
+        
+        # Update current price from the time series 
+        product.price = ce_time_series[time_step]["price"][name]
+        
+        # Update current total demand 
+        product.current_total_demand = ce_time_series[time_step]["demand"][name]
+        
+        product.physical_net_excess = (
+            product.net_excess_supply * CE_PHYSICAL_SCALE
         )
         
 def compute_melt(ce):
+    # update the two fields here 
+    ce.new_gdp_ppp_per_capita()
+    ce.new_average_work_hours()
     # Compute MELT (money per labor-hour) using working population hours (incl. self-employed)
-    ce.melt = ce.gdp_ppp_per_capita / ce.avg_hours_worked_by_working_population
+    ce.melt = ce.current_gdp_ppp_per_capita / ce.current_avg_hours_worked
+    
+def generate_lte_shortages(lte_map):
+    """
+    Randomly select 0-5 LTE products to be missing this time step.
+    Add them to LTE_Import.
+    """
 
+    global LTE_Import
+
+    # List out all LTE product names
+    product_names = list(lte_map.keys())
+
+    # Random number of missing goods (0 to 5)
+    num_missing = random.randint(0, 5)
+
+    # Randomly select without replacement
+    missing_products = random.sample(product_names, k=num_missing)
+
+    for name in missing_products:
+        if name not in LTE_Import:
+            LTE_Import.append(name)
+    
+    return missing_products 
+    
 # Note: This trade function only handles trade on a perticular time step. 
 # If an item on the trading list can not be traded, then the shortage/surplus persists 
 # On the next time step, the trade function will be called again and attempt to resolve the 
@@ -254,22 +310,33 @@ def trade(ce, lte, ce_map, ce_time_series, lte_map, time_step):
     CE_Export.clear()
     LTE_Export.clear()
     
-    # Recalculate export capacity ratios for this time step.
-    # This is the the reproduction requirement, 
-    # as it measures how much the system can safely give up without harming reproduction.
-    # For each CE product i,
-    #   export_capacity_ratio_i(t) = current_supply_i(t) / equilibrium_total_demand_i
-    # where equilibrium_total_demand_i = A·q + b + c 
-    #  (What the letters represent is in simulation.py in the event based simulation)
-    # The ratio therefore measures how much surplus supply capacity
-    # is available for trade relative to internal needs. 
-    # We then subtract 1 from the ratio. 
-    #   If the ratio is positive, then the CE is open to trade since it has surplus. 
-    #   If it's negative, then the CE will not trade this product type (it would instead want to import).
-    # We can time product type i's (export capacity ratio - 1) by 
-    #   the order size of product type i of the LTE to get 
-    #   the specific amount the CE can export.
-    recalculate_export_capacity_ratio(ce_map, ce_time_series, time_step) 
+    # Generate shortages for the LTE 
+    generate_lte_shortages(lte_map)
+    
+    # Update CE supply and compute net excessive supply for this time step.
+    # net_excess_supply_i(t) = current_supply_i(t) - current_total_demand_i(t)
+    #
+    # current_total_demand_i(t) represents the reproduction requirement
+    # for commodity i at time t.
+    #
+    # D_i(t) = (A · q(t))_i + b_i(t) + c_i(t)
+    #
+    # where:
+    #   - (A · q(t))_i is the intermediate input demand needed
+    #     to reproduce current production,
+    #   - b_i(t) is worker consumption demand,
+    #   - c_i(t) is capitalist consumption demand.
+    #
+    # Therefore, current_total_demand_i(t) is the quantity of commodity i
+    # required to reproduce the current scale of production and consumption.
+    #
+    # If net_excess_supply_i(t) > 0:
+    #     The CE can export without disrupting reproduction.
+    # If net_excess_supply_i(t) < 0:
+    #     The CE cannot fully reproduce at time t and requires imports.
+    # If net_excess_supply_i(t) = 0:
+    #     Supply exactly meets reproduction needs.
+    update_ce_map(ce_map, ce_time_series, time_step) 
     
     # Convert keys to sets for fast comparison
     ce_products = set(ce_map.keys())
@@ -283,59 +350,33 @@ def trade(ce, lte, ce_map, ce_time_series, lte_map, time_step):
     for name in lte_products - ce_products:
         CE_Import.append(name)
         
-    for name in ce_map:                     # loop over product names
-        product = ce_map[name]             # get the CapitalistProduct object
+    for name in ce_map:                    
+        product = ce_map[name]          
 
         # CE shortage detection 
-        if product.supply < product.eq_total_demand:
+        if product.net_excess_supply < 0:
             if name not in CE_Import:
                 CE_Import.append(name)
 
-        # CE Surplus detection 
-        elif product.supply > product.eq_total_demand:
+        # CE surplus detection 
+        elif product.net_excess_supply > 0:
             if name not in CE_Export:
                 CE_Export.append(name)
-                
+    
+    # A new melt for every time step before trading      
     compute_melt(ce)
+    
+    
                 
     # TODO:
     # 1. We need to give LTE MELT values to convert the prices. - already done 
-    # 2. We need to convert CE prices which are in ratios to actual currency values. 
-    # 3. We need to give LTE arbitrary shortage for random product types.
-    # 4. We need to use the trade algorithm developed to simulate trade. 
-    # 5. We need to record the change in currency between the two economies and graph it. 
+    # 2. We need to convert CE prices which are in ratios to actual currency values. - already done 
+    # 3. We need to give LTE arbitrary shortage for random product types. - already done 
+    # 4. We need to finish converting the unit of the total demand and scale the number of products available for export. - need to base on discussion  
+    # 5. We need to use the trade algorithm developed to simulate trade. 
+    # 6. We need to record the change in currency between the two economies and graph it. 
     
     # Note: I don't think I'll have time for applying the effect back to the economy. That will be for March and April. 
-    
-    # TODO:
-    # 1. Check which products CE is missing - add to CE_Import - implemented 
-    # 2. Check which products LTE is missing - add to LTE_Import - implemented 
-    # 3. Detect shortages (CE) - add to CE_Import - implemented 
-    # 4. Detect surpluses (CE) - add to CE_Export - implemented 
-    # 5. Remove items when conditions disappear - implemented (by the design)
-    # 6. Use a trade algorithm to determine which product should be traded for what, how much it should be traded, and for what price 
-    # Ideas for 8: 
-    # 1. Calculate the value of the products LTE would like to purchase from LTE_Import 
-    # 2. Calculate the value of the products CE would like to purchase from CE_Import 
-    # 2. Try to trade the amount of values desired by both economies. If not possible, there would be no trade. 
-    
-    # Note: The LTE is only going to trade if it is missing something. It will only overproduce when it needs to trade. 
-    # We will make the LTE to be missing a few base products, put placeholders for the quantities of societal needs of that base product 
-    # For the algorithm, each time step the LTE will be wanting to trade an amount of the base product which has a value of x labor time that can be converted to currency using MELT
-    # Using the amount of total value, we can trade with the CE who has the list of things it wants to trade and try to add up everything 
-    # We then apply the effects back to the CE, and CE will be wanting to trade for a new list of items each time step 
-    
-    # Questions:
-    # Need to ask how to get data from LTE 
-    # How to develop an algorithm for trading? (Or we can do this next week?) 
-    # (Note: If can't get data from LTE, I need data from LTE for testing if the trading function actually work. What kind of data should I use?) 
-    # What is a shortage? Is it when price > eq_price, supply < eq_supply, or both? I think it's both since it should happen at the same time. (Use the supply level to measure)
-    
-    # What is the equilibrium price and supply when it stablizes? 
-    
-    # A shortage for CE is when the supply level of a product is less than its equilibrium supply level 
-    # Shortage should be detected by equilibrium supply  
-    # Output is the activity level 
 
     print(f"[t={time_step}] Trade() executed")
 
@@ -371,7 +412,8 @@ if __name__ == "__main__":
 
     # Display results
     print_maps(ce_map, lte_map)
+    print_equilibrium_total_demand(ce_map)
     
-    for i in range (NUMBER_OF_TIME_STEPS):
-        # Place holder 
-        trade(usa, lte, ce_map, ce_time_series, lte_map, i)
+    # for i in range (NUMBER_OF_TIME_STEPS):
+    #     # Place holder 
+    #     trade(usa, lte, ce_map, ce_time_series, lte_map, i)

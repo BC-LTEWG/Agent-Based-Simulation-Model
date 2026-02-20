@@ -216,57 +216,61 @@ def export_trajectories_with_equilibrium(
     eq_index = None
     if equilibrium_time is not None:
         eq_index = int(np.argmin(np.abs(time - equilibrium_time)))
-        
-    # Extract equilibrium state vectors
-    eq_prices = np.array(traj["p"])[eq_index]   # equilibrium prices
-    eq_output = np.array(traj["q"])[eq_index]   # equilibrium output
+    
+    if eq_index is not None:    
+        # Extract equilibrium state vectors
+        eq_prices = np.array(traj["p"])[eq_index]   # equilibrium prices
+        eq_output = np.array(traj["q"])[eq_index]   # equilibrium output
 
-    # Worker consumption at equilibrium
-    # b = (alpha_w * m_w) / (p · b_bar) * b_bar
-    # where: alpha_w = worker propensity to consume,
-    #        m_w = worker share of total money,
-    #        p = equilibrium price vector,
-    #        b_bar = baseline worker consumption bundle
-    worker_consumption = (
-        params.alpha_w * params.m_w0
-        / (eq_prices @ params.b_bar)
-        * params.b_bar
-    )
+        # Worker consumption at equilibrium
+        # b = (alpha_w * m_w) / (p · b_bar) * b_bar
+        # where: alpha_w = worker propensity to consume,
+        #        m_w = worker share of total money,
+        #        p = equilibrium price vector,
+        #        b_bar = baseline worker consumption bundle
+        worker_consumption = (
+            params.alpha_w * params.m_w0
+            / (eq_prices @ params.b_bar)
+            * params.b_bar
+        )
 
-    # Capitalist consumption at equilibrium
-    # c = (alpha_c * (1 - m_w)) / (p · c_bar) * c_bar
-    # where: alpha_c = capitalist propensity to consume,
-    #        (1 - m_w) = capitalist share of total money,
-    #        p = equilibrium price vector,
-    #        c_bar = baseline capitalist consumption bundle
-    capitalist_consumption = (
-        params.alpha_c * (1.0 - params.m_w0)
-        / (eq_prices @ params.c_bar)
-        * params.c_bar
-    )
+        # Capitalist consumption at equilibrium
+        # c = (alpha_c * (1 - m_w)) / (p · c_bar) * c_bar
+        # where: alpha_c = capitalist propensity to consume,
+        #        (1 - m_w) = capitalist share of total money,
+        #        p = equilibrium price vector,
+        #        c_bar = baseline capitalist consumption bundle
+        capitalist_consumption = (
+            params.alpha_c * (1.0 - params.m_w0)
+            / (eq_prices @ params.c_bar)
+            * params.c_bar
+        )
 
-    # Intermediate input demand from production
-    # intermediate_demand = A · q
-    # where: A = input–output requirements matrix,
-    #        q = equilibrium output (production) vector
-    intermediate_demand = params.A @ eq_output
+        # Intermediate input demand from production
+        # intermediate_demand = A · q
+        # where: A = input–output requirements matrix,
+        #        q = equilibrium output (production) vector
+        intermediate_demand = params.A @ eq_output
 
-    # This is the the reproduction requirement, 
-    # as it measures how much the system can safely give up without harming reproduction.
-    # total_demand = A·q + b + c
-    # where:
-    #   A·q = intermediate input demand from production,
-    #   b   = worker consumption demand,
-    #   c   = capitalist consumption demand
-    equilibrium_total_demand = (
-        intermediate_demand
-        + worker_consumption
-        + capitalist_consumption
-    )
+        # This is the the reproduction requirement, 
+        # as it enables how much the system can safely give up without harming reproduction to be measured 
+        # total_demand = A·q + b + c
+        # where:
+        #   A·q = intermediate input demand from production,
+        #   b   = worker consumption demand,
+        #   c   = capitalist consumption demand
+        equilibrium_total_demand = (
+            intermediate_demand
+            + worker_consumption
+            + capitalist_consumption
+        )
+    else:
+        equilibrium_total_demand = None
 
     header = ["time", "is_equilibrium_step"]
     header += [f"price_{lbl}" for lbl in labels]
     header += [f"supply_{lbl}" for lbl in labels]
+    header += [f"current_total_demand_{lbl}" for lbl in labels]
     header += ["equilibrium_time"]
     header += [f"equilibrium_price_{lbl}" for lbl in labels]
     header += [f"equilibrium_supply_{lbl}" for lbl in labels]
@@ -279,10 +283,35 @@ def export_trajectories_with_equilibrium(
 
         for i in range(len(time)):
             is_eq = 1 if (eq_index is not None and i == eq_index) else 0
+            
+            q_i = np.array(traj["q"])[i]
+            p_i = prices[i]
+            m_w_i = traj["m_w"][i]
+
+            # Worker consumption at time i
+            b_i = (
+                params.alpha_w * m_w_i
+                / (p_i @ params.b_bar)
+                * params.b_bar
+            )
+
+            # Capitalist consumption at time i
+            c_i = (
+                params.alpha_c * (1.0 - m_w_i)
+                / (p_i @ params.c_bar)
+                * params.c_bar
+            )
+
+            # Intermediate input demand
+            intermediate_i = params.A @ q_i
+
+            # Current total demand
+            current_total_demand = intermediate_i + b_i + c_i
 
             row = [time[i], is_eq]
             row += prices[i].tolist()
             row += supply[i].tolist()
+            row += current_total_demand.tolist()
 
             if eq_index is not None and i == eq_index:
                 row.append(time[eq_index])

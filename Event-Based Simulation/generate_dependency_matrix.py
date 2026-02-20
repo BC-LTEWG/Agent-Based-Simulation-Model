@@ -2,13 +2,13 @@ import random
 import numpy as np
 
 BASE_COST_A = 1.0  # Common metal (iron/aluminum)
-BASE_COST_B = 0.8  # Basic organic (wood/grain)
-BASE_COST_C = 0.3  # Water/simple resource
-BASE_COST_D = 1.5  # Energy (coal/gas)
-BASE_COST_E = 2.0  # Oil/synthetic chemical
-BASE_COST_F = 1.8  # Silicon/electronic substrate
+BASE_COST_B = 0.9606446919070629  # Basic organic (wood/grain)
+BASE_COST_C = 1.107906185364423  # Water/simple resource
+BASE_COST_D = 0.7241284499376099  # Energy (coal/gas)
+BASE_COST_E = 1.1210270474407777  # Oil/synthetic chemical
+BASE_COST_F = 6.647437112186537  # Silicon/electronic substrate
 BASE_COST_G = 2.5  # Rare mineral/alloy
-BASE_COST_H = 1.2  # Textile/biological base
+BASE_COST_H = 0.5997100606214827  # Textile/biological base
 
 # Look up prices of each base product in real life and go from there 
 
