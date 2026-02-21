@@ -15,17 +15,13 @@ class CapitalistProduct:
         self.current_total_demand = current_total_demand
         
         self.physical_net_excess = 0
+        self.value_of_goods_for_trade = 0
 
         # Equilibrium values (static)
         self._eq_price = eq_price
         self._eq_supply = eq_supply
         self._eq_total_demand = eq_total_demand
-     
-    # Net excess supply autocomputed every time it is called    
-    @property
-    def net_excess_supply(self):
-        return self.supply - self.current_total_demand
-
+    
     # Equilibrium values are static (read-only)
     @property
     def eq_price(self):
@@ -38,12 +34,24 @@ class CapitalistProduct:
     @property
     def eq_total_demand(self):
         return self._eq_total_demand
+    
+    # Net excess supply autocomputed every time it is called    
+    @property
+    def net_excess_supply(self):
+        return self.supply - self.current_total_demand
 
     def __repr__(self):
         return (
-            f"Product(name={self.name!r}, price={self.price}, supply={self.supply}, "
-            f"current_total_demand={self.current_total_demand}, "
-            f"net_excess_supply={self.net_excess_supply}, "
-            f"eq_price={self.eq_price}, eq_supply={self.eq_supply}, "
-            f"eq_total_demand={self.eq_total_demand})"
+            f"CapitalistProduct("
+            f"name={self.name!r}, "
+            f"price={self.price:.4f}, "
+            f"supply={self.supply:.4f}, "
+            f"current_total_demand={self.current_total_demand:.4f}, "
+            f"net_excess_supply={self.net_excess_supply:.4f}, "
+            f"physical_net_excess={self.physical_net_excess:.4f}, "
+            f"value_of_goods_for_trade={self.value_of_goods_for_trade:.4f}, "
+            f"eq_price={self.eq_price:.4f}, "
+            f"eq_supply={self.eq_supply:.4f}, "
+            f"eq_total_demand={self.eq_total_demand:.4f}"
+            f")"
         )

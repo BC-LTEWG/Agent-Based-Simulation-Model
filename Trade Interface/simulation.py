@@ -1,10 +1,12 @@
 import csv
 import random 
 import os
+import matplotlib.pyplot as plt
 
 # Product classes for each economy
 from CapitalistEconomy import CapitalistEconomy
 from CapitalistProduct import CapitalistProduct
+from LaborTimeEconomy import LaborTimeEconomy
 from LaborTimeProduct import LaborTimeProduct 
 
 # Use labor time value + order size for LTE products 
@@ -255,12 +257,24 @@ def update_ce_map(ce_map, ce_time_series, time_step):
             product.net_excess_supply * CE_PHYSICAL_SCALE
         )
         
+        # This is the absolute monetary value of the goods that are either 
+        # available for export or in need of import 
+        product.value_of_goods_for_trade = (
+            abs(product.physical_net_excess) * product.price
+        )
+        
 def compute_melt(ce):
     # update the two fields here 
     ce.new_gdp_ppp_per_capita()
     ce.new_average_work_hours()
     # Compute MELT (money per labor-hour) using working population hours (incl. self-employed)
     ce.melt = ce.current_gdp_ppp_per_capita / ce.current_avg_hours_worked
+    
+def update_lte_map(ce, lte_map):
+    for name, product in lte_map.items():
+        product.value_of_goods_for_trade = (
+            product.labor_time * ce.melt * product.order_size 
+        )
     
 def generate_lte_shortages(lte_map):
     """
@@ -366,19 +380,96 @@ def trade(ce, lte, ce_map, ce_time_series, lte_map, time_step):
     # A new melt for every time step before trading      
     compute_melt(ce)
     
+    # Update LTE value of goods for trade at a given time step with the new melt 
+    update_lte_map(ce, lte_map)
     
+    # Determine tradable goods 
+    # First convert lists to sets 
+    # lte_export is the same of ce_import since lte would not produce excessively 
+    # unless it is for the purpose of trade so there would only be arbitrary surplus 
+    ce_import_set = set(CE_Import)
+    ce_export_set = set(CE_Export)
+    lte_import_set = set(LTE_Import)
+
+    # CE exports goods LTE wants 
+    ce_to_lte = ce_export_set & lte_import_set
+
+    # LTE exports goods CE wants
+    lte_to_ce = ce_import_set
+    
+    total_value_of_ce_to_lte = sum(
+        ce_map[name].value_of_goods_for_trade
+        for name in ce_to_lte
+    )
+    
+    # The current set is always empty and I think it's due to the following reason: 
+    #   CE only exports the protion that it can safely give up without harming reproduction, 
+    #   so the only time it needs import is when some random events are so harmful that 
+    #   it hurts CE's reproduction demand at that specific time step.
+    #
+    # Therefore, ce_import currently only activates only under reproduction stress.
+    #
+    # If CE remains self-reproducing, it never needs imports.
+    # Balanced trade rule:
+    # trade_value = min(total_exports, total_imports)
+    #
+    # If CE has no import demand, trade_value = 0.
+    #
+    # SInce CE is currently structurally self-sufficient,
+    # trade does not occur.
+    total_value_of_lte_to_ce = sum(
+        lte_map[name].value_of_goods_for_trade
+        for name in lte_to_ce
+    )
+    
+    trade_value = min(
+        total_value_of_ce_to_lte,
+        total_value_of_lte_to_ce
+    )
+    
+    print(f"Total CE->LTE value: {total_value_of_ce_to_lte:.4f}")
+    print(f"Total LTE->CE value: {total_value_of_lte_to_ce:.4f}")
+    print(f"Balanced trade value: {trade_value:.4f}")
+    
+    # Since we're only trading when trade is applicable, 
+    # there would not be any surplus monetary value for both economies from trade 
+    # CE pays for LTE exports
+    ce.total_currency -= trade_value
+    lte.total_currency += trade_value
+
+    # LTE pays for CE exports
+    lte.total_currency -= trade_value
+    ce.total_currency += trade_value
                 
     # TODO:
     # 1. We need to give LTE MELT values to convert the prices. - already done 
     # 2. We need to convert CE prices which are in ratios to actual currency values. - already done 
     # 3. We need to give LTE arbitrary shortage for random product types. - already done 
     # 4. We need to finish converting the unit of the total demand and scale the number of products available for export. - need to base on discussion  
-    # 5. We need to use the trade algorithm developed to simulate trade. 
-    # 6. We need to record the change in currency between the two economies and graph it. 
+    # 5. We need to use the trade algorithm developed to simulate trade. - already done 
+    # 6. We need to record the change in currency between the two economies and graph it. - already done 
     
     # Note: I don't think I'll have time for applying the effect back to the economy. That will be for March and April. 
 
     print(f"[t={time_step}] Trade() executed")
+
+# Plot function for graphing 
+def plot_currency(time, ce_history, lte_history):
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(time, ce_history, label="CE Total Currency", linewidth=2)
+    plt.plot(time, lte_history, label="LTE Total Currency", linewidth=2)
+
+    plt.axhline(0, linestyle="--", linewidth=1)
+
+    plt.xlabel("Time Step")
+    plt.ylabel("Total Currency")
+    plt.title("Monetary Values of CE and LTE Over Time")
+    plt.legend()
+    plt.grid(True)
+
+    plt.savefig("graphs/Monetary Values.png", dpi=300)
+    plt.close()
 
 if __name__ == "__main__":
     ce_data_path = os.path.join(
@@ -396,11 +487,16 @@ if __name__ == "__main__":
     
     usa = CapitalistEconomy(
         name="United States",
-        total_currency=85809.900385,  # GDP per capita, PPP
+        total_currency=0, 
         melt=0.0,  # placeholder 
-        gdp_ppp_per_capita=85809.900385,
+        gdp_ppp_per_capita=85809.900385, # GDP per capita, PPP
         avg_hours_worked_by_working_population=1795.906,
         avg_hours_worked_by_employees_only=1809.583,
+    )
+    
+    lte = LaborTimeEconomy(
+        name="Labor Time Economy",
+        total_currency=0,
     )
     
     # Build CE and LTE maps
@@ -414,6 +510,22 @@ if __name__ == "__main__":
     print_maps(ce_map, lte_map)
     print_equilibrium_total_demand(ce_map)
     
-    # for i in range (NUMBER_OF_TIME_STEPS):
-    #     # Place holder 
-    #     trade(usa, lte, ce_map, ce_time_series, lte_map, i)
+    # Record for graphing 
+    ce_currency_history = []
+    lte_currency_history = []
+    time_axis = []
+    
+    for i in range (NUMBER_OF_TIME_STEPS):
+        trade(usa, lte, ce_map, ce_time_series, lte_map, i)
+        
+        # Record currency values
+        ce_currency_history.append(usa.total_currency)
+        lte_currency_history.append(lte.total_currency)
+        time_axis.append(i + 1)
+        
+        # Print for debug 
+        print(f"Time step: {i+1}")
+        print(f"CE currency: {usa.total_currency:.4f}")
+        print(f"LTE currency: {lte.total_currency:.4f}")
+    
+    plot_currency(time_axis, ce_currency_history, lte_currency_history)

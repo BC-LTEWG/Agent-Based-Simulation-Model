@@ -184,13 +184,178 @@ def plot_averages(time, avg_price, avg_supply, equilibrium_time):
     plt.savefig("graphs/Average Price and Average Supply.png", dpi=300)
     plt.close()
 
+# Graph reproductive demand vs supply 
+def compute_reproduction_demand(traj, params):
+    prices = np.array(traj["p"])
+    outputs = np.array(traj["q"])
+    m_w = np.array(traj["m_w"])
+
+    T, n = outputs.shape
+    demand = np.zeros((T, n))
+
+    for i in range(T):
+        p_i = prices[i]
+        q_i = outputs[i]
+        m_w_i = m_w[i]
+
+        # Worker consumption
+        b_i = (
+            params.alpha_w * m_w_i
+            / (p_i @ params.b_bar)
+            * params.b_bar
+        )
+
+        # Capitalist consumption
+        c_i = (
+            params.alpha_c * (1.0 - m_w_i)
+            / (p_i @ params.c_bar)
+            * params.c_bar
+        )
+
+        # Intermediate demand (A · q)
+        intermediate_i = params.A @ q_i
+
+        # Total reproduction requirement
+        demand[i] = intermediate_i + b_i + c_i
+
+    return demand
+
+def plot_supply_vs_reproduction_demand(time, supply, reproduction_demand, product_labels, equilibrium_time):
+    plt.figure(figsize=(12, 7))
+
+    num_products = supply.shape[1]
+
+    for i in range(num_products):
+        # Supply (solid)
+        plt.plot(
+            time,
+            supply[:, i],
+            linewidth=1,
+            alpha=0.7,
+            label=f"Supply {product_labels[i]}"
+        )
+
+        # Reproduction demand (dashed)
+        plt.plot(
+            time,
+            reproduction_demand[:, i],
+            linestyle="--",
+            linewidth=1,
+            alpha=0.7,
+            label=f"Demand {product_labels[i]}"
+        )
+
+    if equilibrium_time is not None:
+        plt.axvline(
+            x=equilibrium_time,
+            color="red",
+            linestyle="--",
+            linewidth=2,
+            label=f"Equilibrium t={equilibrium_time:.2f}"
+        )
+
+    plt.xlabel("Continuous Time (t)")
+    plt.ylabel("Level")
+    plt.title("Supply (solid) vs Reproduction Demand (dashed)")
+    plt.grid(True)
+
+    # 🔥 THIS was missing
+    plt.legend(loc="upper right", fontsize=8, ncol=2)
+
+    plt.xlim(0, time[-1])
+
+    plt.savefig(
+        "graphs/Supply vs Reproduction Demand.png",
+        dpi=300
+    )
+    plt.close()
+    
+def compute_average_reproduction_demand(reproduction_demand):
+    return np.mean(reproduction_demand, axis=1)
+
+def plot_average_supply_vs_average_reproduction_demand(time, avg_supply, avg_demand, avg_price, equilibrium_time):
+    plt.figure(figsize=(10, 6))
+
+    # Average Supply
+    plt.plot(time, avg_supply,
+             label="Average Supply",
+             color="black",
+             linewidth=2)
+
+    # Average Reproduction Demand
+    plt.plot(time, avg_demand,
+             label="Average Reproduction Demand",
+             linestyle="--",
+             linewidth=2)
+
+    # Average Price (optional but useful)
+    plt.plot(time, avg_price,
+             label="Average Price",
+             color="gold",
+             linewidth=2)
+
+    if equilibrium_time is not None:
+        plt.axvline(
+            x=equilibrium_time,
+            color="red",
+            linestyle="--",
+            linewidth=2,
+            label=f"Equilibrium at t={equilibrium_time:.2f}"
+        )
+
+    plt.xlabel("Continuous Time (t)")
+    plt.ylabel("Value")
+    plt.title("Average Supply vs Average Reproduction Demand")
+    plt.legend()
+    plt.grid(True)
+    plt.xlim(0, time[-1])
+
+    plt.savefig(
+        "graphs/Average Supply vs Reproduction Demand.png",
+        dpi=300
+    )
+    plt.close()
+    
+def plot_average_reproduction_gap(time, avg_supply, avg_demand, equilibrium_time):
+    gap = avg_supply - avg_demand
+
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(time, gap, linewidth=2, label="Average Reproduction Gap")
+
+    plt.axhline(0, linestyle="--", linewidth=1)
+
+    if equilibrium_time is not None:
+        plt.axvline(
+            x=equilibrium_time,
+            color="red",
+            linestyle="--",
+            linewidth=2,
+            label=f"Equilibrium at t={equilibrium_time:.2f}"
+        )
+
+    plt.xlabel("Continuous Time (t)")
+    plt.ylabel("Gap (Supply − Demand)")
+    plt.title("Average Reproduction Gap")
+    plt.legend()
+    plt.grid(True)
+    plt.xlim(0, time[-1])
+
+    plt.savefig(
+        "graphs/Average Reproduction Gap.png",
+        dpi=300
+    )
+    plt.close()
+
 # Plot graphs for visualization 
 def plot_graphs(traj, t, equilibrium_time):
     prices = np.array(traj["p"])
     Supplies = np.array(traj["s"])
+    Reproduction_Demand = compute_reproduction_demand(traj, params)
 
     avg_price = np.mean(prices, axis=1)
     avg_supply = np.mean(Supplies, axis=1)
+    avg_reproduction_demand = compute_average_reproduction_demand(Reproduction_Demand)
 
     # Use continuous time array t for x-axis
     time = np.array(t)
@@ -200,6 +365,9 @@ def plot_graphs(traj, t, equilibrium_time):
 
     plot_prices(time, prices, product_labels, equilibrium_time)
     plot_supply(time, Supplies, product_labels, equilibrium_time)
+    plot_supply_vs_reproduction_demand(time, Supplies, Reproduction_Demand, product_labels, equilibrium_time)
+    plot_average_supply_vs_average_reproduction_demand(time, avg_supply, avg_reproduction_demand, avg_price, equilibrium_time)
+    plot_average_reproduction_gap(time, avg_supply, avg_reproduction_demand, equilibrium_time)
     plot_averages(time, avg_price, avg_supply, equilibrium_time)
 
 def export_trajectories_with_equilibrium(
