@@ -258,8 +258,7 @@ def plot_supply_vs_reproduction_demand(time, supply, reproduction_demand, produc
     plt.ylabel("Level")
     plt.title("Supply (solid) vs Reproduction Demand (dashed)")
     plt.grid(True)
-
-    # 🔥 THIS was missing
+    
     plt.legend(loc="upper right", fontsize=8, ncol=2)
 
     plt.xlim(0, time[-1])
