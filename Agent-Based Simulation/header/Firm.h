@@ -121,6 +121,7 @@ class Firm : public Agent {
     void add_demand_signal(Product * product, int quantity);
     void apply_demand_window();
     virtual std::unordered_set<Product *> get_products_to_reorder() = 0;
+
     void log_shipment_received(std::string product_name, int quantity);
     void log_inventory_level(std::string product_name, int quantity);
     void log_reorder(std::string product_name, int quantity);
