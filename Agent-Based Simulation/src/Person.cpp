@@ -117,23 +117,13 @@ void Person::purchase_good(Product * p, int quantity) {
     Distributor * best_distributor = nullptr;
     int max_available = 0;
     for (Distributor * distributor : ranked_distributors) {
-        int available = distributor->get_inventory(p);
-        if (available > max_available) {
-            max_available = available;
-            best_distributor = distributor;
-        }
+        if (distributor->get_inventory(p) >= quantity) {
+            distributor->sell_goods(*p, quantity, this);
+            return;
+        } 
     }
-    if (best_distributor && max_available > 0) {
-        best_distributor->sell_goods(*p, quantity, this);
-        return;
-    }
-    Logger::get_instance()->log(
-            Logger::PERSON,
-            "no_distributor",
-            id,
-            p->product_name,
-            quantity
-            );
+    std::cerr << "No Distributor with " << quantity << "units of "
+        << p->product_name << " to buy" << std::endl;
 }
 
 bool Person::will_shop() {

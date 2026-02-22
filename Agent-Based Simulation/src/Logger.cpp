@@ -31,7 +31,7 @@ void Logger::log(const Client client,
         const int value
         ) {
     TupleInt tuple = std::make_tuple(value);
-    log(client, label, id, tuple);
+    log(client, label, id, Tuple{tuple});
 }
 
 void Logger::log(const Client client,

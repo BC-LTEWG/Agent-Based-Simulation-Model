@@ -59,11 +59,11 @@ double Firm::get_avg_productivity() {
 }
 
 int Firm::get_inventory(Product * product) {
-    auto it = inventory.find(product);
+    std::unordered_map<Product *, int>::iterator it = inventory.find(product);
     if (it == inventory.end()) {
         return 0;
     }
-    return it->second;
+    return inventory[product];
 }
 
 void Firm::add_supplier(Producer * producer) {
@@ -112,7 +112,7 @@ double Firm::get_reorder_threshold(Product * product) {
         inventory_demands[product] * FIRM_STOCKPILE_DURATION);
 }
 
-int Firm::get_pending_inventory(Product * product) {
+int Firm::get_pending_output_inventory(Product * product) {
     int pending_inventory = inventory[product];
     for (Order * order : product_to_outbound_orders[product]) {
         pending_inventory += order->quantity;
@@ -120,7 +120,7 @@ int Firm::get_pending_inventory(Product * product) {
     return pending_inventory;
 }
 
-void Firm::reorder_product_to_threshold(
+void Firm::reorder_output_product_to_threshold(
         Product * product,
         double threshold,
         int pending_inventory
@@ -152,9 +152,9 @@ void Firm::check_and_reorder() {
         get_products_to_reorder();
     for (Product * product : products_to_reorder) {
         double threshold = get_reorder_threshold(product);
-        int pending_inventory = get_pending_inventory(product);
+        int pending_inventory = get_pending_output_inventory(product);
         if (pending_inventory < threshold) {
-            reorder_product_to_threshold(product, threshold, pending_inventory);
+            reorder_output_product_to_threshold(product, threshold, pending_inventory);
         }
     }
 }

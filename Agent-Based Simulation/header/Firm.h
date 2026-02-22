@@ -94,8 +94,8 @@ class Firm : public Agent {
 
     Producer * send_order(Order * order);
     double get_reorder_threshold(Product * product);
-    int get_pending_inventory(Product * product);
-    void reorder_product_to_threshold(
+    int get_pending_output_inventory(Product * product);
+    void reorder_output_product_to_threshold(
         Product * product, 
         double threshold,
         int pending_inventory
