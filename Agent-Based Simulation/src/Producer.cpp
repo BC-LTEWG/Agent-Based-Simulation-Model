@@ -175,9 +175,6 @@ void Producer::reorder_raw_materials(Plan * plan, Product * product) {
             break;
         }
     }
-    double threshold = get_reorder_threshold(product);
-    reorder_product_to_threshold(product, RAW_MATERIAL_THRESHOLD, RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_ORDER_MULTIPLIER);
-
 }
 
 void Producer::end_plan(Plan * plan) {
