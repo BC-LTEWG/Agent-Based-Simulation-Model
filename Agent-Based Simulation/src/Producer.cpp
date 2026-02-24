@@ -122,7 +122,6 @@ void Producer::move_plan_forward_one_step(Plan * plan) {
 	int labor_hours_done =
         std::min((int) plan->workers.size(), plan->labor_hours_remaining);
 	double raw_materials_used = 0.0;
-    double inputs_used = 0.0;
 	if (plan->training_time_remaining > 0) {
 		plan->training_time_remaining--;
 		if (plan->training_time_remaining == 0) {
@@ -136,14 +135,6 @@ void Producer::move_plan_forward_one_step(Plan * plan) {
             input_products_account *
             labor_hours_done /
             (plan->labor_hours - plan->workers.size() * plan->training_time);
-        inputs_used = std::accumulate(
-                plan->order->product->inputs_per_unit.begin(),
-                plan->order->product->inputs_per_unit.end(),
-                0.0,
-                [plan](double acc, const std::pair<Product *, double>& p) {
-                    return acc + (p.second * plan->order->quantity);
-                }
-                );
     }
 	//pay workers
 	for (Person * worker : plan->workers) {
