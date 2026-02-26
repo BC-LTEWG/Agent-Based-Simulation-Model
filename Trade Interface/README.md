@@ -24,7 +24,7 @@ In addition to tracking prices and supplies, the simulation explicitly computes 
 - Records the continuous equilibrium time and extracts equilibrium price, supply, and total reproduction demand vectors as benchmarks
 - Upon equilibrium detection, enables externally specified random events for a fixed post-equilibrium window (40 time steps)
 - Applies the effects of enabled events directly to the economic state during simulation
-- Computes the average reproduction gap (supply − demand)
+- Computes the average reproduction gap (supply - demand)
 - Exports full trajectory data with equilibrium annotations to CSV for downstream analysis, including:
   - Current total reproduction demand vectors
   - Equilibrium price, supply, and total reproduction demand vectors
@@ -56,7 +56,7 @@ The system integrates multiple empirical data sources to anchor value magnitudes
 - World Bank – PPP conversion factor  
   Because the United States is the reference country in the PPP system, international dollars equal U.S. dollars (conversion factor = 1), allowing all values to be expressed consistently in 2024 USD.
 
-- U.S. Bureau of Labor Statistics (Producer Price Index – PPI)  
+- U.S. Bureau of Labor Statistics (Producer Price Index - PPI)  
   Used to empirically calibrate relative commodity price ratios for the eight base product types.
 
 - CME Group – 2024 Hot Rolled Coil (HRC) Steel Benchmark Price  
@@ -121,13 +121,13 @@ Only surplus above reproduction demand is eligible for export.
 
 CE trade value per commodity is computed as:
 
-value = absolute(physical_net_excess) × absolute_price
+value = absolute(physical_net_excess) × anchored_price_of_the_numéraire
 
 LTE trade value per commodity is computed as:
 
 value = labor_time × MELT × order_size
 
-Trade is computed in monetary value space, not in physical quantities.
+Trade is computed in terms of monetary value.
 
 #### Balanced Trade Rule
 
@@ -139,10 +139,6 @@ Total LTE to CE value
 Trade is strictly balanced:
 
 trade_value = minimum(Total CE to LTE value, Total LTE to CE value)
-
-No deficit financing or surplus imbalance is allowed.
-
-Trade matching is aggregate and value-based; it does not solve a commodity-level matching or knapsack problem.
 
 #### Monetary Accounting
 
@@ -166,3 +162,36 @@ Because trade is balanced, net monetary effects cancel in aggregate, but balance
   - Trade value is computed and executed.
 - No unresolved trade imbalances persist between time steps.
 
+## Results
+
+Trade in the current implementation is governed by two structural rules:
+
+1. The capitalist economy (CE) exports only surplus above reproduction requirements.
+2. The labor-time economy (LTE) produces export goods only when the CE has import demand.
+
+In the algorithm:
+
+- LTE exports are defined exactly as CE import demand.
+- CE exports only goods that exceed reproduction demand.
+- Trade value is strictly balanced:
+
+trade_value = minimum(total CE->LTE value, total LTE->CE value)
+
+Under the present calibration and simulation window, the CE remains largely self-reproducing at the post-equilibrium scale of production. Because exports are constrained by reproduction feasibility and imports are triggered only by reproduction deficits, trade volumes are endogenously limited by structural conditions within the CE time series.
+
+As a result:
+
+- Net monetary balances remain stable over the 40-step post-equilibrium window.
+- CE total_currency and LTE total_currency exhibit stable trajectories.
+- The plotted currency curves appear flat over time.
+
+This outcome reflects the strict reproduction constraint and value-balancing rule embedded in the trade mechanism. Exchange is permitted only when surplus and deficit conditions simultaneously exist and when value equivalence can be satisfied in both directions.
+
+In the current parameter regime:
+
+- No side accumulates persistent monetary gains from trade.
+- No deficit financing occurs.
+- No structural imbalance emerges.
+- Exchange remains symmetric and value-consistent.
+
+The observed currency stability therefore demonstrates that the algorithm produces a structurally sustainable trade regime grounded in reproduction feasibility and strict value equivalence. Because exports are limited to surplus above reproduction demand and trade value is symmetrically balanced, exchange does not generate cumulative imbalances or monetary drift. Therefore, trade becomes both sustainable and fair, operating within constraints that preserve long-run stability and mutual consistency between the two economies.
