@@ -5,6 +5,8 @@
 
 The event-based simulation implements a dynamic capitalist economy model designed to serve as the price- and supply-generating backend for an interface for trade between this capitalist economy and another economy based on labor-time accounting. Its purpose is to generate internally consistent trajectories of prices, outputs, supplies, labor usage rates, and value magnitudes under capitalist production relations, which can then be used by this trading system. It is built as a production-grounded and class-structured model. 
 
+In addition to tracking prices and supplies, the simulation explicitly computes total reproduction demand at each time step, defined as intermediate production requirements plus worker and capitalist consumption demand. This allows reproduction feasibility and surplus conditions to be measured dynamically over time.
+
 ### Simulation Design
 
 - Constructs a multi-commodity capitalist economy using a generated input–output matrix and labor coefficients
@@ -12,11 +14,22 @@ The event-based simulation implements a dynamic capitalist economy model designe
 - Initializes prices, supplies, outputs, wages, profits, and inventories from parameterized initial conditions
 - Evolves the economy forward in discrete time by repeatedly applying a single event-based update step
 - Records trajectories of prices, supplies, and related state variables at each time step
+- Computes total reproduction demand at each time step as:
+  - Intermediate production demand (A · q)
+  - Worker consumption demand
+  - Capitalist consumption demand
+  - Total reproduction requirement = A·q + b + c
+- Tracks both current total reproduction demand and equilibrium total reproduction demand for comparison with supply levels
 - Detects equilibrium by identifying a time step with no change in prices and supplies relative to the previous step
+- Records the continuous equilibrium time and extracts equilibrium price, supply, and total reproduction demand vectors as benchmarks
 - Upon equilibrium detection, enables externally specified random events for a fixed post-equilibrium window (40 time steps)
 - Applies the effects of enabled events directly to the economic state during simulation
-- Exports full trajectory data with equilibrium annotations to CSV for downstream analysis
-- Produces visualizations of individual commodity prices, supplies, and aggregate averages
+- Computes the average reproduction gap (supply − demand)
+- Exports full trajectory data with equilibrium annotations to CSV for downstream analysis, including:
+  - Current total reproduction demand vectors
+  - Equilibrium price, supply, and total reproduction demand vectors
+  - Explicit equilibrium step indicators and equilibrium time annotation
+- Produces visualizations of individual commodity prices, supplies, supply vs. reproduction demand, average supply vs. average reproduction demand, average reproduction gap, and aggregate averages, with equilibrium time explicitly marked in all plots
 
 ### Theoretical Frameworks Used
 
