@@ -114,13 +114,14 @@ void Producer::start_plan(Plan * plan) {
             plan->order->product->inputs_per_unit) {
 		inventory[input.first] -= input.second * plan->order->quantity;
 	}
+    input_products_account += plan->raw_materials;
+    plan->raw_materials = 0;
 }
 
 void Producer::move_plan_forward_one_step(Plan * plan) {
 	int labor_hours_done =
         std::min((int) plan->workers.size(), plan->labor_hours_remaining);
 	double raw_materials_used = 0.0;
-    double inputs_used = 0.0;
 	if (plan->training_time_remaining > 0) {
 		plan->training_time_remaining--;
 		if (plan->training_time_remaining == 0) {
@@ -131,26 +132,40 @@ void Producer::move_plan_forward_one_step(Plan * plan) {
         }
 	} else {
 		raw_materials_used =
-            plan->raw_materials *
+            input_products_account *
             labor_hours_done /
             (plan->labor_hours - plan->workers.size() * plan->training_time);
-        inputs_used = std::accumulate(
-                plan->order->product->inputs_per_unit.begin(),
-                plan->order->product->inputs_per_unit.end(),
-                0.0,
-                [plan](double acc, const std::pair<Product *, double>& p) {
-                    return acc + (p.second * plan->order->quantity);
-                }
-                );
-	}
+    }
 	//pay workers
 	for (Person * worker : plan->workers) {
 		worker->register_hours_worked((double) labor_hours_done / plan->workers.size());
 	}
-	plan->labor_hours_remaining -= labor_hours_done;
-	plan->raw_materials_remaining -= raw_materials_used;
+    plan->labor_hours_remaining -= labor_hours_done;
+    plan->raw_materials_remaining -= raw_materials_used;
+    for (std::pair<Product *const, int>& input : input_inventory) {
+        if (input.second < RAW_MATERIAL_THRESHOLD) {
+            reorder_raw_materials(plan, input.first);
+        }
+    }
 	plan->total_hours_remaining -= labor_hours_done + raw_materials_used;
-	this->pooled_account -= labor_hours_done + inputs_used;
+}
+
+int Producer::get_input_products_account() {
+    return input_products_account;
+}
+
+void Producer::reorder_raw_materials(Plan * plan, Product * product) {
+    Society * society = Society::get_instance();
+    for (Producer * producer : society->get_producers()) {
+        if ((producer->inventory[product] > RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_SURPLUS_FACTOR)) {
+            producer->inventory[product] -= RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_ORDER_MULTIPLIER;
+            plan->firm = producer; 
+            plan->prd += product->price_per_unit * (RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_ORDER_MULTIPLIER); // This is the upstream producer's plan
+            producer->start_plan(plan);
+            input_products_account -= product->price_per_unit * (RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_ORDER_MULTIPLIER); 
+            break;
+        }
+    }
 }
 
 void Producer::end_plan(Plan * plan) {

@@ -81,9 +81,7 @@ bool Distributor::try_sell_goods(Product& product, int quantity, Person * person
     Plan * plan = product_to_plan[&product];
     plan->outgoing_units_consumed += quantity;
     plan->prd += cost;
-    this->pooled_account -= cost;
     inventory[&product] -= quantity;
-    return true;
 }
 
 std::unordered_set<Product *> Distributor::get_products_to_reorder() {
