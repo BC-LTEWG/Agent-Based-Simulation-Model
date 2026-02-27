@@ -184,13 +184,177 @@ def plot_averages(time, avg_price, avg_supply, equilibrium_time):
     plt.savefig("graphs/Average Price and Average Supply.png", dpi=300)
     plt.close()
 
+# Graph reproductive demand vs supply 
+def compute_reproduction_demand(traj, params):
+    prices = np.array(traj["p"])
+    outputs = np.array(traj["q"])
+    m_w = np.array(traj["m_w"])
+
+    T, n = outputs.shape
+    demand = np.zeros((T, n))
+
+    for i in range(T):
+        p_i = prices[i]
+        q_i = outputs[i]
+        m_w_i = m_w[i]
+
+        # Worker consumption
+        b_i = (
+            params.alpha_w * m_w_i
+            / (p_i @ params.b_bar)
+            * params.b_bar
+        )
+
+        # Capitalist consumption
+        c_i = (
+            params.alpha_c * (1.0 - m_w_i)
+            / (p_i @ params.c_bar)
+            * params.c_bar
+        )
+
+        # Intermediate demand (A · q)
+        intermediate_i = params.A @ q_i
+
+        # Total reproduction requirement
+        demand[i] = intermediate_i + b_i + c_i
+
+    return demand
+
+def plot_supply_vs_reproduction_demand(time, supply, reproduction_demand, product_labels, equilibrium_time):
+    plt.figure(figsize=(12, 7))
+
+    num_products = supply.shape[1]
+
+    for i in range(num_products):
+        # Supply (solid)
+        plt.plot(
+            time,
+            supply[:, i],
+            linewidth=1,
+            alpha=0.7,
+            label=f"Supply {product_labels[i]}"
+        )
+
+        # Reproduction demand (dashed)
+        plt.plot(
+            time,
+            reproduction_demand[:, i],
+            linestyle="--",
+            linewidth=1,
+            alpha=0.7,
+            label=f"Demand {product_labels[i]}"
+        )
+
+    if equilibrium_time is not None:
+        plt.axvline(
+            x=equilibrium_time,
+            color="red",
+            linestyle="--",
+            linewidth=2,
+            label=f"Equilibrium t={equilibrium_time:.2f}"
+        )
+
+    plt.xlabel("Continuous Time (t)")
+    plt.ylabel("Level")
+    plt.title("Supply (solid) vs Reproduction Demand (dashed)")
+    plt.grid(True)
+    
+    plt.legend(loc="upper right", fontsize=8, ncol=2)
+
+    plt.xlim(0, time[-1])
+
+    plt.savefig(
+        "graphs/Supply vs Reproduction Demand.png",
+        dpi=300
+    )
+    plt.close()
+    
+def compute_average_reproduction_demand(reproduction_demand):
+    return np.mean(reproduction_demand, axis=1)
+
+def plot_average_supply_vs_average_reproduction_demand(time, avg_supply, avg_demand, avg_price, equilibrium_time):
+    plt.figure(figsize=(10, 6))
+
+    # Average Supply
+    plt.plot(time, avg_supply,
+             label="Average Supply",
+             color="black",
+             linewidth=2)
+
+    # Average Reproduction Demand
+    plt.plot(time, avg_demand,
+             label="Average Reproduction Demand",
+             linestyle="--",
+             linewidth=2)
+
+    # Average Price (optional but useful)
+    plt.plot(time, avg_price,
+             label="Average Price",
+             color="gold",
+             linewidth=2)
+
+    if equilibrium_time is not None:
+        plt.axvline(
+            x=equilibrium_time,
+            color="red",
+            linestyle="--",
+            linewidth=2,
+            label=f"Equilibrium at t={equilibrium_time:.2f}"
+        )
+
+    plt.xlabel("Continuous Time (t)")
+    plt.ylabel("Value")
+    plt.title("Average Supply vs Average Reproduction Demand")
+    plt.legend()
+    plt.grid(True)
+    plt.xlim(0, time[-1])
+
+    plt.savefig(
+        "graphs/Average Supply vs Reproduction Demand.png",
+        dpi=300
+    )
+    plt.close()
+    
+def plot_average_reproduction_gap(time, avg_supply, avg_demand, equilibrium_time):
+    gap = avg_supply - avg_demand
+
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(time, gap, linewidth=2, label="Average Reproduction Gap")
+
+    plt.axhline(0, linestyle="--", linewidth=1)
+
+    if equilibrium_time is not None:
+        plt.axvline(
+            x=equilibrium_time,
+            color="red",
+            linestyle="--",
+            linewidth=2,
+            label=f"Equilibrium at t={equilibrium_time:.2f}"
+        )
+
+    plt.xlabel("Continuous Time (t)")
+    plt.ylabel("Gap (Supply − Demand)")
+    plt.title("Average Reproduction Gap")
+    plt.legend()
+    plt.grid(True)
+    plt.xlim(0, time[-1])
+
+    plt.savefig(
+        "graphs/Average Reproduction Gap.png",
+        dpi=300
+    )
+    plt.close()
+
 # Plot graphs for visualization 
 def plot_graphs(traj, t, equilibrium_time):
     prices = np.array(traj["p"])
     Supplies = np.array(traj["s"])
+    Reproduction_Demand = compute_reproduction_demand(traj, params)
 
     avg_price = np.mean(prices, axis=1)
     avg_supply = np.mean(Supplies, axis=1)
+    avg_reproduction_demand = compute_average_reproduction_demand(Reproduction_Demand)
 
     # Use continuous time array t for x-axis
     time = np.array(t)
@@ -200,6 +364,9 @@ def plot_graphs(traj, t, equilibrium_time):
 
     plot_prices(time, prices, product_labels, equilibrium_time)
     plot_supply(time, Supplies, product_labels, equilibrium_time)
+    plot_supply_vs_reproduction_demand(time, Supplies, Reproduction_Demand, product_labels, equilibrium_time)
+    plot_average_supply_vs_average_reproduction_demand(time, avg_supply, avg_reproduction_demand, avg_price, equilibrium_time)
+    plot_average_reproduction_gap(time, avg_supply, avg_reproduction_demand, equilibrium_time)
     plot_averages(time, avg_price, avg_supply, equilibrium_time)
 
 def export_trajectories_with_equilibrium(
@@ -216,13 +383,66 @@ def export_trajectories_with_equilibrium(
     eq_index = None
     if equilibrium_time is not None:
         eq_index = int(np.argmin(np.abs(time - equilibrium_time)))
+    
+    if eq_index is not None:    
+        # Extract equilibrium state vectors
+        eq_prices = np.array(traj["p"])[eq_index]   # equilibrium prices
+        eq_output = np.array(traj["q"])[eq_index]   # equilibrium output
+
+        # Worker consumption at equilibrium
+        # b = (alpha_w * m_w) / (p · b_bar) * b_bar
+        # where: alpha_w = worker propensity to consume,
+        #        m_w = worker share of total money,
+        #        p = equilibrium price vector,
+        #        b_bar = baseline worker consumption bundle
+        worker_consumption = (
+            params.alpha_w * params.m_w0
+            / (eq_prices @ params.b_bar)
+            * params.b_bar
+        )
+
+        # Capitalist consumption at equilibrium
+        # c = (alpha_c * (1 - m_w)) / (p · c_bar) * c_bar
+        # where: alpha_c = capitalist propensity to consume,
+        #        (1 - m_w) = capitalist share of total money,
+        #        p = equilibrium price vector,
+        #        c_bar = baseline capitalist consumption bundle
+        capitalist_consumption = (
+            params.alpha_c * (1.0 - params.m_w0)
+            / (eq_prices @ params.c_bar)
+            * params.c_bar
+        )
+
+        # Intermediate input demand from production
+        # intermediate_demand = A · q
+        # where: A = input–output requirements matrix,
+        #        q = equilibrium output (production) vector
+        intermediate_demand = params.A @ eq_output
+
+        # This is the the reproduction requirement, 
+        # as it enables how much the system can safely give up without harming reproduction to be measured 
+        # total_demand = A·q + b + c
+        # where:
+        #   A·q = intermediate input demand from production,
+        #   b   = worker consumption demand,
+        #   c   = capitalist consumption demand
+        equilibrium_total_demand = (
+            intermediate_demand
+            + worker_consumption
+            + capitalist_consumption
+        )
+    else:
+        equilibrium_total_demand = None
 
     header = ["time", "is_equilibrium_step"]
     header += [f"price_{lbl}" for lbl in labels]
     header += [f"supply_{lbl}" for lbl in labels]
+    header += [f"current_total_demand_{lbl}" for lbl in labels]
     header += ["equilibrium_time"]
     header += [f"equilibrium_price_{lbl}" for lbl in labels]
     header += [f"equilibrium_supply_{lbl}" for lbl in labels]
+    header += [f"equilibrium_total_demand_{lbl}" for lbl in labels]
+
 
     with open(filename, "w", newline="") as f:
         writer = csv.writer(f)
@@ -230,19 +450,47 @@ def export_trajectories_with_equilibrium(
 
         for i in range(len(time)):
             is_eq = 1 if (eq_index is not None and i == eq_index) else 0
+            
+            q_i = np.array(traj["q"])[i]
+            p_i = prices[i]
+            m_w_i = traj["m_w"][i]
+
+            # Worker consumption at time i
+            b_i = (
+                params.alpha_w * m_w_i
+                / (p_i @ params.b_bar)
+                * params.b_bar
+            )
+
+            # Capitalist consumption at time i
+            c_i = (
+                params.alpha_c * (1.0 - m_w_i)
+                / (p_i @ params.c_bar)
+                * params.c_bar
+            )
+
+            # Intermediate input demand
+            intermediate_i = params.A @ q_i
+
+            # Current total demand
+            current_total_demand = intermediate_i + b_i + c_i
 
             row = [time[i], is_eq]
             row += prices[i].tolist()
             row += supply[i].tolist()
+            row += current_total_demand.tolist()
 
             if eq_index is not None and i == eq_index:
                 row.append(time[eq_index])
                 row += prices[eq_index].tolist()
                 row += supply[eq_index].tolist()
+                row += equilibrium_total_demand.tolist()
             else:
                 row.append("")
                 row += [""] * num_products
                 row += [""] * num_products
+                row += [""] * num_products
+
 
             writer.writerow(row)
 

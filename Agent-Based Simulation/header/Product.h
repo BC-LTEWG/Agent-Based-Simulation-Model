@@ -10,6 +10,7 @@ struct Machine;
 
 struct Product {
     Product(const std::string name);
+    int id;
     void set_inputs(std::vector<Product *>& products);
     void set_machines(std::vector<Machine*> machines);
     std::string product_name;

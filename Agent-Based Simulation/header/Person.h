@@ -41,13 +41,15 @@ class Person : public Agent {
     double account;
 	std::vector<Distributor *> ranked_distributors;
 	int shopping_offset;
-    void log_hours(const double hours);
-    void log_shopping(const std::string product_name, int quantity);
-    void log_state();
 
 	bool will_shop();
 	void shop();
     bool will_retire();
 	void retire();
 	void update_health_status();
+
+    void log_hours(const double hours);
+    void log_shopping(const std::string product_name, int quantity);
+    void log_shopping_deficit(double deficit);
+    void log_state();
 };

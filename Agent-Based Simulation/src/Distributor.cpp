@@ -51,55 +51,66 @@ void Distributor::on_time_step() {
             worker->register_hours_worked(1);
         }
     }
+    check_expand_catalog();
+    log_catalog_size(catalog.size());
 }
 
-void Distributor::sell_goods(Product& product, int quantity, Person * person) {
-    add_demand_signal(&product, quantity);
-
-    bool has_inventory = inventory.count(&product) > 0;
-    int available = has_inventory ? inventory[&product] : 0;
-    if (!has_inventory) {
-        Logger::get_instance()->log(
-                Logger::DISTRIBUTOR,
-                "inventory_missing",
-                id,
-                product.product_name,
-                0
-                );
-    }
-    int remainder = 0;
-    int sell_quantity = std::min(available, quantity);
-    if (available < quantity) {
-        remainder = quantity - available;
-        Logger::get_instance()->log(
-                Logger::DISTRIBUTOR,
-                "shortfall",
-                id,
-                product.product_name,
-                remainder
-                );
-    }
-    if (sell_quantity == 0) {
-        return;
-    }
+bool Distributor::try_sell_goods(Product& product, int quantity, Person * person) {
     ConsumerGood * consumer_good = society->get_consumer_good(&product);
     if (!consumer_good) {
         std::cerr << "No consumer good for product " << product.product_name << std::endl;
-        return;
+        return false;
     }
-    double cost = sell_quantity * consumer_good->price_per_unit;
+
+    add_demand_signal(&product, quantity);
+
+    int available = catalog.count(&product) ? inventory[&product] : 0;
+    if (available < quantity) {
+        log_shortfall(product.product_name, quantity - available);
+        return false;
+    }
+
+    double cost = quantity * consumer_good->price_per_unit;
     if (!person->charge(cost)) {
-        std::cerr << "Person cannot afford " << sell_quantity
+        std::cerr << "Person cannot afford " << quantity
             << " units of " << product.product_name << " costing " 
             << cost << std::endl;
-        return;
+        return false;
     } 
+
     Plan * plan = product_to_plan[&product];
-    plan->outgoing_units_consumed += sell_quantity;
+    plan->outgoing_units_consumed += quantity;
     plan->prd += cost;
-    inventory[&product] -= sell_quantity;
+    inventory[&product] -= quantity;
 }
 
 std::unordered_set<Product *> Distributor::get_products_to_reorder() {
     return catalog;
+}
+
+void Distributor::check_expand_catalog() {
+    for (std::pair<Product *, double> product : inventory_demands) {
+        if (product.second > EXPAND_CATALOG_DEMAND_THRESHOLD && !catalog.count(product.first)) {
+            catalog.insert(product.first);
+        }
+    }
+}
+
+void Distributor::log_shortfall(std::string product_name, int shortfall) {
+    Logger::get_instance()->log(
+            Logger::DISTRIBUTOR,
+            "shortfall",
+            id,
+            product_name,
+            shortfall
+            );
+}
+
+void Distributor::log_catalog_size(int size) {
+    Logger::get_instance()->log(
+            Logger::DISTRIBUTOR,
+            "catalog_size",
+            id,
+            size
+            );
 }

@@ -19,6 +19,7 @@ int main(int argc, const char ** argv) {
 	Sim simulation;
     simulation.set_trace_logging(arg_present("trace", argc, argv));
     simulation.set_write_data(arg_present("write", argc, argv));
+    simulation.set_using_db(arg_present("db", argc, argv));
     simulation.run(1000);
 	return EXIT_SUCCESS;
 }
