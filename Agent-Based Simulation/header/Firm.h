@@ -88,19 +88,19 @@ class Firm : public Agent {
     
     std::queue<DemandSignal> demand_signals;
     std::unordered_map<Product *, double> inventory_demands;
-    std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
+    std::unordered_map<Product *, std::unordered_set<Order *>> product_to_pending_inbound_orders;
     std::unordered_map<Product *, std::vector<Plan *>> plan_history; // unused and prob need to change later
     std::vector<Plan *> plans_in_progress;
 
     Producer * send_order(Order * order);
     double get_reorder_threshold(Product * product);
-    int get_pending_output_inventory(Product * product);
-    void reorder_output_product_to_threshold(
+    int get_pending_input_inventory(Product * product);
+    void reorder_input_product_to_threshold(
         Product * product, 
         double threshold,
         int pending_inventory
     );
-    void check_and_reorder();
+    void check_and_reorder_inputs();
 
 	double suitability(Person * person, std::vector<Person::Ability>& required_abilities);
 	double suitability(std::unordered_map<Person::Ability, double>& abilities, 

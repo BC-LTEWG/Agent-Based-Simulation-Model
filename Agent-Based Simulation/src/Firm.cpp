@@ -42,7 +42,7 @@ unsigned int Firm::get_id() {
 
 void Firm::on_time_step() {
     apply_demand_window();
-    check_and_reorder();
+    check_and_reorder_inputs();
 }
 
 void Firm::initialize_inventory(
@@ -76,7 +76,7 @@ void Firm::receive_shipment(Order * order) {
         return;
     }
     inventory[order->product] += order->quantity;
-    product_to_outbound_orders[order->product].erase(order);
+    product_to_pending_inbound_orders[order->product].erase(order);
     log_shipment_received(order->product->product_name, order->quantity);
     log_inventory_level(order->product->product_name, inventory[order->product]);
 }
@@ -95,7 +95,7 @@ Producer * Firm::send_order(Order * order) {
     }
     if (chosen_producer) {
         chosen_producer->pursue_order(order);
-        product_to_outbound_orders[order->product].insert(order);
+        product_to_pending_inbound_orders[order->product].insert(order);
     }
     for (auto * producer : suppliers) {
         if (producer != chosen_producer) {
@@ -111,15 +111,15 @@ double Firm::get_reorder_threshold(Product * product) {
         inventory_demands[product] * FIRM_STOCKPILE_DURATION);
 }
 
-int Firm::get_pending_output_inventory(Product * product) {
+int Firm::get_pending_input_inventory(Product * product) {
     int pending_inventory = inventory[product];
-    for (Order * order : product_to_outbound_orders[product]) {
+    for (Order * order : product_to_pending_inbound_orders[product]) {
         pending_inventory += order->quantity;
     }
     return pending_inventory;
 }
 
-void Firm::reorder_output_product_to_threshold(
+void Firm::reorder_input_product_to_threshold(
         Product * product,
         double threshold,
         int pending_inventory
@@ -146,14 +146,14 @@ void Firm::reorder_output_product_to_threshold(
     }
 }
 
-void Firm::check_and_reorder() {
-    std::unordered_set<Product *> products_to_reorder =
+void Firm::check_and_reorder_inputs() {
+    std::unordered_set<Product *> input_products_to_reorder =
         get_products_to_reorder();
-    for (Product * product : products_to_reorder) {
+    for (Product * product : input_products_to_reorder) {
         double threshold = get_reorder_threshold(product);
-        int pending_inventory = get_pending_output_inventory(product);
+        int pending_inventory = get_pending_input_inventory(product);
         if (pending_inventory < threshold) {
-            reorder_output_product_to_threshold(product, threshold, pending_inventory);
+            reorder_input_product_to_threshold(product, threshold, pending_inventory);
         }
     }
 }

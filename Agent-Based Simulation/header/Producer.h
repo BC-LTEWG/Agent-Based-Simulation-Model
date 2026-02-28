@@ -27,12 +27,12 @@ class Producer : public Firm {
   bool has_raw_materials();
   void initialize_input_inventory(std::unordered_map<Product *, int>& inventory_items); 
   void get_pending_input_inventory(Product * product);
-  int get_input_products_account();
+  double get_input_products_account();
 
   private:
   std::unordered_map<Product *, int> input_inventory;
 	std::unordered_map<Order *, Plan *> order_to_draft_plan;
-  int input_products_account;
+  double pooled_input_value_account = 0.0;
 
 	void start_plan(Plan * plan);
 	void move_plan_forward_one_step(Plan * plan);

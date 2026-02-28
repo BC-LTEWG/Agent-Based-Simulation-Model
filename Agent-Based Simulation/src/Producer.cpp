@@ -114,7 +114,7 @@ void Producer::start_plan(Plan * plan) {
             plan->order->product->inputs_per_unit) {
 		inventory[input.first] -= input.second * plan->order->quantity;
 	}
-    input_products_account += plan->raw_materials;
+    pooled_input_value_account += plan->raw_materials_remaining;
     plan->raw_materials = 0;
 }
 
@@ -131,27 +131,39 @@ void Producer::move_plan_forward_one_step(Plan * plan) {
                     );
         }
 	} else {
-		raw_materials_used =
-            input_products_account *
-            labor_hours_done /
-            (plan->labor_hours - plan->workers.size() * plan->training_time);
+        // Consume this plan's remaining raw-material value in proportion
+        // to productive labor completed this step.
+        if (labor_hours_done > 0 && plan->labor_hours_remaining > 0) {
+            raw_materials_used =
+                plan->raw_materials_remaining *
+                static_cast<double>(labor_hours_done) /
+                plan->labor_hours_remaining;
+        }
     }
 	//pay workers
 	for (Person * worker : plan->workers) {
 		worker->register_hours_worked((double) labor_hours_done / plan->workers.size());
 	}
     plan->labor_hours_remaining -= labor_hours_done;
-    plan->raw_materials_remaining -= raw_materials_used;
+    plan->raw_materials_remaining = std::max(
+            0.0,
+            plan->raw_materials_remaining - raw_materials_used
+            );
+    pooled_input_value_account = std::max(
+            0.0,
+            pooled_input_value_account - raw_materials_used
+            );
     for (std::pair<Product *const, int>& input : input_inventory) {
         if (input.second < RAW_MATERIAL_THRESHOLD) {
             reorder_raw_materials(plan, input.first);
         }
     }
-	plan->total_hours_remaining -= labor_hours_done + raw_materials_used;
+    plan->total_hours_remaining =
+        plan->labor_hours_remaining + plan->raw_materials_remaining;
 }
 
-int Producer::get_input_products_account() {
-    return input_products_account;
+double Producer::get_input_products_account() {
+    return pooled_input_value_account;
 }
 
 void Producer::reorder_raw_materials(Plan * plan, Product * product) {
@@ -162,7 +174,11 @@ void Producer::reorder_raw_materials(Plan * plan, Product * product) {
             plan->firm = producer; 
             plan->prd += product->price_per_unit * (RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_ORDER_MULTIPLIER); // This is the upstream producer's plan
             producer->start_plan(plan);
-            input_products_account -= product->price_per_unit * (RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_ORDER_MULTIPLIER); 
+            pooled_input_value_account = std::max(
+                    0.0,
+                    pooled_input_value_account - product->price_per_unit *
+                    (RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_ORDER_MULTIPLIER)
+                    );
             break;
         }
     }
