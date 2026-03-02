@@ -30,7 +30,7 @@ Producer::Producer(
     for (Product * product : get_products_to_reorder()) {
         inventory[product] =
             (society->get_initial_production()[product] - product->mean_consumption_frequency) * 
-            (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW * FIRM_INITIAL_INVENTORY_MULT) * 
+            (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MAX * FIRM_INITIAL_INVENTORY_MULT) * 
             STARTING_NUM_PEOPLE;
     }
 }

@@ -46,8 +46,8 @@ void Firm::on_time_step() {
     for (Product * product : catalog) {
         log_inventory_level(product->product_name, inventory[product]);
     }
-    for (std::pair<Product *, double> product : inventory_demands) {
-        log_demand(product.first->product_name, product.second);
+    for (Product * product : get_products_to_reorder()) {
+        log_demand(product->product_name, get_demand(product));
     }
 }
 
@@ -112,7 +112,7 @@ Producer * Firm::send_order(Order * order) {
 
 double Firm::get_reorder_threshold(Product * product) {
     return std::max((double) product->order_size,
-        inventory_demands[product] * FIRM_STOCKPILE_DURATION);
+        get_demand(product) * FIRM_STOCKPILE_DURATION);
 }
 
 int Firm::get_pending_inventory(Product * product) {
@@ -374,18 +374,31 @@ void Firm::train_workers(
 }
 
 void Firm::add_demand_signal(Product * product, int quantity) {
-    demand_signals.push({product, quantity, Sim::get_current_time_step()});
-    inventory_demands[product] += (double) quantity / FIRM_DEMAND_WINDOW;
+    demand_signals[product].push({quantity, Sim::get_current_time_step()});
+    total_demands[product] += quantity;
 }
 
 void Firm::apply_demand_window() {
-    while (!demand_signals.empty() && 
-            demand_signals.front().timestep <= 
-            Sim::get_current_time_step() - FIRM_DEMAND_WINDOW) {
-        inventory_demands[demand_signals.front().product] -= 
-            (double) demand_signals.front().quantity / FIRM_DEMAND_WINDOW;
-        demand_signals.pop();
+    for (auto& product : demand_signals) {
+        std::queue<DemandSignal>& signals = product.second;
+        while (!signals.empty() && 
+                signals.front().timestep <= 
+                Sim::get_current_time_step() - FIRM_DEMAND_WINDOW_MAX) {
+            total_demands[product.first] -= 
+                signals.front().quantity;
+            signals.pop();
+        }
     }
+}
+
+double Firm::get_demand(Product * product) {
+    int window_start = Sim::get_current_time_step();
+    if (!demand_signals[product].empty()) {
+        window_start = demand_signals[product].front().timestep;
+    }
+    int window_length = std::max(FIRM_DEMAND_WINDOW_MIN, 
+        Sim::get_current_time_step() - window_start);
+    return (double) total_demands[product] / window_length;
 }
 
 void Firm::log_shipment_received(std::string product_name, int quantity) {
@@ -421,7 +434,7 @@ void Firm::log_reorder(std::string product_name, int quantity) {
 void Firm::log_accepted_order(std::string product_name, int requested_turnaround_time) {
     Logger::get_instance()->log(
             Logger::FIRM,
-            "accepted order",
+            "accepted_order",
             id,
             product_name,
             requested_turnaround_time

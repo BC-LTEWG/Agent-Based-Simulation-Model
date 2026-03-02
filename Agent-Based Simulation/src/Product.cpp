@@ -14,7 +14,7 @@ Product::Product(const std::string name) : product_name{name} {
     static std::uniform_int_distribution<>
         order_size_dist(PRODUCT_ORDER_SIZE_MIN, PRODUCT_ORDER_SIZE_MAX);
     order_size = order_size_dist(Sim::gen);
-    static std::uniform_int_distribution<>
+    static std::uniform_real_distribution<>
         living_labor_dist(
                 PRODUCT_LABOR_PER_UNIT_MIN,
                 PRODUCT_LABOR_PER_UNIT_MAX
@@ -56,6 +56,7 @@ void Product::set_inputs(std::vector<Product *>& goods) {
 }
 
 void Product::set_machines(std::vector<Machine*> machines) {
+    if (!machines.size()) return;
     static std::uniform_int_distribution<>
         num_machines_dist(PRODUCT_NUM_MACHINES_MIN, PRODUCT_NUM_MACHINES_MAX);
     const std::size_t num_machines = num_machines_dist(Sim::gen);

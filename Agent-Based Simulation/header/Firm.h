@@ -56,7 +56,6 @@ struct Order {
 };
 
 struct DemandSignal {
-    Product * product;
     int quantity;
     int timestep;
 };
@@ -87,8 +86,8 @@ class Firm : public Agent {
     std::unordered_map<Product *, int> inventory;
     std::unordered_set<Product *> catalog;
     
-    std::queue<DemandSignal> demand_signals;
-    std::unordered_map<Product *, double> inventory_demands;
+    std::unordered_map<Product *, std::queue<DemandSignal>> demand_signals;
+    std::unordered_map<Product *, int> total_demands;
     std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
     std::unordered_map<Product *, std::vector<Plan *>> plan_history; // unused and prob need to change later
     std::vector<Plan *> plans_in_progress;
@@ -120,7 +119,9 @@ class Firm : public Agent {
 	void train_workers(std::vector<Person *>& workers, std::vector<Person::Ability>& required_abilities);
     void add_demand_signal(Product * product, int quantity);
     void apply_demand_window();
+    double get_demand(Product * product);
     virtual std::unordered_set<Product *> get_products_to_reorder() = 0;
+
     void log_shipment_received(std::string product_name, int quantity);
     void log_inventory_level(std::string product_name, int quantity);
     void log_reorder(std::string product_name, int quantity);
