@@ -10,7 +10,7 @@
 #include "sqlite3.h"
 
 Logger::Logger() {
-    if (Sim::is_using_db()) {
+    if (Sim::does_db()) {
         int return_code = sqlite3_open(LOG_FILE, &db);
         if (return_code) {
             throw std::runtime_error("Dztabase connection failure");
@@ -91,10 +91,10 @@ void Logger::log_impl(
         const Tuple& values
         ) {
     int time_step = Sim::get_current_time_step();
-    if (Sim::is_trace_logging()) {
+    if (Sim::does_trace()) {
         Logger::trace(time_step, client, label, id, values);
     }
-    if (Sim::is_using_db()) {
+    if (Sim::does_db()) {
         log_to_db(time_step, client, label, id, values);
     }
     data[client][label][id][time_step] = values;
