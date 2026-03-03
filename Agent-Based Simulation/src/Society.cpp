@@ -222,7 +222,7 @@ std::vector<Person *>& Society::get_unemployed_people() {
     return unemployed_people;
 }
 
-int Society::get_current_work_hours_daily() {
+unsigned int Society::get_current_work_hours_daily() {
     return current_work_hours_daily;
 }
 
