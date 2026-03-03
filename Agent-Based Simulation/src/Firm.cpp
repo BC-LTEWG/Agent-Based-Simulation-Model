@@ -64,7 +64,8 @@ double Firm::get_avg_productivity() {
 }
 
 int Firm::get_inventory(Product * product) {
-    if (!inventory.count(product)) {
+    std::unordered_map<Product *, int>::iterator it = inventory.find(product);
+    if (it == inventory.end()) {
         return 0;
     }
     return inventory[product];
@@ -115,15 +116,15 @@ double Firm::get_reorder_threshold(Product * product) {
         get_demand(product) * FIRM_STOCKPILE_DURATION);
 }
 
-int Firm::get_pending_inventory(Product * product) {
+int Firm::get_pending_output_inventory(Product * product) {
     int pending_inventory = inventory[product];
-    for (auto * order : product_to_outbound_orders[product]) {
+    for (Order * order : product_to_outbound_orders[product]) {
         pending_inventory += order->quantity;
     }
     return pending_inventory;
 }
 
-void Firm::reorder_product_to_threshold(
+void Firm::reorder_output_product_to_threshold(
         Product * product,
         double threshold,
         int pending_inventory
@@ -146,14 +147,6 @@ void Firm::reorder_product_to_threshold(
         if (chosen_producer) {
             log_reorder(product->product_name, reorder_quantity);
             log_accepted_order(product->product_name, order->requested_turnaround_time);
-            pooled_account += order->product->living_labor_per_unit + std::accumulate(
-                order->product->inputs_per_unit.begin(),
-                order->product->inputs_per_unit.end(),
-                0.0,
-                [](double acc, const std::pair<Product *, double>& p) {
-                    return acc + p.second;
-                }
-                ) * order->quantity;
         } else {
             log_reorder("No producer found for " + product->product_name, reorder_quantity);
         }
@@ -165,9 +158,9 @@ void Firm::check_and_reorder() {
         get_products_to_reorder();
     for (Product * product : products_to_reorder) {
         double threshold = get_reorder_threshold(product);
-        int pending_inventory = get_pending_inventory(product);
-        if (pending_inventory < threshold || pooled_account == 0.0) {
-            reorder_product_to_threshold(product, threshold, pending_inventory);
+        int pending_inventory = get_pending_output_inventory(product);
+        if (pending_inventory < threshold) {
+            reorder_output_product_to_threshold(product, threshold, pending_inventory);
         }
     }
 }

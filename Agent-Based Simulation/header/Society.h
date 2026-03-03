@@ -30,6 +30,7 @@ class Society : public Agent {
         int get_current_work_days_weekly();
         int get_initial_account();
         std::unordered_map<Product *, double>& get_initial_production();
+        std::vector<Producer *>& get_producers();
 
     private:
         Society();

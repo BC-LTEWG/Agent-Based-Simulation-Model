@@ -15,6 +15,7 @@ using TupleStringDouble = std::tuple<std::string, double>;
 using TupleIntDoubleInt = std::tuple<int, double, int>;
 using TupleStringStringInt = std::tuple<std::string, std::string, int>;
 using Tuple = std::variant<TupleNone,
+      TupleInt,
       TupleDouble,
       TupleStringInt,
       TupleStringDouble,

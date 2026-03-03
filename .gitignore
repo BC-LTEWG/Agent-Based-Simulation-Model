@@ -8,6 +8,7 @@
 *.obj
 *.png
 *.csv
+*.xlsx
 
 # Precompiled Headers
 *.gch

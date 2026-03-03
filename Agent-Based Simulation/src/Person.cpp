@@ -109,8 +109,7 @@ float Person::avg_productivity_over_time_step(std::string product_name) {
 
 void Person::purchase_good(Product * p, int quantity) {
     for (Distributor * distributor : ranked_distributors) {
-        if (distributor->get_inventory(p) >= quantity) {
-            distributor->sell_goods(*p, quantity, this);
+        if (distributor->try_sell_goods(*p, quantity, this)) {
             return;
         }
     }
@@ -134,6 +133,7 @@ void Person::shop() {
         total_price += ideal_purchase_quantities[p.first] * 
             society->get_consumer_good(p.first)->price_per_unit;
     }
+    log_shopping_deficit(std::max(0.0, (total_price - account) / total_price)); 
     for (std::pair<Product *, double> p : ideal_purchase_quantities) {
         int quantity = (int) (std::min(account / total_price, 1.0) * p.second);
         if (quantity > 0) {
@@ -183,6 +183,10 @@ void Person::log_hours(const double hours) {
 
 void Person::log_shopping(const std::string product_name, const int quantity) {
     Logger::get_instance()->log(Logger::PERSON, "shopping", id, product_name, quantity);
+}
+
+void Person::log_shopping_deficit(const double deficit) {
+    Logger::get_instance()->log(Logger::PERSON, "shopping_deficit", id, deficit);
 }
 
 void Person::log_state() {

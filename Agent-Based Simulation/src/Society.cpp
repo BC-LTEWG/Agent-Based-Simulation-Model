@@ -50,8 +50,6 @@ Society::Society() {
             }
         }
     }
-    // People MUST come after products and distributors are created.
-    set_initial_account();
     for (int i = 0; i < STARTING_NUM_PEOPLE; i++) {
         birth_person();	
     }
@@ -143,6 +141,10 @@ double get_max_eigenvalue(Eigen::MatrixXd& io_matrix) {
     return max_eigenvalue;
 }
 
+std::vector<Producer *>& Society::get_producers() {
+    return producers;
+}
+
 void Society::adjust_io_matrix(
         Eigen::MatrixXd& io_matrix,
         double max_eigenvalue
@@ -178,7 +180,7 @@ void Society::set_product_prices_and_production() {
         adjust_io_matrix(A, max_eigenvalue);
     }
     Eigen::MatrixXd leontief_inverse = get_leontief_inverse(A);
-    Eigen::VectorXd values = leontief_inverse * l;
+    Eigen::VectorXd values = leontief_inverse.transpose() * l;
     for (std::size_t i = 0; i < dim; ++i) {
         if (values(i) <= 0.0) {
             std::stringstream message;
@@ -245,6 +247,9 @@ void Society::set_initial_account() {
                 consumer_good->mean_consumption_frequency *
                 FIRM_DEMAND_WINDOW_MIN * INITIAL_ACCOUNT_MULT; 
         }
+        initial_account += consumer_good->price_per_unit *
+            consumer_good->mean_consumption_frequency *
+            PERSON_SHOPPING_PERIOD; 
     }
 }
 
