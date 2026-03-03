@@ -8,13 +8,13 @@ Sim& Sim::get_instance() {
 }
 
 void Sim::run(SimArgs& args) {
-    get_instance().set_params(args);
-    get_instance().run();
+    Sim& sim = get_instance();
+    sim.set_params(args);
+    sim.run();
 }
 
 Sim::Sim() :
-    gen{rd()},
-    society{Society::get_instance()}
+    gen{rd()}
 {}
 
 bool Sim::does_trace() {
@@ -50,6 +50,7 @@ unsigned int Sim::get_current_time_step() {
 }
 
 void Sim::run() {
+    society = Society::get_instance();
     for (std::size_t i = 0; i < args.time_steps; ++i) {
         society->on_time_step();
         current_time_step++;
