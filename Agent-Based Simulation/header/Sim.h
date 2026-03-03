@@ -9,7 +9,6 @@
 
 struct SimArgs {
     unsigned int time_steps = NUM_SIM_RUNS;
-    bool trace = false;
     bool csv = false;
     bool db = false;
     bool json = false;
@@ -19,7 +18,6 @@ class Sim {
     public:
         static Sim& get_instance();
         static void run(SimArgs& args);
-        static bool does_trace();
         static bool does_csv();
         static bool does_db();
         static bool does_json();

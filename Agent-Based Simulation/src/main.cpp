@@ -9,8 +9,6 @@ void print_usage() {
         std::endl;
     std::cout << "\t-d: Store logged data in a SQLite database file called "
         "sim.db." << std::endl;
-    std::cout << "\t-t: Write log traces to stdin throughout execution." <<
-        std::endl;
     std::cout << "\t-j: Write log traces to stdin in JSON format throughout "
         "execution." << std::endl;
     std::cout << "\tYou can combine any arguments except -n, e.g., -ct to "
@@ -32,9 +30,6 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
             } else {
                 while (argv[i][j]) {
                     switch (argv[i][j]) {
-                        case 't':
-                            args.trace = true;
-                            break;
                         case 'c':
                             args.csv = true;
                             break;

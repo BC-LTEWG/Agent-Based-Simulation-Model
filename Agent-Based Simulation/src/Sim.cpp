@@ -17,10 +17,6 @@ Sim::Sim() :
     gen{rd()}
 {}
 
-bool Sim::does_trace() {
-    return get_instance().args.trace;
-}
-
 bool Sim::does_csv() {
     return get_instance().args.csv;
 }
@@ -59,4 +55,3 @@ void Sim::run() {
         Logger::get_instance()->write_data();
     }
 }
-
