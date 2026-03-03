@@ -30,7 +30,7 @@ Producer::Producer(
     for (Product * product : get_products_to_reorder()) {
         inventory[product] =
             (society->get_initial_production()[product] - product->mean_consumption_frequency) * 
-            (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MAX * FIRM_INITIAL_INVENTORY_MULT) * 
+            (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN * PRODUCER_INITIAL_INVENTORY_MULT) * 
             STARTING_NUM_PEOPLE;
     }
 }
@@ -53,24 +53,24 @@ int Producer::draft_plan(Order * order) {
         if (inventory[input.first] < input.second * order->quantity) {
 			return DRAFT_ORDER_REJECTED;
         }
-        add_demand_signal(input.first, input.second * order->quantity);
     }
 	Plan * draft_plan = new Plan{};
 	draft_plan->order = order;
 	draft_plan->firm = this;
 	draft_optimal_plan(draft_plan, order->product->required_abilities);
 
+    if (draft_plan->workers.empty()) {
+        delete draft_plan;
+        return DRAFT_ORDER_REJECTED;
+    }
+
     double machinery_cost_per_hour = 0.0;
     for (Machine * machine : machines) {
         machinery_cost_per_hour += machine->price_per_unit / machine->lifetime;
     }
-    if (!draft_plan->workers.empty()) {
-        draft_plan->machinery_cost = machinery_cost_per_hour *
-                        (static_cast<double>(draft_plan->labor_hours) /
-                         draft_plan->workers.size());
-    } else {
-        draft_plan->machinery_cost = 0.0;
-    }
+    draft_plan->machinery_cost = machinery_cost_per_hour *
+                    (static_cast<double>(draft_plan->labor_hours) /
+                     draft_plan->workers.size());
 
 	order_to_draft_plan[order] = draft_plan;
     log_draft_plan(draft_plan);
@@ -87,6 +87,11 @@ bool Producer::pursue_order(Order * order) {
 		return false;
 	}
 	Plan * draft_plan = order_to_draft_plan[order];
+
+    for (std::pair<Product * const, double>& input :
+            order->product->inputs_per_unit) {
+        add_demand_signal(input.first, input.second * order->quantity);
+    }
 	// remove all workers from their current pools
     Society * society = Society::get_instance();
 	for (Person * worker : draft_plan->workers) {
@@ -116,6 +121,7 @@ void Producer::start_plan(Plan * plan) {
             plan->order->product->inputs_per_unit) {
 		inventory[input.first] -= input.second * plan->order->quantity;
 	}
+    plan->total_hours_remaining -= 1e-6;
 }
 
 void Producer::move_plan_forward_one_step(Plan * plan) {
@@ -188,7 +194,7 @@ void Producer::move_plans_forward_one_step() {
 			Sim::get_current_time_step() / DAY % 7 < Society::get_instance()->get_current_work_days_weekly()) {
 			move_plan_forward_one_step(plan);
 		}
-		if (plan->total_hours_remaining == 0) {
+		if (plan->total_hours_remaining < 1e-6) {
 			end_plan(plan);
 			iter = plans_in_progress.erase(iter);
 			--iter; 

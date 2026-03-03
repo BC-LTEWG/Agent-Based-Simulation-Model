@@ -24,7 +24,7 @@ Distributor::Distributor(
         society->add_consumer_good(product);
         int quantity =
             product->mean_consumption_frequency *
-            (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MAX * FIRM_INITIAL_INVENTORY_MULT) * 
+            (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN * DISTRIBUTOR_INITIAL_INVENTORY_MULT) * 
             STARTING_NUM_PEOPLE;
         Order * order = new Order(product, quantity, this, 0);
         Plan * plan = new Plan;

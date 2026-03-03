@@ -43,8 +43,8 @@ unsigned int Firm::get_id() {
 void Firm::on_time_step() {
     apply_demand_window();
     check_and_reorder();
-    for (Product * product : catalog) {
-        log_inventory_level(product->product_name, inventory[product]);
+    for (std::pair<Product * const, int>& product : inventory) {
+        log_inventory_level(product.first->product_name, product.second);
     }
     for (Product * product : get_products_to_reorder()) {
         log_demand(product->product_name, get_demand(product));
@@ -136,7 +136,6 @@ void Firm::reorder_product_to_threshold(
             DEADLINE_SAFETY_MULTIPLIER /
             threshold
             );
-        log_reorder(product->product_name, reorder_quantity);
         Order * order = new Order(
                 product,
                 reorder_quantity,
@@ -145,6 +144,7 @@ void Firm::reorder_product_to_threshold(
                 );
         Producer * chosen_producer = send_order(order);
         if (chosen_producer) {
+            log_reorder(product->product_name, reorder_quantity);
             log_accepted_order(product->product_name, order->requested_turnaround_time);
             pooled_account += order->product->living_labor_per_unit + std::accumulate(
                 order->product->inputs_per_unit.begin(),
@@ -154,6 +154,8 @@ void Firm::reorder_product_to_threshold(
                     return acc + p.second;
                 }
                 ) * order->quantity;
+        } else {
+            log_reorder("No producer found for " + product->product_name, reorder_quantity);
         }
     }
 }
@@ -414,7 +416,7 @@ void Firm::log_shipment_received(std::string product_name, int quantity) {
 void Firm::log_inventory_level(std::string product_name, int quantity) {
     Logger::get_instance()->log(
             Logger::FIRM,
-            "inventory_level",
+            "inventory_level " + product_name,
             id,
             product_name,
             quantity
@@ -444,7 +446,7 @@ void Firm::log_accepted_order(std::string product_name, int requested_turnaround
 void Firm::log_demand(std::string product_name, double demand) {
     Logger::get_instance()->log(
             Logger::FIRM,
-            "demand",
+            "demand " + product_name,
             id,
             product_name,
             demand
