@@ -1,6 +1,5 @@
 #include <iostream>
 #include <stdexcept>
-#include <type_traits>
 
 #include "Constants.h"
 #include "Firm.h"
