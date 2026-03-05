@@ -74,7 +74,7 @@ void Society::on_time_step() {
 void Society::set_initial_products() {
     std::size_t i = 0;
     for (; i < STARTING_NUM_PRODUCTS; ++i) {
-        Product * new_product = new Product("Product " + std::to_string(i));
+        Product * new_product = new Product("Product_" + std::to_string(i));
         new_product->id = i;
         goods.push_back(new_product);
         products.push_back(new_product);

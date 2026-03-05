@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdexcept>
+#include <type_traits>
 
 #include "Constants.h"
 #include "Firm.h"
@@ -67,7 +68,8 @@ void Logger::log(
         const std::string name,
         const int quantity
         ) {
-    TupleStringInt tuple = std::make_tuple(name, quantity);
+    const std::string name_s = std::string("\"") + name + "\"";
+    TupleStringInt tuple = std::make_tuple(name_s, quantity);
     log_impl(client, label, id, tuple);
 }
 
@@ -78,7 +80,8 @@ void Logger::log(
         const std::string name,
         const double measure
         ) {
-    TupleStringDouble tuple = std::make_tuple(name, measure);
+    const std::string name_s = std::string("\"") + name + "\"";
+    TupleStringDouble tuple = std::make_tuple(name_s, measure);
     log_impl(client, label, id, tuple);
 }
 
@@ -128,7 +131,7 @@ template<typename TupleT>
 void Logger::trace_tuple(const TupleT& values) {
     static int count = 0;
     std::apply([](auto&& ... arg) {
-            ((std::cout << (count++ ? "," : "") << arg), ...);
+            ((std::cout << (count++ ? "," : "") << arg), ...); count++;
             }, values);
     count = 0;
 }
