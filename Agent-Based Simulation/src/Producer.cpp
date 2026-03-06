@@ -135,7 +135,7 @@ void Producer::move_plan_forward_one_step(Plan * plan) {
         // to productive labor completed this step.
         if (labor_hours_done > 0 && plan->labor_hours_remaining > 0) {
             raw_materials_used =
-                plan->raw_materials_remaining *
+                pooled_input_value_account *
                 static_cast<double>(labor_hours_done) /
                 plan->labor_hours_remaining;
         }
