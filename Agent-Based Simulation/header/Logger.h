@@ -75,7 +75,7 @@ class Logger {
                 const unsigned int id,
                 const Tuple& values
                 );
-        static void trace(
+        static void json(
                 const int time_step,
                 const Client client,
                 std::string label,
