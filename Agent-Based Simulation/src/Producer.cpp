@@ -15,9 +15,10 @@
 
 Producer::Producer(
         Society * society,
-        std::unordered_set<Product *> initial_catalog
+        std::unordered_set<Product *> initial_catalog,
+        std::unordered_map<Product *, int> input_inventory
         ) :
-    Firm(society, initial_catalog) {
+    Firm(society, initial_catalog, input_inventory) {
     std::unordered_set<Machine *> initial_machines;
     for (Product * product : initial_catalog) {
         for (Machine * machine : product->machines_needed) {

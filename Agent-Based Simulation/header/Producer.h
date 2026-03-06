@@ -16,7 +16,7 @@ class Person;
 
 class Producer : public Firm {
   public:
-    Producer(Society * society, std::unordered_set<Product *> initial_catalog);
+    Producer(Society * society, std::unordered_set<Product *> initial_catalog, std::unordered_map<Product *, int> input_inventory);
     void on_time_step() override;
 
     bool can_produce(Product * product);

@@ -28,9 +28,10 @@ Order::Order(
 
 Firm::Firm(Society * society) : society{society} {}
 
-Firm::Firm(Society * society, std::unordered_set<Product *> initial_catalog) :
+Firm::Firm(Society * society, std::unordered_set<Product *> initial_catalog, std::unordered_map<Product *, int>& input_inventory) :
     society{society},
-    catalog(initial_catalog)
+    catalog(initial_catalog),
+    inventory(input_inventory)
 {
     static unsigned int unique_id = 0;
     id = unique_id++;
