@@ -10,7 +10,7 @@
 #include "sqlite3.h"
 
 Logger::Logger() {
-    if (Sim::is_using_db()) {
+    if (Sim::does_db()) {
         int return_code = sqlite3_open(LOG_FILE, &db);
         if (return_code) {
             throw std::runtime_error("Dztabase connection failure");
@@ -67,7 +67,8 @@ void Logger::log(
         const std::string name,
         const int quantity
         ) {
-    TupleStringInt tuple = std::make_tuple(name, quantity);
+    const std::string name_s = std::string("\"") + name + "\"";
+    TupleStringInt tuple = std::make_tuple(name_s, quantity);
     log_impl(client, label, id, tuple);
 }
 
@@ -78,7 +79,8 @@ void Logger::log(
         const std::string name,
         const double measure
         ) {
-    TupleStringDouble tuple = std::make_tuple(name, measure);
+    const std::string name_s = std::string("\"") + name + "\"";
+    TupleStringDouble tuple = std::make_tuple(name_s, measure);
     log_impl(client, label, id, tuple);
 }
 
@@ -91,16 +93,18 @@ void Logger::log_impl(
         const Tuple& values
         ) {
     int time_step = Sim::get_current_time_step();
-    if (Sim::is_trace_logging()) {
-        Logger::trace(time_step, client, label, id, values);
+    if (Sim::does_json()) {
+        Logger::json(time_step, client, label, id, values);
     }
-    if (Sim::is_using_db()) {
+    if (Sim::does_db()) {
         log_to_db(time_step, client, label, id, values);
     }
-    data[client][label][id][time_step] = values;
+    if (Sim::does_csv()) {
+        data[client][label][id][time_step] = values;
+    }
 }
 
-void Logger::trace(
+void Logger::json(
         const int time_step,
         const Client client,
         std::string label,
@@ -110,21 +114,25 @@ void Logger::trace(
     if (client >= ERROR) {
         throw std::invalid_argument("Logging client does not exist");
     }
-    std::cout << "[" << time_step << "] ";
-    std::cout << clients[client] << "_" << id << ": ";
-    std::cout << label << " - ";
+    std::cout << "{\"t\":" << time_step << "," <<
+        "\"client\":\"" << clients[client] << "\"," <<
+        "\"id\":" << id << "," <<
+        "\"label\":\"" << label << "\"," <<
+        "\"values\":[";
     auto visitor = [](auto&& arg) {
         Logger::trace_tuple(arg);
     };
     std::visit(visitor, values);
-    std::cout << std::endl;
+    std::cout << "]}" << std::endl;
 }
 
 template<typename TupleT>
 void Logger::trace_tuple(const TupleT& values) {
+    static int count = 0;
     std::apply([](auto&& ... arg) {
-            ((std::cout << arg << " "), ...);
+            ((std::cout << (count++ ? "," : "") << arg), ...); count++;
             }, values);
+    count = 0;
 }
 
 template<typename TupleT>

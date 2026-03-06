@@ -416,7 +416,7 @@ void Firm::log_reorder(std::string product_name, int quantity) {
 void Firm::log_accepted_order(std::string product_name, int requested_turnaround_time) {
     Logger::get_instance()->log(
             Logger::FIRM,
-            "accepted order",
+            "accepted_order",
             id,
             product_name,
             requested_turnaround_time

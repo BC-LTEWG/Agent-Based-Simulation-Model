@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+const unsigned int NUM_SIM_RUNS = 10;
+
 const int DAY = 24;
 const int WEEK = DAY * 7;
 const int MONTH = DAY * 30;

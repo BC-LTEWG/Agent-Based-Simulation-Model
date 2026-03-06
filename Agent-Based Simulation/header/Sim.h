@@ -4,27 +4,33 @@
 #include <string>
 #include <vector>
 
+#include "Constants.h"
 #include "Society.h"
 
-class Sim {
-  public:
-	static std::random_device rd;
-	static std::mt19937 gen;
-    Sim();
-    static bool is_trace_logging();
-    static bool is_writing_data();
-    static bool is_using_db();
-    static void set_trace_logging(bool should_log);
-    static void set_write_data(bool should_log);
-    static void set_using_db(bool should_log);
-	static int get_current_time_step();
-    void time_step();
-    void run(int time_steps);
+struct SimArgs {
+    unsigned int time_steps = NUM_SIM_RUNS;
+    bool csv = false;
+    bool db = false;
+    bool json = false;
+};
 
-  private:
-    static bool use_db;
-    static bool trace_logging;
-    static bool write_data;
-    static int current_time_step;
-    Society * society;
+class Sim {
+    public:
+        static Sim& get_instance();
+        static void run(SimArgs& args);
+        static bool does_csv();
+        static bool does_db();
+        static bool does_json();
+        static unsigned int get_current_time_step();
+        static std::random_device& get_random_device();
+        static std::mt19937& get_random_generator();
+        void set_params(SimArgs& args);
+    private:
+        Sim();
+        void run();
+        SimArgs args;
+        std::random_device rd;
+        std::mt19937 gen;
+        unsigned int current_time_step;
+        Society * society;
 };
