@@ -125,7 +125,6 @@ bool Person::will_shop() {
 
 void Person::shop() {
     static std::normal_distribution<> dist(1, PERSON_SHOPPING_MULTIPLIER_STDDEV);
-    std::unordered_map<Product *, double> ideal_purchase_quantities;
     double total_price = 0.0;
     for (std::pair<Product *, double> p : purchase_frequencies) {
         ideal_purchase_quantities[p.first] =

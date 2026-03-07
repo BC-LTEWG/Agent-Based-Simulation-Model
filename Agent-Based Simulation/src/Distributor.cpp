@@ -84,6 +84,7 @@ bool Distributor::try_sell_goods(Product& product, int quantity, Person * person
     plan->outgoing_units_consumed += quantity;
     plan->prd += cost;
     inventory[&product] -= quantity;
+    return true;
 }
 
 std::unordered_set<Product *> Distributor::get_products_to_reorder() {

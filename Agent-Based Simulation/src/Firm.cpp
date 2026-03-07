@@ -374,7 +374,7 @@ void Firm::add_demand_signal(Product * product, int quantity) {
 }
 
 void Firm::apply_demand_window() {
-    for (auto& product : demand_signals) {
+    for (std::pair<Product * const, std::queue<DemandSignal>>& product : demand_signals) {
         std::queue<DemandSignal>& signals = product.second;
         while (!signals.empty() && 
                 signals.front().timestep <= 

@@ -163,7 +163,6 @@ void Society::adjust_io_matrix(
 Eigen::MatrixXd get_leontief_inverse(
         Eigen::MatrixXd io_matrix
         ) {
-    // Eigen::MatrixXd io_matrix_transpose = io_matrix.transpose();
     const std::size_t dim = io_matrix.rows();
     Eigen::MatrixXd identity_matrix = Eigen::MatrixXd::Identity(dim, dim);
     Eigen::MatrixXd leontief_matrix = identity_matrix - io_matrix;
@@ -242,15 +241,13 @@ void Society::set_initial_account() {
     initial_account = 0.0;
     for (Product * product : products) {
         ConsumerGood * consumer_good = get_consumer_good(product);
-        if (consumer_good) {
-            initial_account += consumer_good->price_per_unit *
-                consumer_good->mean_consumption_frequency *
-                FIRM_DEMAND_WINDOW_MIN * INITIAL_ACCOUNT_MULT; 
+        if (!consumer_good) {
+            std::cerr << "consumer good DNE" << std::endl;
         }
         initial_account += consumer_good->price_per_unit *
-            consumer_good->mean_consumption_frequency *
-            PERSON_SHOPPING_PERIOD; 
+            consumer_good->mean_consumption_frequency;
     }
+    initial_account *= FIRM_DEMAND_WINDOW_MIN * INITIAL_ACCOUNT_MULT;
 }
 
 int Society::get_initial_account() {
