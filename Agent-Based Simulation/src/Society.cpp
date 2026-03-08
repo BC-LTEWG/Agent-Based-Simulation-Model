@@ -50,6 +50,7 @@ Society::Society() {
             }
         }
     }
+    set_initial_account();
     for (int i = 0; i < STARTING_NUM_PEOPLE; i++) {
         birth_person();	
     }
