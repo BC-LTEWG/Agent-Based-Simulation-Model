@@ -26,7 +26,7 @@ class Society : public Agent {
         std::vector<Distributor *>& get_distributors();
         std::vector<Person *>& get_unemployed_people();
         void retire_person(Person * person);
-        int get_current_work_hours_daily();
+        unsigned int get_current_work_hours_daily();
         int get_current_work_days_weekly();
         int get_initial_account();
         std::unordered_map<Product *, double>& get_initial_production();
@@ -57,7 +57,7 @@ class Society : public Agent {
         std::vector<Distributor *> distributors;
         std::unordered_map<Product *, std::vector<Distributor *>>
             product_to_distributors;
-        int current_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
+        unsigned int current_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
 		int current_work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
         std::vector<Person *> unemployed_people;
         double initial_account;

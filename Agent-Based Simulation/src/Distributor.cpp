@@ -63,15 +63,12 @@ bool Distributor::try_sell_goods(Product& product, int quantity, Person * person
         std::cerr << "No consumer good for product " << product.product_name << std::endl;
         return false;
     }
-
     add_demand_signal(&product, quantity);
-
     int available = catalog.count(&product) ? inventory[&product] : 0;
     if (available < quantity) {
         log_shortfall(product.product_name, quantity - available);
         return false;
     }
-
     double cost = quantity * consumer_good->price_per_unit;
     if (!person->charge(cost)) {
         std::cerr << "Person cannot afford " << quantity
@@ -79,7 +76,6 @@ bool Distributor::try_sell_goods(Product& product, int quantity, Person * person
             << cost << std::endl;
         return false;
     } 
-
     Plan * plan = product_to_plan[&product];
     plan->outgoing_units_consumed += quantity;
     plan->prd += cost;

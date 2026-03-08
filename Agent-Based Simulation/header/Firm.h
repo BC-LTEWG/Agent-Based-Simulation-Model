@@ -57,7 +57,7 @@ struct Order {
 
 struct DemandSignal {
     int quantity;
-    int timestep;
+    unsigned int timestep;
 };
 
 class Firm : public Agent {

@@ -75,7 +75,7 @@ void Society::on_time_step() {
 void Society::set_initial_products() {
     std::size_t i = 0;
     for (; i < STARTING_NUM_PRODUCTS; ++i) {
-        Product * new_product = new Product("Product " + std::to_string(i));
+        Product * new_product = new Product("Product_" + std::to_string(i));
         new_product->id = i;
         goods.push_back(new_product);
         products.push_back(new_product);
@@ -86,7 +86,7 @@ void Society::set_initial_products() {
     for (std::size_t j = 0; j < STARTING_NUM_MACHINES; ++j, ++i) {
         Machine * new_machine = new Machine(
                 "Machine " + std::to_string(i),
-                machine_lifetime_dist(Sim::gen)
+                machine_lifetime_dist(Sim::get_random_generator())
                 );
         machines.push_back(new_machine);
         products.push_back(new_machine);
@@ -230,7 +230,7 @@ std::vector<Person *>& Society::get_unemployed_people() {
     return unemployed_people;
 }
 
-int Society::get_current_work_hours_daily() {
+unsigned int Society::get_current_work_hours_daily() {
     return current_work_hours_daily;
 }
 

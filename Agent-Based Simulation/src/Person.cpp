@@ -26,7 +26,7 @@ Person::Person(Society * society):
                 PERSON_SHOPPING_PERIOD / 2, PERSON_SHOPPING_OFFSET_STDDEV
                 );
     shopping_offset =
-        (((int) shopping_dist(Sim::gen)) +
+        (((int) shopping_dist(Sim::get_random_generator())) +
          PERSON_SHOPPING_PERIOD) % PERSON_SHOPPING_PERIOD;
 
     static std::normal_distribution<>
@@ -35,22 +35,22 @@ Person::Person(Society * society):
     for (int i = 0; i < Person::NUM_ABILITIES; i++) {
         all_abilities.push_back((Person::Ability) i);
     }
-    std::shuffle(all_abilities.begin(), all_abilities.end(), Sim::gen);
+    std::shuffle(all_abilities.begin(), all_abilities.end(), Sim::get_random_generator());
     all_abilities.resize(PERSON_ABILITY_COUNT_MAX);
     for (Person::Ability ability : all_abilities) {
-        abilities[ability] = std::max(0.0, ability_dist(Sim::gen));
+        abilities[ability] = std::max(0.0, ability_dist(Sim::get_random_generator()));
     }
     ranked_distributors = society->get_distributors();
     std::shuffle(
             ranked_distributors.begin(),
             ranked_distributors.end(),
-            Sim::gen
+            Sim::get_random_generator()
             );
     static std::normal_distribution<>
         dist(1, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
     for (Product * p : society->get_goods()) {
         purchase_frequencies[p] =
-            p->mean_consumption_frequency * std::abs(dist(Sim::gen));
+            p->mean_consumption_frequency * std::abs(dist(Sim::get_random_generator()));
     }
     account = society->get_initial_account();
 }
@@ -128,7 +128,7 @@ void Person::shop() {
     double total_price = 0.0;
     for (std::pair<Product *, double> p : purchase_frequencies) {
         ideal_purchase_quantities[p.first] =
-            p.second * PERSON_SHOPPING_PERIOD * std::abs(dist(Sim::gen));
+            p.second * PERSON_SHOPPING_PERIOD * std::abs(dist(Sim::get_random_generator()));
         total_price += ideal_purchase_quantities[p.first] * 
             society->get_consumer_good(p.first)->price_per_unit;
     }
@@ -145,7 +145,7 @@ void Person::shop() {
 bool Person::will_retire() {
     static std::uniform_real_distribution<> dist(0, 1);
     if (age >= GUARANTEED_RETIREMENT_AGE) { return true; }
-    return dist(Sim::gen) < RANDOM_RETIREMENT_CHANCE;
+    return dist(Sim::get_random_generator()) < RANDOM_RETIREMENT_CHANCE;
 }
 
 void Person::retire() {
@@ -155,10 +155,10 @@ void Person::retire() {
 void Person::update_health_status() {
 	static std::uniform_real_distribution<> dist(0, 1);
 	if (health_status == HEALTHY &&
-		dist(Sim::gen) < 1 - pow(1 - DAILY_SICKNESS_CHANCE, 1.0 / DAY)) {
+		dist(Sim::get_random_generator()) < 1 - pow(1 - DAILY_SICKNESS_CHANCE, 1.0 / DAY)) {
 		health_status = UNHEALTHY;
 	} else if (health_status == UNHEALTHY &&
-	   dist(Sim::gen) < 1 - pow(1 - DAILY_RECOVERY_CHANCE, 1.0 / DAY)) {
+	   dist(Sim::get_random_generator()) < 1 - pow(1 - DAILY_RECOVERY_CHANCE, 1.0 / DAY)) {
 		health_status = HEALTHY;
 	} 
 }

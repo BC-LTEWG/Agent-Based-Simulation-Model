@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+const unsigned int NUM_SIM_RUNS = 10;
+
 const int DAY = 24;
 const int WEEK = DAY * 7;
 const int MONTH = DAY * 30;
@@ -50,8 +52,8 @@ const int MACHINE_LIFETIME_MAX = MACHINE_LIFETIME_MIN * 10;
 
 const int FIRM_TRAINING_TIME = INITIAL_WORK_HOURS_DAILY * WEEK / DAY;
 const int FIRM_STOCKPILE_DURATION = 1.5 * WEEK;
-const int FIRM_DEMAND_WINDOW_MIN = WEEK;
-const int FIRM_DEMAND_WINDOW_MAX = MONTH;
+const unsigned int FIRM_DEMAND_WINDOW_MIN = WEEK;
+const unsigned int FIRM_DEMAND_WINDOW_MAX = MONTH;
 const double PRODUCER_INITIAL_INVENTORY_MULT = 10;
 const double DISTRIBUTOR_INITIAL_INVENTORY_MULT = 2;
 const double DEADLINE_SAFETY_MULTIPLIER = 0.6;
