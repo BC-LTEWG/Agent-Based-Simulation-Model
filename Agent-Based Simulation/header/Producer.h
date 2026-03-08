@@ -42,6 +42,7 @@ class Producer : public Firm {
     void log_plans();
     void log_draft_plan(const Plan * draft_plan);
     void log_dropped_order(const Order * order);
-    void log_pursued_plan(const Plan * draft_plan); 
+    void log_pursued_plan(const Plan * draft_plan);
+    void log_ended_plan(const Plan * plan);
     void log_pending_input_inventory_level(Product * product);
 };

@@ -36,7 +36,8 @@ class Person : public Agent {
     std::unordered_map<Ability, double> abilities;
     int age;
     HealthStatus health_status;
-    std::unordered_map<Product*, double> purchase_frequencies;
+    std::unordered_map<Product *, double> purchase_frequencies,
+        ideal_purchase_quantities;
     Firm * firm = nullptr;
     double account;
 	std::vector<Distributor *> ranked_distributors;

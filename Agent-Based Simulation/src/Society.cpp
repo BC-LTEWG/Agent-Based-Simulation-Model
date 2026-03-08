@@ -50,6 +50,7 @@ Society::Society() {
             }
         }
     }
+    set_initial_account();
     for (int i = 0; i < STARTING_NUM_PEOPLE; i++) {
         birth_person();	
     }
@@ -95,7 +96,7 @@ void Society::set_initial_products() {
         product->set_inputs(goods);
         product->set_machines(machines);
     }
-    set_product_prices();
+    set_product_prices_and_production();
 }
 
 void Society::populate_io_matrix_and_labor_vector(
@@ -160,19 +161,16 @@ void Society::adjust_io_matrix(
     }
 }
 
-Eigen::VectorXd get_leontief_function(
-        Eigen::MatrixXd io_matrix, 
-        Eigen::VectorXd labor
+Eigen::MatrixXd get_leontief_inverse(
+        Eigen::MatrixXd io_matrix
         ) {
-    Eigen::MatrixXd io_matrix_transpose = io_matrix.transpose();
     const std::size_t dim = io_matrix.rows();
     Eigen::MatrixXd identity_matrix = Eigen::MatrixXd::Identity(dim, dim);
-    Eigen::MatrixXd leontief_matrix = identity_matrix - io_matrix_transpose;
-    Eigen::MatrixXd leontief_matrix_inverse = leontief_matrix.inverse();
-    return leontief_matrix_inverse * labor;
+    Eigen::MatrixXd leontief_matrix = identity_matrix - io_matrix;
+    return leontief_matrix.inverse();
 }
 
-void Society::set_product_prices() {
+void Society::set_product_prices_and_production() {
     const size_t dim = products.size();
     Eigen::MatrixXd A(dim, dim);
     Eigen::VectorXd l(dim);
@@ -181,7 +179,8 @@ void Society::set_product_prices() {
     if (max_eigenvalue >= 1.0) {
         adjust_io_matrix(A, max_eigenvalue);
     }
-    Eigen::VectorXd values = get_leontief_function(A, l);
+    Eigen::MatrixXd leontief_inverse = get_leontief_inverse(A);
+    Eigen::VectorXd values = leontief_inverse.transpose() * l;
     for (std::size_t i = 0; i < dim; ++i) {
         if (values(i) <= 0.0) {
             std::stringstream message;
@@ -189,6 +188,15 @@ void Society::set_product_prices() {
             throw std::domain_error(message.str());
         }
         products[i]->price_per_unit = values(i);
+    }
+
+    Eigen::VectorXd demands(dim);
+    for (Product * product : products) {
+        demands[product_to_index[product]] = product->mean_consumption_frequency;
+    }
+    Eigen::VectorXd production = leontief_inverse * demands;
+    for (std::size_t i = 0; i < dim; ++i) {
+        initial_production[products[i]] = production(i);
     }
 }
 
@@ -234,18 +242,21 @@ void Society::set_initial_account() {
     initial_account = 0.0;
     for (Product * product : products) {
         ConsumerGood * consumer_good = get_consumer_good(product);
-        if(!consumer_good) {
+        if (!consumer_good) {
             std::cerr << "consumer good DNE" << std::endl;
         }
-
         initial_account += consumer_good->price_per_unit *
-            consumer_good->mean_consumption_frequency *
-            PERSON_SHOPPING_PERIOD; 
+            consumer_good->mean_consumption_frequency;
     }
+    initial_account *= FIRM_DEMAND_WINDOW_MIN * INITIAL_ACCOUNT_MULT;
 }
 
 int Society::get_initial_account() {
     return initial_account;
+}
+
+std::unordered_map<Product *, double>& Society::get_initial_production() {
+    return initial_production;
 }
 
 Person * Society::birth_person() {

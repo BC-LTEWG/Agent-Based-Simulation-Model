@@ -39,13 +39,6 @@ Person::Person(Society * society):
     all_abilities.resize(PERSON_ABILITY_COUNT_MAX);
     for (Person::Ability ability : all_abilities) {
         abilities[ability] = std::max(0.0, ability_dist(Sim::get_random_generator()));
-        static std::normal_distribution<>
-            dist(1, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
-        for (Product * p : society->get_goods()) {
-            purchase_frequencies[p] =
-                p->mean_consumption_frequency * std::abs(dist(Sim::get_random_generator()));
-        }
-        account = society->get_initial_account();
     }
     ranked_distributors = society->get_distributors();
     std::shuffle(
@@ -59,6 +52,7 @@ Person::Person(Society * society):
         purchase_frequencies[p] =
             p->mean_consumption_frequency * std::abs(dist(Sim::get_random_generator()));
     }
+    account = society->get_initial_account();
 }
 
 unsigned int Person::get_id() {
@@ -131,7 +125,6 @@ bool Person::will_shop() {
 
 void Person::shop() {
     static std::normal_distribution<> dist(1, PERSON_SHOPPING_MULTIPLIER_STDDEV);
-    std::unordered_map<Product *, double> ideal_purchase_quantities;
     double total_price = 0.0;
     for (std::pair<Product *, double> p : purchase_frequencies) {
         ideal_purchase_quantities[p.first] =
@@ -141,11 +134,10 @@ void Person::shop() {
     }
     log_shopping_deficit(std::max(0.0, (total_price - account) / total_price)); 
     for (std::pair<Product *, double> p : ideal_purchase_quantities) {
-        int affordable_quantity = (int) (account / total_price *
-                ideal_purchase_quantities[p.first]);
-        if (affordable_quantity > 0) {
-            purchase_good(p.first, affordable_quantity);
-            log_shopping(p.first->product_name, affordable_quantity);
+        int quantity = (int) (std::min(account / total_price, 1.0) * p.second);
+        if (quantity > 0) {
+            purchase_good(p.first, quantity);
+            log_shopping(p.first->product_name, quantity);
         }
     }
 }
