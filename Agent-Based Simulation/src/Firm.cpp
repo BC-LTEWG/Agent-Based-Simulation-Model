@@ -43,9 +43,6 @@ unsigned int Firm::get_id() {
 void Firm::on_time_step() {
     apply_demand_window();
     check_and_reorder();
-    for (std::pair<Product * const, int>& product : inventory) {
-        log_inventory_level(product.first->product_name, product.second);
-    }
     for (Product * product : get_products_to_reorder()) {
         log_demand(product->product_name, get_demand(product));
     }
@@ -400,16 +397,6 @@ void Firm::log_shipment_received(std::string product_name, int quantity) {
     Logger::get_instance()->log(
             Logger::FIRM,
             "shipment_received",
-            id,
-            product_name,
-            quantity
-            );
-}
-
-void Firm::log_inventory_level(std::string product_name, int quantity) {
-    Logger::get_instance()->log(
-            Logger::FIRM,
-            "inventory_level " + product_name,
             id,
             product_name,
             quantity
