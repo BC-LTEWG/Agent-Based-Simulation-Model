@@ -50,14 +50,6 @@ void Firm::on_time_step() {
     check_and_reorder_inputs();
 }
 
-void Firm::initialize_inventory(
-        std::unordered_map<Product *, int>& inventory_items
-        ) {
-    for(auto& items : inventory_items) {
-        inventory[items.first] = items.second;
-    }
-}
-
 double Firm::get_avg_productivity() {
     return 0.0;
 }
@@ -425,5 +417,15 @@ void Firm::log_accepted_order(std::string product_name, int requested_turnaround
             id,
             product_name,
             requested_turnaround_time
+            );
+}
+
+void Firm::log_input_inventory(Firm * firm, std::string product_name, int quantity) {
+    Logger::get_instance()->log(
+            Logger::FIRM,
+            "input_inventory",
+            firm->get_id(),
+            product_name,
+            quantity
             );
 }

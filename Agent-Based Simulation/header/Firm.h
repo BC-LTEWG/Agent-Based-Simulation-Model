@@ -68,13 +68,12 @@ class Firm : public Agent {
     unsigned int get_id() override;
     virtual void on_time_step() override;
 
-    void initialize_inventory(std::unordered_map<Product *, int>& inventory_items);
-    
     double get_avg_productivity();
     int get_inventory(Product * product);
     void add_supplier(Producer * producer);
     void receive_shipment(Order * order);
 
+    void log_input_inventory(Firm * firm, std::string product_name, int quantity);
 
   protected:
     Society * society;
