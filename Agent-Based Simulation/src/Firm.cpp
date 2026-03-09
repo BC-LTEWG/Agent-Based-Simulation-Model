@@ -47,8 +47,7 @@ unsigned int Firm::get_id() {
 
 void Firm::on_time_step() {
     apply_demand_window();
-    check_and_reorder_inputs();
-}
+    check_and_reorder_inputs();}
 
 double Firm::get_avg_productivity() {
     return 0.0;
@@ -73,10 +72,9 @@ void Firm::receive_shipment(Order * order) {
         return;
     }
     output_inventory[order->product] += order->quantity;
-    product_to_pending_inbound_orders[order->product].erase(order);
+    product_to_outbound_orders[order->product].erase(order);
     log_shipment_received(order->product->product_name, order->quantity);
-    log_inventory_level(order->product->product_name, output_inventory[order->product]);
-}
+    log_inventory_level(order->product->product_name, output_inventory[order->product]);}
 
 Producer * Firm::send_order(Order * order) {
     int order_time = INT_MAX;
@@ -92,7 +90,7 @@ Producer * Firm::send_order(Order * order) {
     }
     if (chosen_producer) {
         chosen_producer->pursue_order(order);
-        product_to_pending_inbound_orders[order->product].insert(order);
+        product_to_outbound_orders[order->product].insert(order);
     }
     for (auto * producer : suppliers) {
         if (producer != chosen_producer) {
@@ -105,12 +103,12 @@ Producer * Firm::send_order(Order * order) {
 
 double Firm::get_reorder_threshold(Product * product) {
     return std::max((double) product->order_size,
-        inventory_demands[product] * FIRM_STOCKPILE_DURATION);
+        get_demand(product) * FIRM_STOCKPILE_DURATION);
 }
 
 int Firm::get_pending_input_inventory(Product * product) {
     int pending_inventory = output_inventory[product];
-    for (Order * order : product_to_pending_inbound_orders[product]) {
+    for (Order * order : product_to_outbound_orders[product]) {
         pending_inventory += order->quantity;
     }
     return pending_inventory;
@@ -129,7 +127,6 @@ void Firm::reorder_input_product_to_threshold(
             DEADLINE_SAFETY_MULTIPLIER /
             threshold
             );
-        log_reorder(product->product_name, reorder_quantity);
         Order * order = new Order(
                 product,
                 reorder_quantity,
@@ -138,7 +135,10 @@ void Firm::reorder_input_product_to_threshold(
                 );
         Producer * chosen_producer = send_order(order);
         if (chosen_producer) {
+            log_reorder(product->product_name, reorder_quantity);
             log_accepted_order(product->product_name, order->requested_turnaround_time);
+        } else {
+            log_reorder("No producer found for " + product->product_name, reorder_quantity);
         }
     }
 }
@@ -179,7 +179,7 @@ double Firm::suitability(
 }
 
 int Firm::predict_workers_needed(Order * order) {
-    return ceil(
+    return std::ceil(
             order->quantity *
             order->product->living_labor_per_unit *
             DAY /
@@ -267,28 +267,21 @@ void Firm::assign_plan_dependent_fields(
                     required_abilities,
                     worker->get_current_productivity());
         }
-        if (total_suitability <= 0) {
-            total_suitability = 1.0;
-        }
         draft_plan->predicted_turnaround_time =
             draft_plan->training_time +
             predict_turnaround_time(draft_plan->order, total_suitability);
         draft_plan->labor_hours =
-            draft_plan->labor_hours_remaining =
-            draft_plan->training_time * draft_plan->workers.size() +
-            predict_labor_hours(draft_plan->order, total_suitability);
+            draft_plan->labor_hours_remaining = (int) (draft_plan->workers.size() * 
+            (draft_plan->training_time + predict_labor_hours(draft_plan->order, total_suitability)));
     } else {
         for (Person * worker : draft_plan->workers) {
             total_suitability += suitability(worker, required_abilities);
         }
-        if (total_suitability <= 0) {
-            total_suitability = 1.0;
-        }
         draft_plan->predicted_turnaround_time =
             predict_turnaround_time(draft_plan->order, total_suitability);
         draft_plan->labor_hours =
-            draft_plan->labor_hours_remaining =
-            predict_labor_hours(draft_plan->order, total_suitability);
+            draft_plan->labor_hours_remaining = (int) (draft_plan->workers.size() *
+            predict_labor_hours(draft_plan->order, total_suitability));
     }
 
     int raw_materials = 0;
@@ -366,18 +359,31 @@ void Firm::train_workers(
 }
 
 void Firm::add_demand_signal(Product * product, int quantity) {
-    demand_signals.push({product, quantity, Sim::get_current_time_step()});
-    inventory_demands[product] += (double) quantity / FIRM_DEMAND_WINDOW;
+    demand_signals[product].push({quantity, Sim::get_current_time_step()});
+    total_demands[product] += quantity;
 }
 
 void Firm::apply_demand_window() {
-    while (!demand_signals.empty() && 
-            demand_signals.front().timestep <= 
-            Sim::get_current_time_step() - FIRM_DEMAND_WINDOW) {
-        inventory_demands[demand_signals.front().product] -= 
-            (double) demand_signals.front().quantity / FIRM_DEMAND_WINDOW;
-        demand_signals.pop();
+    for (std::pair<Product * const, std::queue<DemandSignal>>& product : demand_signals) {
+        std::queue<DemandSignal>& signals = product.second;
+        while (!signals.empty() && 
+                signals.front().timestep <= 
+                Sim::get_current_time_step() - FIRM_DEMAND_WINDOW_MAX) {
+            total_demands[product.first] -= 
+                signals.front().quantity;
+            signals.pop();
+        }
     }
+}
+
+double Firm::get_demand(Product * product) {
+    int window_start = Sim::get_current_time_step();
+    if (!demand_signals[product].empty()) {
+        window_start = demand_signals[product].front().timestep;
+    }
+    int window_length = std::max(FIRM_DEMAND_WINDOW_MIN, 
+        Sim::get_current_time_step() - window_start);
+    return (double) total_demands[product] / window_length;
 }
 
 void Firm::log_shipment_received(std::string product_name, int quantity) {

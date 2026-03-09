@@ -24,7 +24,9 @@ Distributor::Distributor(
     for (Product * product : get_products_to_reorder()) {
         society->add_consumer_good(product);
         int quantity =
-            get_reorder_threshold(product) * FIRM_INITIAL_INVENTORY_MULTIPLIER;
+            product->mean_consumption_frequency *
+            (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN * DISTRIBUTOR_INITIAL_INVENTORY_MULT) * 
+            STARTING_NUM_PEOPLE;
         Order * order = new Order(product, quantity, this, 0);
         Plan * plan = new Plan;
         plan->order = order;
@@ -87,9 +89,9 @@ std::unordered_set<Product *> Distributor::get_products_to_reorder() {
 }
 
 void Distributor::check_expand_catalog() {
-    for (std::pair<Product *, double> product : inventory_demands) {
-        if (product.second > EXPAND_CATALOG_DEMAND_THRESHOLD && !catalog.count(product.first)) {
-            catalog.insert(product.first);
+    for (Product * product : get_products_to_reorder()) {
+        if (get_demand(product) > EXPAND_CATALOG_DEMAND_THRESHOLD && !catalog.count(product)) {
+            catalog.insert(product);
         }
     }
 }

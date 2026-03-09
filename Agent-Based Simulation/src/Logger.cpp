@@ -13,7 +13,7 @@ Logger::Logger() {
     if (Sim::does_db()) {
         int return_code = sqlite3_open(LOG_FILE, &db);
         if (return_code) {
-            throw std::runtime_error("Dztabase connection failure");
+            throw std::runtime_error("Database connection failure");
         }
         std::cout << "Opened DB" << std::endl;
     } else {
