@@ -17,9 +17,9 @@ Distributor::Distributor(Society * society) : Firm{society} {}
 Distributor::Distributor(
         Society * society,
         std::unordered_set<Product *> initial_catalog,
-        std::unordered_map<Product *, int> input_inventory
+        std::unordered_map<Product *, int> initial_output_inventory
         ) :
-    Firm(society, initial_catalog, input_inventory)
+    Firm(society, initial_catalog, initial_output_inventory)
 {
     for (Product * product : get_products_to_reorder()) {
         society->add_consumer_good(product);
@@ -40,7 +40,7 @@ Distributor::Distributor(
         plan->machinery_cost = 0.0;
         plans_in_progress.push_back(plan);
         product_to_plan[product] = plan;
-        inventory[product] = quantity;
+        output_inventory[product] = quantity;
     }
 }
 
@@ -63,7 +63,7 @@ bool Distributor::try_sell_goods(Product& product, int quantity, Person * person
         return false;
     }
     add_demand_signal(&product, quantity);
-    int available = catalog.count(&product) ? inventory[&product] : 0;
+    int available = catalog.count(&product) ? output_inventory[&product] : 0;
     if (available < quantity) {
         log_shortfall(product.product_name, quantity - available);
         return false;
@@ -78,7 +78,7 @@ bool Distributor::try_sell_goods(Product& product, int quantity, Person * person
     Plan * plan = product_to_plan[&product];
     plan->outgoing_units_consumed += quantity;
     plan->prd += cost;
-    inventory[&product] -= quantity;
+    output_inventory[&product] -= quantity;
     return true;
 }
 

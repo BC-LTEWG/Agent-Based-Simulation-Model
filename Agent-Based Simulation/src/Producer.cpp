@@ -18,7 +18,8 @@ Producer::Producer(
         std::unordered_set<Product *> initial_catalog,
         std::unordered_map<Product *, int> input_inventory
         ) :
-    Firm(society, initial_catalog, input_inventory) {
+    Firm(society, initial_catalog, input_inventory),
+    input_inventory(input_inventory) {
     std::unordered_set<Machine *> initial_machines;
     for (Product * product : initial_catalog) {
         for (Machine * machine : product->machines_needed) {
@@ -29,7 +30,7 @@ Producer::Producer(
         machines.push_back(machine);
     }
     for (Product * product : get_products_to_reorder()) {
-        inventory[product] =
+        this->input_inventory[product] =
             get_reorder_threshold(product) * FIRM_INITIAL_INVENTORY_MULTIPLIER;
     }
 }
@@ -49,7 +50,7 @@ bool Producer::can_produce(Product * product) {
 int Producer::draft_plan(Order * order) {
     for (std::pair<Product * const, double>& input :
             order->product->inputs_per_unit) {
-        if (inventory[input.first] < input.second * order->quantity) {
+        if (input_inventory[input.first] < input.second * order->quantity) {
 			return DRAFT_ORDER_REJECTED;
         }
         add_demand_signal(input.first, input.second * order->quantity);
@@ -113,7 +114,7 @@ void Producer::start_plan(Plan * plan) {
 	// simplification: consume all raw materials at start of plan
 	for (std::pair<Product * const, double>& input :
             plan->order->product->inputs_per_unit) {
-		inventory[input.first] -= input.second * plan->order->quantity;
+		input_inventory[input.first] -= input.second * plan->order->quantity;
 	}
     pooled_input_value_account += plan->raw_materials_remaining;
     plan->raw_materials = 0;
@@ -167,11 +168,20 @@ double Producer::get_input_products_account() {
     return pooled_input_value_account;
 }
 
+int Producer::get_pending_input_inventory(Product * product) {
+    int pending_inventory = input_inventory[product];
+    for (Order * order : product_to_pending_inbound_orders[product]) {
+        pending_inventory += order->quantity;
+    }
+    return pending_inventory;
+}
+
 void Producer::reorder_raw_materials(Plan * plan, Product * product) {
     Society * society = Society::get_instance();
     for (Producer * producer : society->get_producers()) {
-        if ((producer->inventory[product] > RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_SURPLUS_FACTOR)) {
-            producer->inventory[product] -= RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_ORDER_MULTIPLIER;
+        if ((producer->input_inventory[product] > RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_SURPLUS_FACTOR)) {
+            producer->input_inventory[product] -= RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_ORDER_MULTIPLIER;
+            input_inventory[product] += RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_ORDER_MULTIPLIER;
             plan->firm = producer; 
             plan->prd += product->price_per_unit * (RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_ORDER_MULTIPLIER); // This is the upstream producer's plan
             producer->start_plan(plan);
@@ -189,9 +199,9 @@ void Producer::end_plan(Plan * plan) {
     plan->order->status = Order::ORDER_FINISHED;
 	// simplification: whole product amount is added to inventory at the end of
     // a plan
-	inventory[plan->order->product] += plan->order->quantity;
+	output_inventory[plan->order->product] += plan->order->quantity;
 	// simplification: product shipped instantly
-	inventory[plan->order->product] -= plan->order->quantity;
+	output_inventory[plan->order->product] -= plan->order->quantity;
     plan->order->customer->receive_shipment(plan->order);
     double total = plan->order->product->price_per_unit * plan->order->quantity;
     plan->prd += total;

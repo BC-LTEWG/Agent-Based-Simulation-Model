@@ -31,11 +31,11 @@ Firm::Firm(Society * society) : society{society} {}
 Firm::Firm(
     Society * society,
     std::unordered_set<Product *> initial_catalog,
-    std::unordered_map<Product *, int> input_inventory
+    std::unordered_map<Product *, int> initial_output_inventory
 )
 : society{society},
   catalog(initial_catalog),
-  inventory(input_inventory)
+  output_inventory(initial_output_inventory)
 {
     static unsigned int unique_id = 0;
     id = unique_id++;
@@ -55,11 +55,11 @@ double Firm::get_avg_productivity() {
 }
 
 int Firm::get_inventory(Product * product) {
-    std::unordered_map<Product *, int>::iterator it = inventory.find(product);
-    if (it == inventory.end()) {
+    std::unordered_map<Product *, int>::iterator it = output_inventory.find(product);
+    if (it == output_inventory.end()) {
         return 0;
     }
-    return inventory[product];
+    return output_inventory[product];
 }
 
 void Firm::add_supplier(Producer * producer) {
@@ -72,10 +72,10 @@ void Firm::receive_shipment(Order * order) {
             << std::endl;
         return;
     }
-    inventory[order->product] += order->quantity;
+    output_inventory[order->product] += order->quantity;
     product_to_pending_inbound_orders[order->product].erase(order);
     log_shipment_received(order->product->product_name, order->quantity);
-    log_inventory_level(order->product->product_name, inventory[order->product]);
+    log_inventory_level(order->product->product_name, output_inventory[order->product]);
 }
 
 Producer * Firm::send_order(Order * order) {
@@ -109,7 +109,7 @@ double Firm::get_reorder_threshold(Product * product) {
 }
 
 int Firm::get_pending_input_inventory(Product * product) {
-    int pending_inventory = inventory[product];
+    int pending_inventory = output_inventory[product];
     for (Order * order : product_to_pending_inbound_orders[product]) {
         pending_inventory += order->quantity;
     }

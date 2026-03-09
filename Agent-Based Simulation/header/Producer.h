@@ -25,8 +25,7 @@ class Producer : public Firm {
 	bool pursue_order(Order * order);
   void reorder_raw_materials(Plan * plan, Product * product);
   bool has_raw_materials();
-  void initialize_input_inventory(std::unordered_map<Product *, int>& inventory_items); 
-  void get_pending_input_inventory(Product * product);
+  int get_pending_input_inventory(Product * product) override;
   double get_input_products_account();
 
   private:

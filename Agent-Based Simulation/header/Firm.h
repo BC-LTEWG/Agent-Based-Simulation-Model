@@ -64,7 +64,7 @@ struct DemandSignal {
 class Firm : public Agent {
   public:
 	Firm(Society * society);
-    Firm(Society * society, std::unordered_set<Product *> initial_catalog, std::unordered_map<Product *, int> input_inventory);
+    Firm(Society * society, std::unordered_set<Product *> initial_catalog, std::unordered_map<Product *, int> initial_output_inventory);
     unsigned int get_id() override;
     virtual void on_time_step() override;
 
@@ -82,7 +82,7 @@ class Firm : public Agent {
     std::vector<Person*> workers;
 	
     std::vector<Producer *> suppliers;
-    std::unordered_map<Product *, int> inventory;
+    std::unordered_map<Product *, int> output_inventory;
     std::unordered_set<Product *> catalog;
     
     std::queue<DemandSignal> demand_signals;
@@ -93,7 +93,7 @@ class Firm : public Agent {
 
     Producer * send_order(Order * order);
     double get_reorder_threshold(Product * product);
-    int get_pending_input_inventory(Product * product);
+    virtual int get_pending_input_inventory(Product * product);
     void reorder_input_product_to_threshold(
         Product * product, 
         double threshold,
