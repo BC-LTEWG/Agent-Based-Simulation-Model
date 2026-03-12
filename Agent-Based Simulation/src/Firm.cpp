@@ -56,10 +56,6 @@ void Firm::initialize_inventory(
     }
 }
 
-double Firm::get_avg_productivity() {
-    return 0.0;
-}
-
 int Firm::get_inventory(Product * product) {
     std::unordered_map<Product *, int>::iterator it = inventory.find(product);
     if (it == inventory.end()) {

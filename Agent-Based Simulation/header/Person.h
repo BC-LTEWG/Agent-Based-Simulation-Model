@@ -21,10 +21,8 @@ class Person : public Agent {
   
 	std::unordered_map<Ability, double>& get_abilities();
 	void train(std::unordered_map<Ability, double> target_abilities);
-    std::unordered_map<Product*, double>& get_purchase_frequencies();
     HealthStatus get_health_status();
     float get_current_productivity();
-    float avg_productivity_over_time_step(std::string product_name);
     void register_hours_worked(double hours_worked);
     bool charge(double cost);
     void purchase_good(Product * p, int quantity);
@@ -36,13 +34,12 @@ class Person : public Agent {
     std::unordered_map<Ability, double> abilities;
     int age;
     HealthStatus health_status;
-    std::unordered_map<Product *, double> purchase_frequencies,
-        ideal_purchase_quantities;
+    std::unordered_map<Product *, int> inventory;
     Firm * firm = nullptr;
     double account;
 	std::vector<Distributor *> ranked_distributors;
-	int shopping_offset;
 
+    void consume();
 	bool will_shop();
 	void shop();
     bool will_retire();

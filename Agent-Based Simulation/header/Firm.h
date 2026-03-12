@@ -69,7 +69,6 @@ class Firm : public Agent {
 
     void initialize_inventory(std::unordered_map<Product *, int>& inventory_items);
     
-    double get_avg_productivity();
     int get_inventory(Product * product);
     void add_supplier(Producer * producer);
     void receive_shipment(Order * order);
