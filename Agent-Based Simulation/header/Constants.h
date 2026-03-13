@@ -31,6 +31,7 @@ const double AVERAGE_RETIREMENT_AGE = (
     RANDOM_RETIREMENT_CHANCE +
     INITIAL_AGE; // approx 62 years in hours
 
+const int PRODUCT_ABILITY_COUNT_MAX = 1;
 const int PRODUCT_ORDER_SIZE_MIN = 1;
 const int PRODUCT_ORDER_SIZE_MAX = 10;
 const int PRODUCT_NUM_INPUTS_MIN = 0;
@@ -66,16 +67,14 @@ const double RAW_MATERIAL_ORDER_MULTIPLIER = 1.2;
 const int DRAFT_ORDER_REJECTED = -1;
 const double EXPAND_CATALOG_DEMAND_THRESHOLD = 1;
 
-const double PERSON_INVENTORY_STOCKPILE_DURATION = WEEK; 
-const double PERSON_INVENTORY_DEFICIT_THRESHOLD = WEEK / 2.0;
+const double PERSON_STOCKPILE_DURATION = WEEK; 
+const double PERSON_DEFICIT_THRESHOLD = WEEK / 2.0;
+const int PERSON_VARIATED_ABILITY_COUNT = 3;
 const double PERSON_ABILITY_STDDEV = 0.05;
 
 const double UNHEALTHY_PRODUCTIVITY = 0.5;
 const double DAILY_SICKNESS_CHANCE = 0.01;
 const double DAILY_RECOVERY_CHANCE = 0.1;
-
-const int PERSON_ABILITY_COUNT_MAX = 3;
-const int PRODUCT_ABILITY_COUNT_MAX = 1;
 
 const char * const LOGGING_DIR = "data";
 const char * const LOG_FILE = "data/lte.db";

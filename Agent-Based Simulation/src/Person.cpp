@@ -24,14 +24,14 @@ Person::Person(Society * society):
 
     static std::normal_distribution<>
         ability_dist(1.0, PERSON_ABILITY_STDDEV);
-    std::vector<Person::Ability> all_abilities;
+    std::vector<Person::Ability> variated_abilities;
     for (int i = 0; i < Person::NUM_ABILITIES; i++) {
-        all_abilities.push_back((Person::Ability) i);
+        abilities[(Person::Ability) i] = 1.0;
+        variated_abilities.push_back((Person::Ability) i);
     }
-    std::shuffle(all_abilities.begin(), all_abilities.end(), Sim::get_random_generator());
-    all_abilities.resize(PERSON_ABILITY_COUNT_MAX);
-    for (Person::Ability ability : all_abilities) {
-        abilities[ability] = std::max(0.0, ability_dist(Sim::get_random_generator()));
+    std::shuffle(variated_abilities.begin(), variated_abilities.end(), Sim::get_random_generator());
+    for (int i = 0; i < PERSON_VARIATED_ABILITY_COUNT; i++) {
+        abilities[variated_abilities[i]] = std::max(0.0, ability_dist(Sim::get_random_generator()));
     }
     ranked_distributors = society->get_distributors();
     std::shuffle(
@@ -41,7 +41,7 @@ Person::Person(Society * society):
             );
     for (Product * product : society->get_goods()) {
         inventory[product] = 
-            (int) (PERSON_INVENTORY_STOCKPILE_DURATION * product->mean_consumption_frequency);
+            (int) (PERSON_STOCKPILE_DURATION * product->mean_consumption_frequency);
     }
     account = society->get_initial_account();
 }
@@ -110,11 +110,11 @@ bool Person::will_shop() {
     double total_deficit = 0.0;
     for (Product * product : society->get_goods()) {
         total_deficit += std::max(0.0, 
-            PERSON_INVENTORY_STOCKPILE_DURATION - 
+            PERSON_STOCKPILE_DURATION - 
             inventory[product] / product->mean_consumption_frequency
         );
     }
-    return total_deficit > PERSON_INVENTORY_DEFICIT_THRESHOLD;
+    return total_deficit > PERSON_DEFICIT_THRESHOLD;
 }
 
 void Person::shop() {
@@ -122,7 +122,7 @@ void Person::shop() {
     static std::unordered_map<Product *, int> purchase_quantities;
     for (Product * product : society->get_goods()) {
         purchase_quantities[product] = std::max(0, 
-            (int) (PERSON_INVENTORY_STOCKPILE_DURATION * product->mean_consumption_frequency) - 
+            (int) (PERSON_STOCKPILE_DURATION * product->mean_consumption_frequency) - 
             inventory[product]
         );
         total_price += purchase_quantities[product] * 
