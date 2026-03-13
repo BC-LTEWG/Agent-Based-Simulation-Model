@@ -22,7 +22,8 @@ class Person : public Agent {
 	std::unordered_map<Ability, double>& get_abilities();
 	void train(std::unordered_map<Ability, double> target_abilities);
     HealthStatus get_health_status();
-    float get_current_productivity();
+    float productivity();
+    double suitability(std::vector<Ability>& required_abilities);
     void register_hours_worked(double hours_worked);
     bool charge(double cost);
     void purchase_good(Product * p, int quantity);

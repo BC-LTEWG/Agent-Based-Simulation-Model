@@ -78,7 +78,7 @@ Person::HealthStatus Person::get_health_status() {
     return this->health_status;
 }
 
-float Person::get_current_productivity() {
+float Person::productivity() {
 	switch(health_status) {
 		case HEALTHY:
 			return 1.0;
@@ -172,6 +172,16 @@ void Person::on_time_step() {
 
 void Person::set_firm(Firm * workplace) {
     firm = workplace;
+}
+
+double Person::suitability(std::vector<Ability>& required_abilities) {
+    double suitability = 0.0;
+    for (Ability ability : required_abilities) {
+        suitability += abilities[ability];
+    }
+    suitability /= required_abilities.size();
+    suitability *= productivity();
+    return suitability;
 }
 
 void Person::log_hours(const double hours) {
