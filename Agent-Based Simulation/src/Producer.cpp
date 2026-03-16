@@ -192,9 +192,8 @@ void Producer::end_plan(Plan * plan) {
 
     // update local labor time
     local_living_labor_per_unit[plan->order->product] = 
-        local_living_labor_per_unit[plan->order->product] * FIRM_LOCAL_LABOR_LERP + 
-        (plan->labor_hours - plan->labor_hours_remaining) * 
-        (1 - FIRM_LOCAL_LABOR_LERP) / plan->order->quantity;
+        (double) (plan->labor_hours - plan->labor_hours_remaining) 
+        / plan->order->quantity;
     // update global price
     PriceController::get_instance()->update_price(plan);
     

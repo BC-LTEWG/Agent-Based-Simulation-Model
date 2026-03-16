@@ -194,9 +194,12 @@ void Society::set_product_prices_production_consumption() {
     }
     double consumption_scalar = 0.0;
     for (Product * product : products) {
-        consumption_scalar += product->living_labor_per_unit * product->mean_consumption_frequency;
+        consumption_scalar += product->price_per_unit * product->mean_consumption_frequency;
     }
-    consumption_scalar = PRODUCT_CONSUMPTION_MULT / consumption_scalar;
+    consumption_scalar = PRODUCT_CONSUMPTION_MULT * INITIAL_WORK_WEEK 
+                         / WEEK
+                         / consumption_scalar 
+                         ;
     for (Product * product : products) {
         product->mean_consumption_frequency *= consumption_scalar;
     }
