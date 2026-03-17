@@ -34,8 +34,8 @@ Firm::Firm(
     const std::unordered_map<Product *, int>& initial_input_inventory
 )
 : society{society},
-  catalog(initial_catalog),
-  input_inventory(initial_input_inventory)
+  input_inventory(initial_input_inventory),
+  catalog(initial_catalog)
 {
     static unsigned int unique_id = 0;
     id = unique_id++;

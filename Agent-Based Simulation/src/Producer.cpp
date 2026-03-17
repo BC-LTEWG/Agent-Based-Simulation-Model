@@ -180,7 +180,7 @@ int Producer::get_pending_input_inventory(Product * product) {
 
 void Producer::reorder_raw_materials(Product * product) {
     const int reorder_quantity =
-        RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_ORDER_MULTIPLIER;
+        (RAW_MATERIAL_THRESHOLD - input_inventory[product]) * RAW_MATERIAL_ORDER_MULTIPLIER;
     const double transaction_value =
         product->price_per_unit * reorder_quantity;
     for (Producer * producer : society->get_producers()) {
@@ -255,7 +255,8 @@ void Producer::move_plans_forward_one_step() {
 		}
 		if (plan->total_hours_remaining > 0 &&
 			Sim::get_current_time_step() % DAY < Society::get_instance()->get_current_work_hours_daily() && 
-			Sim::get_current_time_step() / DAY % 7 < Society::get_instance()->get_current_work_days_weekly()) {
+			Sim::get_current_time_step() / DAY % 7 <
+                static_cast<unsigned int>(Society::get_instance()->get_current_work_days_weekly())) {
 			move_plan_forward_one_step(plan);
 		}
 		if (plan->total_hours_remaining < 1e-6) {
