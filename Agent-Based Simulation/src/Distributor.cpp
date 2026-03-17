@@ -16,10 +16,11 @@ Distributor::Distributor(Society * society) : Firm{society} {}
 
 Distributor::Distributor(
         Society * society,
-        std::unordered_set<Product *> initial_catalog,
-        std::unordered_map<Product *, int> initial_output_inventory
+        const std::unordered_set<Product *>& initial_catalog,
+        const std::unordered_map<Product *, int>& initial_output_inventory
         ) :
-    Firm(society, initial_catalog, initial_output_inventory)
+    Firm(society, initial_catalog, {}),
+    output_inventory(initial_output_inventory)
 {
     for (Product * product : get_products_to_reorder()) {
         society->add_consumer_good(product);
@@ -58,6 +59,26 @@ void Distributor::on_time_step() {
     log_catalog_size(catalog.size());
 }
 
+int Distributor::get_inventory(Product * product) {
+    auto it = output_inventory.find(product);
+    if (it == output_inventory.end()) {
+        return 0;
+    }
+    return it->second;
+}
+
+void Distributor::receive_shipment(Order * order) {
+    if (order->status != Order::ORDER_FINISHED) {
+        std::cerr << "Attempted to recieve a shipment for an incomplete order."
+            << std::endl;
+        return;
+    }
+    output_inventory[order->product] += order->quantity;
+    product_to_outbound_orders[order->product].erase(order);
+    log_shipment_received(order->product->product_name, order->quantity);
+    log_inventory_level(order->product->product_name, output_inventory[order->product]);
+}
+
 bool Distributor::try_sell_goods(Product& product, int quantity, Person * person) {
     ConsumerGood * consumer_good = society->get_consumer_good(&product);
     if (!consumer_good) {
@@ -82,6 +103,18 @@ bool Distributor::try_sell_goods(Product& product, int quantity, Person * person
     plan->prd += cost;
     output_inventory[&product] -= quantity;
     return true;
+}
+
+int Distributor::get_pending_input_inventory(Product * product) {
+    return get_pending_output_inventory(product);
+}
+
+int Distributor::get_pending_output_inventory(Product * product) {
+    int pending_inventory = output_inventory[product];
+    for (Order * order : product_to_outbound_orders[product]) {
+        pending_inventory += order->quantity;
+    }
+    return pending_inventory;
 }
 
 std::unordered_set<Product *> Distributor::get_products_to_reorder() {

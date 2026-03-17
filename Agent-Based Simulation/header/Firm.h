@@ -63,14 +63,18 @@ struct DemandSignal {
 class Firm : public Agent {
   public:
 	Firm(Society * society);
-    Firm(Society * society, std::unordered_set<Product *> initial_catalog, std::unordered_map<Product *, int> initial_output_inventory);
+    Firm(
+        Society * society,
+        const std::unordered_set<Product *>& initial_catalog,
+        const std::unordered_map<Product *, int>& initial_input_inventory
+    );
     unsigned int get_id() override;
     virtual void on_time_step() override;
 
     double get_avg_productivity();
-    int get_inventory(Product * product);
+    virtual int get_inventory(Product * product);
     void add_supplier(Producer * producer);
-    void receive_shipment(Order * order);
+    virtual void receive_shipment(Order * order);
 
     void log_input_inventory(Firm * firm, std::string product_name, int quantity);
 
@@ -81,7 +85,7 @@ class Firm : public Agent {
     std::vector<Person*> workers;
 	
     std::vector<Producer *> suppliers;
-    std::unordered_map<Product *, int> output_inventory;
+    std::unordered_map<Product *, int> input_inventory;
     std::unordered_set<Product *> catalog;
     
     std::unordered_map<Product *, std::queue<DemandSignal>> demand_signals;
@@ -90,6 +94,8 @@ class Firm : public Agent {
     std::vector<Plan *> plans_in_progress;
 
     Producer * send_order(Order * order);
+    bool remove_input_inventory(Product * product, int quantity);
+    void add_input_inventory(Product * product, int quantity);
     double get_reorder_threshold(Product * product);
     virtual int get_pending_input_inventory(Product * product);
     void reorder_input_product_to_threshold(

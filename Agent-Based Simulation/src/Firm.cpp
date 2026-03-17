@@ -30,12 +30,12 @@ Firm::Firm(Society * society) : society{society} {}
 
 Firm::Firm(
     Society * society,
-    std::unordered_set<Product *> initial_catalog,
-    std::unordered_map<Product *, int> initial_output_inventory
+    const std::unordered_set<Product *>& initial_catalog,
+    const std::unordered_map<Product *, int>& initial_input_inventory
 )
 : society{society},
   catalog(initial_catalog),
-  output_inventory(initial_output_inventory)
+  input_inventory(initial_input_inventory)
 {
     static unsigned int unique_id = 0;
     id = unique_id++;
@@ -54,11 +54,11 @@ double Firm::get_avg_productivity() {
 }
 
 int Firm::get_inventory(Product * product) {
-    std::unordered_map<Product *, int>::iterator it = output_inventory.find(product);
-    if (it == output_inventory.end()) {
+    std::unordered_map<Product *, int>::iterator it = input_inventory.find(product);
+    if (it == input_inventory.end()) {
         return 0;
     }
-    return output_inventory[product];
+    return input_inventory[product];
 }
 
 void Firm::add_supplier(Producer * producer) {
@@ -71,10 +71,23 @@ void Firm::receive_shipment(Order * order) {
             << std::endl;
         return;
     }
-    output_inventory[order->product] += order->quantity;
+    input_inventory[order->product] += order->quantity;
     product_to_outbound_orders[order->product].erase(order);
     log_shipment_received(order->product->product_name, order->quantity);
-    log_inventory_level(order->product->product_name, output_inventory[order->product]);}
+    log_inventory_level(order->product->product_name, input_inventory[order->product]);
+}
+
+bool Firm::remove_input_inventory(Product * product, int quantity) {
+    if (input_inventory[product] < quantity) {
+        return false;
+    }
+    input_inventory[product] -= quantity;
+    return true;
+}
+
+void Firm::add_input_inventory(Product * product, int quantity) {
+    input_inventory[product] += quantity;
+}
 
 Producer * Firm::send_order(Order * order) {
     int order_time = INT_MAX;
@@ -107,7 +120,7 @@ double Firm::get_reorder_threshold(Product * product) {
 }
 
 int Firm::get_pending_input_inventory(Product * product) {
-    int pending_inventory = output_inventory[product];
+    int pending_inventory = input_inventory[product];
     for (Order * order : product_to_outbound_orders[product]) {
         pending_inventory += order->quantity;
     }

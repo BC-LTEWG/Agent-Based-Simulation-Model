@@ -34,7 +34,7 @@ Society::Society() {
     static std::uniform_int_distribution<> initial_inventory_dist(
         PRODUCT_ORDER_SIZE_MIN, PRODUCT_ORDER_SIZE_MAX);
     for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
-        Product * product = goods[i % STARTING_NUM_PRODUCTS];
+        Product * product = products[i % STARTING_NUM_PRODUCTS];
         int initial_quantity = initial_inventory_dist(Sim::get_random_generator());
         std::unordered_map<Product *, int> initial_input_inventory = {
             {product, initial_quantity}
@@ -50,13 +50,13 @@ Society::Society() {
     for (int i = 0; i < STARTING_NUM_DISTRIBUTORS; i++) {
         Product * product = goods[i % STARTING_NUM_PRODUCTS];
         int initial_quantity = initial_inventory_dist(Sim::get_random_generator());
-        std::unordered_map<Product *, int> initial_input_inventory = {
+        std::unordered_map<Product *, int> initial_output_inventory = {
             {product, initial_quantity}
         };
         Distributor * distributor = new Distributor(
             this,
             {product},
-            initial_input_inventory
+            initial_output_inventory
         );
         distributors.push_back(distributor);
         firms.push_back(distributor);
