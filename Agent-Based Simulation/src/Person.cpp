@@ -100,9 +100,9 @@ void Person::purchase_good(Product * p, int quantity) {
 
 void Person::consume() {
     for (Product * product : society->get_goods()) {
-        inventory[product] -= 
-            (int) (Sim::get_current_time_step() * product->mean_consumption_frequency) - 
-            (int) ((Sim::get_current_time_step() - 1) * product->mean_consumption_frequency);
+        to_consume[product] += product->mean_consumption_frequency;
+        inventory[product] -= (int) to_consume[product];
+        to_consume[product] -= (int) to_consume[product];
     }
 }
 

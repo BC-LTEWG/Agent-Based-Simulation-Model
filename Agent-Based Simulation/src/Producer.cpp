@@ -191,7 +191,7 @@ void Producer::end_plan(Plan * plan) {
     plan->prd += total;
 
     // update local labor time
-    local_living_labor_per_unit[plan->order->product] = 
+    recorded_living_labor_per_unit[plan->order->product] = 
         (double) (plan->labor_hours - plan->labor_hours_remaining) 
         / plan->order->quantity;
     // update global price

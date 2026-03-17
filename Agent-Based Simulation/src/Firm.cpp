@@ -33,7 +33,7 @@ Firm::Firm(Society * society, std::unordered_set<Product *> initial_catalog) :
     static unsigned int unique_id = 0;
     id = unique_id++;
     for (Product * product : society->get_products()) {
-        local_living_labor_per_unit[product] = product->living_labor_per_unit;
+        recorded_living_labor_per_unit[product] = product->living_labor_per_unit;
     }
 }
 
@@ -161,7 +161,7 @@ void Firm::check_and_reorder() {
 int Firm::predict_workers_needed(Order * order) {
     return std::ceil(
             order->quantity *
-            local_living_labor_per_unit[order->product] *
+            order->product->global_living_labor_per_unit *
             DAY /
             society->get_current_work_hours_daily() /
             order->requested_turnaround_time
@@ -190,7 +190,7 @@ void Firm::assign_workers(
 int Firm::predict_turnaround_time(Order * order, std::vector<Person *>& workers) {
     return std::ceil(
             order->quantity *
-            local_living_labor_per_unit[order->product] *
+            recorded_living_labor_per_unit[order->product] *
             DAY /
             society->get_current_work_hours_daily() / 
             workers.size()
@@ -200,7 +200,7 @@ int Firm::predict_turnaround_time(Order * order, std::vector<Person *>& workers)
 int Firm::predict_labor_hours(Order * order, std::vector<Person *>& workers) {
     return std::ceil(
             order->quantity *
-            local_living_labor_per_unit[order->product] / 
+            recorded_living_labor_per_unit[order->product] / 
             workers.size()
             );
 }
@@ -247,21 +247,6 @@ void Firm::draft_optimal_plan(
         required_abilities
     );
     *draft_plan = *draft_plan_without_training;
-
-    // did not meet the deadline without training
-    // -> pick the better option between training or no training
-    // Plan * draft_plan_with_training = new Plan(*draft_plan_without_training);
-    // draft_plan_with_training->training_time =
-    //     draft_plan_with_training->training_time_remaining = FIRM_TRAINING_TIME;
-    // assign_plan_dependent_fields(draft_plan_with_training, required_abilities);
-    // if (
-    //         draft_plan_without_training->predicted_turnaround_time <
-    //         draft_plan_with_training->predicted_turnaround_time
-    //    ) {
-    //     *draft_plan = *draft_plan_without_training;
-    // } else {
-    //     *draft_plan = *draft_plan_with_training;
-    // }
 }
 
 void Firm::train_workers(
@@ -269,20 +254,6 @@ void Firm::train_workers(
         std::vector<Person::Ability>& required_abilities
         ) {
     // training has to be revised.
-    
-    // std::unordered_map<Person::Ability, double> max_required_abilities;
-    // for (Person * worker : workers) {
-    //     for (Person::Ability ability : required_abilities) {
-    //         max_required_abilities[ability] =
-    //             std::max(
-    //                     max_required_abilities[ability],
-    //                     worker->get_abilities()[ability]
-    //                     );
-    //     }
-    // }
-    // for (Person * worker : workers) {
-    //     worker->train(max_required_abilities);    
-    // }
 }
 
 void Firm::add_demand_signal(Product * product, int quantity) {

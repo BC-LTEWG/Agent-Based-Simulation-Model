@@ -82,7 +82,7 @@ class Firm : public Agent {
     std::unordered_map<Product *, std::queue<DemandSignal>> demand_signals;
     std::unordered_map<Product *, int> total_demands;
     std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
-    std::unordered_map<Product *, double> local_living_labor_per_unit;
+    std::unordered_map<Product *, double> recorded_living_labor_per_unit;
     std::vector<Plan *> plans_in_progress;
 
     Producer * send_order(Order * order);
