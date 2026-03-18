@@ -17,10 +17,10 @@ Distributor::Distributor(Society * society) : Firm{society} {}
 Distributor::Distributor(
         Society * society,
         const std::unordered_set<Product *>& initial_catalog,
-        const std::unordered_map<Product *, int>& initial_output_inventory
+        const std::unordered_map<Product *, int>& initial_input_inventory
         ) :
     Firm(society, initial_catalog, {}),
-    output_inventory(initial_output_inventory)
+    input_inventory(initial_input_inventory)
 {
     for (Product * product : get_products_to_reorder()) {
         society->add_consumer_good(product);
@@ -35,7 +35,7 @@ Distributor::Distributor(
         plan->training_time_remaining = plan->training_time = 0;
         plan->predicted_turnaround_time = 0;
         plan->labor_hours = DISTRIBUTION_LABOR_PER_UNIT * quantity;
-        plan->raw_materials_remaining = plan->raw_materials = 0.0;
+        plan->raw_materials_remaining = plan->raw_materials = pooled_input_value_account += product->price_per_unit * quantity;
         plan->total_hours_remaining = plan->total_hours =
             plan->labor_hours + plan->raw_materials;
         plan->prd = -(plan->total_hours);
@@ -43,7 +43,7 @@ Distributor::Distributor(
         plan->machinery_cost = 0.0;
         plans_in_progress.push_back(plan);
         product_to_plan[product] = plan;
-        output_inventory[product] = quantity;
+        input_inventory[product] = quantity;
     }
 }
 
@@ -60,8 +60,8 @@ void Distributor::on_time_step() {
 }
 
 int Distributor::get_inventory(Product * product) {
-    auto it = output_inventory.find(product);
-    if (it == output_inventory.end()) {
+    auto it = input_inventory.find(product);
+    if (it == input_inventory.end()) {
         return 0;
     }
     return it->second;
@@ -73,10 +73,10 @@ void Distributor::receive_shipment(Order * order) {
             << std::endl;
         return;
     }
-    output_inventory[order->product] += order->quantity;
+    input_inventory[order->product] += order->quantity;
     product_to_outbound_orders[order->product].erase(order);
     log_shipment_received(order->product->product_name, order->quantity);
-    log_inventory_level(order->product->product_name, output_inventory[order->product]);
+    log_inventory_level(order->product->product_name, input_inventory[order->product]);
 }
 
 bool Distributor::try_sell_goods(Product& product, int quantity, Person * person) {
@@ -86,7 +86,7 @@ bool Distributor::try_sell_goods(Product& product, int quantity, Person * person
         return false;
     }
     add_demand_signal(&product, quantity);
-    int available = catalog.count(&product) ? output_inventory[&product] : 0;
+    int available = catalog.count(&product) ? input_inventory[&product] : 0;
     if (available < quantity) {
         log_shortfall(product.product_name, quantity - available);
         return false;
@@ -101,12 +101,12 @@ bool Distributor::try_sell_goods(Product& product, int quantity, Person * person
     Plan * plan = product_to_plan[&product];
     plan->outgoing_units_consumed += quantity;
     plan->prd += cost;
-    output_inventory[&product] -= quantity;
+    input_inventory[&product] -= quantity;
     return true;
 }
 
 int Distributor::get_pending_input_inventory(Product * product) {
-    int pending_inventory = output_inventory[product];
+    int pending_inventory = input_inventory[product];
     for (Order * order : product_to_outbound_orders[product]) {
         pending_inventory += order->quantity;
     }

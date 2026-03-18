@@ -19,7 +19,7 @@ class Distributor : public Firm {
     Distributor(
         Society * society,
         const std::unordered_set<Product *>& initial_catalog,
-        const std::unordered_map<Product *, int>& initial_output_inventory
+        const std::unordered_map<Product *, int>& initial_input_inventory
     );
     void on_time_step() override;
     bool try_sell_goods(Product& product, int quantity, Person * person);
@@ -29,7 +29,7 @@ class Distributor : public Firm {
   private:
     int get_pending_input_inventory(Product * product);
     std::unordered_set<Product *> get_products_to_reorder() override;
-    std::unordered_map<Product *, int> output_inventory;
+    std::unordered_map<Product *, int> input_inventory;
     std::unordered_map<Product *, Plan *> product_to_plan;
     void check_expand_catalog();
     void log_shortfall(std::string product_name, int shortfall);
