@@ -103,6 +103,7 @@ Producer * Firm::send_order(Order * order) {
     }
     if (chosen_producer) {
         chosen_producer->pursue_order(order);
+        chosen_producer->plans_in_progress.back()->prd += order->product->price_per_unit * order->quantity;
         product_to_outbound_orders[order->product].insert(order);
     }
     for (auto * producer : suppliers) {
@@ -150,6 +151,7 @@ void Firm::reorder_input_product_to_threshold(
         if (chosen_producer) {
             log_reorder(product->product_name, reorder_quantity);
             log_accepted_order(product->product_name, order->requested_turnaround_time);
+            this->pooled_input_value_account -= product->price_per_unit * reorder_quantity;
         } else {
             log_reorder("No producer found for " + product->product_name, reorder_quantity);
         }

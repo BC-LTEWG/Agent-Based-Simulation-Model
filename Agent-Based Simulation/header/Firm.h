@@ -81,6 +81,7 @@ class Firm : public Agent {
   protected:
     Society * society;
     unsigned int id;
+    int pooled_input_value_account;
     std::vector<Machine*> machines;
     std::vector<Person*> workers;
 	

@@ -27,16 +27,12 @@ class Producer : public Firm {
 	int draft_plan(Order * order);
 	void drop_order(Order * order);
 	bool pursue_order(Order * order);
-  void reorder_raw_materials(Product * product);
   bool sell_input_inventory(Product * product, int quantity, double transaction_value);
   bool has_raw_materials();
-  int get_pending_input_inventory(Product * product) override;
   double get_input_products_account();
 
   private:
 	std::unordered_map<Order *, Plan *> order_to_draft_plan;
-  double pooled_input_value_account = 0.0;
-  void register_input_sale(double transaction_value);
 
 	void start_plan(Plan * plan);
 	void move_plan_forward_one_step(Plan * plan);

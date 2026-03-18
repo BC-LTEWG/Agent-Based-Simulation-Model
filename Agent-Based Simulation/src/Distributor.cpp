@@ -106,10 +106,6 @@ bool Distributor::try_sell_goods(Product& product, int quantity, Person * person
 }
 
 int Distributor::get_pending_input_inventory(Product * product) {
-    return get_pending_output_inventory(product);
-}
-
-int Distributor::get_pending_output_inventory(Product * product) {
     int pending_inventory = output_inventory[product];
     for (Order * order : product_to_outbound_orders[product]) {
         pending_inventory += order->quantity;

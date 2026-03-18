@@ -157,72 +157,13 @@ void Producer::move_plan_forward_one_step(Plan * plan) {
             0.0,
             plan->raw_materials_remaining - raw_materials_used
             );
-    for (std::pair<Product *const, int>& input : input_inventory) {
-        if (input.second < RAW_MATERIAL_THRESHOLD) {
-            reorder_raw_materials(input.first);
-        }
-    }
+    check_and_reorder_inputs();
     plan->total_hours_remaining =
         plan->labor_hours_remaining + plan->raw_materials_remaining;
 }
 
 double Producer::get_input_products_account() {
     return pooled_input_value_account;
-}
-
-int Producer::get_pending_input_inventory(Product * product) {
-    int pending_inventory = input_inventory[product];
-    for (Order * order : product_to_outbound_orders[product]) {
-        pending_inventory += order->quantity;
-    }
-    return pending_inventory;
-}
-
-void Producer::reorder_raw_materials(Product * product) {
-    const int reorder_quantity =
-        (RAW_MATERIAL_THRESHOLD - input_inventory[product]) * RAW_MATERIAL_ORDER_MULTIPLIER;
-    const double transaction_value =
-        product->price_per_unit * reorder_quantity;
-    for (Producer * producer : society->get_producers()) {
-        if (producer == this) {
-            continue;
-        }
-        if (producer->get_inventory(product) <=
-                RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_SURPLUS_FACTOR) {
-            continue;
-        }
-        if (pooled_input_value_account < transaction_value) {
-            continue;
-        }
-        if (producer->sell_input_inventory(
-                    product,
-                    reorder_quantity,
-                    transaction_value
-                    )) {
-            add_input_inventory(product, reorder_quantity);
-            pooled_input_value_account -= transaction_value;
-            break;
-        }
-    }
-}
-
-bool Producer::sell_input_inventory(
-        Product * product,
-        int quantity,
-        double transaction_value
-        ) {
-    if (!remove_input_inventory(product, quantity)) {
-        return false;
-    }
-    register_input_sale(transaction_value);
-    return true;
-}
-
-void Producer::register_input_sale(double transaction_value) {
-    if (plans_in_progress.empty()) {
-        return;
-    }
-    plans_in_progress.front()->prd += transaction_value;
 }
 
 void Producer::end_plan(Plan * plan) {
