@@ -35,8 +35,6 @@ Plan make_plan(Producer * producer, Product * product, Firm * customer, int quan
     Plan plan{};
     plan.order = new Order(product, quantity, customer, 5);
     plan.firm = producer;
-    plan.training_time = 0;
-    plan.training_time_remaining = 0;
     plan.predicted_turnaround_time = 1;
     plan.machinery_cost = 0.0;
     plan.labor_hours = quantity;
@@ -187,15 +185,12 @@ TEST_CASE("Producer move_plan_forward_one_step progresses labor and total hours"
     Producer producer(society, {output});
     Firm * customer = society->get_distributors()[0];
     Plan plan = make_plan(&producer, output, customer, 5);
-    plan.training_time = 1;
-    plan.training_time_remaining = 1;
     plan.labor_hours = plan.labor_hours_remaining = 5;
     plan.raw_materials = plan.raw_materials_remaining = 2.0;
     plan.total_hours = plan.total_hours_remaining = 7.0;
     plan.workers.push_back(society->get_unemployed_people()[0]);
 
     producer.move_plan_forward_one_step(&plan);
-    CHECK(plan.training_time_remaining == 0);
     CHECK(plan.labor_hours_remaining == 4);
     CHECK(plan.total_hours_remaining == doctest::Approx(6.0));
 }

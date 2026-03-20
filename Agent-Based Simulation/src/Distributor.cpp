@@ -12,8 +12,6 @@
 #include "Product.h"
 #include "Society.h"
 
-Distributor::Distributor(Society * society) : Firm{society} {}
-
 Distributor::Distributor(
         Society * society,
         std::unordered_set<Product *> initial_catalog
@@ -30,8 +28,6 @@ Distributor::Distributor(
         Plan * plan = new Plan;
         plan->order = order;
         plan->firm = this;
-        plan->training_time_remaining = plan->training_time = 0;
-        plan->predicted_turnaround_time = 0;
         plan->labor_hours = DISTRIBUTION_LABOR_PER_UNIT * quantity;
         plan->raw_materials_remaining = plan->raw_materials = 0.0;
         plan->total_hours_remaining = plan->total_hours =

@@ -123,30 +123,31 @@ void Producer::start_plan(Plan * plan) {
 	}
     input_products_account += plan->raw_materials;
     plan->raw_materials = 0;
-    plan->total_hours_remaining -= 1e-6;
+    plan->order->status = Order::ORDER_IN_PROGRESS;
 }
 
 void Producer::move_plan_forward_one_step(Plan * plan) {
-	int labor_hours_done =
-        std::min((int) plan->workers.size(), plan->labor_hours_remaining);
-	double raw_materials_used = 0.0;
-	if (plan->training_time_remaining > 0) {
-		plan->training_time_remaining--;
-		if (plan->training_time_remaining == 0) {
-            train_workers(
-                    plan->workers,
-                    plan->order->product->required_abilities
-                    );
-        }
-	} else {
-		raw_materials_used =
-            input_products_account *
-            labor_hours_done /
-            (plan->labor_hours - plan->workers.size() * plan->training_time);
+	int labor_hours_done = plan->workers.size();
+    double quantity_produced = 0.0;
+    std::unordered_map<Person *, double> contributions;
+    for (Person * worker : plan->workers) {
+        contributions[worker] = worker->suitability(plan->order->product->required_abilities);
+        quantity_produced += contributions[worker];
     }
+    for (Person * worker : plan->workers) {
+        contributions[worker] /= quantity_produced;
+    }
+    quantity_produced /= plan->order->product->living_labor_per_unit;
+
+	double raw_materials_used = 0.0;
+    raw_materials_used =
+        plan->raw_materials *
+        quantity_produced /
+        plan->order->quantity;
+
 	//pay workers
 	for (Person * worker : plan->workers) {
-		worker->register_hours_worked((double) labor_hours_done / plan->workers.size());
+		worker->register_hours_worked(1);
 	}
     plan->labor_hours_remaining -= labor_hours_done;
     plan->raw_materials_remaining -= raw_materials_used;
@@ -156,6 +157,7 @@ void Producer::move_plan_forward_one_step(Plan * plan) {
         }
     }
 	plan->total_hours_remaining -= labor_hours_done + raw_materials_used;
+    plan->quantity_remaining -= quantity_produced;
 }
 
 int Producer::get_input_products_account() {
@@ -187,6 +189,12 @@ void Producer::end_plan(Plan * plan) {
     plan->order->customer->receive_shipment(plan->order);
     double total = plan->order->product->price_per_unit * plan->order->quantity;
     plan->prd += total;
+
+    // update local labor time
+    recorded_living_labor_per_unit[plan->order->product] = 
+        (double) (plan->labor_hours - plan->labor_hours_remaining) 
+        / plan->order->quantity;
+    // update global price
     PriceController::get_instance()->update_price(plan);
     
     for (Person * worker : plan->workers) {
@@ -201,15 +209,15 @@ void Producer::move_plans_forward_one_step() {
             ++iter
             ) {
 		Plan * plan = *iter;
-		if (plan->total_hours == plan->total_hours_remaining) {
+        if (plan->order->status == Order::ORDER_REQUESTED) {
 			start_plan(plan);
 		}
-		if (plan->total_hours_remaining > 0 &&
+        if (plan->order->status == Order::ORDER_IN_PROGRESS &&
 			Sim::get_current_time_step() % DAY < Society::get_instance()->get_current_work_hours_daily() && 
 			Sim::get_current_time_step() / DAY % 7 < Society::get_instance()->get_current_work_days_weekly()) {
 			move_plan_forward_one_step(plan);
 		}
-		if (plan->total_hours_remaining < 1e-6) {
+		if (plan->quantity_remaining <= 0) {
 			end_plan(plan);
 			iter = plans_in_progress.erase(iter);
 			--iter; 

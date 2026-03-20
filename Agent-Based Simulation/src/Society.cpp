@@ -75,8 +75,10 @@ void Society::on_time_step() {
 void Society::set_initial_products() {
     std::size_t i = 0;
     for (; i < STARTING_NUM_PRODUCTS; ++i) {
-        Product * new_product = new Product("Product_" + std::to_string(i));
-        new_product->id = i;
+        Product * new_product = new Product(
+                i,
+                "Product " + std::to_string(i)
+                );
         goods.push_back(new_product);
         products.push_back(new_product);
         product_to_index[new_product] = i;
@@ -85,6 +87,7 @@ void Society::set_initial_products() {
         machine_lifetime_dist(MACHINE_LIFETIME_MIN, MACHINE_LIFETIME_MAX);
     for (std::size_t j = 0; j < STARTING_NUM_MACHINES; ++j, ++i) {
         Machine * new_machine = new Machine(
+                i,
                 "Machine " + std::to_string(i),
                 machine_lifetime_dist(Sim::get_random_generator())
                 );
@@ -96,7 +99,7 @@ void Society::set_initial_products() {
         product->set_inputs(goods);
         product->set_machines(machines);
     }
-    set_product_prices_and_production();
+    set_product_prices_production_consumption();
 }
 
 void Society::populate_io_matrix_and_labor_vector(
@@ -170,7 +173,7 @@ Eigen::MatrixXd get_leontief_inverse(
     return leontief_matrix.inverse();
 }
 
-void Society::set_product_prices_and_production() {
+void Society::set_product_prices_production_consumption() {
     const size_t dim = products.size();
     Eigen::MatrixXd A(dim, dim);
     Eigen::VectorXd l(dim);
@@ -189,7 +192,17 @@ void Society::set_product_prices_and_production() {
         }
         products[i]->price_per_unit = values(i);
     }
-
+    double consumption_scalar = 0.0;
+    for (Product * product : products) {
+        consumption_scalar += product->price_per_unit * product->mean_consumption_frequency;
+    }
+    consumption_scalar = PRODUCT_CONSUMPTION_MULT * INITIAL_WORK_WEEK 
+                         / WEEK
+                         / consumption_scalar 
+                         ;
+    for (Product * product : products) {
+        product->mean_consumption_frequency *= consumption_scalar;
+    }
     Eigen::VectorXd demands(dim);
     for (Product * product : products) {
         demands[product_to_index[product]] = product->mean_consumption_frequency;

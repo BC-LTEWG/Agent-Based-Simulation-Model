@@ -21,8 +21,6 @@ struct Plan {
 	Order * order;
     Firm * firm;
 	std::vector<Person*> workers;
-	int training_time;
-	int training_time_remaining;
 
 	// dependent/output fields	
 	int predicted_turnaround_time;
@@ -34,11 +32,12 @@ struct Plan {
     int labor_hours_remaining;
     double raw_materials_remaining;
     double total_hours_remaining;
+    double quantity_remaining;
 	int outgoing_units_consumed;
 };
 
 struct Order {
-    enum OrderStatus { ORDER_REQUESTED, ORDER_FINISHED };
+    enum OrderStatus { ORDER_REQUESTED, ORDER_IN_PROGRESS, ORDER_FINISHED };
     Product * product;
     int quantity;
     Firm * customer;
@@ -51,8 +50,6 @@ struct Order {
             Firm * customer,
             int requested_turnaround_time
     );
-
-
 };
 
 struct DemandSignal {
@@ -62,24 +59,21 @@ struct DemandSignal {
 
 class Firm : public Agent {
   public:
-	Firm(Society * society);
     Firm(Society * society, std::unordered_set<Product *> initial_catalog);
     unsigned int get_id() override;
     virtual void on_time_step() override;
 
     void initialize_inventory(std::unordered_map<Product *, int>& inventory_items);
     
-    double get_avg_productivity();
     int get_inventory(Product * product);
     void add_supplier(Producer * producer);
     void receive_shipment(Order * order);
 
-
   protected:
     Society * society;
     unsigned int id;
-    std::vector<Machine*> machines;
-    std::vector<Person*> workers;
+    std::vector<Machine *> machines;
+    std::vector<Person *> workers;
 	
     std::vector<Producer *> suppliers;
     std::unordered_map<Product *, int> inventory;
@@ -88,7 +82,7 @@ class Firm : public Agent {
     std::unordered_map<Product *, std::queue<DemandSignal>> demand_signals;
     std::unordered_map<Product *, int> total_demands;
     std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
-    std::unordered_map<Product *, std::vector<Plan *>> plan_history; // unused and prob need to change later
+    std::unordered_map<Product *, double> recorded_living_labor_per_unit;
     std::vector<Plan *> plans_in_progress;
 
     Producer * send_order(Order * order);
@@ -101,18 +95,13 @@ class Firm : public Agent {
     );
     void check_and_reorder();
 
-	double suitability(Person * person, std::vector<Person::Ability>& required_abilities);
-	double suitability(std::unordered_map<Person::Ability, double>& abilities, 
-			           std::vector<Person::Ability>& required_abilities,
-					   float productivity);
 	int predict_workers_needed(Order * order);
-    void assign_workers_by_suitability_threshold(
-            Plan * draft_plan,
-            std::vector<Person::Ability>& required_abilities,
-            double suitability_threshold
-            );
-	int predict_turnaround_time(Order * order, double total_suitability); 
-	int predict_labor_hours(Order * order, double total_suitability);
+    void assign_workers(
+        Plan * draft_plan,
+        std::vector<Person::Ability>& required_abilities
+    );
+	int predict_turnaround_time(Order * order, std::vector<Person*>& workers); 
+	int predict_labor_hours(Order * order, std::vector<Person*>& workers);
 	void assign_plan_dependent_fields(Plan * draft_plan, std::vector<Person::Ability>& required_abilities);
 	void draft_optimal_plan(Plan * draft_plan, std::vector<Person::Ability>& required_abilities);
 	void train_workers(std::vector<Person *>& workers, std::vector<Person::Ability>& required_abilities);
