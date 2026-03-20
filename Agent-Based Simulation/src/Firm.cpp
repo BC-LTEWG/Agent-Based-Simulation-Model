@@ -84,22 +84,51 @@ Producer * Firm::send_order(Order * order) {
     int order_time = INT_MAX;
     Producer * chosen_producer = nullptr;
 
+    std::vector<Producer *> primary_producers, 
+        secondary_producers,
+        rejecting_primary_producers;
     for (Producer * producer : suppliers) {
+        if (producer->can_produce(order->product)) {
+            primary_producers.push_back(producer);
+        } else {
+            secondary_producers.push_back(producer);
+        }
+    }
+    for (Producer * producer : primary_producers) {
         int draft_plan_time = producer->draft_plan(order);
-        if (draft_plan_time != DRAFT_ORDER_REJECTED &&
-                draft_plan_time < order_time) {
+        if (draft_plan_time == DRAFT_ORDER_REJECTED) {
+            producer->drop_order(order);
+            rejecting_primary_producers.push_back(producer);
+            continue;
+        }
+        if (draft_plan_time < order_time) {
+            if (chosen_producer) {
+                chosen_producer->drop_order(order);
+            }
             order_time = draft_plan_time;
             chosen_producer = producer;
         }
     }
+    if (!chosen_producer) {
+        for (Producer * producer : secondary_producers) {
+            int draft_plan_time = producer->draft_plan(order);
+            if (draft_plan_time == DRAFT_ORDER_REJECTED) {
+                producer->drop_order(order);
+                continue;
+            }
+            order_time = draft_plan_time;
+            chosen_producer = producer;
+            break;
+        }
+    }
+    for (Producer * producer : rejecting_primary_producers) {
+        producer->add_demand_signal(order->product,
+                order->quantity * REJECTED_ORDER_DEMAND_EXCESS / 
+                rejecting_primary_producers.size());
+    }
     if (chosen_producer) {
         chosen_producer->pursue_order(order);
         product_to_outbound_orders[order->product].insert(order);
-    }
-    for (auto * producer : suppliers) {
-        if (producer != chosen_producer) {
-            producer->drop_order(order);
-        }
     }
     return chosen_producer;
 }

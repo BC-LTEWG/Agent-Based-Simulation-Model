@@ -87,7 +87,7 @@ bool Producer::pursue_order(Order * order) {
 		return false;
 	}
 	Plan * draft_plan = order_to_draft_plan[order];
-
+    catalog.insert(order->product);
     for (std::pair<Product * const, double>& input :
             order->product->inputs_per_unit) {
         add_demand_signal(input.first, input.second * order->quantity);
