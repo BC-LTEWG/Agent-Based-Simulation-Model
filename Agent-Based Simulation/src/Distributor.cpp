@@ -12,8 +12,6 @@
 #include "Product.h"
 #include "Society.h"
 
-Distributor::Distributor(Society * society) : Firm{society} {}
-
 Distributor::Distributor(
         Society * society,
         const std::unordered_set<Product *>& initial_catalog,
@@ -32,8 +30,6 @@ Distributor::Distributor(
         Plan * plan = new Plan;
         plan->order = order;
         plan->firm = this;
-        plan->training_time_remaining = plan->training_time = 0;
-        plan->predicted_turnaround_time = 0;
         plan->labor_hours = DISTRIBUTION_LABOR_PER_UNIT * quantity;
         plan->raw_materials_remaining = plan->raw_materials = pooled_input_value_account += product->price_per_unit * quantity;
         plan->total_hours_remaining = plan->total_hours =
@@ -118,7 +114,7 @@ std::unordered_set<Product *> Distributor::get_products_to_reorder() {
 }
 
 void Distributor::check_expand_catalog() {
-    for (Product * product : get_products_to_reorder()) {
+    for (Product * product : society->get_goods()) {
         if (get_demand(product) > EXPAND_CATALOG_DEMAND_THRESHOLD && !catalog.count(product)) {
             catalog.insert(product);
         }

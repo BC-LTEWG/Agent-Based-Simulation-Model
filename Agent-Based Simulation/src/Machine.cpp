@@ -2,6 +2,9 @@
 
 #include "Machine.h"
 
-Machine::Machine(const std::string & name, int lifetime) 
-    : Product{name}, lifetime{lifetime} {}
+Machine::Machine(int id, const std::string& name, int lifetime) 
+    : Product{id, name}, lifetime{lifetime} 
+{
+    mean_consumption_frequency = 0;
+}
 

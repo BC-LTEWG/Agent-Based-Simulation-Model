@@ -37,7 +37,7 @@ class Society : public Agent {
         unsigned int id;
         Person * birth_person();
         void set_initial_products();
-        void set_product_prices_and_production();
+        void set_product_prices_production_consumption();
         std::unordered_map<Product *, std::size_t> get_product_to_index_map();
         void populate_io_matrix_and_labor_vector(
                 std::unordered_map<Product *, std::size_t>&,

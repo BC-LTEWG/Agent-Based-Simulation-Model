@@ -15,7 +15,6 @@ class Producer;
 
 class Distributor : public Firm {
   public:
-    Distributor(Society * society);
     Distributor(
         Society * society,
         const std::unordered_set<Product *>& initial_catalog,
