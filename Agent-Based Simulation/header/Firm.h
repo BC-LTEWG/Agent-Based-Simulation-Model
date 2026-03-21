@@ -14,6 +14,7 @@ class Firm;
 struct Machine;
 struct Order;
 class Producer;
+class Society;
 struct Product;
 
 struct Plan {
@@ -59,24 +60,31 @@ struct DemandSignal {
 
 class Firm : public Agent {
   public:
-    Firm(Society * society, std::unordered_set<Product *> initial_catalog);
+    Firm(
+        Society * society,
+        const std::unordered_set<Product *>& initial_catalog,
+        const std::unordered_map<Product *, int>& initial_input_inventory
+    );
     unsigned int get_id() override;
     virtual void on_time_step() override;
 
-    void initialize_inventory(std::unordered_map<Product *, int>& inventory_items);
-    
-    int get_inventory(Product * product);
+    double get_avg_productivity();
+    virtual int get_inventory(Product * product);
     void add_supplier(Producer * producer);
-    void receive_shipment(Order * order);
+    void receive_shipment(Plan * plan);
+    void receive_payment(Plan * plan, int transaction_amount);
+
+    void log_input_inventory(Firm * firm, std::string product_name, int quantity);
 
   protected:
     Society * society;
     unsigned int id;
+    double pooled_input_value_account = 0.0;
     std::vector<Machine *> machines;
     std::vector<Person *> workers;
 	
     std::vector<Producer *> suppliers;
-    std::unordered_map<Product *, int> inventory;
+    std::unordered_map<Product *, int> input_inventory;
     std::unordered_set<Product *> catalog;
     
     std::unordered_map<Product *, std::queue<DemandSignal>> demand_signals;
@@ -86,14 +94,16 @@ class Firm : public Agent {
     std::vector<Plan *> plans_in_progress;
 
     Producer * send_order(Order * order);
+    bool remove_input_inventory(Product * product, int quantity);
+    void add_input_inventory(Product * product, int quantity);
     double get_reorder_threshold(Product * product);
-    int get_pending_output_inventory(Product * product);
-    void reorder_output_product_to_threshold(
+    virtual int get_pending_input_inventory(Product * product);
+    void reorder_input_product_to_threshold(
         Product * product, 
         double threshold,
         int pending_inventory
     );
-    void check_and_reorder();
+    void check_and_reorder_inputs();
 
 	int predict_workers_needed(Order * order);
     void assign_workers(
@@ -111,6 +121,7 @@ class Firm : public Agent {
     virtual std::unordered_set<Product *> get_products_to_reorder() = 0;
 
     void log_shipment_received(std::string product_name, int quantity);
+    void log_inventory_level(std::string product_name, int quantity);
     void log_reorder(std::string product_name, int quantity);
     void log_accepted_order(std::string product_name, int requested_turnaround_time);
     void log_demand(std::string product_name, double demand);

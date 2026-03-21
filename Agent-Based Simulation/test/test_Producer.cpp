@@ -3,15 +3,15 @@
 #include <unordered_set>
 #include <vector>
 
-#include "doctest.h"
-
+#define private public
+#define protected public
 #include "Producer.h"
-#undef private
-#undef protected
-#include "Firm.h"
 #include "Distributor.h"
 #include "Product.h"
 #include "Society.h"
+#undef protected
+#undef private
+#include "doctest.h"
 
 TEST_SUITE_BEGIN("Producer");
 
@@ -167,12 +167,13 @@ TEST_CASE("Producer start_plan consumes inputs and updates raw materials account
     Firm * customer = society->get_distributors()[0];
     Plan plan = make_plan(&producer, output, customer, 3);
     plan.raw_materials = 12.0;
+    plan.raw_materials_remaining = 12.0;
     producer.inventory[input] = 100;
-    producer.input_products_account = 0;
+    producer.pooled_input_value_account = 0.0;
 
     producer.start_plan(&plan);
     CHECK(producer.inventory[input] == 97);
-    CHECK(producer.input_products_account == 12);
+    CHECK(producer.pooled_input_value_account == doctest::Approx(12.0));
     CHECK(plan.raw_materials == doctest::Approx(0.0));
 }
 
@@ -195,6 +196,30 @@ TEST_CASE("Producer move_plan_forward_one_step progresses labor and total hours"
     CHECK(plan.total_hours_remaining == doctest::Approx(6.0));
 }
 
+TEST_CASE("Producer move_plan_forward_one_step consumes pooled input value") {
+    Society * society = Society::get_instance();
+    REQUIRE(society->get_distributors().size() > 0);
+    REQUIRE(society->get_unemployed_people().size() > 0);
+
+    Product * output = make_output_product();
+    Producer producer(society, {output});
+    Firm * customer = society->get_distributors()[0];
+    Plan plan = make_plan(&producer, output, customer, 5);
+    plan.training_time = 0;
+    plan.training_time_remaining = 0;
+    plan.labor_hours = plan.labor_hours_remaining = 5;
+    plan.raw_materials = plan.raw_materials_remaining = 10.0;
+    plan.total_hours = plan.total_hours_remaining = 15.0;
+    plan.workers.push_back(society->get_unemployed_people()[0]);
+    producer.pooled_input_value_account = 10.0;
+
+    producer.move_plan_forward_one_step(&plan);
+    CHECK(plan.labor_hours_remaining == 4);
+    CHECK(plan.raw_materials_remaining == doctest::Approx(8.0));
+    CHECK(producer.pooled_input_value_account == doctest::Approx(8.0));
+    CHECK(plan.total_hours_remaining == doctest::Approx(12.0));
+}
+
 TEST_CASE("Producer reorder_raw_materials can source from another producer") {
     Society * society = Society::get_instance();
     REQUIRE(society->get_distributors().size() > 0);
@@ -206,15 +231,17 @@ TEST_CASE("Producer reorder_raw_materials can source from another producer") {
     Producer producer(society, {output});
     Firm * customer = society->get_distributors()[0];
     Plan plan = make_plan(&producer, output, customer, 1);
-    producer.input_products_account = 10000;
+    producer.pooled_input_value_account = 10000.0;
 
     Producer * supplier = society->get_producers()[0];
-    supplier->input_products_account = 0;
+    supplier->pooled_input_value_account = 0.0;
+    int old_supplier_inventory = supplier->get_inventory(product);
     supplier->inventory[product] = 1000;
     int before = supplier->inventory[product];
 
     producer.reorder_raw_materials(&plan, product);
     CHECK(supplier->inventory[product] <= before);
+    supplier->inventory[product] = old_supplier_inventory;
 }
 
 TEST_CASE("Producer end_plan marks order complete and notifies customer") {

@@ -15,9 +15,10 @@
 
 Producer::Producer(
         Society * society,
-        std::unordered_set<Product *> initial_catalog
+        const std::unordered_set<Product *>& initial_catalog,
+        const std::unordered_map<Product *, int>& input_inventory
         ) :
-    Firm(society, initial_catalog) {
+    Firm(society, initial_catalog, input_inventory) {
     std::unordered_set<Machine *> initial_machines;
     for (Product * product : initial_catalog) {
         for (Machine * machine : product->machines_needed) {
@@ -28,9 +29,9 @@ Producer::Producer(
         machines.push_back(machine);
     }
     for (Product * product : get_products_to_reorder()) {
-        inventory[product] =
+        this->input_inventory[product] =
             (society->get_initial_production()[product] - product->mean_consumption_frequency) * 
-            (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN * PRODUCER_INITIAL_INVENTORY_MULT) * 
+            (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN * PRODUCER_INITIAL_INVENTORY_MULT) *
             STARTING_NUM_PEOPLE;
     }
 }
@@ -50,7 +51,7 @@ bool Producer::can_produce(Product * product) {
 int Producer::draft_plan(Order * order) {
     for (std::pair<Product * const, double>& input :
             order->product->inputs_per_unit) {
-        if (inventory[input.first] < input.second * order->quantity) {
+        if (input_inventory[input.first] < input.second * order->quantity) {
 			return DRAFT_ORDER_REJECTED;
         }
     }
@@ -93,7 +94,6 @@ bool Producer::pursue_order(Order * order) {
         add_demand_signal(input.first, input.second * order->quantity);
     }
 	// remove all workers from their current pools
-    Society * society = Society::get_instance();
 	for (Person * worker : draft_plan->workers) {
 		auto it = std::find(workers.begin(), workers.end(), worker);
 		if (it != workers.end()) {
@@ -119,9 +119,12 @@ void Producer::start_plan(Plan * plan) {
 	// simplification: consume all raw materials at start of plan
 	for (std::pair<Product * const, double>& input :
             plan->order->product->inputs_per_unit) {
-		inventory[input.first] -= input.second * plan->order->quantity;
+        int required_input = static_cast<int>(
+            std::ceil(input.second * plan->order->quantity)
+            );
+	remove_input_inventory(input.first, required_input);
 	}
-    input_products_account += plan->raw_materials;
+    pooled_input_value_account += plan->raw_materials;
     plan->raw_materials = 0;
     plan->order->status = Order::ORDER_IN_PROGRESS;
 }
@@ -137,11 +140,14 @@ void Producer::move_plan_forward_one_step(Plan * plan) {
     for (Person * worker : plan->workers) {
         contributions[worker] /= quantity_produced;
     }
+    if (quantity_produced <= 0.0) {
+        return;
+    }
     quantity_produced /= plan->order->product->living_labor_per_unit;
 
 	double raw_materials_used = 0.0;
     raw_materials_used =
-        plan->raw_materials *
+        plan->raw_materials_remaining *
         quantity_produced /
         plan->order->quantity;
 
@@ -150,32 +156,22 @@ void Producer::move_plan_forward_one_step(Plan * plan) {
 		worker->register_hours_worked(1);
 	}
     plan->labor_hours_remaining -= labor_hours_done;
-    plan->raw_materials_remaining -= raw_materials_used;
-    for (std::pair<Product *const, int>& input : input_inventory) {
-        if (input.second < RAW_MATERIAL_THRESHOLD) {
-            reorder_raw_materials(plan, input.first);
-        }
-    }
-	plan->total_hours_remaining -= labor_hours_done + raw_materials_used;
+    plan->raw_materials_remaining = std::max(
+            0.0,
+            plan->raw_materials_remaining - raw_materials_used
+            );
+    pooled_input_value_account = std::max(
+        0.0,
+        pooled_input_value_account - raw_materials_used
+        );
+    check_and_reorder_inputs();
+    plan->total_hours_remaining =
+        plan->labor_hours_remaining + plan->raw_materials_remaining;
     plan->quantity_remaining -= quantity_produced;
 }
 
-int Producer::get_input_products_account() {
-    return input_products_account;
-}
-
-void Producer::reorder_raw_materials(Plan * plan, Product * product) {
-    Society * society = Society::get_instance();
-    for (Producer * producer : society->get_producers()) {
-        if ((producer->inventory[product] > RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_SURPLUS_FACTOR)) {
-            producer->inventory[product] -= RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_ORDER_MULTIPLIER;
-            plan->firm = producer; 
-            plan->prd += product->price_per_unit * (RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_ORDER_MULTIPLIER); // This is the upstream producer's plan
-            producer->start_plan(plan);
-            input_products_account -= product->price_per_unit * (RAW_MATERIAL_THRESHOLD * RAW_MATERIAL_ORDER_MULTIPLIER); 
-            break;
-        }
-    }
+double Producer::get_input_products_account() {
+    return pooled_input_value_account;
 }
 
 void Producer::end_plan(Plan * plan) {
@@ -183,13 +179,10 @@ void Producer::end_plan(Plan * plan) {
     plan->order->status = Order::ORDER_FINISHED;
 	// simplification: whole product amount is added to inventory at the end of
     // a plan
-	inventory[plan->order->product] += plan->order->quantity;
+	input_inventory[plan->order->product] += plan->order->quantity;
 	// simplification: product shipped instantly
-	inventory[plan->order->product] -= plan->order->quantity;
-    plan->order->customer->receive_shipment(plan->order);
-    double total = plan->order->product->price_per_unit * plan->order->quantity;
-    plan->prd += total;
-
+	input_inventory[plan->order->product] -= plan->order->quantity;
+    plan->order->customer->receive_shipment(plan);
     // update local labor time
     recorded_living_labor_per_unit[plan->order->product] = 
         (double) (plan->labor_hours - plan->labor_hours_remaining) 
@@ -214,7 +207,8 @@ void Producer::move_plans_forward_one_step() {
 		}
         if (plan->order->status == Order::ORDER_IN_PROGRESS &&
 			Sim::get_current_time_step() % DAY < Society::get_instance()->get_current_work_hours_daily() && 
-			Sim::get_current_time_step() / DAY % 7 < Society::get_instance()->get_current_work_days_weekly()) {
+			Sim::get_current_time_step() / DAY % 7 <
+                static_cast<unsigned int>(Society::get_instance()->get_current_work_days_weekly())) {
 			move_plan_forward_one_step(plan);
 		}
 		if (plan->quantity_remaining <= 0) {

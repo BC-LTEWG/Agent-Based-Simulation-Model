@@ -16,23 +16,21 @@ class Person;
 
 class Producer : public Firm {
   public:
-    Producer(Society * society, std::unordered_set<Product *> initial_catalog);
+    Producer(
+        Society * society,
+        const std::unordered_set<Product *>& initial_catalog,
+        const std::unordered_map<Product *, int>& input_inventory
+    );
     void on_time_step() override;
 
     bool can_produce(Product * product);
 	int draft_plan(Order * order);
 	void drop_order(Order * order);
 	bool pursue_order(Order * order);
-    void reorder_raw_materials(Plan * plan, Product * product);
-    bool has_raw_materials();
-    void initialize_input_inventory(std::unordered_map<Product *, int>& inventory_items); 
-    void get_pending_input_inventory(Product * product);
-    int get_input_products_account();
+    double get_input_products_account();
 
   private:
-    std::unordered_map<Product *, int> input_inventory;
-  	std::unordered_map<Order *, Plan *> order_to_draft_plan;
-    int input_products_account;
+    std::unordered_map<Order *, Plan *> order_to_draft_plan;
 
 	void start_plan(Plan * plan);
 	void move_plan_forward_one_step(Plan * plan);

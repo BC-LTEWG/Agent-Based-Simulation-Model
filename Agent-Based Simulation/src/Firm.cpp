@@ -26,8 +26,13 @@ Order::Order(
       status(ORDER_REQUESTED)
 {}
 
-Firm::Firm(Society * society, std::unordered_set<Product *> initial_catalog) :
+Firm::Firm(
+        Society * society,
+        const std::unordered_set<Product *>& initial_catalog,
+        const std::unordered_map<Product *, int>& initial_input_inventory
+        ) :
     society{society},
+    input_inventory(initial_input_inventory),
     catalog(initial_catalog)
 {
     static unsigned int unique_id = 0;
@@ -43,41 +48,54 @@ unsigned int Firm::get_id() {
 
 void Firm::on_time_step() {
     apply_demand_window();
-    check_and_reorder();
-    for (Product * product : get_products_to_reorder()) {
-        log_demand(product->product_name, get_demand(product));
-    }
-}
-
-void Firm::initialize_inventory(
-        std::unordered_map<Product *, int>& inventory_items
-        ) {
-    for(auto& items : inventory_items) {
-        inventory[items.first] = items.second;
-    }
+    check_and_reorder_inputs();
 }
 
 int Firm::get_inventory(Product * product) {
-    std::unordered_map<Product *, int>::iterator it = inventory.find(product);
-    if (it == inventory.end()) {
+    std::unordered_map<Product *, int>::iterator it = input_inventory.find(product);
+    if (it == input_inventory.end()) {
         return 0;
     }
-    return inventory[product];
+    return input_inventory[product];
 }
 
 void Firm::add_supplier(Producer * producer) {
     suppliers.push_back(producer);
 }
 
-void Firm::receive_shipment(Order * order) {
+void Firm::receive_shipment(Plan * plan) {
+    Order * order = plan->order;
     if (order->status != Order::ORDER_FINISHED) {
         std::cerr << "Attempted to recieve a shipment for an incomplete order."
             << std::endl;
         return;
     }
-    inventory[order->product] += order->quantity;
+    input_inventory[order->product] += order->quantity;
     product_to_outbound_orders[order->product].erase(order);
+    int transaction_amount = order->product->price_per_unit * order->quantity;
+    pooled_input_value_account -= transaction_amount;
+    plan->firm->receive_payment(plan, transaction_amount);
     log_shipment_received(order->product->product_name, order->quantity);
+    log_inventory_level(order->product->product_name, input_inventory[order->product]);
+
+}
+
+void Firm::receive_payment(Plan * plan, int transaction_amount) {
+    plan->prd += transaction_amount;
+
+}
+
+bool Firm::remove_input_inventory(Product * product, int quantity) {
+    if (input_inventory[product] < quantity) {
+        return false;
+        std::cerr << "No good to remove from" << std::endl;
+    }
+    input_inventory[product] -= quantity;
+    return true;
+}
+
+void Firm::add_input_inventory(Product * product, int quantity) {
+    input_inventory[product] += quantity;
 }
 
 Producer * Firm::send_order(Order * order) {
@@ -94,6 +112,7 @@ Producer * Firm::send_order(Order * order) {
     }
     if (chosen_producer) {
         chosen_producer->pursue_order(order);
+        chosen_producer->plans_in_progress.back()->prd += order->product->price_per_unit * order->quantity;
         product_to_outbound_orders[order->product].insert(order);
     }
     for (auto * producer : suppliers) {
@@ -109,51 +128,56 @@ double Firm::get_reorder_threshold(Product * product) {
         get_demand(product) * FIRM_STOCKPILE_DURATION);
 }
 
-int Firm::get_pending_output_inventory(Product * product) {
-    int pending_inventory = inventory[product];
+int Firm::get_pending_input_inventory(Product * product) {
+    int pending_inventory = input_inventory[product];
     for (Order * order : product_to_outbound_orders[product]) {
         pending_inventory += order->quantity;
     }
     return pending_inventory;
 }
 
-void Firm::reorder_output_product_to_threshold(
+void Firm::reorder_input_product_to_threshold(
         Product * product,
         double threshold,
         int pending_inventory
         ) {
-    if (pending_inventory < threshold) {
-        int reorder_quantity = static_cast<int>(std::ceil(threshold));
-        int reorder_deadline = static_cast<int>(
-            pending_inventory *
-            FIRM_STOCKPILE_DURATION *
-            DEADLINE_SAFETY_MULT /
-            threshold
+    if (pending_inventory >= threshold) {
+        std::cerr << "Reordering product " << product->product_name
+            << " unnecessarily." << std::endl;
+        return;
+    }
+
+    int reorder_quantity = static_cast<int>(
+        std::ceil(threshold - pending_inventory)
+        );
+    int reorder_deadline = static_cast<int>(
+        pending_inventory *
+        FIRM_STOCKPILE_DURATION *
+        DEADLINE_SAFETY_MULT /
+        threshold
+        );
+    Order * order = new Order(
+            product,
+            reorder_quantity,
+            this,
+            reorder_deadline
             );
-        Order * order = new Order(
-                product,
-                reorder_quantity,
-                this,
-                reorder_deadline
-                );
-        Producer * chosen_producer = send_order(order);
-        if (chosen_producer) {
-            log_reorder(product->product_name, reorder_quantity);
-            log_accepted_order(product->product_name, order->requested_turnaround_time);
-        } else {
-            log_reorder("No producer found for " + product->product_name, reorder_quantity);
-        }
+    Producer * chosen_producer = send_order(order);
+    if (chosen_producer) {
+        log_reorder(product->product_name, reorder_quantity);
+        log_accepted_order(product->product_name, order->requested_turnaround_time);
+    } else {
+        log_reorder("No producer found for " + product->product_name, reorder_quantity);
     }
 }
 
-void Firm::check_and_reorder() {
-    std::unordered_set<Product *> products_to_reorder =
-        get_products_to_reorder();
-    for (Product * product : products_to_reorder) {
-        double threshold = get_reorder_threshold(product);
-        int pending_inventory = get_pending_output_inventory(product);
+void Firm::check_and_reorder_inputs() {
+    for (std::pair<Product *, int> stockpile : input_inventory) {
+        Product * input_product = stockpile.first;
+        double threshold = get_reorder_threshold(input_product);
+        int pending_inventory = get_pending_input_inventory(input_product);
         if (pending_inventory < threshold) {
-            reorder_output_product_to_threshold(product, threshold, pending_inventory);
+            reorder_input_product_to_threshold(input_product, threshold, pending_inventory);
         }
     }
 }
@@ -294,6 +318,16 @@ void Firm::log_shipment_received(std::string product_name, int quantity) {
             );
 }
 
+void Firm::log_inventory_level(std::string product_name, int quantity) {
+    Logger::get_instance()->log(
+            Logger::FIRM,
+            "inventory_level",
+            id,
+            product_name,
+            quantity
+            );
+}
+
 void Firm::log_reorder(std::string product_name, int quantity) {
     Logger::get_instance()->log(
             Logger::FIRM,
@@ -314,12 +348,12 @@ void Firm::log_accepted_order(std::string product_name, int requested_turnaround
             );
 }
 
-void Firm::log_demand(std::string product_name, double demand) {
+void Firm::log_input_inventory(Firm * firm, std::string product_name, int quantity) {
     Logger::get_instance()->log(
             Logger::FIRM,
-            "demand " + product_name,
-            id,
+            "input_inventory",
+            firm->get_id(),
             product_name,
-            demand
+            quantity
             );
 }

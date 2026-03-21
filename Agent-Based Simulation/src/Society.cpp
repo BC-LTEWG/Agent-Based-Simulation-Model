@@ -31,15 +31,33 @@ Society::Society() {
         Logger::get_instance()->log(Logger::SOCIETY, "price", product->id, product->price_per_unit); 
         Logger::get_instance()->log(Logger::SOCIETY, "order_size", product->id, product->order_size);
     }
+    static std::uniform_int_distribution<> initial_inventory_dist(
+        PRODUCT_ORDER_SIZE_MIN, PRODUCT_ORDER_SIZE_MAX);
     for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
-        Producer * producer = new Producer(this, {goods[i %
-                STARTING_NUM_PRODUCTS]});
+        Product * product = products[i % STARTING_NUM_PRODUCTS];
+        int initial_quantity = initial_inventory_dist(Sim::get_random_generator());
+        std::unordered_map<Product *, int> initial_input_inventory = {
+            {product, initial_quantity}
+        };
+        Producer * producer = new Producer(
+            this,
+            {product},
+            initial_input_inventory
+        );
         producers.push_back(producer);
         firms.push_back(producer);
     }
     for (int i = 0; i < STARTING_NUM_DISTRIBUTORS; i++) {
-        Distributor * distributor =
-            new Distributor(this, {goods[i % STARTING_NUM_PRODUCTS]});
+        Product * product = goods[i % STARTING_NUM_PRODUCTS];
+        int initial_quantity = initial_inventory_dist(Sim::get_random_generator());
+        std::unordered_map<Product *, int> initial_output_inventory = {
+            {product, initial_quantity}
+        };
+        Distributor * distributor = new Distributor(
+            this,
+            {product},
+            initial_output_inventory
+        );
         distributors.push_back(distributor);
         firms.push_back(distributor);
     }
