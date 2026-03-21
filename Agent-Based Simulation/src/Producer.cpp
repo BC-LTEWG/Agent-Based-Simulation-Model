@@ -106,6 +106,7 @@ bool Producer::pursue_order(Order * order) {
                 );
 		if (it != society->get_unemployed_people().end()) {
 			society->get_unemployed_people().erase(it);
+            onboard_worker(worker);
 		}
 	}
 	// move draft_plan to plans_in_progress
@@ -148,6 +149,7 @@ void Producer::move_plan_forward_one_step(Plan * plan) {
 	//pay workers
 	for (Person * worker : plan->workers) {
 		worker->register_hours_worked(1);
+        record_busyness(worker, true);
 	}
     plan->labor_hours_remaining -= labor_hours_done;
     plan->raw_materials_remaining -= raw_materials_used;
@@ -198,7 +200,7 @@ void Producer::end_plan(Plan * plan) {
     PriceController::get_instance()->update_price(plan);
     
     for (Person * worker : plan->workers) {
-        Society::get_instance()->get_unemployed_people().push_back(worker);
+        workers.push_back(worker);
     }
 }
 

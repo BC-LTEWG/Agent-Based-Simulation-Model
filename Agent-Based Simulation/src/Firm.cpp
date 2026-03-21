@@ -47,6 +47,7 @@ void Firm::on_time_step() {
     for (Product * product : get_products_to_reorder()) {
         log_demand(product->product_name, get_demand(product));
     }
+    deallocate_workers();
 }
 
 void Firm::initialize_inventory(
@@ -213,6 +214,31 @@ void Firm::assign_workers(
     for (int i = 0; i < society->get_unemployed_people().size() && workers_left > 0; i++) {
         draft_plan->workers.push_back(society->get_unemployed_people()[i]);
         workers_left--;
+    }
+}
+
+void Firm::onboard_worker(Person * worker) {
+    busyness[worker] = 0.0;
+    onboard_time[worker] = Sim::get_current_time_step();
+}
+
+void Firm::record_busyness(Person * worker, bool busy) {
+    double duration_proportion = 1.0 / DEALLOCATION_SAFETY_DURATION;
+    busyness[worker] = busyness[worker] * (1 - duration_proportion) + 
+        busy * duration_proportion;
+}
+
+void Firm::deallocate_workers() {
+    for (int i = (int) workers.size() - 1; i >= 0; i--) {
+        Person * worker = workers[i];
+        record_busyness(worker, false);
+        if (busyness[worker] < BUSYNESS_DEALLOCATION_THRESHOLD &&
+            Sim::get_current_time_step() - onboard_time[worker] > DEALLOCATION_SAFETY_DURATION) {
+            Society::get_instance()->get_unemployed_people().push_back(worker);
+            busyness.erase(worker);
+            onboard_time.erase(worker);
+            workers.erase(workers.begin() + i);
+        }
     }
 }
 
