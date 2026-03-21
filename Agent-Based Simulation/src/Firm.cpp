@@ -133,28 +133,32 @@ void Firm::reorder_input_product_to_threshold(
         double threshold,
         int pending_inventory
         ) {
-    if (pending_inventory < threshold) {
-        int reorder_quantity = static_cast<int>(std::ceil(threshold));
-        int reorder_deadline = static_cast<int>(
-            pending_inventory *
-            FIRM_STOCKPILE_DURATION *
-            DEADLINE_SAFETY_MULTIPLIER /
-            threshold
+    if (pending_inventory >= threshold) {
+        std::cerr << "Reordering product " << product->product_name
+            << " unnecessarily." << std::endl;
+        return;
+    }
+
+    int reorder_quantity = static_cast<int>(std::ceil(threshold));
+    int reorder_deadline = static_cast<int>(
+        pending_inventory *
+        FIRM_STOCKPILE_DURATION *
+        DEADLINE_SAFETY_MULTIPLIER /
+        threshold
+        );
+    Order * order = new Order(
+            product,
+            reorder_quantity,
+            this,
+            reorder_deadline
             );
-        Order * order = new Order(
-                product,
-                reorder_quantity,
-                this,
-                reorder_deadline
-                );
-        Producer * chosen_producer = send_order(order);
-        if (chosen_producer) {
-            log_reorder(product->product_name, reorder_quantity);
-            log_accepted_order(product->product_name, order->requested_turnaround_time);
-            this->pooled_input_value_account -= product->price_per_unit * reorder_quantity;
-        } else {
-            log_reorder("No producer found for " + product->product_name, reorder_quantity);
-        }
+    Producer * chosen_producer = send_order(order);
+    if (chosen_producer) {
+        log_reorder(product->product_name, reorder_quantity);
+        log_accepted_order(product->product_name, order->requested_turnaround_time);
+        this->pooled_input_value_account -= product->price_per_unit * reorder_quantity;
+    } else {
+        log_reorder("No producer found for " + product->product_name, reorder_quantity);
     }
 }
 
