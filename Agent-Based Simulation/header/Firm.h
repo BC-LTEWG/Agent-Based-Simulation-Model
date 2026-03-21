@@ -71,7 +71,8 @@ class Firm : public Agent {
     double get_avg_productivity();
     virtual int get_inventory(Product * product);
     void add_supplier(Producer * producer);
-    virtual void receive_shipment(Order * order);
+    void receive_shipment(Plan * plan);
+    void receive_payment(Plan * plan, int transaction_amount);
 
     void log_input_inventory(Firm * firm, std::string product_name, int quantity);
 

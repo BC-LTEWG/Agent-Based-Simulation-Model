@@ -63,18 +63,6 @@ int Distributor::get_inventory(Product * product) {
     return it->second;
 }
 
-void Distributor::receive_shipment(Order * order) {
-    if (order->status != Order::ORDER_FINISHED) {
-        std::cerr << "Attempted to recieve a shipment for an incomplete order."
-            << std::endl;
-        return;
-    }
-    input_inventory[order->product] += order->quantity;
-    product_to_outbound_orders[order->product].erase(order);
-    log_shipment_received(order->product->product_name, order->quantity);
-    log_inventory_level(order->product->product_name, input_inventory[order->product]);
-}
-
 bool Distributor::try_sell_goods(Product& product, int quantity, Person * person) {
     ConsumerGood * consumer_good = society->get_consumer_good(&product);
     if (!consumer_good) {

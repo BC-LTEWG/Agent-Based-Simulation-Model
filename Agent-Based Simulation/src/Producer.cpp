@@ -122,7 +122,7 @@ void Producer::start_plan(Plan * plan) {
         int required_input = static_cast<int>(
             std::ceil(input.second * plan->order->quantity)
             );
-		remove_input_inventory(input.first, required_input);
+	remove_input_inventory(input.first, required_input);
 	}
     pooled_input_value_account += plan->raw_materials;
     plan->raw_materials = 0;
@@ -182,10 +182,7 @@ void Producer::end_plan(Plan * plan) {
 	input_inventory[plan->order->product] += plan->order->quantity;
 	// simplification: product shipped instantly
 	input_inventory[plan->order->product] -= plan->order->quantity;
-    plan->order->customer->receive_shipment(plan->order);
-    double total = plan->order->product->price_per_unit * plan->order->quantity;
-    plan->prd += total;
-
+    plan->order->customer->receive_shipment(plan);
     // update local labor time
     recorded_living_labor_per_unit[plan->order->product] = 
         (double) (plan->labor_hours - plan->labor_hours_remaining) 

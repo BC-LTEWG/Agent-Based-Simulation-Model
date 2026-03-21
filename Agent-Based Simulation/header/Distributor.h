@@ -23,8 +23,7 @@ class Distributor : public Firm {
     void on_time_step() override;
     bool try_sell_goods(Product& product, int quantity, Person * person);
     int get_inventory(Product * product) override;
-    void receive_shipment(Order * order) override;
-
+    
   private:
     int get_pending_input_inventory(Product * product);
     std::unordered_set<Product *> get_products_to_reorder() override;
