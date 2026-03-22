@@ -179,13 +179,10 @@ void Producer::end_plan(Plan * plan) {
     plan->order->status = Order::ORDER_FINISHED;
 	// simplification: whole product amount is added to inventory at the end of
     // a plan
-    int quantity_produced = plan->order->quantity;
-    Product * product = plan->order->product;
-	input_inventory[plan->order->product] += quantity_produced;
+	input_inventory[plan->order->product] += plan->order->quantity;
 	// simplification: product shipped instantly
+	input_inventory[plan->order->product] -= plan->order->quantity;
     plan->order->customer->receive_shipment(plan);
-    check_and_reorder_inputs();
-    remove_input_from_inventory(product, quantity_produced);
     // update local labor time
     recorded_living_labor_per_unit[plan->order->product] = 
         (double) (plan->labor_hours - plan->labor_hours_remaining) 
