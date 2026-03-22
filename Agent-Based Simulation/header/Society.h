@@ -2,6 +2,7 @@
 
 #include <Eigen/Dense>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "Agent.h"
 #include "Constants.h"
@@ -24,13 +25,14 @@ class Society : public Agent {
         ConsumerGood * get_consumer_good(Product * product);
         void add_consumer_good(Product * product);
         std::vector<Distributor *>& get_distributors();
-        std::vector<Person *>& get_unemployed_people();
+        std::unordered_set<Person *>& get_unemployed_people();
         void retire_person(Person * person);
         unsigned int get_current_work_hours_daily();
         int get_current_work_days_weekly();
         int get_initial_account();
         std::unordered_map<Product *, double>& get_initial_production();
         std::vector<Producer *>& get_producers();
+        double get_busyness();
 
     private:
         Society();
@@ -59,7 +61,7 @@ class Society : public Agent {
             product_to_distributors;
         unsigned int current_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
 		int current_work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
-        std::vector<Person *> unemployed_people;
+        std::unordered_set<Person *> unemployed_people;
         double initial_account;
         std::unordered_map<Product *, double> initial_production;
 };

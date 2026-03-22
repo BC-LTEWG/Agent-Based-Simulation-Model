@@ -68,12 +68,16 @@ class Firm : public Agent {
     int get_inventory(Product * product);
     void add_supplier(Producer * producer);
     void receive_shipment(Order * order);
+    double get_busyness();
+    std::vector<Person *> propose_transfer(int workers_wanted);
+    void finalize_transfer(Person * worker);
 
   protected:
     Society * society;
     unsigned int id;
     std::vector<Machine *> machines;
-    std::vector<Person *> workers;
+    std::unordered_set<Person *> workers,
+        standby_workers;
 	
     std::vector<Producer *> suppliers;
     std::unordered_map<Product *, int> inventory;
@@ -84,9 +88,6 @@ class Firm : public Agent {
     std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
     std::unordered_map<Product *, double> recorded_living_labor_per_unit;
     std::vector<Plan *> plans_in_progress;
-
-    std::unordered_map<Person *, double> busyness;
-    std::unordered_map<Person *, int> onboard_time;
 
     Producer * send_order(Order * order);
     double get_reorder_threshold(Product * product);
@@ -112,9 +113,7 @@ class Firm : public Agent {
     void apply_demand_window();
     double get_demand(Product * product);
     virtual std::unordered_set<Product *> get_products_to_reorder() = 0;
-    void onboard_worker(Person * worker);
-    void record_busyness(Person * worker, bool busy);
-    void deallocate_workers();
+    void move_worker_off_standby(Person * worker);
 
     void log_shipment_received(std::string product_name, int quantity);
     void log_reorder(std::string product_name, int quantity);

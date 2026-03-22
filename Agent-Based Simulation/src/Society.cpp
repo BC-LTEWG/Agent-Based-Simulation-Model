@@ -5,7 +5,6 @@
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
-#include <unordered_map>
 
 #include "ConsumerGood.h"
 #include "Distributor.h"
@@ -149,6 +148,14 @@ std::vector<Producer *>& Society::get_producers() {
     return producers;
 }
 
+double Society::get_busyness() {
+    double busyness = 0.0;
+    for (Person * person : people) {
+        busyness += person->get_busyness();
+    }
+    return busyness / people.size();
+}
+
 void Society::adjust_io_matrix(
         Eigen::MatrixXd& io_matrix,
         double max_eigenvalue
@@ -239,7 +246,7 @@ std::vector<Distributor *>& Society::get_distributors() {
     return distributors;
 }
 
-std::vector<Person *>& Society::get_unemployed_people() {
+std::unordered_set<Person *>& Society::get_unemployed_people() {
     return unemployed_people;
 }
 
@@ -275,7 +282,7 @@ std::unordered_map<Product *, double>& Society::get_initial_production() {
 Person * Society::birth_person() {
     Person * person = new Person(this);
     people.push_back(person);
-    unemployed_people.push_back(person);
+    unemployed_people.insert(person);
     return person;
 }
 

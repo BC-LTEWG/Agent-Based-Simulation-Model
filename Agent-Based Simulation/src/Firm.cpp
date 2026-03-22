@@ -47,7 +47,6 @@ void Firm::on_time_step() {
     for (Product * product : get_products_to_reorder()) {
         log_demand(product->product_name, get_demand(product));
     }
-    deallocate_workers();
 }
 
 void Firm::initialize_inventory(
@@ -79,6 +78,34 @@ void Firm::receive_shipment(Order * order) {
     inventory[order->product] += order->quantity;
     product_to_outbound_orders[order->product].erase(order);
     log_shipment_received(order->product->product_name, order->quantity);
+}
+
+double Firm::get_busyness() {
+    double busyness = 0.0;
+    for (Person * worker : workers) {
+        busyness += worker->get_busyness();
+    }
+    return workers.size() > 0 ? busyness / workers.size() : 0.0;
+}
+
+std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
+    if (get_busyness() >= society->get_busyness() - TRANSFER_BUSYNESS_THRESHOLD) {
+        return {};
+    }
+    int max_workers_to_transfer = (int) (workers.size() * (1.0 - get_busyness() / 
+            (society->get_busyness() - TRANSFER_BUSYNESS_THRESHOLD))); 
+    max_workers_to_transfer = std::max(max_workers_to_transfer, workers_wanted);
+    std::vector<Person *> transfers;
+    for (Person * worker : standby_workers) {
+        if (transfers.size() == max_workers_to_transfer) break;
+        transfers.push_back(worker);
+    }
+    return transfers;
+}
+
+void Firm::finalize_transfer(Person * worker) {
+    standby_workers.erase(worker);
+    workers.erase(worker);
 }
 
 Producer * Firm::send_order(Order * order) {
@@ -123,9 +150,9 @@ Producer * Firm::send_order(Order * order) {
         }
     }
     for (Producer * producer : rejecting_primary_producers) {
-        producer->add_demand_signal(order->product,
-                order->quantity * REJECTED_ORDER_DEMAND_EXCESS / 
-                rejecting_primary_producers.size());
+        ;//producer->add_demand_signal(order->product,
+        ;//        order->quantity * REJECTED_ORDER_DEMAND_EXCESS / 
+        ;//        rejecting_primary_producers.size());
     }
     if (chosen_producer) {
         chosen_producer->pursue_order(order);
@@ -202,43 +229,32 @@ void Firm::assign_workers(
         Plan * draft_plan,
         std::vector<Person::Ability>& required_abilities
         ) {
-    std::sort(workers.begin(), workers.end(), [&](Person * a, Person * b) {
-            return a->suitability(required_abilities) > b->suitability(required_abilities);
+    std::vector<Person *> sorted_standby_workers(standby_workers.begin(),
+            standby_workers.end());
+    std::sort(sorted_standby_workers.begin(), sorted_standby_workers.end(), 
+            [&](Person * a, Person * b) {
+            return a->get_busyness() < b->get_busyness();
             });
 
     int workers_left = predict_workers_needed(draft_plan->order);
-    for (int i = 0; i < workers.size() && workers_left > 0; i++) {
-        draft_plan->workers.push_back(workers[i]);
+    for (Person * worker : standby_workers) {
+        if (workers_left == 0) return;
+        draft_plan->workers.push_back(worker);
         workers_left--;
     }
-    for (int i = 0; i < society->get_unemployed_people().size() && workers_left > 0; i++) {
-        draft_plan->workers.push_back(society->get_unemployed_people()[i]);
+    for (Person * unemployed_person : society->get_unemployed_people()) {
+        if (workers_left == 0) return;
+        draft_plan->workers.push_back(unemployed_person);
         workers_left--;
     }
-}
-
-void Firm::onboard_worker(Person * worker) {
-    busyness[worker] = 0.0;
-    onboard_time[worker] = Sim::get_current_time_step();
-}
-
-void Firm::record_busyness(Person * worker, bool busy) {
-    double duration_proportion = 1.0 / DEALLOCATION_SAFETY_DURATION;
-    busyness[worker] = busyness[worker] * (1 - duration_proportion) + 
-        busy * duration_proportion;
-}
-
-void Firm::deallocate_workers() {
-    for (int i = (int) workers.size() - 1; i >= 0; i--) {
-        Person * worker = workers[i];
-        record_busyness(worker, false);
-        if (busyness[worker] < BUSYNESS_DEALLOCATION_THRESHOLD &&
-            Sim::get_current_time_step() - onboard_time[worker] > DEALLOCATION_SAFETY_DURATION) {
-            Society::get_instance()->get_unemployed_people().push_back(worker);
-            busyness.erase(worker);
-            onboard_time.erase(worker);
-            workers.erase(workers.begin() + i);
+    for (Producer * producer : society->get_producers()) {
+        if (workers_left == 0) return;
+        if (producer == this) continue;
+        std::vector<Person *> transfers = producer->propose_transfer(workers_left);
+        for (Person * transfer : transfers) {
+            draft_plan->workers.push_back(transfer);
         }
+        workers_left -= transfers.size();
     }
 }
 
@@ -337,6 +353,18 @@ double Firm::get_demand(Product * product) {
     int window_length = std::max(FIRM_DEMAND_WINDOW_MIN, 
         Sim::get_current_time_step() - window_start);
     return (double) total_demands[product] / window_length;
+}
+
+void Firm::move_worker_off_standby(Person * worker) {
+    if (worker->get_firm() == nullptr) {
+        society->get_unemployed_people().erase(worker);
+    } else if (worker->get_firm() == this) {
+        standby_workers.erase(worker);
+    } else {
+        worker->get_firm()->finalize_transfer(worker);
+    }
+    worker->set_firm(this);
+    workers.insert(worker);
 }
 
 void Firm::log_shipment_received(std::string product_name, int quantity) {

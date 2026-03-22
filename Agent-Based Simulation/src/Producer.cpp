@@ -93,21 +93,8 @@ bool Producer::pursue_order(Order * order) {
         add_demand_signal(input.first, input.second * order->quantity);
     }
 	// remove all workers from their current pools
-    Society * society = Society::get_instance();
 	for (Person * worker : draft_plan->workers) {
-		auto it = std::find(workers.begin(), workers.end(), worker);
-		if (it != workers.end()) {
-			workers.erase(it);
-		}
-		it = std::find(
-                society->get_unemployed_people().begin(),
-                society->get_unemployed_people().end(),
-                worker
-                );
-		if (it != society->get_unemployed_people().end()) {
-			society->get_unemployed_people().erase(it);
-            onboard_worker(worker);
-		}
+        move_worker_off_standby(worker);
 	}
 	// move draft_plan to plans_in_progress
 	order_to_draft_plan[order] = nullptr;
@@ -149,7 +136,7 @@ void Producer::move_plan_forward_one_step(Plan * plan) {
 	//pay workers
 	for (Person * worker : plan->workers) {
 		worker->register_hours_worked(1);
-        record_busyness(worker, true);
+        worker->register_busyness();
 	}
     plan->labor_hours_remaining -= labor_hours_done;
     plan->raw_materials_remaining -= raw_materials_used;
@@ -200,7 +187,7 @@ void Producer::end_plan(Plan * plan) {
     PriceController::get_instance()->update_price(plan);
     
     for (Person * worker : plan->workers) {
-        workers.push_back(worker);
+        standby_workers.insert(worker);
     }
 }
 
