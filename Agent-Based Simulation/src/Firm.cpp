@@ -48,7 +48,6 @@ unsigned int Firm::get_id() {
 
 void Firm::on_time_step() {
     apply_demand_window();
-    check_and_reorder_inputs();
 }
 
 int Firm::get_inventory(Product * product) {
@@ -78,6 +77,10 @@ void Firm::receive_shipment(Plan * plan) {
     log_shipment_received(order->product->product_name, order->quantity);
     log_inventory_level(order->product->product_name, input_inventory[order->product]);
 
+}
+
+void Firm::remove_input_from_inventory(Product * product, int quantity) {
+    input_inventory[product] -= quantity;
 }
 
 void Firm::receive_payment(Plan * plan, int transaction_amount) {
