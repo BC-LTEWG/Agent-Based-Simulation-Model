@@ -201,11 +201,11 @@ void Firm::assign_workers(
             });
 
     int workers_left = predict_workers_needed(draft_plan->order);
-    for (int i = 0; i < workers.size() && workers_left > 0; i++) {
+    for (unsigned int i = 0; i < workers.size() && workers_left > 0; ++i) {
         draft_plan->workers.push_back(workers[i]);
         workers_left--;
     }
-    for (int i = 0; i < society->get_unemployed_people().size() && workers_left > 0; i++) {
+    for (unsigned int i = 0; i < society->get_unemployed_people().size() && workers_left > 0; i++) {
         draft_plan->workers.push_back(society->get_unemployed_people()[i]);
         workers_left--;
     }
