@@ -154,7 +154,7 @@ double get_max_eigenvalue(Eigen::MatrixXd& io_matrix) {
     Eigen::EigenSolver<Eigen::MatrixXd> eigen_solver(io_matrix, false);
     Eigen::VectorXcd eigenvalues = eigen_solver.eigenvalues();
     double max_eigenvalue = 0.0;
-    for (size_t i = 0; i < eigenvalues.size(); ++i) {
+    for (size_t i = 0; i < static_cast<unsigned long>(eigenvalues.size()); ++i) {
         if (eigenvalues(i).real() > max_eigenvalue &&
                 !eigenvalues(i).imag()) {
             max_eigenvalue = eigenvalues(i).real();

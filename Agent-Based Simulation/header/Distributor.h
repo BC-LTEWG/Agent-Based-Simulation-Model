@@ -25,7 +25,6 @@ class Distributor : public Firm {
     int get_inventory(Product * product) override;
     
   private:
-    int get_pending_input_inventory(Product * product);
     std::unordered_set<Product *> get_products_to_reorder() override;
     std::unordered_map<Product *, int> input_inventory;
     std::unordered_map<Product *, Plan *> product_to_plan;
