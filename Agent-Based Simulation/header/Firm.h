@@ -97,7 +97,7 @@ class Firm : public Agent {
     bool remove_input_inventory(Product * product, int quantity);
     void add_input_inventory(Product * product, int quantity);
     double get_reorder_threshold(Product * product);
-    virtual int get_pending_input_inventory(Product * product);
+    int get_pending_input_inventory(Product * product);
     void reorder_input_product_to_threshold(
         Product * product, 
         double threshold,
