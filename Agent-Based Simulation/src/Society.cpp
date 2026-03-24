@@ -271,10 +271,12 @@ int Society::get_current_work_days_weekly() {
 
 void Society::set_initial_account() {
     initial_account = 0.0;
-    for (Product * product : products) {
-        ConsumerGood * consumer_good = get_consumer_good(product);
+    for (Product * good : goods) {
+        ConsumerGood * consumer_good = get_consumer_good(good);
         if (!consumer_good) {
-            std::cerr << "consumer good DNE" << std::endl;
+            std::cerr << "consumer good does not exist: "
+                << good->product_name << std::endl;
+            exit(EXIT_FAILURE);
         }
         initial_account += consumer_good->price_per_unit *
             consumer_good->mean_consumption_frequency;
