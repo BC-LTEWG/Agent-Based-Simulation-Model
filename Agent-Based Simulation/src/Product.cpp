@@ -33,8 +33,9 @@ Product::Product(int id, const std::string& name) :
 }
 
 void Product::set_inputs(std::vector<Product *>& goods) {
-    int max_num_inputs = PRODUCT_NUM_INPUTS_MAX ? PRODUCT_NUM_INPUTS_MAX :
-        goods.size(); 
+    int max_num_inputs =
+        std::max<int>(PRODUCT_NUM_INPUTS_MAX, PRODUCT_NUM_INPUTS_MAX);
+    max_num_inputs = std::min<int>(max_num_inputs, goods.size());
     static std::uniform_int_distribution<>
         num_inputs_dist(PRODUCT_NUM_INPUTS_MIN, max_num_inputs);
     const std::size_t num_inputs = num_inputs_dist(Sim::get_random_generator());
