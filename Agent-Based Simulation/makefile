@@ -9,7 +9,7 @@ GRAPH_DIR = ${DOCS_DIR}/graphs
 TEST_SRCS = $(wildcard ${TEST_DIR}/*.cpp)
 TEST_EXECS = $(patsubst %.cpp, %.test, ${TEST_SRCS})
 APP = ${BIN_DIR}/sim
-FLAGS = -Wall -Iheader -std=c++17 -g
+FLAGS = -Wall -Wsign-compare -Iheader -std=c++17 -g
 PLOT_SRC = ${GRAPH_DIR}/plot_producer_distributor_transactions.cpp
 PLOT_APP = ${BIN_DIR}/plot_producer_distributor_transactions
 MATPLOT_INCLUDE ?= ${HOME}/.local/include

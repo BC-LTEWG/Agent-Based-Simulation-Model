@@ -89,14 +89,6 @@ bool Distributor::try_sell_goods(Product& product, int quantity, Person * person
     return true;
 }
 
-int Distributor::get_pending_input_inventory(Product * product) {
-    int pending_inventory = input_inventory[product];
-    for (Order * order : product_to_outbound_orders[product]) {
-        pending_inventory += order->quantity;
-    }
-    return pending_inventory;
-}
-
 std::unordered_set<Product *> Distributor::get_products_to_reorder() {
     return catalog;
 }
