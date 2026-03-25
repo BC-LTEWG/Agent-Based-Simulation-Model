@@ -4,14 +4,14 @@
 
 const unsigned int NUM_SIM_RUNS = 10;
 
-const int DAY = 24;
-const int WEEK = DAY * 7;
-const int MONTH = DAY * 30;
-const int YEAR = DAY * 365;
+const unsigned int DAY = 24;
+const unsigned int WEEK = DAY * 7;
+const unsigned int MONTH = DAY * 30;
+const unsigned int YEAR = DAY * 365;
 
-const int INITIAL_WORK_HOURS_DAILY = 8;
-const int INITIAL_WORK_DAYS_WEEKLY = 5;
-const int INITIAL_WORK_WEEK = INITIAL_WORK_HOURS_DAILY * \
+const unsigned int INITIAL_WORK_HOURS_DAILY = 8;
+const unsigned int INITIAL_WORK_DAYS_WEEKLY = 5;
+const unsigned int INITIAL_WORK_WEEK = INITIAL_WORK_HOURS_DAILY * \
                               INITIAL_WORK_DAYS_WEEKLY;
 const double INITIAL_ACCOUNT_MULT = 1000;
 const int WORK_HOURS_UPDATE_START = YEAR;
@@ -35,8 +35,8 @@ const double AVERAGE_RETIREMENT_AGE = (
 const int PRODUCT_ABILITY_COUNT_MAX = 1;
 const int PRODUCT_ORDER_SIZE_MIN = 1;
 const int PRODUCT_ORDER_SIZE_MAX = 10;
-const int PRODUCT_NUM_INPUTS_MIN = 0;
-const int PRODUCT_NUM_INPUTS_MAX = STARTING_NUM_PRODUCTS / 10;
+const int PRODUCT_NUM_INPUTS_MIN = 1;
+const int PRODUCT_NUM_INPUTS_MAX = STARTING_NUM_PRODUCTS / 2;
 const double PRODUCT_INPUT_PER_UNIT_MIN = 0.1;
 const double PRODUCT_INPUT_PER_UNIT_MAX = 0.25;
 const double PRODUCT_INPUT_EPSILON = 0.0001;

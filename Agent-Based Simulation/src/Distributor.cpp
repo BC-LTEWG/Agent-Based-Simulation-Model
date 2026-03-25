@@ -14,9 +14,11 @@
 
 Distributor::Distributor(
         Society * society,
-        std::unordered_set<Product *> initial_catalog
+        const std::unordered_set<Product *>& initial_catalog,
+        const std::unordered_map<Product *, int>& initial_input_inventory
         ) :
-    Firm(society, initial_catalog)
+    Firm(society, initial_catalog, {}),
+    input_inventory(initial_input_inventory)
 {
     for (Product * product : get_products_to_reorder()) {
         society->add_consumer_good(product);
@@ -29,7 +31,7 @@ Distributor::Distributor(
         plan->order = order;
         plan->firm = this;
         plan->labor_hours = DISTRIBUTION_LABOR_PER_UNIT * quantity;
-        plan->raw_materials_remaining = plan->raw_materials = 0.0;
+        plan->raw_materials_remaining = plan->raw_materials = pooled_input_value_account += product->price_per_unit * quantity;
         plan->total_hours_remaining = plan->total_hours =
             plan->labor_hours + plan->raw_materials;
         plan->prd = -(plan->total_hours);
@@ -37,7 +39,7 @@ Distributor::Distributor(
         plan->machinery_cost = 0.0;
         plans_in_progress.push_back(plan);
         product_to_plan[product] = plan;
-        inventory[product] = quantity;
+        input_inventory[product] = quantity;
     }
 }
 
@@ -53,6 +55,14 @@ void Distributor::on_time_step() {
     log_catalog_size(catalog.size());
 }
 
+int Distributor::get_inventory(Product * product) {
+    auto it = input_inventory.find(product);
+    if (it == input_inventory.end()) {
+        return 0;
+    }
+    return it->second;
+}
+
 bool Distributor::try_sell_goods(Product& product, int quantity, Person * person) {
     ConsumerGood * consumer_good = society->get_consumer_good(&product);
     if (!consumer_good) {
@@ -60,7 +70,7 @@ bool Distributor::try_sell_goods(Product& product, int quantity, Person * person
         return false;
     }
     add_demand_signal(&product, quantity);
-    int available = catalog.count(&product) ? inventory[&product] : 0;
+    int available = catalog.count(&product) ? input_inventory[&product] : 0;
     if (available < quantity) {
         log_shortfall(product.product_name, quantity - available);
         return false;
@@ -75,7 +85,7 @@ bool Distributor::try_sell_goods(Product& product, int quantity, Person * person
     Plan * plan = product_to_plan[&product];
     plan->outgoing_units_consumed += quantity;
     plan->prd += cost;
-    inventory[&product] -= quantity;
+    input_inventory[&product] -= quantity;
     return true;
 }
 
@@ -84,7 +94,7 @@ std::unordered_set<Product *> Distributor::get_products_to_reorder() {
 }
 
 void Distributor::check_expand_catalog() {
-    for (Product * product : get_products_to_reorder()) {
+    for (Product * product : society->get_goods()) {
         if (get_demand(product) > EXPAND_CATALOG_DEMAND_THRESHOLD && !catalog.count(product)) {
             catalog.insert(product);
         }

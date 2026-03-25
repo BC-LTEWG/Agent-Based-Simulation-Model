@@ -4,10 +4,17 @@ BUILD_DIR = build
 TEST_DIR = test
 DATA_DIR = data
 BIN_DIR = bin
+DOCS_DIR = docs
+GRAPH_DIR = ${DOCS_DIR}/graphs
 TEST_SRCS = $(wildcard ${TEST_DIR}/*.cpp)
 TEST_EXECS = $(patsubst %.cpp, %.test, ${TEST_SRCS})
 APP = ${BIN_DIR}/sim
-FLAGS = -Wall -Iheader -std=c++17 -g
+FLAGS = -Wall -Wsign-compare -Iheader -std=c++17 -g
+PLOT_SRC = ${GRAPH_DIR}/plot_producer_distributor_transactions.cpp
+PLOT_APP = ${BIN_DIR}/plot_producer_distributor_transactions
+MATPLOT_INCLUDE ?= ${HOME}/.local/include
+MATPLOT_LIB ?= ${HOME}/.local/lib
+PLOT_FLAGS = -std=c++17 -I${MATPLOT_INCLUDE} -L${MATPLOT_LIB} -Wl,-rpath,${MATPLOT_LIB} -lmatplot
 
 ${APP} : ${BUILD_DIR}/Product.o \
 	${BUILD_DIR}/Machine.o \
@@ -67,6 +74,19 @@ tests: ${TEST_EXECS}
 
 test/%.test: test/%.cpp ${TEST_DEPS}
 	g++ ${FLAGS} $^ -o $@
+
+.PHONY: trace plot-tool graphs
+
+trace: ${APP}
+	./${APP} > trace.txt
+
+plot-tool: ${PLOT_SRC}
+	mkdir -p ${BIN_DIR}
+	g++ ${PLOT_SRC} ${PLOT_FLAGS} -o ${PLOT_APP}
+
+graphs: trace plot-tool
+	mkdir -p ${GRAPH_DIR}
+	./${PLOT_APP} trace.txt ${GRAPH_DIR}
 
 
 clean:

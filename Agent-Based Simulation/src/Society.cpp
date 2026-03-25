@@ -30,15 +30,33 @@ Society::Society() {
         Logger::get_instance()->log(Logger::SOCIETY, "price", product->id, product->price_per_unit); 
         Logger::get_instance()->log(Logger::SOCIETY, "order_size", product->id, product->order_size);
     }
+    static std::uniform_int_distribution<> initial_inventory_dist(
+        PRODUCT_ORDER_SIZE_MIN, PRODUCT_ORDER_SIZE_MAX);
     for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
-        Producer * producer = new Producer(this, {goods[i %
-                STARTING_NUM_PRODUCTS]});
+        Product * product = products[i % STARTING_NUM_PRODUCTS];
+        int initial_quantity = initial_inventory_dist(Sim::get_random_generator());
+        std::unordered_map<Product *, int> initial_input_inventory = {
+            {product, initial_quantity}
+        };
+        Producer * producer = new Producer(
+            this,
+            {product},
+            initial_input_inventory
+        );
         producers.push_back(producer);
         firms.push_back(producer);
     }
     for (int i = 0; i < STARTING_NUM_DISTRIBUTORS; i++) {
-        Distributor * distributor =
-            new Distributor(this, {goods[i % STARTING_NUM_PRODUCTS]});
+        Product * product = goods[i % STARTING_NUM_PRODUCTS];
+        int initial_quantity = initial_inventory_dist(Sim::get_random_generator());
+        std::unordered_map<Product *, int> initial_output_inventory = {
+            {product, initial_quantity}
+        };
+        Distributor * distributor = new Distributor(
+            this,
+            {product},
+            initial_output_inventory
+        );
         distributors.push_back(distributor);
         firms.push_back(distributor);
     }
@@ -139,7 +157,7 @@ double get_max_eigenvalue(Eigen::MatrixXd& io_matrix) {
     Eigen::EigenSolver<Eigen::MatrixXd> eigen_solver(io_matrix, false);
     Eigen::VectorXcd eigenvalues = eigen_solver.eigenvalues();
     double max_eigenvalue = 0.0;
-    for (size_t i = 0; i < eigenvalues.size(); ++i) {
+    for (size_t i = 0; i < static_cast<unsigned long>(eigenvalues.size()); ++i) {
         if (eigenvalues(i).real() > max_eigenvalue &&
                 !eigenvalues(i).imag()) {
             max_eigenvalue = eigenvalues(i).real();
@@ -258,16 +276,18 @@ unsigned int Society::get_current_work_hours_daily() {
     return current_work_hours_daily;
 }
 
-int Society::get_current_work_days_weekly() {
+unsigned int Society::get_current_work_days_weekly() {
 	return current_work_days_weekly;
 }
 
 void Society::set_initial_account() {
     initial_account = 0.0;
-    for (Product * product : products) {
-        ConsumerGood * consumer_good = get_consumer_good(product);
+    for (Product * good : goods) {
+        ConsumerGood * consumer_good = get_consumer_good(good);
         if (!consumer_good) {
-            std::cerr << "consumer good DNE" << std::endl;
+            std::cerr << "consumer good does not exist: "
+                << good->product_name << std::endl;
+            exit(EXIT_FAILURE);
         }
         initial_account += consumer_good->price_per_unit *
             consumer_good->mean_consumption_frequency;
@@ -286,6 +306,7 @@ std::unordered_map<Product *, double>& Society::get_initial_production() {
 void Society::update_work_hours_daily() {
     current_work_hours_daily = std::ceil(get_busyness() * INEFFICIENCY_OF_WORK * 
             WEEK / INITIAL_WORK_DAYS_WEEKLY);
+    current_work_hours_daily = std::min(DAY, current_work_hours_daily);
 }
 
 Person * Society::birth_person() {
