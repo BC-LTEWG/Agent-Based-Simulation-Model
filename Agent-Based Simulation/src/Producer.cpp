@@ -57,6 +57,7 @@ int Producer::draft_plan(Order * order) {
 	Plan * draft_plan = new Plan{};
 	draft_plan->order = order;
 	draft_plan->firm = this;
+    draft_plan->local_work_hours_daily = Society::get_instance()->get_current_work_hours_daily();
 	draft_optimal_plan(draft_plan, order->product->required_abilities);
 
     if (draft_plan->workers.empty()) {
@@ -202,7 +203,7 @@ void Producer::move_plans_forward_one_step() {
 			start_plan(plan);
 		}
         if (plan->order->status == Order::ORDER_IN_PROGRESS &&
-			Sim::get_current_time_step() % DAY < Society::get_instance()->get_current_work_hours_daily() && 
+			Sim::get_current_time_step() % DAY < plan->local_work_hours_daily && 
 			Sim::get_current_time_step() / DAY % 7 < Society::get_instance()->get_current_work_days_weekly()) {
 			move_plan_forward_one_step(plan);
 		}

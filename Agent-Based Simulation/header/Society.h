@@ -48,6 +48,8 @@ class Society : public Agent {
                 );
         void adjust_io_matrix(Eigen::MatrixXd&, double max_eigenvalue);
         void set_initial_account();
+        void update_work_hours_daily();
+
         std::vector<Person *> people;
         std::vector<Product *> goods;
         std::vector<Machine *> machines;

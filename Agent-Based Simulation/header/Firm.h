@@ -21,6 +21,7 @@ struct Plan {
 	Order * order;
     Firm * firm;
 	std::vector<Person*> workers;
+    int local_work_hours_daily;
 
 	// dependent/output fields	
 	int predicted_turnaround_time;
@@ -99,12 +100,12 @@ class Firm : public Agent {
     );
     void check_and_reorder();
 
-	int predict_workers_needed(Order * order);
+	int predict_workers_needed(Plan * plan);
     void assign_workers(
         Plan * draft_plan,
         std::vector<Person::Ability>& required_abilities
     );
-	int predict_turnaround_time(Order * order, std::vector<Person*>& workers); 
+	int predict_turnaround_time(Plan * plan, std::vector<Person*>& workers); 
 	int predict_labor_hours(Order * order, std::vector<Person*>& workers);
 	void assign_plan_dependent_fields(Plan * draft_plan, std::vector<Person::Ability>& required_abilities);
 	void draft_optimal_plan(Plan * draft_plan, std::vector<Person::Ability>& required_abilities);

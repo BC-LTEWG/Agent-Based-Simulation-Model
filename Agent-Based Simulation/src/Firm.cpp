@@ -149,11 +149,6 @@ Producer * Firm::send_order(Order * order) {
             break;
         }
     }
-    for (Producer * producer : rejecting_primary_producers) {
-        ;//producer->add_demand_signal(order->product,
-        ;//        order->quantity * REJECTED_ORDER_DEMAND_EXCESS / 
-        ;//        rejecting_primary_producers.size());
-    }
     if (chosen_producer) {
         chosen_producer->pursue_order(order);
         product_to_outbound_orders[order->product].insert(order);
@@ -215,13 +210,14 @@ void Firm::check_and_reorder() {
     }
 }
 
-int Firm::predict_workers_needed(Order * order) {
+int Firm::predict_workers_needed(Plan * plan) {
     return std::ceil(
-            order->quantity *
-            order->product->global_living_labor_per_unit *
-            DAY /
-            society->get_current_work_hours_daily() /
-            order->requested_turnaround_time
+            plan->order->quantity *
+            plan->order->product->global_living_labor_per_unit *
+            WEEK /
+            INITIAL_WORK_DAYS_WEEKLY / 
+            plan->local_work_hours_daily /
+            plan->order->requested_turnaround_time
             );
 }
 
@@ -236,7 +232,7 @@ void Firm::assign_workers(
             return a->get_busyness() < b->get_busyness();
             });
 
-    int workers_left = predict_workers_needed(draft_plan->order);
+    int workers_left = predict_workers_needed(draft_plan);
     for (Person * worker : standby_workers) {
         if (workers_left == 0) return;
         draft_plan->workers.push_back(worker);
@@ -258,12 +254,13 @@ void Firm::assign_workers(
     }
 }
 
-int Firm::predict_turnaround_time(Order * order, std::vector<Person *>& workers) {
+int Firm::predict_turnaround_time(Plan * plan, std::vector<Person *>& workers) {
     return std::ceil(
-            order->quantity *
-            recorded_living_labor_per_unit[order->product] *
-            DAY /
-            society->get_current_work_hours_daily() / 
+            plan->order->quantity *
+            recorded_living_labor_per_unit[plan->order->product] *
+            WEEK /
+            INITIAL_WORK_DAYS_WEEKLY / 
+            plan->local_work_hours_daily /
             workers.size()
             );
 }
@@ -281,7 +278,7 @@ void Firm::assign_plan_dependent_fields(
         std::vector<Person::Ability>& required_abilities
         ) {
     draft_plan->predicted_turnaround_time =
-        predict_turnaround_time(draft_plan->order, draft_plan->workers);
+        predict_turnaround_time(draft_plan, draft_plan->workers);
     draft_plan->labor_hours = 
         draft_plan->labor_hours_remaining =
         predict_labor_hours(draft_plan->order, draft_plan->workers); 

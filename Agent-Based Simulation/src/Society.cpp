@@ -69,6 +69,10 @@ void Society::on_time_step() {
     for (Firm * firm : firms) {
         firm->on_time_step();
     }
+    if (Sim::get_current_time_step() >= WORK_HOURS_UPDATE_START &&
+            Sim::get_current_time_step() % WORK_HOURS_UPDATE_PERIOD == 0) {
+        update_work_hours_daily();
+    }
 }
 
 void Society::set_initial_products() {
@@ -277,6 +281,11 @@ int Society::get_initial_account() {
 
 std::unordered_map<Product *, double>& Society::get_initial_production() {
     return initial_production;
+}
+
+void Society::update_work_hours_daily() {
+    current_work_hours_daily = std::ceil(get_busyness() * INEFFICIENCY_OF_WORK * 
+            WEEK / INITIAL_WORK_DAYS_WEEKLY);
 }
 
 Person * Society::birth_person() {
