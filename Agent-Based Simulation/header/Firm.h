@@ -95,13 +95,13 @@ class Firm : public Agent {
 
     Producer * send_order(Order * order);
     Producer * select_fastest_supplier_for_order(Order * order);
-    void pursue_order_with_selected_supplier(
+    void pursue_order_with_chosen_producer(
         Order * order,
         Producer * chosen_producer
     );
-    void drop_order_from_unselected_suppliers(
+    void drop_order_from_unchosen_producer(
         Order * order,
-        Producer * chosen_producer
+        Producer * unchosen_producer
     );
     bool remove_input_inventory(Product * product, int quantity);
     void add_input_inventory(Product * product, int quantity);
@@ -123,8 +123,7 @@ class Firm : public Agent {
 	int predict_labor_hours(Order * order, std::vector<Person*>& workers);
     int calculate_raw_material_cost_for_order(Order * order);
     void initialize_plan_progress_metrics(
-        Plan * draft_plan,
-        int raw_material_cost
+        Plan * draft_plan
     );
 	void assign_plan_dependent_fields(Plan * draft_plan, std::vector<Person::Ability>& required_abilities);
 	void draft_optimal_plan(Plan * draft_plan, std::vector<Person::Ability>& required_abilities);

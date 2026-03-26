@@ -48,7 +48,6 @@ unsigned int Firm::get_id() {
 
 void Firm::on_time_step() {
     apply_demand_window();
-    check_and_reorder_inputs();
 }
 
 int Firm::get_inventory(Product * product) {
@@ -101,9 +100,9 @@ void Firm::add_input_inventory(Product * product, int quantity) {
 Producer * Firm::send_order(Order * order) {
     Producer * chosen_producer = select_fastest_supplier_for_order(order);
     if (chosen_producer) {
-        pursue_order_with_selected_supplier(order, chosen_producer);
+        pursue_order_with_chosen_producer(order, chosen_producer);
     }
-    drop_order_from_unselected_suppliers(order, chosen_producer);
+    drop_order_from_unchosen_producer(order, chosen_producer);
     return chosen_producer;
 }
 
@@ -122,7 +121,7 @@ Producer * Firm::select_fastest_supplier_for_order(Order * order) {
     return chosen_producer;
 }
 
-void Firm::pursue_order_with_selected_supplier(
+void Firm::pursue_order_with_chosen_producer(
         Order * order,
         Producer * chosen_producer
         ) {
@@ -132,12 +131,12 @@ void Firm::pursue_order_with_selected_supplier(
     product_to_outbound_orders[order->product].insert(order);
 }
 
-void Firm::drop_order_from_unselected_suppliers(
+void Firm::drop_order_from_unchosen_producer(
         Order * order,
-        Producer * chosen_producer
+        Producer * unchosen_producer
         ) {
     for (Producer * producer : suppliers) {
-        if (producer != chosen_producer) {
+        if (producer != unchosen_producer) {
             producer->drop_order(order);
         }
     }
@@ -260,9 +259,9 @@ int Firm::calculate_raw_material_cost_for_order(Order * order) {
 }
 
 void Firm::initialize_plan_progress_metrics(
-        Plan * draft_plan,
-        int raw_material_cost
+        Plan * draft_plan
         ) {
+    int raw_material_cost = calculate_raw_material_cost_for_order(draft_plan->order);
     draft_plan->raw_materials =
         draft_plan->raw_materials_remaining = raw_material_cost;
     draft_plan->total_hours =
@@ -283,7 +282,7 @@ void Firm::assign_plan_dependent_fields(
         predict_labor_hours(draft_plan->order, draft_plan->workers); 
     int raw_material_cost =
         calculate_raw_material_cost_for_order(draft_plan->order);
-    initialize_plan_progress_metrics(draft_plan, raw_material_cost);
+    initialize_plan_progress_metrics(draft_plan);
 }
 
 void Firm::draft_optimal_plan(
