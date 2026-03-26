@@ -146,7 +146,8 @@ void Producer::start_plan(Plan * plan) {
         int required_input = static_cast<int>(
             std::ceil(input.second * plan->order->quantity)
             );
-	remove_input_inventory(input.first, required_input);
+	    remove_input_inventory(input.first, required_input);
+        check_and_reorder_inputs();
 	}
     pooled_input_value_account += plan->raw_materials;
     plan->raw_materials = 0;
@@ -232,7 +233,6 @@ void Producer::apply_plan_progress_after_work_step(
         0.0,
         pooled_input_value_account - raw_materials_used
     );
-    check_and_reorder_inputs();
     plan->total_hours_remaining =
         plan->labor_hours_remaining + plan->raw_materials_remaining;
     plan->quantity_remaining -= quantity_produced;
@@ -245,10 +245,6 @@ bool Producer::is_within_work_schedule() const {
         static_cast<unsigned int>(
             Society::get_instance()->get_current_work_days_weekly()
         );
-}
-
-bool Producer::is_plan_finished(const Plan * plan) const {
-    return plan->quantity_remaining <= 0;
 }
 
 void Producer::move_plans_forward_one_step() {
@@ -265,7 +261,7 @@ void Producer::move_plans_forward_one_step() {
 			is_within_work_schedule()) {
 			move_plan_forward_one_step(plan);
 		}
-		if (is_plan_finished(plan)) {
+		if (plan->quantity_remaining <= 0) {
 			end_plan(plan);
 			iter = plans_in_progress.erase(iter);
 			--iter; 

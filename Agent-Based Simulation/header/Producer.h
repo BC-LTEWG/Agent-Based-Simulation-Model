@@ -47,7 +47,6 @@ class Producer : public Firm {
         double quantity_produced
     );
     bool is_within_work_schedule() const;
-    bool is_plan_finished(const Plan * plan) const;
 
 	void start_plan(Plan * plan);
 	void move_plan_forward_one_step(Plan * plan);
