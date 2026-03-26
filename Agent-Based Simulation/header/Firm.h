@@ -103,6 +103,7 @@ class Firm : public Agent {
         int pending_inventory
     );
     void check_and_reorder_inputs();
+    void check_and_reorder_input(Product * product);
 
 	int predict_workers_needed(Order * order);
     void assign_workers(

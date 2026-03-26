@@ -93,10 +93,6 @@ bool Firm::remove_input_from_inventory(Product * product, int quantity) {
     return true;
 }
 
-void Firm::add_input_inventory(Product * product, int quantity) {
-    input_inventory[product] += quantity;
-}
-
 Producer * Firm::send_order(Order * order) {
     int order_time = INT_MAX;
     Producer * chosen_producer = nullptr;
@@ -172,14 +168,17 @@ void Firm::reorder_input_product_to_threshold(
 
 void Firm::check_and_reorder_inputs() {
     for (std::pair<Product *, int> stockpile : input_inventory) {
-        Product * input_product = stockpile.first;
+        check_and_reorder_input(stockpile.first);
     }
 }
-        double threshold = get_reorder_threshold(input_product);
-        int pending_inventory = get_pending_input_inventory(input_product);
-        if (pending_inventory < threshold) {
-            reorder_input_product_to_threshold(input_product, threshold, pending_inventory);
-        }
+
+void Firm::check_and_reorder_input(Product * product) {
+    double threshold = get_reorder_threshold(product);
+    int pending_inventory = get_pending_input_inventory(product);
+    if (pending_inventory < threshold) {
+        reorder_input_product_to_threshold(product, threshold, pending_inventory);
+    }
+}
 
 int Firm::predict_workers_needed(Order * order) {
     return std::ceil(

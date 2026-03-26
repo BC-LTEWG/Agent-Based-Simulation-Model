@@ -122,7 +122,7 @@ void Producer::start_plan(Plan * plan) {
         int required_input = static_cast<int>(
             std::ceil(input.second * plan->order->quantity)
             );
-        remove_input_inventory(input.first, required_input);
+        remove_input_from_inventory(input.first, required_input);
 	}
     pooled_input_value_account += plan->raw_materials;
     plan->raw_materials = 0;
