@@ -48,6 +48,7 @@ unsigned int Firm::get_id() {
 
 void Firm::on_time_step() {
     apply_demand_window();
+    check_and_reorder_inputs();
 }
 
 int Firm::get_inventory(Product * product) {
@@ -84,7 +85,7 @@ void Firm::receive_payment(Plan * plan, int transaction_amount) {
 
 }
 
-bool Firm::remove_input_from_inventory(Product * product, int quantity) {
+bool Firm::remove_input_inventory(Product * product, int quantity) {
     if (input_inventory[product] < quantity) {
         return false;
         std::cerr << "No good to remove from" << std::endl;
@@ -173,13 +174,13 @@ void Firm::reorder_input_product_to_threshold(
 void Firm::check_and_reorder_inputs() {
     for (std::pair<Product *, int> stockpile : input_inventory) {
         Product * input_product = stockpile.first;
-    }
-}
         double threshold = get_reorder_threshold(input_product);
         int pending_inventory = get_pending_input_inventory(input_product);
         if (pending_inventory < threshold) {
             reorder_input_product_to_threshold(input_product, threshold, pending_inventory);
         }
+    }
+}
 
 int Firm::predict_workers_needed(Order * order) {
     return std::ceil(
