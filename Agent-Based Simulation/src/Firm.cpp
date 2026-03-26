@@ -84,17 +84,13 @@ void Firm::receive_payment(Plan * plan, int transaction_amount) {
 
 }
 
-bool Firm::remove_input_inventory(Product * product, int quantity) {
+bool Firm::remove_input_from_inventory(Product * product, int quantity) {
     if (input_inventory[product] < quantity) {
         return false;
         std::cerr << "No good to remove from" << std::endl;
     }
     input_inventory[product] -= quantity;
     return true;
-}
-
-void Firm::add_input_inventory(Product * product, int quantity) {
-    input_inventory[product] += quantity;
 }
 
 Producer * Firm::send_order(Order * order) {
@@ -192,12 +188,15 @@ void Firm::reorder_input_product_to_threshold(
 
 void Firm::check_and_reorder_inputs() {
     for (std::pair<Product *, int> stockpile : input_inventory) {
-        Product * input_product = stockpile.first;
-        double threshold = get_reorder_threshold(input_product);
-        int pending_inventory = get_pending_input_inventory(input_product);
-        if (pending_inventory < threshold) {
-            reorder_input_product_to_threshold(input_product, threshold, pending_inventory);
-        }
+        check_and_reorder_input(stockpile.first);
+    }
+}
+
+void Firm::check_and_reorder_input(Product * product) {
+    double threshold = get_reorder_threshold(product);
+    int pending_inventory = get_pending_input_inventory(product);
+    if (pending_inventory < threshold) {
+        reorder_input_product_to_threshold(product, threshold, pending_inventory);
     }
 }
 

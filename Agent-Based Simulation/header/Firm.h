@@ -103,7 +103,7 @@ class Firm : public Agent {
         Order * order,
         Producer * unchosen_producer
     );
-    bool remove_input_inventory(Product * product, int quantity);
+    bool remove_input_from_inventory(Product * product, int quantity);
     void add_input_inventory(Product * product, int quantity);
     double get_reorder_threshold(Product * product);
     int get_pending_input_inventory(Product * product);
@@ -113,6 +113,7 @@ class Firm : public Agent {
         int pending_inventory
     );
     void check_and_reorder_inputs();
+    void check_and_reorder_input(Product * product);
 
 	int predict_workers_needed(Order * order);
     void assign_workers(

@@ -146,11 +146,11 @@ void Producer::start_plan(Plan * plan) {
         int required_input = static_cast<int>(
             std::ceil(input.second * plan->order->quantity)
             );
-	    remove_input_inventory(input.first, required_input);
-        check_and_reorder_inputs();
+        remove_input_from_inventory(input.first, required_input);
 	}
     pooled_input_value_account += plan->raw_materials;
     plan->raw_materials = 0;
+    check_and_reorder_inputs();
     plan->order->status = Order::ORDER_IN_PROGRESS;
 }
 
@@ -166,13 +166,18 @@ void Producer::move_plan_forward_one_step(Plan * plan) {
         quantity_produced /
         plan->order->quantity;
 
-    register_worked_hour_for_plan_workers(plan);
-    apply_plan_progress_after_work_step(
-        plan,
-        labor_hours_done,
-        raw_materials_used,
-        quantity_produced
-    );
+	//pay workers
+	for (Person * worker : plan->workers) {
+		worker->register_hours_worked(1);
+	}
+    plan->labor_hours_remaining -= labor_hours_done;
+    plan->raw_materials_remaining = std::max(
+            0.0,
+            plan->raw_materials_remaining - raw_materials_used
+            );
+    plan->total_hours_remaining =
+        plan->labor_hours_remaining + plan->raw_materials_remaining;
+    plan->quantity_remaining -= quantity_produced;
 }
 
 double Producer::get_input_products_account() {
@@ -212,31 +217,6 @@ double Producer::calculate_quantity_produced_from_worker_suitability(Plan * plan
     return total_worker_suitability / plan->order->product->living_labor_per_unit;
 }
 
-void Producer::register_worked_hour_for_plan_workers(Plan * plan) {
-    for (Person * worker : plan->workers) {
-        worker->register_hours_worked(1);
-    }
-}
-
-void Producer::apply_plan_progress_after_work_step(
-        Plan * plan,
-        int labor_hours_done,
-        double raw_materials_used,
-        double quantity_produced
-        ) {
-    plan->labor_hours_remaining -= labor_hours_done;
-    plan->raw_materials_remaining = std::max(
-        0.0,
-        plan->raw_materials_remaining - raw_materials_used
-    );
-    pooled_input_value_account = std::max(
-        0.0,
-        pooled_input_value_account - raw_materials_used
-    );
-    plan->total_hours_remaining =
-        plan->labor_hours_remaining + plan->raw_materials_remaining;
-    plan->quantity_remaining -= quantity_produced;
-}
 
 bool Producer::is_within_work_schedule() const {
     return Sim::get_current_time_step() % DAY <
