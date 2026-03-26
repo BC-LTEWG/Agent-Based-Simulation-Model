@@ -126,6 +126,7 @@ void Producer::start_plan(Plan * plan) {
 	}
     pooled_input_value_account += plan->raw_materials;
     plan->raw_materials = 0;
+    check_and_reorder_inputs();
     plan->order->status = Order::ORDER_IN_PROGRESS;
 }
 
@@ -160,11 +161,6 @@ void Producer::move_plan_forward_one_step(Plan * plan) {
             0.0,
             plan->raw_materials_remaining - raw_materials_used
             );
-    pooled_input_value_account = std::max(
-        0.0,
-        pooled_input_value_account - raw_materials_used
-        );
-    check_and_reorder_inputs();
     plan->total_hours_remaining =
         plan->labor_hours_remaining + plan->raw_materials_remaining;
     plan->quantity_remaining -= quantity_produced;

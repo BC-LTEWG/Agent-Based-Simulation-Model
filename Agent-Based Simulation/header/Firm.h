@@ -94,7 +94,7 @@ class Firm : public Agent {
     std::vector<Plan *> plans_in_progress;
 
     Producer * send_order(Order * order);
-    bool remove_input_inventory(Product * product, int quantity);
+    bool remove_input_from_inventory(Product * product, int quantity);
     void add_input_inventory(Product * product, int quantity);
     double get_reorder_threshold(Product * product);
     int get_pending_input_inventory(Product * product);
