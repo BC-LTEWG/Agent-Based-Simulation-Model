@@ -100,7 +100,7 @@ class Firm : public Agent {
     std::vector<Plan *> plans_in_progress;
 
     Producer * send_order(Order * order);
-    bool remove_input_inventory(Product * product, int quantity);
+    bool remove_input_from_inventory(Product * product, int quantity);
     void add_input_inventory(Product * product, int quantity);
     double get_reorder_threshold(Product * product);
     int get_pending_input_inventory(Product * product);
@@ -110,6 +110,7 @@ class Firm : public Agent {
         int pending_inventory
     );
     void check_and_reorder_inputs();
+    void check_and_reorder_input(Product * product);
 
 	int predict_workers_needed(Plan * plan);
     void assign_workers(
