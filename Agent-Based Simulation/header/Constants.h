@@ -4,18 +4,19 @@
 
 const unsigned int NUM_SIM_RUNS = 10;
 
-const int DAY = 24;
-const int WEEK = DAY * 7;
-const int MONTH = DAY * 30;
-const int YEAR = DAY * 365;
+const unsigned int DAY = 24;
+const unsigned int WEEK = DAY * 7;
+const unsigned int MONTH = DAY * 30;
+const unsigned int YEAR = DAY * 365;
 
-// Threshold for productivity before lowering working hours
-const double PRODUCTIVITY_THRESHOLD = 60.0;
-const int INITIAL_WORK_HOURS_DAILY = 8;
-const int INITIAL_WORK_DAYS_WEEKLY = 5;
-const int INITIAL_WORK_WEEK = INITIAL_WORK_HOURS_DAILY * \
+const unsigned int INITIAL_WORK_HOURS_DAILY = 8;
+const unsigned int INITIAL_WORK_DAYS_WEEKLY = 5;
+const unsigned int INITIAL_WORK_WEEK = INITIAL_WORK_HOURS_DAILY * \
                               INITIAL_WORK_DAYS_WEEKLY;
 const double INITIAL_ACCOUNT_MULT = 1000;
+const int WORK_HOURS_UPDATE_START = YEAR;
+const int WORK_HOURS_UPDATE_PERIOD = MONTH;
+const double INEFFICIENCY_OF_WORK = 1.5;
 
 const int STARTING_NUM_PEOPLE = 1000;
 const int STARTING_NUM_PRODUCTS = 100;
@@ -59,6 +60,8 @@ const unsigned int FIRM_DEMAND_WINDOW_MAX = MONTH;
 const double PRODUCER_INITIAL_INVENTORY_MULT = 10;
 const double DISTRIBUTOR_INITIAL_INVENTORY_MULT = 2;
 const double DEADLINE_SAFETY_MULT = 0.6;
+const int BUSYNESS_AVERAGING_WINDOW = WEEK;
+const double TRANSFER_BUSYNESS_THRESHOLD = 0.05;
 
 const int RAW_MATERIAL_THRESHOLD = 50;
 const double RAW_MATERIAL_SURPLUS_FACTOR = 1.5;

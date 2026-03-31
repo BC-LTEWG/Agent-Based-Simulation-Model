@@ -58,6 +58,7 @@ int Producer::draft_plan(Order * order) {
 	Plan * draft_plan = new Plan{};
 	draft_plan->order = order;
 	draft_plan->firm = this;
+    draft_plan->local_work_hours_daily = Society::get_instance()->get_current_work_hours_daily();
 	draft_optimal_plan(draft_plan, order->product->required_abilities);
 
     if (draft_plan->workers.empty()) {
@@ -88,25 +89,14 @@ bool Producer::pursue_order(Order * order) {
 		return false;
 	}
 	Plan * draft_plan = order_to_draft_plan[order];
-
+    catalog.insert(order->product);
     for (std::pair<Product * const, double>& input :
             order->product->inputs_per_unit) {
         add_demand_signal(input.first, input.second * order->quantity);
     }
 	// remove all workers from their current pools
 	for (Person * worker : draft_plan->workers) {
-		auto it = std::find(workers.begin(), workers.end(), worker);
-		if (it != workers.end()) {
-			workers.erase(it);
-		}
-		it = std::find(
-                society->get_unemployed_people().begin(),
-                society->get_unemployed_people().end(),
-                worker
-                );
-		if (it != society->get_unemployed_people().end()) {
-			society->get_unemployed_people().erase(it);
-		}
+        move_worker_off_standby(worker);
 	}
 	// move draft_plan to plans_in_progress
 	order_to_draft_plan[order] = nullptr;
@@ -155,6 +145,7 @@ void Producer::move_plan_forward_one_step(Plan * plan) {
 	//pay workers
 	for (Person * worker : plan->workers) {
 		worker->register_hours_worked(1);
+        worker->register_busyness();
 	}
     plan->labor_hours_remaining -= labor_hours_done;
     plan->raw_materials_remaining = std::max(
@@ -187,7 +178,7 @@ void Producer::end_plan(Plan * plan) {
     PriceController::get_instance()->update_price(plan);
     
     for (Person * worker : plan->workers) {
-        Society::get_instance()->get_unemployed_people().push_back(worker);
+        standby_workers.insert(worker);
     }
 }
 
@@ -202,9 +193,8 @@ void Producer::move_plans_forward_one_step() {
 			start_plan(plan);
 		}
         if (plan->order->status == Order::ORDER_IN_PROGRESS &&
-			Sim::get_current_time_step() % DAY < Society::get_instance()->get_current_work_hours_daily() && 
-			Sim::get_current_time_step() / DAY % 7 <
-                static_cast<unsigned int>(Society::get_instance()->get_current_work_days_weekly())) {
+			Sim::get_current_time_step() % DAY < plan->local_work_hours_daily && 
+			Sim::get_current_time_step() / DAY % 7 < Society::get_instance()->get_current_work_days_weekly()) {
 			move_plan_forward_one_step(plan);
 		}
 		if (plan->quantity_remaining <= 0) {

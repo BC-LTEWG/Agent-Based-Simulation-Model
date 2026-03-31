@@ -22,6 +22,7 @@ struct Plan {
 	Order * order;
     Firm * firm;
 	std::vector<Person*> workers;
+    unsigned int local_work_hours_daily;
 
 	// dependent/output fields	
 	int predicted_turnaround_time;
@@ -71,8 +72,12 @@ class Firm : public Agent {
     double get_avg_productivity();
     virtual int get_inventory(Product * product);
     void add_supplier(Producer * producer);
+    void receive_shipment(Order * order);
     void receive_shipment(Plan * plan);
     void receive_payment(Plan * plan, int transaction_amount);
+    double get_busyness();
+    std::vector<Person *> propose_transfer(int workers_wanted);
+    void finalize_transfer(Person * worker);
 
     void log_input_inventory(Firm * firm, std::string product_name, int quantity);
 
@@ -81,7 +86,8 @@ class Firm : public Agent {
     unsigned int id;
     double pooled_input_value_account = 0.0;
     std::vector<Machine *> machines;
-    std::vector<Person *> workers;
+    std::unordered_set<Person *> workers,
+        standby_workers;
 	
     std::vector<Producer *> suppliers;
     std::unordered_map<Product *, int> input_inventory;
@@ -106,12 +112,12 @@ class Firm : public Agent {
     void check_and_reorder_inputs();
     void check_and_reorder_input(Product * product);
 
-	int predict_workers_needed(Order * order);
+	int predict_workers_needed(Plan * plan);
     void assign_workers(
         Plan * draft_plan,
         std::vector<Person::Ability>& required_abilities
     );
-	int predict_turnaround_time(Order * order, std::vector<Person*>& workers); 
+	int predict_turnaround_time(Plan * plan, std::vector<Person*>& workers); 
 	int predict_labor_hours(Order * order, std::vector<Person*>& workers);
 	void assign_plan_dependent_fields(Plan * draft_plan, std::vector<Person::Ability>& required_abilities);
 	void draft_optimal_plan(Plan * draft_plan, std::vector<Person::Ability>& required_abilities);
@@ -120,6 +126,7 @@ class Firm : public Agent {
     void apply_demand_window();
     double get_demand(Product * product);
     virtual std::unordered_set<Product *> get_products_to_reorder() = 0;
+    void move_worker_off_standby(Person * worker);
 
     void log_shipment_received(std::string product_name, int quantity);
     void log_inventory_level(std::string product_name, int quantity);

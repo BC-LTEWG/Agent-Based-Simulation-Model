@@ -54,6 +54,10 @@ std::unordered_map<Person::Ability, double>& Person::get_abilities() {
     return this->abilities;
 }
 
+double Person::get_busyness() {
+    return busyness;
+}
+
 void Person::train(std::unordered_map<Person::Ability, double> target_abilities) {
     // can introduce < 100% effectiveness on training later
     for (auto &pair : target_abilities) {
@@ -64,6 +68,10 @@ void Person::train(std::unordered_map<Person::Ability, double> target_abilities)
 void Person::register_hours_worked(double hours_worked) {
     log_hours(hours_worked);
     account += hours_worked;
+}
+
+void Person::register_busyness() {
+    busy_this_time_step = true;
 }
 
 bool Person::charge(double cost) {
@@ -160,6 +168,11 @@ void Person::update_health_status() {
 	} 
 }
 
+void Person::update_busyness() {
+    double duration_prop = 1.0 / BUSYNESS_AVERAGING_WINDOW;
+    busyness = busyness * (1 - duration_prop) + busy_this_time_step * duration_prop;
+    busy_this_time_step = false;
+}
 
 void Person::on_time_step() {
 	++age;
@@ -167,11 +180,16 @@ void Person::on_time_step() {
 	if (will_shop()) { shop(); }
 	if (will_retire()) { retire(); }
 	update_health_status();
+    update_busyness();
     log_state();
 }
 
 void Person::set_firm(Firm * workplace) {
     firm = workplace;
+}
+
+Firm * Person::get_firm() {
+    return firm;
 }
 
 double Person::suitability(std::vector<Ability>& required_abilities) {
