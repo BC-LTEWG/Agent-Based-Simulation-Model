@@ -28,11 +28,9 @@ Order::Order(
 
 Firm::Firm(
         Society * society,
-        const std::unordered_set<Product *>& initial_catalog,
-        const std::unordered_map<Product *, int>& initial_input_inventory
+        const std::unordered_set<Product *>& initial_catalog
         ) :
     society{society},
-    input_inventory(initial_input_inventory),
     catalog(initial_catalog)
 {
     static unsigned int unique_id = 0;
@@ -279,8 +277,6 @@ void Firm::assign_plan_dependent_fields(
     draft_plan->labor_hours = 
         draft_plan->labor_hours_remaining =
         predict_labor_hours(draft_plan->order, draft_plan->workers); 
-    int raw_material_cost =
-        calculate_raw_material_cost_for_order(draft_plan->order);
     initialize_plan_progress_metrics(draft_plan);
 }
 
