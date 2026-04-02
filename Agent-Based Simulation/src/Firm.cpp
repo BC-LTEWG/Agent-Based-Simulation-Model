@@ -91,6 +91,34 @@ bool Firm::remove_input_from_inventory(Product * product, int quantity) {
     return true;
 }
 
+double Firm::get_busyness() {
+    double busyness = 0.0;
+    for (Person * worker : workers) {
+        busyness += worker->get_busyness();
+    }
+    return workers.size() > 0 ? busyness / workers.size() : 0.0;
+}
+
+std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
+    if (get_busyness() >= society->get_busyness() - TRANSFER_BUSYNESS_THRESHOLD) {
+        return {};
+    }
+    int max_workers_to_transfer = (int) (workers.size() * (1.0 - get_busyness() / 
+            (society->get_busyness() - TRANSFER_BUSYNESS_THRESHOLD))); 
+    max_workers_to_transfer = std::max(max_workers_to_transfer, workers_wanted);
+    std::vector<Person *> transfers;
+    for (Person * worker : standby_workers) {
+        if (static_cast<int>(transfers.size()) == max_workers_to_transfer) break;
+        transfers.push_back(worker);
+    }
+    return transfers;
+}
+
+void Firm::finalize_transfer(Person * worker) {
+    standby_workers.erase(worker);
+    workers.erase(worker);
+}
+
 Producer * Firm::send_order(Order * order) {
     Producer * chosen_producer = select_fastest_supplier_for_order(order);
     if (chosen_producer) {
@@ -104,10 +132,27 @@ Producer * Firm::select_fastest_supplier_for_order(Order * order) {
     int order_time = INT_MAX;
     Producer * chosen_producer = nullptr;
 
+    std::vector<Producer *> primary_producers, 
+        secondary_producers,
+        rejecting_primary_producers;
     for (Producer * producer : suppliers) {
+        if (producer->can_produce(order->product)) {
+            primary_producers.push_back(producer);
+        } else {
+            secondary_producers.push_back(producer);
+        }
+    }
+    for (Producer * producer : primary_producers) {
         int draft_plan_time = producer->draft_plan(order);
-        if (draft_plan_time != DRAFT_ORDER_REJECTED &&
-                draft_plan_time < order_time) {
+        if (draft_plan_time == DRAFT_ORDER_REJECTED) {
+            producer->drop_order(order);
+            rejecting_primary_producers.push_back(producer);
+            continue;
+        }
+        if (draft_plan_time < order_time) {
+            if (chosen_producer) {
+                chosen_producer->drop_order(order);
+            }
             order_time = draft_plan_time;
             chosen_producer = producer;
         }
@@ -198,13 +243,14 @@ void Firm::check_and_reorder_input(Product * product) {
     }
 }
 
-int Firm::predict_workers_needed(Order * order) {
+int Firm::predict_workers_needed(Plan * plan) {
     return std::ceil(
-            order->quantity *
-            order->product->global_living_labor_per_unit *
-            DAY /
-            society->get_current_work_hours_daily() /
-            order->requested_turnaround_time
+            plan->order->quantity *
+            plan->order->product->global_living_labor_per_unit *
+            WEEK /
+            INITIAL_WORK_DAYS_WEEKLY / 
+            plan->local_work_hours_daily /
+            plan->order->requested_turnaround_time
             );
 }
 
@@ -212,27 +258,42 @@ void Firm::assign_workers(
         Plan * draft_plan,
         std::vector<Person::Ability>& required_abilities
         ) {
-    std::sort(workers.begin(), workers.end(), [&](Person * a, Person * b) {
-            return a->suitability(required_abilities) > b->suitability(required_abilities);
+    std::vector<Person *> sorted_standby_workers(standby_workers.begin(),
+            standby_workers.end());
+    std::sort(sorted_standby_workers.begin(), sorted_standby_workers.end(), 
+            [&](Person * a, Person * b) {
+            return a->get_busyness() < b->get_busyness();
             });
 
-    int workers_left = predict_workers_needed(draft_plan->order);
-    for (unsigned int i = 0; i < workers.size() && workers_left > 0; ++i) {
-        draft_plan->workers.push_back(workers[i]);
+    int workers_left = predict_workers_needed(draft_plan);
+    for (Person * worker : standby_workers) {
+        if (workers_left == 0) return;
+        draft_plan->workers.push_back(worker);
         workers_left--;
     }
-    for (unsigned int i = 0; i < society->get_unemployed_people().size() && workers_left > 0; i++) {
-        draft_plan->workers.push_back(society->get_unemployed_people()[i]);
+    for (Person * unemployed_person : society->get_unemployed_people()) {
+        if (workers_left == 0) return;
+        draft_plan->workers.push_back(unemployed_person);
         workers_left--;
+    }
+    for (Producer * producer : society->get_producers()) {
+        if (workers_left == 0) return;
+        if (producer == this) continue;
+        std::vector<Person *> transfers = producer->propose_transfer(workers_left);
+        for (Person * transfer : transfers) {
+            draft_plan->workers.push_back(transfer);
+        }
+        workers_left -= transfers.size();
     }
 }
 
-int Firm::predict_turnaround_time(Order * order, std::vector<Person *>& workers) {
+int Firm::predict_turnaround_time(Plan * plan, std::vector<Person *>& workers) {
     return std::ceil(
-            order->quantity *
-            recorded_living_labor_per_unit[order->product] *
-            DAY /
-            society->get_current_work_hours_daily() / 
+            plan->order->quantity *
+            recorded_living_labor_per_unit[plan->order->product] *
+            WEEK /
+            INITIAL_WORK_DAYS_WEEKLY / 
+            plan->local_work_hours_daily /
             workers.size()
             );
 }
@@ -273,7 +334,7 @@ void Firm::assign_plan_dependent_fields(
         std::vector<Person::Ability>& required_abilities
         ) {
     draft_plan->predicted_turnaround_time =
-        predict_turnaround_time(draft_plan->order, draft_plan->workers);
+        predict_turnaround_time(draft_plan, draft_plan->workers);
     draft_plan->labor_hours = 
         draft_plan->labor_hours_remaining =
         predict_labor_hours(draft_plan->order, draft_plan->workers); 
@@ -313,6 +374,18 @@ double Firm::get_demand(Product * product) {
     int window_length = std::max(FIRM_DEMAND_WINDOW_MIN, 
         Sim::get_current_time_step() - window_start);
     return (double) total_demands[product] / window_length;
+}
+
+void Firm::move_worker_off_standby(Person * worker) {
+    if (worker->get_firm() == nullptr) {
+        society->get_unemployed_people().erase(worker);
+    } else if (worker->get_firm() == this) {
+        standby_workers.erase(worker);
+    } else {
+        worker->get_firm()->finalize_transfer(worker);
+    }
+    worker->set_firm(this);
+    workers.insert(worker);
 }
 
 void Firm::log_shipment_received(std::string product_name, int quantity) {

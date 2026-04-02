@@ -182,6 +182,7 @@ void Producer::move_plan_forward_one_step(Plan * plan) {
 	//pay workers
 	for (Person * worker : plan->workers) {
 		worker->register_hours_worked(1);
+        worker->register_busyness();
 	}
     plan->labor_hours_remaining -= labor_hours_done;
     plan->raw_materials_remaining = std::max(
@@ -214,7 +215,7 @@ void Producer::end_plan(Plan * plan) {
     PriceController::get_instance()->update_price(plan);
     
     for (Person * worker : plan->workers) {
-        Society::get_instance()->get_unemployed_people().push_back(worker);
+        standby_workers.insert(worker);
     }
 }
 

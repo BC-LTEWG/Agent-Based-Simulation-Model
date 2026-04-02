@@ -5,7 +5,6 @@
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
-#include <unordered_map>
 
 #include "ConsumerGood.h"
 #include "Distributor.h"
@@ -67,6 +66,10 @@ void Society::on_time_step() {
     }
     for (Firm *firm : firms) {
         firm->on_time_step();
+    }
+    if (Sim::get_current_time_step() >= WORK_HOURS_UPDATE_START &&
+            Sim::get_current_time_step() % WORK_HOURS_UPDATE_PERIOD == 0) {
+        update_work_hours_daily();
     }
 }
 
@@ -140,6 +143,14 @@ double get_max_eigenvalue(Eigen::MatrixXd &io_matrix) {
 
 std::vector<Producer *> &Society::get_producers() {
     return producers;
+}
+
+double Society::get_busyness() {
+    double busyness = 0.0;
+    for (Person * person : people) {
+        busyness += person->get_busyness();
+    }
+    return busyness / people.size();
 }
 
 void Society::adjust_io_matrix(
@@ -228,7 +239,7 @@ std::vector<Distributor *> &Society::get_distributors() {
     return distributors;
 }
 
-std::vector<Person *> &Society::get_unemployed_people() {
+std::unordered_set<Person *>& Society::get_unemployed_people() {
     return unemployed_people;
 }
 
@@ -236,8 +247,8 @@ unsigned int Society::get_current_work_hours_daily() {
     return current_work_hours_daily;
 }
 
-int Society::get_current_work_days_weekly() {
-    return current_work_days_weekly;
+unsigned int Society::get_current_work_days_weekly() {
+	return current_work_days_weekly;
 }
 
 void Society::set_initial_account() {
@@ -263,10 +274,16 @@ std::unordered_map<Product *, double> &Society::get_initial_production() {
     return initial_production;
 }
 
-Person *Society::birth_person() {
-    Person *person = new Person(this);
+void Society::update_work_hours_daily() {
+    current_work_hours_daily = std::ceil(get_busyness() * INEFFICIENCY_OF_WORK * 
+            WEEK / INITIAL_WORK_DAYS_WEEKLY);
+    current_work_hours_daily = std::min(DAY, current_work_hours_daily);
+}
+
+Person * Society::birth_person() {
+    Person * person = new Person(this);
     people.push_back(person);
-    unemployed_people.push_back(person);
+    unemployed_people.insert(person);
     return person;
 }
 
