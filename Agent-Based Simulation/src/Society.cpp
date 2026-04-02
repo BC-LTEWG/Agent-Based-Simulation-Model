@@ -34,16 +34,7 @@ Society::Society() {
     static std::uniform_int_distribution<> initial_inventory_dist(
         PRODUCT_ORDER_SIZE_MIN, PRODUCT_ORDER_SIZE_MAX);
     for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
-        Product * product = products[i % STARTING_NUM_PRODUCTS];
-        int initial_quantity = initial_inventory_dist(Sim::get_random_generator());
-        std::unordered_map<Product *, int> initial_input_inventory = {
-            {product, initial_quantity}
-        };
-        Producer * producer = new Producer(
-            this,
-            {product},
-            initial_input_inventory
-        );
+        Producer * producer = new Producer(this, {}, {}); // get_products_to_reorder() gets called since the catalog and inputs are empty
         producers.push_back(producer);
         firms.push_back(producer);
     }
