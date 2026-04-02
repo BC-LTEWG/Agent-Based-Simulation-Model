@@ -126,7 +126,6 @@ class Firm : public Agent {
         Plan * draft_plan
     );
 	void assign_plan_dependent_fields(Plan * draft_plan, std::vector<Person::Ability>& required_abilities);
-	void draft_optimal_plan(Plan * draft_plan, std::vector<Person::Ability>& required_abilities);
 	void train_workers(std::vector<Person *>& workers, std::vector<Person::Ability>& required_abilities);
     void add_demand_signal(Product * product, int quantity);
     void apply_demand_window();

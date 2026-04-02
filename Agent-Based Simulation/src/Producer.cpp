@@ -56,11 +56,25 @@ bool Producer::has_sufficient_inputs_for_order(const Order * order) {
     return true;
 }
 
-Plan * Producer::create_draft_plan_for_order(Order * order) {
+
+Plan * Producer::draft_optimal_plan(
+        Order * order,
+        std::vector<Person::Ability>& required_abilities
+        ) {
+    // try without training first
     Plan * draft_plan = new Plan{};
     draft_plan->order = order;
     draft_plan->firm = this;
-    draft_optimal_plan(draft_plan, order->product->required_abilities);
+    Plan * draft_plan_without_training = new Plan(*draft_plan);
+    assign_workers(
+        draft_plan_without_training,
+        required_abilities
+    );
+    assign_plan_dependent_fields(
+        draft_plan_without_training,
+        required_abilities
+    );
+    *draft_plan = *draft_plan_without_training;
     return draft_plan;
 }
 
@@ -77,7 +91,7 @@ int Producer::draft_plan(Order * order) {
     if (!has_sufficient_inputs_for_order(order)) {
         return DRAFT_ORDER_REJECTED;
     }
-	Plan * draft_plan = create_draft_plan_for_order(order);
+	Plan * draft_plan = draft_optimal_plan(order, order->product->required_abilities);
 
     if (draft_plan->workers.empty()) {
         delete draft_plan;

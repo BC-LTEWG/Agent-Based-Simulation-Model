@@ -280,23 +280,6 @@ void Firm::assign_plan_dependent_fields(
     initialize_plan_budget(draft_plan);
 }
 
-void Firm::draft_optimal_plan(
-        Plan * draft_plan,
-        std::vector<Person::Ability>& required_abilities
-        ) {
-    // try without training first
-    Plan * draft_plan_without_training = new Plan(*draft_plan);
-    assign_workers(
-        draft_plan_without_training,
-        required_abilities
-    );
-    assign_plan_dependent_fields(
-        draft_plan_without_training,
-        required_abilities
-    );
-    *draft_plan = *draft_plan_without_training;
-}
-
 void Firm::train_workers(
         std::vector<Person *>& workers,
         std::vector<Person::Ability>& required_abilities

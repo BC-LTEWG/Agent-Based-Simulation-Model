@@ -51,6 +51,7 @@ class Producer : public Firm {
 	void move_plan_forward_one_step(Plan * plan);
 	void end_plan(Plan * plan);
 	void move_plans_forward_one_step();
+    Plan * draft_optimal_plan(Order * order, std::vector<Person::Ability>& required_abilities);
     std::unordered_set<Product *> get_products_to_reorder() override;
     void log_plans();
     void log_draft_plan(const Plan * draft_plan);
