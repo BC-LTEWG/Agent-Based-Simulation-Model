@@ -122,7 +122,7 @@ class Firm : public Agent {
 	int predict_turnaround_time(Order * order, std::vector<Person*>& workers); 
 	int predict_labor_hours(Order * order, std::vector<Person*>& workers);
     int calculate_raw_material_cost_for_order(Order * order);
-    void initialize_plan_progress_metrics(
+    void initialize_plan_budget(
         Plan * draft_plan
     );
 	void assign_plan_dependent_fields(Plan * draft_plan, std::vector<Person::Ability>& required_abilities);

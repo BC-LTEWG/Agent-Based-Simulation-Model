@@ -255,7 +255,7 @@ int Firm::calculate_raw_material_cost_for_order(Order * order) {
     return raw_material_cost;
 }
 
-void Firm::initialize_plan_progress_metrics(
+void Firm::initialize_plan_budget(
         Plan * draft_plan
         ) {
     int raw_material_cost = calculate_raw_material_cost_for_order(draft_plan->order);
@@ -277,7 +277,7 @@ void Firm::assign_plan_dependent_fields(
     draft_plan->labor_hours = 
         draft_plan->labor_hours_remaining =
         predict_labor_hours(draft_plan->order, draft_plan->workers); 
-    initialize_plan_progress_metrics(draft_plan);
+    initialize_plan_budget(draft_plan);
 }
 
 void Firm::draft_optimal_plan(
