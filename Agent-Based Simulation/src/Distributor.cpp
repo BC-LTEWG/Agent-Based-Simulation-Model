@@ -14,11 +14,9 @@
 
 Distributor::Distributor(
         Society * society,
-        const std::unordered_set<Product *>& initial_catalog,
-        const std::unordered_map<Product *, int>& initial_input_inventory
+        const std::unordered_set<Product *>& initial_catalog
         ) :
-    Firm(society, initial_catalog, {}),
-    input_inventory(initial_input_inventory)
+    Firm(society, initial_catalog)
 {
     for (Product * product : get_products_to_reorder()) {
         society->add_consumer_good(product);

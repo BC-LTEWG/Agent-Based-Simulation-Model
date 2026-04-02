@@ -18,8 +18,7 @@ class Producer : public Firm {
   public:
     Producer(
         Society * society,
-        const std::unordered_set<Product *>& initial_catalog,
-        const std::unordered_map<Product *, int>& input_inventory
+        const std::unordered_set<Product *>& initial_catalog
     );
     void on_time_step() override;
 

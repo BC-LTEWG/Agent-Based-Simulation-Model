@@ -34,30 +34,15 @@ Society::Society()
         Logger::get_instance()->log(Logger::SOCIETY, "price", product->id, product->price_per_unit);
         Logger::get_instance()->log(Logger::SOCIETY, "order_size", product->id, product->order_size);
     }
-    static std::uniform_int_distribution<> initial_inventory_dist(
-        PRODUCT_ORDER_SIZE_MIN, PRODUCT_ORDER_SIZE_MAX);
     for (int i = 0; i < STARTING_NUM_PRODUCERS; i++)
     {
-        Product *product = products[i % STARTING_NUM_PRODUCTS];
-        std::unordered_map<Product *, int> inputs_map;
-        for (const auto &input : product->inputs_per_unit)
-        {
-            inputs_map[input.first] = 0;
-        }
-        Producer *producer = new Producer(this, {product}, inputs_map); // get_products_to_reorder() gets called since the catalog and inputs are empty
+        Producer *producer = new Producer(this, {goods[i % STARTING_NUM_PRODUCTS]});
         producers.push_back(producer);
         firms.push_back(producer);
     }
     for (int i = 0; i < STARTING_NUM_DISTRIBUTORS; i++)
     {
-        Product *product = goods[i % STARTING_NUM_PRODUCTS];
-        int initial_quantity = initial_inventory_dist(Sim::get_random_generator());
-        std::unordered_map<Product *, int> initial_output_inventory = {
-            {product, initial_quantity}};
-        Distributor *distributor = new Distributor(
-            this,
-            {product},
-            initial_output_inventory);
+        Distributor *distributor = new Distributor(this, {goods[i % STARTING_NUM_PRODUCTS]});
         distributors.push_back(distributor);
         firms.push_back(distributor);
     }

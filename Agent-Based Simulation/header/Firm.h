@@ -62,8 +62,7 @@ class Firm : public Agent {
   public:
     Firm(
         Society * society,
-        const std::unordered_set<Product *>& initial_catalog,
-        const std::unordered_map<Product *, int>& initial_input_inventory
+        const std::unordered_set<Product *>& initial_catalog
     );
     unsigned int get_id() override;
     virtual void on_time_step() override;
