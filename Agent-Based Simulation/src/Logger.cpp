@@ -84,6 +84,14 @@ void Logger::log(
     log_impl(client, label, id, tuple);
 }
 
+void Logger::log(
+        const Client client,
+        const std::string label,
+        const unsigned int id,
+        const std::unordered_map<Product *, int> inventory
+        ) {
+}
+
 const char * Logger::clients[] = {"Firm", "Distributor", "Person", "Producer", "Product", "Society"};
 
 void Logger::log_impl(
