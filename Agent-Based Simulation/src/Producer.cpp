@@ -15,10 +15,9 @@
 
 Producer::Producer(
         Society * society,
-        const std::unordered_set<Product *>& initial_catalog,
-        const std::unordered_map<Product *, int>& input_inventory
+        const std::unordered_set<Product *>& initial_catalog
         ) :
-    Firm(society, initial_catalog, input_inventory) {
+    Firm(society, initial_catalog) {
     std::unordered_set<Machine *> initial_machines;
     for (Product * product : initial_catalog) {
         for (Machine * machine : product->machines_needed) {
@@ -48,31 +47,58 @@ bool Producer::can_produce(Product * product) {
     return catalog.count(product);
 }
 
-int Producer::draft_plan(Order * order) {
-    for (std::pair<Product * const, double>& input :
-            order->product->inputs_per_unit) {
+bool Producer::has_sufficient_inputs_for_order(const Order * order) {
+    for (std::pair<Product * const, double>& input : order->product->inputs_per_unit) {
         if (input_inventory[input.first] < input.second * order->quantity) {
-			return DRAFT_ORDER_REJECTED;
+            return false;
         }
     }
-	Plan * draft_plan = new Plan{};
-	draft_plan->order = order;
-	draft_plan->firm = this;
-    draft_plan->local_work_hours_daily = Society::get_instance()->get_current_work_hours_daily();
-	draft_optimal_plan(draft_plan, order->product->required_abilities);
+    return true;
+}
+
+
+Plan * Producer::draft_optimal_plan(
+        Order * order,
+        std::vector<Person::Ability>& required_abilities
+        ) {
+    // try without training first
+    Plan * draft_plan = new Plan{};
+    draft_plan->order = order;
+    draft_plan->firm = this;
+    Plan * draft_plan_without_training = new Plan(*draft_plan);
+    assign_workers(
+        draft_plan_without_training,
+        required_abilities
+    );
+    assign_plan_dependent_fields(
+        draft_plan_without_training,
+        required_abilities
+    );
+    *draft_plan = *draft_plan_without_training;
+    return draft_plan;
+}
+
+double Producer::calculate_machinery_cost_for_plan(const Plan * draft_plan) const {
+    double machinery_cost_per_hour = 0.0;
+    for (Machine * machine : machines) {
+        machinery_cost_per_hour += machine->price_per_unit / machine->lifetime;
+    }
+    return machinery_cost_per_hour *
+        (static_cast<double>(draft_plan->labor_hours) / draft_plan->workers.size());
+}
+
+int Producer::draft_plan(Order * order) {
+    if (!has_sufficient_inputs_for_order(order)) {
+        return DRAFT_ORDER_REJECTED;
+    }
+	Plan * draft_plan = draft_optimal_plan(order, order->product->required_abilities);
 
     if (draft_plan->workers.empty()) {
         delete draft_plan;
         return DRAFT_ORDER_REJECTED;
     }
 
-    double machinery_cost_per_hour = 0.0;
-    for (Machine * machine : machines) {
-        machinery_cost_per_hour += machine->price_per_unit / machine->lifetime;
-    }
-    draft_plan->machinery_cost = machinery_cost_per_hour *
-                    (static_cast<double>(draft_plan->labor_hours) /
-                     draft_plan->workers.size());
+    draft_plan->machinery_cost = calculate_machinery_cost_for_plan(draft_plan);
 
 	order_to_draft_plan[order] = draft_plan;
     log_draft_plan(draft_plan);
@@ -84,20 +110,41 @@ void Producer::drop_order(Order * order) {
 	order_to_draft_plan.erase(order);
 }
 
+void Producer::add_order_input_demand_signals(const Order * order) {
+    for (std::pair<Product * const, double>& input : order->product->inputs_per_unit) {
+        add_demand_signal(input.first, input.second * order->quantity);
+    }
+}
+
+void Producer::remove_workers_from_available_pools(
+        const std::vector<Person *>& assigned_workers
+        ) {
+    for (Person * worker : assigned_workers) {
+        auto worker_it = std::find(workers.begin(), workers.end(), worker);
+        if (worker_it != workers.end()) {
+            workers.erase(worker_it);
+        }
+
+        auto unemployed_it = std::find(
+            society->get_unemployed_people().begin(),
+            society->get_unemployed_people().end(),
+            worker
+        );
+        if (unemployed_it != society->get_unemployed_people().end()) {
+            society->get_unemployed_people().erase(unemployed_it);
+        }
+    }
+}
+
 bool Producer::pursue_order(Order * order) {
 	if (!order_to_draft_plan.count(order)) {
 		return false;
 	}
 	Plan * draft_plan = order_to_draft_plan[order];
-    catalog.insert(order->product);
-    for (std::pair<Product * const, double>& input :
-            order->product->inputs_per_unit) {
-        add_demand_signal(input.first, input.second * order->quantity);
-    }
-	// remove all workers from their current pools
-	for (Person * worker : draft_plan->workers) {
-        move_worker_off_standby(worker);
-	}
+
+    add_order_input_demand_signals(order);
+	remove_workers_from_available_pools(draft_plan->workers);
+
 	// move draft_plan to plans_in_progress
 	order_to_draft_plan[order] = nullptr;
 	plans_in_progress.push_back(draft_plan);
@@ -122,22 +169,12 @@ void Producer::start_plan(Plan * plan) {
 
 void Producer::move_plan_forward_one_step(Plan * plan) {
 	int labor_hours_done = plan->workers.size();
-    double quantity_produced = 0.0;
-    std::unordered_map<Person *, double> contributions;
-    for (Person * worker : plan->workers) {
-        contributions[worker] = worker->suitability(plan->order->product->required_abilities);
-        quantity_produced += contributions[worker];
-    }
-    for (Person * worker : plan->workers) {
-        contributions[worker] /= quantity_produced;
-    }
+    double quantity_produced = calculate_quantity_produced_from_worker_suitability(plan);
     if (quantity_produced <= 0.0) {
         return;
     }
-    quantity_produced /= plan->order->product->living_labor_per_unit;
 
-	double raw_materials_used = 0.0;
-    raw_materials_used =
+    double raw_materials_used =
         plan->raw_materials_remaining *
         quantity_produced /
         plan->order->quantity;
@@ -182,6 +219,28 @@ void Producer::end_plan(Plan * plan) {
     }
 }
 
+double Producer::calculate_quantity_produced_from_worker_suitability(Plan * plan) {
+    double total_worker_suitability = 0.0;
+    for (Person * worker : plan->workers) {
+        total_worker_suitability +=
+            worker->suitability(plan->order->product->required_abilities);
+    }
+    if (total_worker_suitability <= 0.0) {
+        return 0.0;
+    }
+    return total_worker_suitability / plan->order->product->living_labor_per_unit;
+}
+
+
+bool Producer::is_within_work_schedule() const {
+    return Sim::get_current_time_step() % DAY <
+        Society::get_instance()->get_current_work_hours_daily() &&
+        Sim::get_current_time_step() / DAY % 7 <
+        static_cast<unsigned int>(
+            Society::get_instance()->get_current_work_days_weekly()
+        );
+}
+
 void Producer::move_plans_forward_one_step() {
 	for (
             auto iter = plans_in_progress.begin();
@@ -193,8 +252,7 @@ void Producer::move_plans_forward_one_step() {
 			start_plan(plan);
 		}
         if (plan->order->status == Order::ORDER_IN_PROGRESS &&
-			Sim::get_current_time_step() % DAY < plan->local_work_hours_daily && 
-			Sim::get_current_time_step() / DAY % 7 < Society::get_instance()->get_current_work_days_weekly()) {
+			is_within_work_schedule()) {
 			move_plan_forward_one_step(plan);
 		}
 		if (plan->quantity_remaining <= 0) {

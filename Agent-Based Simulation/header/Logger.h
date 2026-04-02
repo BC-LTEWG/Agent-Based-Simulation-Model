@@ -22,6 +22,8 @@ using Tuple = std::variant<TupleNone,
       TupleIntDoubleInt
       >;
 
+struct Product;
+
 class Logger {
     public:
         enum Client {
@@ -64,6 +66,12 @@ class Logger {
                 const unsigned int id,
                 const std::string name,
                 const double measure
+                );
+        void log(
+                const Client client,
+                const std::string label,
+                const unsigned int id,
+                const std::unordered_map<Product *, int> inventory
                 );
         void write_data();
     private:

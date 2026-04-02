@@ -28,11 +28,9 @@ Order::Order(
 
 Firm::Firm(
         Society * society,
-        const std::unordered_set<Product *>& initial_catalog,
-        const std::unordered_map<Product *, int>& initial_input_inventory
+        const std::unordered_set<Product *>& initial_catalog
         ) :
     society{society},
-    input_inventory(initial_input_inventory),
     catalog(initial_catalog)
 {
     static unsigned int unique_id = 0;
@@ -122,6 +120,15 @@ void Firm::finalize_transfer(Person * worker) {
 }
 
 Producer * Firm::send_order(Order * order) {
+    Producer * chosen_producer = select_fastest_supplier_for_order(order);
+    if (chosen_producer) {
+        pursue_order_with_chosen_producer(order, chosen_producer);
+    }
+    drop_order_from_unchosen_producer(order, chosen_producer);
+    return chosen_producer;
+}
+
+Producer * Firm::select_fastest_supplier_for_order(Order * order) {
     int order_time = INT_MAX;
     Producer * chosen_producer = nullptr;
 
@@ -150,24 +157,28 @@ Producer * Firm::send_order(Order * order) {
             chosen_producer = producer;
         }
     }
-    if (!chosen_producer) {
-        for (Producer * producer : secondary_producers) {
-            int draft_plan_time = producer->draft_plan(order);
-            if (draft_plan_time == DRAFT_ORDER_REJECTED) {
-                producer->drop_order(order);
-                continue;
-            }
-            order_time = draft_plan_time;
-            chosen_producer = producer;
-            break;
+    return chosen_producer;
+}
+
+void Firm::pursue_order_with_chosen_producer(
+        Order * order,
+        Producer * chosen_producer
+        ) {
+    chosen_producer->pursue_order(order);
+    chosen_producer->plans_in_progress.back()->prd +=
+        order->product->price_per_unit * order->quantity;
+    product_to_outbound_orders[order->product].insert(order);
+}
+
+void Firm::drop_order_from_unchosen_producer(
+        Order * order,
+        Producer * unchosen_producer
+        ) {
+    for (Producer * producer : suppliers) {
+        if (producer != unchosen_producer) {
+            producer->drop_order(order);
         }
     }
-    if (chosen_producer) {
-        chosen_producer->pursue_order(order);
-        chosen_producer->plans_in_progress.back()->prd += order->product->price_per_unit * order->quantity;
-        product_to_outbound_orders[order->product].insert(order);
-    }
-    return chosen_producer;
 }
 
 double Firm::get_reorder_threshold(Product * product) {
@@ -295,6 +306,29 @@ int Firm::predict_labor_hours(Order * order, std::vector<Person *>& workers) {
             );
 }
 
+int Firm::calculate_raw_material_cost_for_order(Order * order) {
+    int raw_material_cost = 0;
+    for (std::pair<Product * const, double>& input : order->product->inputs_per_unit) {
+        raw_material_cost += input.first->price_per_unit *
+            input.second *
+            order->quantity;
+    }
+    return raw_material_cost;
+}
+
+void Firm::initialize_plan_budget(
+        Plan * draft_plan
+        ) {
+    int raw_material_cost = calculate_raw_material_cost_for_order(draft_plan->order);
+    draft_plan->raw_materials =
+        draft_plan->raw_materials_remaining = raw_material_cost;
+    draft_plan->total_hours =
+        draft_plan->total_hours_remaining =
+        draft_plan->labor_hours + draft_plan->raw_materials;
+    draft_plan->quantity_remaining = draft_plan->order->quantity;
+    draft_plan->prd = -(draft_plan->total_hours);
+}
+
 void Firm::assign_plan_dependent_fields(
         Plan * draft_plan,
         std::vector<Person::Ability>& required_abilities
@@ -304,39 +338,7 @@ void Firm::assign_plan_dependent_fields(
     draft_plan->labor_hours = 
         draft_plan->labor_hours_remaining =
         predict_labor_hours(draft_plan->order, draft_plan->workers); 
-    int raw_materials = 0;
-    for (
-            std::pair<Product * const, double>& p :
-            draft_plan->order->product->inputs_per_unit
-            ) {
-        raw_materials += p.first->price_per_unit *
-            p.second *
-            draft_plan->order->quantity;
-    }
-    draft_plan->raw_materials = 
-        draft_plan->raw_materials_remaining = raw_materials;
-    draft_plan->total_hours =
-        draft_plan->total_hours_remaining =
-        draft_plan->labor_hours + draft_plan->raw_materials;
-    draft_plan->quantity_remaining = draft_plan->order->quantity;
-    draft_plan->prd = -(draft_plan->total_hours);
-}
-
-void Firm::draft_optimal_plan(
-        Plan * draft_plan,
-        std::vector<Person::Ability>& required_abilities
-        ) {
-    // try without training first
-    Plan * draft_plan_without_training = new Plan(*draft_plan);
-    assign_workers(
-        draft_plan_without_training,
-        required_abilities
-    );
-    assign_plan_dependent_fields(
-        draft_plan_without_training,
-        required_abilities
-    );
-    *draft_plan = *draft_plan_without_training;
+    initialize_plan_budget(draft_plan);
 }
 
 void Firm::train_workers(
