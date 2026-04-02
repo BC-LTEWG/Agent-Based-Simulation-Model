@@ -18,77 +18,61 @@
 #include "Sim.h"
 #include "Society.h"
 
-Society *Society::get_instance()
-{
+Society *Society::get_instance() {
     static Society *instance = new Society;
     return instance;
 }
 
-Society::Society()
-{
+Society::Society() {
     static unsigned int unique_id = 0;
     id = unique_id++;
     set_initial_products();
-    for (Product *product : products)
-    {
+    for (Product *product : products) {
         Logger::get_instance()->log(Logger::SOCIETY, "price", product->id, product->price_per_unit);
         Logger::get_instance()->log(Logger::SOCIETY, "order_size", product->id, product->order_size);
     }
-    for (int i = 0; i < STARTING_NUM_PRODUCERS; i++)
-    {
+    for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
         Producer *producer = new Producer(this, {goods[i % STARTING_NUM_PRODUCTS]});
         producers.push_back(producer);
         firms.push_back(producer);
     }
-    for (int i = 0; i < STARTING_NUM_DISTRIBUTORS; i++)
-    {
+    for (int i = 0; i < STARTING_NUM_DISTRIBUTORS; i++) {
         Distributor *distributor = new Distributor(this, {goods[i % STARTING_NUM_PRODUCTS]});
         distributors.push_back(distributor);
         firms.push_back(distributor);
     }
-    for (Firm *firm : firms)
-    {
-        for (Producer *producer : producers)
-        {
-            if (producer != firm)
-            {
+    for (Firm *firm : firms) {
+        for (Producer *producer : producers) {
+            if (producer != firm) {
                 firm->add_supplier(producer);
             }
         }
     }
     set_initial_account();
-    for (int i = 0; i < STARTING_NUM_PEOPLE; i++)
-    {
+    for (int i = 0; i < STARTING_NUM_PEOPLE; i++) {
         birth_person();
     }
 }
 
-unsigned int Society::get_id()
-{
-    if (id)
-    {
+unsigned int Society::get_id() {
+    if (id) {
         throw std::invalid_argument("Society should be a singleton.");
     }
     return id;
 }
 
-void Society::on_time_step()
-{
-    for (Person *person : people)
-    {
+void Society::on_time_step() {
+    for (Person *person : people) {
         person->on_time_step();
     }
-    for (Firm *firm : firms)
-    {
+    for (Firm *firm : firms) {
         firm->on_time_step();
     }
 }
 
-void Society::set_initial_products()
-{
+void Society::set_initial_products() {
     std::size_t i = 0;
-    for (; i < STARTING_NUM_PRODUCTS; ++i)
-    {
+    for (; i < STARTING_NUM_PRODUCTS; ++i) {
         Product *new_product = new Product(
             i,
             "Product " + std::to_string(i));
@@ -98,8 +82,7 @@ void Society::set_initial_products()
     }
     static std::uniform_int_distribution<>
         machine_lifetime_dist(MACHINE_LIFETIME_MIN, MACHINE_LIFETIME_MAX);
-    for (std::size_t j = 0; j < STARTING_NUM_MACHINES; ++j, ++i)
-    {
+    for (std::size_t j = 0; j < STARTING_NUM_MACHINES; ++j, ++i) {
         Machine *new_machine = new Machine(
             i,
             "Machine " + std::to_string(i),
@@ -108,8 +91,7 @@ void Society::set_initial_products()
         products.push_back(new_machine);
         product_to_index[new_machine] = i;
     }
-    for (Product *product : products)
-    {
+    for (Product *product : products) {
         product->set_inputs(goods);
         product->set_machines(machines);
     }
@@ -119,25 +101,21 @@ void Society::set_initial_products()
 void Society::populate_io_matrix_and_labor_vector(
     std::unordered_map<Product *, std::size_t> &product_to_index,
     Eigen::MatrixXd &input_output_matrix,
-    Eigen::VectorXd &labor_vector)
-{
+    Eigen::VectorXd &labor_vector) {
     static const int starting_num_firms = STARTING_NUM_PRODUCERS +
                                           STARTING_NUM_DISTRIBUTORS;
     static const int average_team_size =
         STARTING_NUM_PEOPLE / starting_num_firms;
-    for (Product *output_product : products)
-    {
+    for (Product *output_product : products) {
         for (const std::pair<Product *const, double> &input :
-             output_product->inputs_per_unit)
-        {
+             output_product->inputs_per_unit) {
             input_output_matrix(
                 product_to_index[input.first],
                 product_to_index[output_product]) = input.second;
         }
         double machine_use_hours =
             output_product->living_labor_per_unit / average_team_size;
-        for (Machine *const machine : output_product->machines_needed)
-        {
+        for (Machine *const machine : output_product->machines_needed) {
             input_output_matrix(
                 product_to_index[static_cast<Product *const>(machine)],
                 product_to_index[output_product]) = machine_use_hours / machine->lifetime;
@@ -147,39 +125,31 @@ void Society::populate_io_matrix_and_labor_vector(
     }
 }
 
-double get_max_eigenvalue(Eigen::MatrixXd &io_matrix)
-{
+double get_max_eigenvalue(Eigen::MatrixXd &io_matrix) {
     Eigen::EigenSolver<Eigen::MatrixXd> eigen_solver(io_matrix, false);
     Eigen::VectorXcd eigenvalues = eigen_solver.eigenvalues();
     double max_eigenvalue = 0.0;
-    for (size_t i = 0; i < static_cast<unsigned long>(eigenvalues.size()); ++i)
-    {
+    for (size_t i = 0; i < static_cast<unsigned long>(eigenvalues.size()); ++i) {
         if (eigenvalues(i).real() > max_eigenvalue &&
-            !eigenvalues(i).imag())
-        {
+            !eigenvalues(i).imag()) {
             max_eigenvalue = eigenvalues(i).real();
         }
     }
     return max_eigenvalue;
 }
 
-std::vector<Producer *> &Society::get_producers()
-{
+std::vector<Producer *> &Society::get_producers() {
     return producers;
 }
 
 void Society::adjust_io_matrix(
     Eigen::MatrixXd &io_matrix,
-    double max_eigenvalue)
-{
+    double max_eigenvalue) {
     io_matrix /= (max_eigenvalue + PRODUCT_INPUT_EPSILON);
     const size_t dim = io_matrix.rows();
-    for (std::size_t j = 0; j < dim; ++j)
-    {
-        for (std::size_t i = 0; i < dim; ++i)
-        {
-            if (io_matrix(i, j))
-            {
+    for (std::size_t j = 0; j < dim; ++j) {
+        for (std::size_t i = 0; i < dim; ++i) {
+            if (io_matrix(i, j)) {
                 products[j]->inputs_per_unit[products[i]] = io_matrix(i, j);
             }
         }
@@ -187,31 +157,26 @@ void Society::adjust_io_matrix(
 }
 
 Eigen::MatrixXd get_leontief_inverse(
-    Eigen::MatrixXd io_matrix)
-{
+    Eigen::MatrixXd io_matrix) {
     const std::size_t dim = io_matrix.rows();
     Eigen::MatrixXd identity_matrix = Eigen::MatrixXd::Identity(dim, dim);
     Eigen::MatrixXd leontief_matrix = identity_matrix - io_matrix;
     return leontief_matrix.inverse();
 }
 
-void Society::set_product_prices_production_consumption()
-{
+void Society::set_product_prices_production_consumption() {
     const size_t dim = products.size();
     Eigen::MatrixXd A(dim, dim);
     Eigen::VectorXd l(dim);
     populate_io_matrix_and_labor_vector(product_to_index, A, l);
     double max_eigenvalue = get_max_eigenvalue(A);
-    if (max_eigenvalue >= 1.0)
-    {
+    if (max_eigenvalue >= 1.0) {
         adjust_io_matrix(A, max_eigenvalue);
     }
     Eigen::MatrixXd leontief_inverse = get_leontief_inverse(A);
     Eigen::VectorXd values = leontief_inverse.transpose() * l;
-    for (std::size_t i = 0; i < dim; ++i)
-    {
-        if (values(i) <= 0.0)
-        {
+    for (std::size_t i = 0; i < dim; ++i) {
+        if (values(i) <= 0.0) {
             std::stringstream message;
             message << "Value of item " << i << " <= 0.";
             throw std::domain_error(message.str());
@@ -219,85 +184,67 @@ void Society::set_product_prices_production_consumption()
         products[i]->price_per_unit = values(i);
     }
     double consumption_scalar = 0.0;
-    for (Product *product : products)
-    {
+    for (Product *product : products) {
         consumption_scalar += product->price_per_unit * product->mean_consumption_frequency;
     }
     consumption_scalar = PRODUCT_CONSUMPTION_MULT * INITIAL_WORK_WEEK / WEEK / consumption_scalar;
-    for (Product *product : products)
-    {
+    for (Product *product : products) {
         product->mean_consumption_frequency *= consumption_scalar;
     }
     Eigen::VectorXd demands(dim);
-    for (Product *product : products)
-    {
+    for (Product *product : products) {
         demands[product_to_index[product]] = product->mean_consumption_frequency;
     }
     Eigen::VectorXd production = leontief_inverse * demands;
-    for (std::size_t i = 0; i < dim; ++i)
-    {
+    for (std::size_t i = 0; i < dim; ++i) {
         initial_production[products[i]] = production(i);
     }
 }
 
-std::vector<Product *> &Society::get_products()
-{
+std::vector<Product *> &Society::get_products() {
     return products;
 }
 
-std::vector<Product *> &Society::get_goods()
-{
+std::vector<Product *> &Society::get_goods() {
     return goods;
 }
 
-ConsumerGood *Society::get_consumer_good(Product *product)
-{
-    if (consumer_goods.count(product))
-    {
+ConsumerGood *Society::get_consumer_good(Product *product) {
+    if (consumer_goods.count(product)) {
         return consumer_goods[product];
     }
-    else
-    {
+    else {
         return NULL;
     }
 }
 
-void Society::add_consumer_good(Product *product)
-{
-    if (!consumer_goods.count(product))
-    {
+void Society::add_consumer_good(Product *product) {
+    if (!consumer_goods.count(product)) {
         consumer_goods[product] = new ConsumerGood(product);
     }
 }
 
-std::vector<Distributor *> &Society::get_distributors()
-{
+std::vector<Distributor *> &Society::get_distributors() {
     return distributors;
 }
 
-std::vector<Person *> &Society::get_unemployed_people()
-{
+std::vector<Person *> &Society::get_unemployed_people() {
     return unemployed_people;
 }
 
-unsigned int Society::get_current_work_hours_daily()
-{
+unsigned int Society::get_current_work_hours_daily() {
     return current_work_hours_daily;
 }
 
-int Society::get_current_work_days_weekly()
-{
+int Society::get_current_work_days_weekly() {
     return current_work_days_weekly;
 }
 
-void Society::set_initial_account()
-{
+void Society::set_initial_account() {
     initial_account = 0.0;
-    for (Product *good : goods)
-    {
+    for (Product *good : goods) {
         ConsumerGood *consumer_good = get_consumer_good(good);
-        if (!consumer_good)
-        {
+        if (!consumer_good) {
             std::cerr << "consumer good does not exist: "
                       << good->product_name << std::endl;
             exit(EXIT_FAILURE);
@@ -308,25 +255,21 @@ void Society::set_initial_account()
     initial_account *= FIRM_DEMAND_WINDOW_MIN * INITIAL_ACCOUNT_MULT;
 }
 
-int Society::get_initial_account()
-{
+int Society::get_initial_account() {
     return initial_account;
 }
 
-std::unordered_map<Product *, double> &Society::get_initial_production()
-{
+std::unordered_map<Product *, double> &Society::get_initial_production() {
     return initial_production;
 }
 
-Person *Society::birth_person()
-{
+Person *Society::birth_person() {
     Person *person = new Person(this);
     people.push_back(person);
     unemployed_people.push_back(person);
     return person;
 }
 
-void Society::retire_person(Person *person)
-{
+void Society::retire_person(Person *person) {
     // unimplemented until hiring/reallocation is done
 }
