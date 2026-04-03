@@ -9,24 +9,6 @@
 #include "Sim.h"
 #include "sqlite3.h"
 
-Logger::Logger() {
-    if (Sim::does_db()) {
-        int return_code = sqlite3_open(LOG_FILE, &db);
-        if (return_code) {
-            throw std::runtime_error("Database connection failure");
-        }
-        std::cout << "Opened DB" << std::endl;
-    } else {
-        db = NULL;
-    }
-}
-
-Logger::~Logger() {
-    if (db) {
-        sqlite3_close(db);
-    }
-}
-
 Logger * Logger::get_instance() {
     static Logger * instance = new Logger;
     return instance;
@@ -67,9 +49,7 @@ void Logger::log(
         const std::string name,
         const int quantity
         ) {
-    const std::string name_s = std::string("\"") + name + "\"";
-    TupleStringInt tuple = std::make_tuple(name_s, quantity);
-    log_impl(client, label, id, tuple);
+    log_impl<int>(client, label, id, name, quantity);
 }
 
 void Logger::log(
@@ -79,9 +59,7 @@ void Logger::log(
         const std::string name,
         const double measure
         ) {
-    const std::string name_s = std::string("\"") + name + "\"";
-    TupleStringDouble tuple = std::make_tuple(name_s, measure);
-    log_impl(client, label, id, tuple);
+    log_impl<double>(client, label, id, name, measure);
 }
 
 void Logger::log(
@@ -90,6 +68,9 @@ void Logger::log(
         const unsigned int id,
         const std::unordered_map<Product *, int> inventory
         ) {
+    for (std::pair<Product *, int> entry : inventory) {
+        log(client, label, id, entry.first->product_name, entry.second);
+    }
 }
 
 const char * Logger::clients[] = {"Firm", "Distributor", "Person", "Producer", "Product", "Society"};
@@ -100,16 +81,26 @@ void Logger::log_impl(
         const unsigned int id,
         const Tuple& values
         ) {
+    if (!Sim::does_json()) {
+        return;
+    }
     int time_step = Sim::get_current_time_step();
-    if (Sim::does_json()) {
-        Logger::json(time_step, client, label, id, values);
+    Logger::json(time_step, client, label, id, values);
+}
+
+template <typename T>
+void Logger::log_impl(
+        const Client client,
+        const std::string label,
+        const unsigned int id,
+        const std::string& key,
+        const T value
+        ) {
+    if (!Sim::does_json()) {
+        return;
     }
-    if (Sim::does_db()) {
-        log_to_db(time_step, client, label, id, values);
-    }
-    if (Sim::does_csv()) {
-        data[client][label][id][time_step] = values;
-    }
+    int time_step = Sim::get_current_time_step();
+    Logger::json<T>(time_step, client, label, id, key, value);
 }
 
 void Logger::json(
@@ -134,6 +125,25 @@ void Logger::json(
     std::cout << "]}" << std::endl;
 }
 
+template <typename T>
+void Logger::json(
+        const int time_step,
+        const Client client,
+        std::string label,
+        unsigned int id,
+        const std::string key,
+        const T value
+        ) {
+    if (client >= ERROR) {
+        throw std::invalid_argument("Logging client does not exist");
+    }
+    std::cout << "{\"t\":" << time_step << "," <<
+        "\"client\":\"" << clients[client] << "\"," <<
+        "\"id\":" << id << "," <<
+        "\"label\":\"" << label << "\"," <<
+        "\"" << key << "\":" << value << std::endl;
+}
+
 template<typename TupleT>
 void Logger::trace_tuple(const TupleT& values) {
     static int count = 0;
@@ -143,42 +153,3 @@ void Logger::trace_tuple(const TupleT& values) {
     count = 0;
 }
 
-template<typename TupleT>
-void Logger::write_tuple(std::ofstream& out_file, const TupleT& values) {
-    std::apply([&out_file](auto&& ... arg) {
-            ((out_file << "," << arg), ...);
-            }, values);
-}
-
-void Logger::write_data() {
-    std::string s("price");
-    for (auto& client_map : data) {
-        std::string client_prefix = clients[client_map.first];
-        for (auto& label_map : client_map.second) {
-            std::string file_name = std::string(LOGGING_DIR) + "/" +
-                client_prefix + "_" + label_map.first + ".csv";
-            std::ofstream out_file(file_name);
-            auto visitor = [&out_file](auto&& arg) {
-                Logger::write_tuple(out_file, arg);
-            };
-            for (auto& id_map : label_map.second) {
-                for (auto& time_step_map : id_map.second) {
-                    out_file << id_map.first;
-                    out_file << "," << time_step_map.first;
-                    std::visit(visitor, time_step_map.second);
-                    out_file << std::endl;
-                }
-            }
-            out_file.close();
-        }
-    }
-}
-
-void Logger::log_to_db(
-                const int time_step,
-                const Client client,
-                std::string label,
-                unsigned int id,
-                const Tuple& values
-                ) {
-}

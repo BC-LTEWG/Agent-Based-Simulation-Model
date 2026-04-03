@@ -78,7 +78,7 @@ void Society::set_initial_products() {
     for (; i < STARTING_NUM_PRODUCTS; ++i) {
         Product *new_product = new Product(
             i,
-            "Product " + std::to_string(i));
+            "Product_" + std::to_string(i));
         goods.push_back(new_product);
         products.push_back(new_product);
         product_to_index[new_product] = i;
@@ -88,13 +88,13 @@ void Society::set_initial_products() {
     for (std::size_t j = 0; j < STARTING_NUM_MACHINES; ++j, ++i) {
         Machine *new_machine = new Machine(
             i,
-            "Machine " + std::to_string(i),
+            "Machine_" + std::to_string(i),
             machine_lifetime_dist(Sim::get_random_generator()));
         machines.push_back(new_machine);
         products.push_back(new_machine);
         product_to_index[new_machine] = i;
     }
-    for (Product *product : products) {
+    for (Product * product : products) {
         product->set_inputs(goods);
         product->set_machines(machines);
     }

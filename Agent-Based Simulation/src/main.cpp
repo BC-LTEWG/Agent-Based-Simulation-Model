@@ -5,14 +5,8 @@
 void print_usage() {
     std::cout << "Usage: sim [<args> ...]" << std::endl;
     std::cout << "\t-n N: Run the simulation for N time steps." << std::endl;
-    std::cout << "\t-c: Write CSV log files at the end of simulation." <<
-        std::endl;
-    std::cout << "\t-d: Store logged data in a SQLite database file called "
-        "sim.db." << std::endl;
     std::cout << "\t-j: Write log traces to stdin in JSON format throughout "
         "execution." << std::endl;
-    std::cout << "\tYou can combine any arguments except -n, e.g., -ct to "
-        "print traces _and_ write CSV logs." << std::endl;
 }
 
 void set_params(int argc, const char ** argv, SimArgs& args) {
@@ -30,12 +24,6 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
             } else {
                 while (argv[i][j]) {
                     switch (argv[i][j]) {
-                        case 'c':
-                            args.csv = true;
-                            break;
-                        case 'd':
-                            args.db = true;
-                            break;
                         case 'j':
                             args.json = true;
                             break;
