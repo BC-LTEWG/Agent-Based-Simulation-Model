@@ -32,6 +32,7 @@ Producer::Producer(
             (society->get_initial_production()[product] - product->mean_consumption_frequency) * 
             (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN * PRODUCER_INITIAL_INVENTORY_MULT) *
             STARTING_NUM_PEOPLE;
+            log_inventory_level(product->product_name, input_inventory[product]);
     }
 }
 
