@@ -62,17 +62,6 @@ void Logger::log(
     log_impl<double>(client, label, id, name, measure);
 }
 
-void Logger::log(
-        const Client client,
-        const std::string label,
-        const unsigned int id,
-        const std::unordered_map<Product *, int> inventory
-        ) {
-    for (std::pair<Product *, int> entry : inventory) {
-        log(client, label, id, entry.first->product_name, entry.second);
-    }
-}
-
 const char * Logger::clients[] = {"Firm", "Distributor", "Person", "Producer", "Product", "Society"};
 
 void Logger::log_impl(

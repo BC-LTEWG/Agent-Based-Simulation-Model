@@ -10,15 +10,11 @@
 using TupleNone = std::tuple<>;
 using TupleInt = std::tuple<int>;
 using TupleDouble = std::tuple<double>;
-using TupleStringInt = std::tuple<std::string, int>;
-using TupleStringDouble = std::tuple<std::string, double>;
 using TupleIntDoubleInt = std::tuple<int, double, int>;
 using TupleStringStringInt = std::tuple<std::string, std::string, int>;
 using Tuple = std::variant<TupleNone,
       TupleInt,
       TupleDouble,
-      TupleStringInt,
-      TupleStringDouble,
       TupleIntDoubleInt
       >;
 
@@ -66,12 +62,6 @@ class Logger {
                 const unsigned int id,
                 const std::string name,
                 const double measure
-                );
-        void log(
-                const Client client,
-                const std::string label,
-                const unsigned int id,
-                const std::unordered_map<Product *, int> inventory
                 );
     private:
         void log_impl(
