@@ -73,20 +73,15 @@ class Logger {
                 const unsigned int id,
                 const std::unordered_map<Product *, int> inventory
                 );
+        void write_data();
     private:
+        Logger();
+        ~Logger();
         void log_impl(
                 const Client client,
                 const std::string label,
                 const unsigned int id,
                 const Tuple& values
-                );
-        template <typename T>
-        void log_impl(
-                const Client client,
-                const std::string label,
-                const unsigned int id,
-                const std::string& key,
-                const T value
                 );
         static void json(
                 const int time_step,
@@ -94,15 +89,6 @@ class Logger {
                 std::string label,
                 unsigned int id,
                 const Tuple& values
-                );
-        template <typename T>
-        static void json(
-                const int time_step,
-                const Client client,
-                std::string label,
-                unsigned int id,
-                const std::string key,
-                const T value
                 );
         static void log_to_db(
                 const int time_step,
@@ -113,7 +99,13 @@ class Logger {
                 );
         template<typename TupleT>
             static void trace_tuple(const TupleT& values);
+        template<typename TupleT>
+            static void write_tuple(std::ofstream& file, const TupleT& values);
         static const char * clients[];
+        sqlite3 * db;
+        // client -> label -> id -> time step -> data
+        std::unordered_map<Client,
+            std::unordered_map<std::string,
+            std::map<unsigned int,
+            std::map<int, Tuple>>>> data;
 };
-
-
