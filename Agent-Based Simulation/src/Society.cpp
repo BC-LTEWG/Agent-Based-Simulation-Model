@@ -109,8 +109,8 @@ void Society::populate_io_matrix_and_labor_vector(
                                           STARTING_NUM_DISTRIBUTORS;
     static const int average_team_size =
         STARTING_NUM_PEOPLE / starting_num_firms;
-    for (Product *output_product : products) {
-        for (const std::pair<Product *const, double> &input :
+    for (Product * output_product : products) {
+        for (const std::pair<Product * const, double> &input :
              output_product->inputs_per_unit) {
             input_output_matrix(
                 product_to_index[input.first],
@@ -118,9 +118,9 @@ void Society::populate_io_matrix_and_labor_vector(
         }
         double machine_use_hours =
             output_product->living_labor_per_unit / average_team_size;
-        for (Machine *const machine : output_product->machines_needed) {
+        for (Machine * const machine : output_product->machines_needed) {
             input_output_matrix(
-                product_to_index[static_cast<Product *const>(machine)],
+                product_to_index[static_cast<Product * const>(machine)],
                 product_to_index[output_product]) = machine_use_hours / machine->lifetime;
         }
         labor_vector(product_to_index[output_product]) =
@@ -154,13 +154,14 @@ double Society::get_busyness() {
 }
 
 void Society::adjust_io_matrix(
-    Eigen::MatrixXd &io_matrix,
+    Eigen::MatrixXd& io_matrix,
     double max_eigenvalue) {
     io_matrix /= (max_eigenvalue + PRODUCT_INPUT_EPSILON);
     const size_t dim = io_matrix.rows();
     for (std::size_t j = 0; j < dim; ++j) {
         for (std::size_t i = 0; i < dim; ++i) {
-            if (io_matrix(i, j)) {
+            if (io_matrix(i, j) &&
+                    products[i]->product_type == Product::ProductType::TYPE_GOOD) {
                 products[j]->inputs_per_unit[products[i]] = io_matrix(i, j);
             }
         }

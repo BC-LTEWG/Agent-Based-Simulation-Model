@@ -9,12 +9,13 @@
 struct Machine;
 
 struct Product {
-    Product() = default;
+    enum ProductType { TYPE_GOOD, TYPE_MACHINE, TYPE_CONSUMER_GOOD, TYPE_UNKNOWN };
     Product(int id, const std::string& name);
-    int id;
     void set_inputs(std::vector<Product *>& products);
     void set_machines(std::vector<Machine*> machines);
+    int id;
     std::string product_name;
+    ProductType product_type;
     double price_per_unit;
     int order_size;
     std::vector<Machine *> machines_needed;

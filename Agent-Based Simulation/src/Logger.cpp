@@ -141,7 +141,7 @@ void Logger::json(
         "\"client\":\"" << clients[client] << "\"," <<
         "\"id\":" << id << "," <<
         "\"label\":\"" << label << "\"," <<
-        "\"" << key << "\":" << value << std::endl;
+        "\"" << key << "\":" << value << "}" << std::endl;
 }
 
 template<typename TupleT>
