@@ -185,6 +185,8 @@ void Society::set_product_prices_production_consumption() {
     if (max_eigenvalue >= 1.0) {
         adjust_io_matrix(A, max_eigenvalue);
     }
+    log_io_matrix(A, dim);
+    log_labor_vector(l, dim);
     Eigen::MatrixXd leontief_inverse = get_leontief_inverse(A);
     Eigen::VectorXd values = leontief_inverse.transpose() * l;
     for (std::size_t i = 0; i < dim; ++i) {
@@ -290,4 +292,25 @@ Person * Society::birth_person() {
 
 void Society::retire_person(Person *person) {
     // unimplemented until hiring/reallocation is done
+}
+
+void Society::log_io_matrix(Eigen::MatrixXd& A, size_t dim) {
+    Logger::get_instance()->log(Logger::SOCIETY, "A_dim", id, static_cast<int>(dim));
+    for (size_t i = 0; i < dim; ++i) {
+        for (size_t j = 0; j < dim; ++j) {
+            if (A(i, j)) {
+                std::string index = std::to_string(i) + "," + std::to_string(j);
+                Logger::get_instance()->log(Logger::SOCIETY, "A", id, index, A(i, j));
+            }
+        }
+    }
+}
+
+void Society::log_labor_vector(Eigen::VectorXd& l, size_t dim) {
+    Logger::get_instance()->log(Logger::SOCIETY, "l_dim", id, static_cast<int>(dim));
+    for (size_t i = 0; i < dim; ++i) {
+        if (l(i)) {
+            Logger::get_instance()->log(Logger::SOCIETY, "l", id, std::to_string(i), l(i));
+        }
+    }
 }
