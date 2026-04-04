@@ -45,6 +45,7 @@ class Person : public Agent {
     bool busy_this_time_step = false;
     double busyness = 0.0;
  	std::vector<Distributor *> ranked_distributors;
+    static const char * ability_names[];
 
     void consume();
 	bool will_shop();
@@ -53,9 +54,11 @@ class Person : public Agent {
 	void retire();
 	void update_health_status();
     void update_busyness();
-
     void log_hours(const double hours);
     void log_shopping(const std::string product_name, int quantity);
     void log_shopping_deficit(double deficit);
-    void log_state();
+    void log_placement();
+    void log_abilities();
+    void log_inventory();
+    void log_account();
 };

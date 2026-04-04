@@ -42,6 +42,10 @@ Distributor::Distributor(
     }
 }
 
+Logger::Client Distributor::get_client_type() {
+    return Logger::DISTRIBUTOR;
+}
+
 void Distributor::on_time_step() {
     Firm::on_time_step();
     for (Plan * plan : plans_in_progress) {

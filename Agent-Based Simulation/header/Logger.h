@@ -1,11 +1,11 @@
+#pragma once
+
 #include <cstdarg>
 #include <fstream>
 #include <map>
 #include <tuple>
 #include <variant>
 #include <unordered_map>
-
-#include "sqlite3.h"
 
 using TupleNone = std::tuple<>;
 using TupleInt = std::tuple<int>;
@@ -93,13 +93,6 @@ class Logger {
                 unsigned int id,
                 const std::string key,
                 const T value
-                );
-        static void log_to_db(
-                const int time_step,
-                const Client client,
-                std::string label,
-                unsigned int id,
-                const Tuple& values
                 );
         template<typename TupleT>
             static void trace_tuple(const TupleT& values);

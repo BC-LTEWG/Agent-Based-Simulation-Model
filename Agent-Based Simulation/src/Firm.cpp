@@ -390,7 +390,7 @@ void Firm::move_worker_off_standby(Person * worker) {
 
 void Firm::log_shipment_received(std::string product_name, int quantity) {
     Logger::get_instance()->log(
-            Logger::FIRM,
+            get_client_type(),
             "shipment_received",
             id,
             product_name,
@@ -400,7 +400,7 @@ void Firm::log_shipment_received(std::string product_name, int quantity) {
 
 void Firm::log_inventory_level(std::string product_name, int quantity) {
     Logger::get_instance()->log(
-            Logger::FIRM,
+            get_client_type(),
             "inventory_level",
             id,
             product_name,
@@ -410,7 +410,7 @@ void Firm::log_inventory_level(std::string product_name, int quantity) {
 
 void Firm::log_reorder(std::string product_name, int quantity) {
     Logger::get_instance()->log(
-            Logger::FIRM,
+            get_client_type(),
             "reorder",
             id,
             product_name,
@@ -420,7 +420,7 @@ void Firm::log_reorder(std::string product_name, int quantity) {
 
 void Firm::log_accepted_order(std::string product_name, int requested_turnaround_time) {
     Logger::get_instance()->log(
-            Logger::FIRM,
+            get_client_type(),
             "accepted_order",
             id,
             product_name,
@@ -430,7 +430,7 @@ void Firm::log_accepted_order(std::string product_name, int requested_turnaround
 
 void Firm::log_input_inventory(Firm * firm, std::string product_name, int quantity) {
     Logger::get_instance()->log(
-            Logger::FIRM,
+            get_client_type(),
             "input_inventory",
             firm->get_id(),
             product_name,

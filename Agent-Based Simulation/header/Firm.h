@@ -8,6 +8,7 @@
 #include <queue>
 
 #include "Agent.h"
+#include "Logger.h"
 #include "Person.h"
 
 class Firm;
@@ -21,7 +22,7 @@ struct Plan {
 	// independent/input fields
 	Order * order;
     Firm * firm;
-	std::vector<Person*> workers;
+	std::vector<Person *> workers;
     unsigned int local_work_hours_daily;
 
 	// dependent/output fields	
@@ -66,6 +67,7 @@ class Firm : public Agent {
         const std::unordered_set<Product *>& initial_catalog
     );
     unsigned int get_id() override;
+    virtual Logger::Client get_client_type() = 0;
     virtual void on_time_step() override;
 
     double get_avg_productivity();

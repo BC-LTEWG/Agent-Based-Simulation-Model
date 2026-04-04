@@ -153,6 +153,18 @@ double Society::get_busyness() {
     return busyness / people.size();
 }
 
+double Society::get_total_employment() {
+    unsigned int employed = 0;
+    for (Person * person : people) {
+        employed += (person->get_firm() != nullptr);
+    }
+    return static_cast<double>(employed) / people.size();
+}
+
+void Society::log_total_employment() {
+    Logger::get_instance()->log(Logger::SOCIETY, "employment", id, get_total_employment());
+}
+
 void Society::adjust_io_matrix(
     Eigen::MatrixXd& io_matrix,
     double max_eigenvalue) {

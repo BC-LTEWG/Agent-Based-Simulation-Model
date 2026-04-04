@@ -33,6 +33,8 @@ class Society : public Agent {
         std::unordered_map<Product *, double>& get_initial_production();
         std::vector<Producer *>& get_producers();
         double get_busyness();
+        double get_total_employment();
+        void log_total_employment();
 
     private:
         Society();

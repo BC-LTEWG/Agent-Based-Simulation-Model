@@ -19,6 +19,7 @@ class Distributor : public Firm {
         Society * society,
         const std::unordered_set<Product *>& initial_catalog
     );
+    Logger::Client get_client_type() override;
     void on_time_step() override;
     bool try_sell_goods(Product& product, int quantity, Person * person);
     int get_inventory(Product * product) override;

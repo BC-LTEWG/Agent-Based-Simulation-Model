@@ -36,6 +36,10 @@ Producer::Producer(
     }
 }
 
+Logger::Client Producer::get_client_type() {
+    return Logger::PRODUCER;
+}
+
 void Producer::on_time_step() {
     Firm::on_time_step();
 	move_plans_forward_one_step();
@@ -150,6 +154,7 @@ bool Producer::pursue_order(Order * order) {
 	order_to_draft_plan[order] = nullptr;
 	plans_in_progress.push_back(draft_plan);
     log_pursued_plan(draft_plan);
+    society->log_total_employment();
 	return true;
 }
 
