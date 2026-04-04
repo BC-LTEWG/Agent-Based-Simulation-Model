@@ -28,11 +28,14 @@ Producer::Producer(
     for (Machine * machine : initial_machines) {
         machines.push_back(machine);
     }
-    for (Product * product : get_products_to_reorder()) {
-        this->input_inventory[product] =
-            (society->get_initial_production()[product] - product->mean_consumption_frequency) * 
-            (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN * PRODUCER_INITIAL_INVENTORY_MULT) *
-            STARTING_NUM_PEOPLE;
+    for (Product * product : catalog) {
+        for (std::pair<Product * const, double>& input :
+                product->inputs_per_unit) {
+            this->input_inventory[input.first] +=
+                input.second * 
+                society->get_initial_production()[product] * 
+                (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN * PRODUCER_INITIAL_INVENTORY_MULT) *
+                STARTING_NUM_PEOPLE;
     }
 }
 

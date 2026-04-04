@@ -1,34 +1,10 @@
-# Distributor Agent
-
-## Purpose
-The Distributor holds inventory of consumer goods and fulfills purchases from people. It tracks demand signals, sells from stock and triggers restocking when inventory is short.
+# `Distributor`
+Distributors are a type of `Firm` that sell goods to consumers. Mechanisms specific only to distributors are described below.
 
 ## Initialization
-- Builds an initial inventory for every product in its catalog.
-- Registers each product as a `ConsumerGood` in the `Society`.
-- Creates an internal `Plan` per product to track labor usage and revenue for distribution activity.
+Because the initial inventory needs to last at least `FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN` time steps, distributors scale this value off of each of their catalog's product's `mean_consumption_frequency`. Note that if multiple distributors sell the same product, the inventory will likely last much longer.
 
-## Per-timestep behavior
-- Delegates generic firm logic to `Firm::on_time_step()`.
-- Advances each distribution plan by consuming worker labor hours and recording worked hours.
+Additionally, distributors create a `ConsumerGood` (if it doesn't exist) for products they're assigned, which is simply a representation of the original good with added distribution cost. 
 
 ## Selling goods
-`sell_goods(Product& product, int quantity, Person * person)`:
-- Adds a demand signal for the requested quantity.
-- If inventory is short, logs the shortfall and relies on the standard reorder
-  logic (triggered by low inventory) instead of ordering immediately.
-- Charges the buyer for the portion actually sold and records revenue on the product's plan.
-- Reduces inventory by the quantity sold.
-
-## Reordering
-The Distributor reorders only for products in its catalog. The reorder threshold
-is the max of `order_size` and demand-based stockpiling. Demand is tracked via
-`add_demand_signal()` and decays in `apply_demand_window()` over
-`FIRM_DEMAND_WINDOW`, resulting in `inventory_demands[product] *
-FIRM_STOCKPILE_DURATION` as the demand component.
-
-## Plans and workforce
-Each catalog product has a distribution `Plan` created at initialization to
-track labor hours, outgoing units consumed, and revenue; the "raw material" for
-distribution is the product itself. Plans start with zero workers and are
-staffed via the shared firm worker-assignment logic.
+Selling is implemented with `try_sell_goods()`, which people call during their shopping events. In normal circumstances, will successfully exchange the socially necessary labor time for the requested quantity of goods. But, if the distributor doesn't have enough inventory to fulfill the request, it will only sell as much as it can. In either case, however, the demand signal logged for the full requested amount.
