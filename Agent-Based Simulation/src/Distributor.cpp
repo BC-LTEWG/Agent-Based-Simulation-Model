@@ -10,6 +10,7 @@
 #include "Person.h"
 #include "Producer.h"
 #include "Product.h"
+#include "Sim.h"
 #include "Society.h"
 
 Distributor::Distributor(
@@ -23,7 +24,7 @@ Distributor::Distributor(
         int quantity =
             product->mean_consumption_frequency *
             (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN * DISTRIBUTOR_INITIAL_INVENTORY_MULT) * 
-            STARTING_NUM_PEOPLE;
+            Sim::get_num_people();
         Order * order = new Order(product, quantity, this, 0);
         Plan * plan = new Plan;
         plan->order = order;

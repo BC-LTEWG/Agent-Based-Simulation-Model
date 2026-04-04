@@ -22,7 +22,10 @@ Society *Society::get_instance() {
     return instance;
 }
 
-Society::Society() {
+Society::Society() :
+    current_work_hours_daily{Sim::get_work_hours_daily()},
+    current_work_days_weekly{Sim::get_work_days_weekly()}
+{
     static unsigned int unique_id = 0;
     id = unique_id++;
     set_initial_products();
@@ -30,13 +33,13 @@ Society::Society() {
         Logger::get_instance()->log(Logger::SOCIETY, "price", product->id, product->price_per_unit);
         Logger::get_instance()->log(Logger::SOCIETY, "order_size", product->id, product->order_size);
     }
-    for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
-        Producer *producer = new Producer(this, {goods[i % STARTING_NUM_PRODUCTS]});
+    for (unsigned int i = 0; i < Sim::get_num_producers(); i++) {
+        Producer *producer = new Producer(this, {goods[i % Sim::get_num_products()]});
         producers.push_back(producer);
         firms.push_back(producer);
     }
-    for (int i = 0; i < STARTING_NUM_DISTRIBUTORS; i++) {
-        Distributor *distributor = new Distributor(this, {goods[i % STARTING_NUM_PRODUCTS]});
+    for (unsigned int i = 0; i < Sim::get_num_distributors(); i++) {
+        Distributor *distributor = new Distributor(this, {goods[i % Sim::get_num_products()]});
         distributors.push_back(distributor);
         firms.push_back(distributor);
     }
@@ -48,7 +51,7 @@ Society::Society() {
         }
     }
     set_initial_account();
-    for (int i = 0; i < STARTING_NUM_PEOPLE; i++) {
+    for (unsigned int i = 0; i < Sim::get_num_people(); i++) {
         birth_person();
     }
 }
@@ -74,8 +77,9 @@ void Society::on_time_step() {
 }
 
 void Society::set_initial_products() {
+    unsigned int starting_num_products = Sim::get_num_products();
     std::size_t i = 0;
-    for (; i < STARTING_NUM_PRODUCTS; ++i) {
+    for (; i < starting_num_products; ++i) {
         Product *new_product = new Product(
             i,
             "Product_" + std::to_string(i));
@@ -85,7 +89,9 @@ void Society::set_initial_products() {
     }
     static std::uniform_int_distribution<>
         machine_lifetime_dist(MACHINE_LIFETIME_MIN, MACHINE_LIFETIME_MAX);
-    for (std::size_t j = 0; j < STARTING_NUM_MACHINES; ++j, ++i) {
+    const unsigned int starting_num_machines =
+        starting_num_products / Sim::get_products_per_machine();
+    for (std::size_t j = 0; j < starting_num_machines; ++j, ++i) {
         Machine *new_machine = new Machine(
             i,
             "Machine_" + std::to_string(i),
@@ -105,10 +111,10 @@ void Society::populate_io_matrix_and_labor_vector(
     std::unordered_map<Product *, std::size_t> &product_to_index,
     Eigen::MatrixXd &input_output_matrix,
     Eigen::VectorXd &labor_vector) {
-    static const int starting_num_firms = STARTING_NUM_PRODUCERS +
-                                          STARTING_NUM_DISTRIBUTORS;
-    static const int average_team_size =
-        STARTING_NUM_PEOPLE / starting_num_firms;
+    const unsigned int starting_num_firms =
+        Sim::get_num_producers() + Sim::get_num_distributors();
+    const unsigned int average_team_size =
+        std::max<unsigned int>(Sim::get_num_people() / starting_num_firms, 1);
     for (Product * output_product : products) {
         for (const std::pair<Product * const, double> &input :
              output_product->inputs_per_unit) {
@@ -213,7 +219,9 @@ void Society::set_product_prices_production_consumption() {
     for (Product *product : products) {
         consumption_scalar += product->price_per_unit * product->mean_consumption_frequency;
     }
-    consumption_scalar = PRODUCT_CONSUMPTION_MULT * INITIAL_WORK_WEEK / WEEK / consumption_scalar;
+    const unsigned int initial_work_week =
+        Sim::get_work_hours_daily() * Sim::get_work_days_weekly();
+    consumption_scalar = PRODUCT_CONSUMPTION_MULT * initial_work_week / WEEK / consumption_scalar;
     for (Product *product : products) {
         product->mean_consumption_frequency *= consumption_scalar;
     }
@@ -291,7 +299,7 @@ std::unordered_map<Product *, double> &Society::get_initial_production() {
 
 void Society::update_work_hours_daily() {
     current_work_hours_daily = std::ceil(get_busyness() * INEFFICIENCY_OF_WORK * 
-            WEEK / INITIAL_WORK_DAYS_WEEKLY);
+            WEEK / Sim::get_work_days_weekly());
     current_work_hours_daily = std::min(DAY, current_work_hours_daily);
 }
 
