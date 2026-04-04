@@ -17,8 +17,7 @@ class Distributor : public Firm {
   public:
     Distributor(
         Society * society,
-        const std::unordered_set<Product *>& initial_catalog,
-        const std::unordered_map<Product *, int>& initial_input_inventory
+        const std::unordered_set<Product *>& initial_catalog
     );
     void on_time_step() override;
     bool try_sell_goods(Product& product, int quantity, Person * person);
