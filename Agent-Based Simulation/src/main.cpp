@@ -29,6 +29,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 case 'h':
                 case 'w':
                 case 'o':
+                case 'm':
                 case 'r':
                 case 'd':
                     flag = argv[i][j];
