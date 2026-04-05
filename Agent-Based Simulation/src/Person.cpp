@@ -115,8 +115,10 @@ void Person::consume() {
     for (Product * product : society->get_goods()) {
         to_consume[product] += product->mean_consumption_frequency;
         int consumed = static_cast<int>(to_consume[product]);
-        inventory[product] -= consumed;
-        log_consumption(product, consumed);
+        if (consumed) {
+            inventory[product] -= consumed;
+            log_consumption(product, consumed);
+        }
         to_consume[product] -= (int) to_consume[product];
     }
 }
