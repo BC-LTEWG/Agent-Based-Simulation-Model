@@ -254,6 +254,6 @@ void Person::log_health_status() {
     Logger::get_instance()->log(Logger::PERSON, "health_status", id, health_status_names[health_status]);
 }
 
-void Person::log_consumption(const Product * product, const double quantity) {
+void Person::log_consumption(const Product * product, const int quantity) {
     Logger::get_instance()->log(Logger::PERSON, "consumption", id, product->product_name, quantity);
 }
