@@ -63,6 +63,13 @@ class Logger {
                 const std::string name,
                 const double measure
                 );
+        void log(
+                const Client client,
+                const std::string label,
+                const unsigned int id,
+                const std::pair<int, int> coords,
+                const double value
+                );
     private:
         void log_impl(
                 const Client client,

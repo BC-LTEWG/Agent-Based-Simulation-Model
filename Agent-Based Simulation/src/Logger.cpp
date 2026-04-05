@@ -14,6 +14,7 @@ Logger * Logger::get_instance() {
     return instance;
 }
 
+const char * Logger::clients[] = {"Firm", "Distributor", "Person", "Producer", "Product", "Society"};
 
 void Logger::log(
         const Client client,
@@ -62,7 +63,27 @@ void Logger::log(
     log_impl<double>(client, label, id, name, measure);
 }
 
-const char * Logger::clients[] = {"Firm", "Distributor", "Person", "Producer", "Product", "Society"};
+void Logger::log(
+        const Client client,
+        const std::string label,
+        const unsigned int id,
+        const std::pair<int, int> coords,
+        const double value
+        ) {
+    if (!Sim::does_json()) {
+        return;
+    }
+    if (client >= ERROR) {
+        throw std::invalid_argument("Logging client does not exist");
+    }
+    unsigned int time_step = Sim::get_current_time_step();
+    std::cout << "{\"t\":" << time_step << "," <<
+        "\"client\":\"" << clients[client] << "\"," <<
+        "\"id\":" << id << "," <<
+        "\"label\":\"" << label << "\"," <<
+        "\"coords\":[" << coords.first << "," << coords.second << "]," <<
+        "\"value\":" << value << "}" << std::endl;
+}
 
 void Logger::log_impl(
         const Client client,

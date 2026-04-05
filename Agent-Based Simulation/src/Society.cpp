@@ -319,8 +319,13 @@ void Society::log_io_matrix(Eigen::MatrixXd& A, size_t dim) {
     for (size_t i = 0; i < dim; ++i) {
         for (size_t j = 0; j < dim; ++j) {
             if (A(i, j)) {
-                std::string index = std::to_string(i) + "," + std::to_string(j);
-                Logger::get_instance()->log(Logger::SOCIETY, "A", id, index, A(i, j));
+                Logger::get_instance()->log(
+                        Logger::SOCIETY,
+                        "A",
+                        id,
+                        std::make_pair(i, j),
+                        A(i, j)
+                        );
             }
         }
     }
