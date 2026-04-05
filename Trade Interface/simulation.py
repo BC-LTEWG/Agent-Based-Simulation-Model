@@ -3,7 +3,6 @@ import random
 import os
 import matplotlib.pyplot as plt
 
-# Product classes for each economy
 from CapitalistEconomy import CapitalistEconomy
 from CapitalistProduct import CapitalistProduct
 from LaborTimeEconomy import LaborTimeEconomy
@@ -440,16 +439,6 @@ def trade(ce, lte, ce_map, ce_time_series, lte_map, time_step):
     # LTE pays for CE exports
     lte.total_currency -= trade_value
     ce.total_currency += trade_value
-                
-    # TODO:
-    # 1. We need to give LTE MELT values to convert the prices. - already done 
-    # 2. We need to convert CE prices which are in ratios to actual currency values. - already done 
-    # 3. We need to give LTE arbitrary shortage for random product types. - already done 
-    # 4. We need to finish converting the unit of the total demand and scale the number of products available for export. - need to base on discussion  
-    # 5. We need to use the trade algorithm developed to simulate trade. - already done 
-    # 6. We need to record the change in currency between the two economies and graph it. - already done 
-    
-    # Note: I don't think I'll have time for applying the effect back to the economy. That will be for March and April. 
 
     print(f"[t={time_step}] Trade() executed")
 
