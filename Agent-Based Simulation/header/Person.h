@@ -63,4 +63,5 @@ class Person : public Agent {
     void log_inventory();
     void log_account();
     void log_health_status();
+    void log_consumption(const Product * product, const double quantity);
 };

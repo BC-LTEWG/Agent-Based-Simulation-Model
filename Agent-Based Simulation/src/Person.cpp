@@ -115,6 +115,7 @@ void Person::consume() {
     for (Product * product : society->get_goods()) {
         to_consume[product] += product->mean_consumption_frequency;
         inventory[product] -= (int) to_consume[product];
+        log_consumption(product, to_consume[product]);
         to_consume[product] -= (int) to_consume[product];
     }
 }
@@ -245,4 +246,8 @@ void Person::log_account() {
 
 void Person::log_health_status() {
     Logger::get_instance()->log(Logger::PERSON, "health_status", id, health_status_names[health_status]);
+}
+
+void Person::log_consumption(const Product * product, const double quantity) {
+    Logger::get_instance()->log(Logger::PERSON, "consumption", id, product->product_name, quantity);
 }
