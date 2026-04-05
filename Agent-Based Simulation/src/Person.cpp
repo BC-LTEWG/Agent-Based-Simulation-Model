@@ -170,6 +170,7 @@ void Person::update_health_status() {
 	   dist(Sim::get_random_generator()) < 1 - pow(1 - DAILY_RECOVERY_CHANCE, 1.0 / DAY)) {
 		health_status = HEALTHY;
 	} 
+    log_health_status();
 }
 
 void Person::update_busyness() {
@@ -208,6 +209,8 @@ double Person::suitability(std::vector<Ability>& required_abilities) {
 
 const char * Person::ability_names[] = { "Ability_1", "Ability_2", "Ability_3" };
 
+const char * Person::health_status_names[] = { "Healthy", "Unhealthy" };
+
 void Person::log_hours(const double hours) {
     Logger::get_instance()->log(Logger::PERSON, "hours", id, hours);
 }
@@ -238,4 +241,8 @@ void Person::log_inventory() {
 
 void Person::log_account() {
     Logger::get_instance()->log(Logger::PERSON, "account", id, account);
+}
+
+void Person::log_health_status() {
+    Logger::get_instance()->log(Logger::PERSON, "health_status", id, health_status_names[health_status]);
 }

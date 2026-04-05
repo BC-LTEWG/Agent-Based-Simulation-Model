@@ -46,6 +46,7 @@ class Person : public Agent {
     double busyness = 0.0;
  	std::vector<Distributor *> ranked_distributors;
     static const char * ability_names[];
+    static const char * health_status_names[];
 
     void consume();
 	bool will_shop();
@@ -61,4 +62,5 @@ class Person : public Agent {
     void log_abilities();
     void log_inventory();
     void log_account();
+    void log_health_status();
 };

@@ -47,6 +47,16 @@ void Logger::log(
         const Client client,
         const std::string label,
         const unsigned int id,
+        const std::string value
+        ) {
+    TupleString tuple = std::make_tuple(value);
+    log_impl(client, label, id, tuple);
+}
+
+void Logger::log(
+        const Client client,
+        const std::string label,
+        const unsigned int id,
         const std::string name,
         const int quantity
         ) {
