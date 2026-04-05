@@ -30,5 +30,4 @@ class Distributor : public Firm {
     std::unordered_map<Product *, Plan *> product_to_plan;
     void check_expand_catalog();
     void log_shortfall(std::string product_name, int shortfall);
-    void log_catalog_size(int size);
 };

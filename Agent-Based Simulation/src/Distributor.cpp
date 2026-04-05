@@ -56,7 +56,6 @@ void Distributor::on_time_step() {
         }
     }
     check_expand_catalog();
-    log_catalog_size(catalog.size());
 }
 
 int Distributor::get_inventory(Product * product) {
@@ -116,11 +115,3 @@ void Distributor::log_shortfall(std::string product_name, int shortfall) {
             );
 }
 
-void Distributor::log_catalog_size(int size) {
-    Logger::get_instance()->log(
-            Logger::DISTRIBUTOR,
-            "catalog_size",
-            id,
-            size
-            );
-}
