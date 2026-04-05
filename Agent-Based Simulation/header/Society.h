@@ -34,6 +34,7 @@ class Society : public Agent {
         std::vector<Producer *>& get_producers();
         double get_busyness();
         double get_total_employment();
+        void log_total_employment();
 
     private:
         Society();
@@ -52,7 +53,6 @@ class Society : public Agent {
         void update_work_hours_daily();
         void log_io_matrix(Eigen::MatrixXd&, size_t);
         void log_labor_vector(Eigen::VectorXd&, size_t);
-        void log_total_employment();
 
         std::vector<Person *> people;
         std::vector<Product *> goods;
