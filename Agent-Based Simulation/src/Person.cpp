@@ -164,14 +164,19 @@ void Person::retire() {
 
 void Person::update_health_status() {
 	static std::uniform_real_distribution<> dist(0, 1);
+    bool changed = false;
 	if (health_status == HEALTHY &&
 		dist(Sim::get_random_generator()) < 1 - pow(1 - DAILY_SICKNESS_CHANCE, 1.0 / DAY)) {
 		health_status = UNHEALTHY;
+        changed = true;
 	} else if (health_status == UNHEALTHY &&
 	   dist(Sim::get_random_generator()) < 1 - pow(1 - DAILY_RECOVERY_CHANCE, 1.0 / DAY)) {
 		health_status = HEALTHY;
+        changed = true;
 	} 
-    log_health_status();
+    if (changed) {
+        log_health_status();
+    }
 }
 
 void Person::update_busyness() {
