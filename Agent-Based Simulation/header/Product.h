@@ -13,6 +13,7 @@ struct Product {
     Product(int id, const std::string& name);
     void set_inputs(std::vector<Product *>& products);
     void set_machines(std::vector<Machine*> machines);
+    void log_mean_consumption_frequency();
     int id;
     std::string product_name;
     ProductType product_type;

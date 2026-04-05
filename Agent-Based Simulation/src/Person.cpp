@@ -101,10 +101,11 @@ float Person::productivity() {
 	}
 }
 
-void Person::purchase_good(Product * p, int quantity) {
+void Person::purchase_good(Product * product, int quantity) {
     for (Distributor * distributor : ranked_distributors) {
-        if (distributor->try_sell_goods(*p, quantity, this)) {
-            inventory[p] += quantity;
+        if (distributor->try_sell_goods(*product, quantity, this)) {
+            inventory[product] += quantity;
+            log_purchase(product->product_name, quantity);
             return;
         }
     }
@@ -146,7 +147,6 @@ void Person::shop() {
         int quantity = (int) (price_scalar * p.second);
         if (quantity > 0) {
             purchase_good(p.first, quantity);
-            log_shopping(p.first->product_name, quantity);
         }
     }
 }
@@ -215,8 +215,8 @@ void Person::log_hours(const double hours) {
     Logger::get_instance()->log(Logger::PERSON, "hours", id, hours);
 }
 
-void Person::log_shopping(const std::string product_name, const int quantity) {
-    Logger::get_instance()->log(Logger::PERSON, "shopping", id, product_name, quantity);
+void Person::log_purchase(const std::string& product_name, const int quantity) {
+    Logger::get_instance()->log(Logger::PERSON, "purchase", id, product_name, quantity);
 }
 
 void Person::log_shopping_deficit(const double deficit) {

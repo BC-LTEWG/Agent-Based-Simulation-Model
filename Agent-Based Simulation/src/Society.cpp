@@ -216,7 +216,7 @@ void Society::set_product_prices_production_consumption() {
         products[i]->price_per_unit = values(i);
     }
     double consumption_scalar = 0.0;
-    for (Product *product : products) {
+    for (Product * product : products) {
         consumption_scalar += product->price_per_unit * product->mean_consumption_frequency;
     }
     const unsigned int initial_work_week =
@@ -243,7 +243,7 @@ std::vector<Product *> &Society::get_goods() {
     return goods;
 }
 
-ConsumerGood *Society::get_consumer_good(Product *product) {
+ConsumerGood * Society::get_consumer_good(Product *product) {
     if (consumer_goods.count(product)) {
         return consumer_goods[product];
     }

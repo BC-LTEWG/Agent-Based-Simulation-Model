@@ -4,6 +4,7 @@
 #include <set>
 
 #include "Constants.h"
+#include "Logger.h"
 #include "Machine.h"
 #include "Product.h"
 #include "Sim.h"
@@ -76,3 +77,8 @@ void Product::set_machines(std::vector<Machine*> machines) {
         machines_needed.push_back(machines[index]);
     }
  }
+
+
+void Product::log_mean_consumption_frequency() {
+    Logger::get_instance()->log(Logger::PRODUCT, "mean_consumption_frequency", id, mean_consumption_frequency);
+}
