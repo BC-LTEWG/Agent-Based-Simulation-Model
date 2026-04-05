@@ -20,15 +20,17 @@ class Person : public Agent {
 	void on_time_step() override;
   
 	std::unordered_map<Ability, double>& get_abilities();
+    double get_busyness();
 	void train(std::unordered_map<Ability, double> target_abilities);
-    std::unordered_map<Product*, double>& get_purchase_frequencies();
     HealthStatus get_health_status();
-    float get_current_productivity();
-    float avg_productivity_over_time_step(std::string product_name);
+    float productivity();
+    double suitability(std::vector<Ability>& required_abilities);
     void register_hours_worked(double hours_worked);
+    void register_busyness();
     bool charge(double cost);
     void purchase_good(Product * p, int quantity);
     void set_firm(Firm *);
+    Firm * get_firm();
   
   private:
     Society * society;
@@ -36,17 +38,21 @@ class Person : public Agent {
     std::unordered_map<Ability, double> abilities;
     int age;
     HealthStatus health_status;
-    std::unordered_map<Product*, double> purchase_frequencies;
+    std::unordered_map<Product *, int> inventory;
+    std::unordered_map<Product *, double> to_consume;
     Firm * firm = nullptr;
     double account;
-	std::vector<Distributor *> ranked_distributors;
-	int shopping_offset;
+    bool busy_this_time_step = false;
+    double busyness = 0.0;
+ 	std::vector<Distributor *> ranked_distributors;
 
+    void consume();
 	bool will_shop();
 	void shop();
     bool will_retire();
 	void retire();
 	void update_health_status();
+    void update_busyness();
 
     void log_hours(const double hours);
     void log_shopping(const std::string product_name, int quantity);

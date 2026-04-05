@@ -2,6 +2,7 @@
 
 #include <Eigen/Dense>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "Agent.h"
 #include "Constants.h"
@@ -24,17 +25,21 @@ class Society : public Agent {
         ConsumerGood * get_consumer_good(Product * product);
         void add_consumer_good(Product * product);
         std::vector<Distributor *>& get_distributors();
-        std::vector<Person *>& get_unemployed_people();
+        std::unordered_set<Person *>& get_unemployed_people();
         void retire_person(Person * person);
-        int get_current_work_hours_daily();
-        int get_current_work_days_weekly();
+        unsigned int get_current_work_hours_daily();
+        unsigned int get_current_work_days_weekly();
         int get_initial_account();
+        std::unordered_map<Product *, double>& get_initial_production();
+        std::vector<Producer *>& get_producers();
+        double get_busyness();
+
     private:
         Society();
         unsigned int id;
         Person * birth_person();
         void set_initial_products();
-        void set_product_prices();
+        void set_product_prices_production_consumption();
         std::unordered_map<Product *, std::size_t> get_product_to_index_map();
         void populate_io_matrix_and_labor_vector(
                 std::unordered_map<Product *, std::size_t>&,
@@ -43,6 +48,8 @@ class Society : public Agent {
                 );
         void adjust_io_matrix(Eigen::MatrixXd&, double max_eigenvalue);
         void set_initial_account();
+        void update_work_hours_daily();
+
         std::vector<Person *> people;
         std::vector<Product *> goods;
         std::vector<Machine *> machines;
@@ -54,8 +61,9 @@ class Society : public Agent {
         std::vector<Distributor *> distributors;
         std::unordered_map<Product *, std::vector<Distributor *>>
             product_to_distributors;
-        int current_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
-		int current_work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
-        std::vector<Person *> unemployed_people;
+        unsigned int current_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
+		unsigned int current_work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
+        std::unordered_set<Person *> unemployed_people;
         double initial_account;
+        std::unordered_map<Product *, double> initial_production;
 };

@@ -21,44 +21,29 @@ Person::Person(Society * society):
 {
     static unsigned int unique_id = 0;
     id = unique_id++;
-    static std::normal_distribution<>
-        shopping_dist(
-                PERSON_SHOPPING_PERIOD / 2, PERSON_SHOPPING_OFFSET_STDDEV
-                );
-    shopping_offset =
-        (((int) shopping_dist(Sim::gen)) +
-         PERSON_SHOPPING_PERIOD) % PERSON_SHOPPING_PERIOD;
 
     static std::normal_distribution<>
         ability_dist(1.0, PERSON_ABILITY_STDDEV);
-    std::vector<Person::Ability> all_abilities;
+    std::vector<Person::Ability> variated_abilities;
     for (int i = 0; i < Person::NUM_ABILITIES; i++) {
-        all_abilities.push_back((Person::Ability) i);
+        abilities[(Person::Ability) i] = 1.0;
+        variated_abilities.push_back((Person::Ability) i);
     }
-    std::shuffle(all_abilities.begin(), all_abilities.end(), Sim::gen);
-    all_abilities.resize(PERSON_ABILITY_COUNT_MAX);
-    for (Person::Ability ability : all_abilities) {
-        abilities[ability] = std::max(0.0, ability_dist(Sim::gen));
-        static std::normal_distribution<>
-            dist(1, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
-        for (Product * p : society->get_goods()) {
-            purchase_frequencies[p] =
-                p->mean_consumption_frequency * std::abs(dist(Sim::gen));
-        }
-        account = society->get_initial_account();
+    std::shuffle(variated_abilities.begin(), variated_abilities.end(), Sim::get_random_generator());
+    for (int i = 0; i < PERSON_VARIATED_ABILITY_COUNT; i++) {
+        abilities[variated_abilities[i]] = std::max(0.0, ability_dist(Sim::get_random_generator()));
     }
     ranked_distributors = society->get_distributors();
     std::shuffle(
             ranked_distributors.begin(),
             ranked_distributors.end(),
-            Sim::gen
+            Sim::get_random_generator()
             );
-    static std::normal_distribution<>
-        dist(1, PERSON_FREQUENCY_MULTIPLIER_STDDEV);
-    for (Product * p : society->get_goods()) {
-        purchase_frequencies[p] =
-            p->mean_consumption_frequency * std::abs(dist(Sim::gen));
+    for (Product * product : society->get_goods()) {
+        inventory[product] = 
+            (int) (PERSON_STOCKPILE_DURATION * product->mean_consumption_frequency);
     }
+    account = society->get_initial_account();
 }
 
 unsigned int Person::get_id() {
@@ -67,6 +52,10 @@ unsigned int Person::get_id() {
 
 std::unordered_map<Person::Ability, double>& Person::get_abilities() {
     return this->abilities;
+}
+
+double Person::get_busyness() {
+    return busyness;
 }
 
 void Person::train(std::unordered_map<Person::Ability, double> target_abilities) {
@@ -81,6 +70,10 @@ void Person::register_hours_worked(double hours_worked) {
     account += hours_worked;
 }
 
+void Person::register_busyness() {
+    busy_this_time_step = true;
+}
+
 bool Person::charge(double cost) {
     if (cost > account) {
         return false;
@@ -89,15 +82,11 @@ bool Person::charge(double cost) {
     return true;
 }
 
-std::unordered_map<Product*, double>& Person::get_purchase_frequencies() { 
-    return this->purchase_frequencies;
-}
-
 Person::HealthStatus Person::get_health_status() {
     return this->health_status;
 }
 
-float Person::get_current_productivity() {
+float Person::productivity() {
 	switch(health_status) {
 		case HEALTHY:
 			return 1.0;
@@ -108,44 +97,52 @@ float Person::get_current_productivity() {
 	}
 }
 
-float Person::avg_productivity_over_time_step(std::string product_name) {
-    (void)product_name;
-    return 0.0f;
-}
-
 void Person::purchase_good(Product * p, int quantity) {
     for (Distributor * distributor : ranked_distributors) {
         if (distributor->try_sell_goods(*p, quantity, this)) {
+            inventory[p] += quantity;
             return;
         }
     }
-    /*
-    std::cerr << "No Distributor with " << quantity << "units of "
-        << p->product_name << " to buy" << std::endl;
-        */
+}
+
+void Person::consume() {
+    for (Product * product : society->get_goods()) {
+        to_consume[product] += product->mean_consumption_frequency;
+        inventory[product] -= (int) to_consume[product];
+        to_consume[product] -= (int) to_consume[product];
+    }
 }
 
 bool Person::will_shop() {
-    return Sim::get_current_time_step() % PERSON_SHOPPING_PERIOD == shopping_offset;
+    double total_deficit = 0.0;
+    for (Product * product : society->get_goods()) {
+        total_deficit += std::max(0.0, 
+            PERSON_STOCKPILE_DURATION - 
+            inventory[product] / product->mean_consumption_frequency
+        );
+    }
+    return total_deficit > PERSON_DEFICIT_THRESHOLD;
 }
 
 void Person::shop() {
-    static std::normal_distribution<> dist(1, PERSON_SHOPPING_MULTIPLIER_STDDEV);
-    std::unordered_map<Product *, double> ideal_purchase_quantities;
     double total_price = 0.0;
-    for (std::pair<Product *, double> p : purchase_frequencies) {
-        ideal_purchase_quantities[p.first] =
-            p.second * PERSON_SHOPPING_PERIOD * std::abs(dist(Sim::gen));
-        total_price += ideal_purchase_quantities[p.first] * 
-            society->get_consumer_good(p.first)->price_per_unit;
+    static std::unordered_map<Product *, int> purchase_quantities;
+    for (Product * product : society->get_goods()) {
+        purchase_quantities[product] = std::max(0, 
+            (int) (PERSON_STOCKPILE_DURATION * product->mean_consumption_frequency) - 
+            inventory[product]
+        );
+        total_price += purchase_quantities[product] * 
+            society->get_consumer_good(product)->price_per_unit;
     }
-    log_shopping_deficit(std::max(0.0, (total_price - account) / total_price)); 
-    for (std::pair<Product *, double> p : ideal_purchase_quantities) {
-        int affordable_quantity = (int) (account / total_price *
-                ideal_purchase_quantities[p.first]);
-        if (affordable_quantity > 0) {
-            purchase_good(p.first, affordable_quantity);
-            log_shopping(p.first->product_name, affordable_quantity);
+    double price_scalar = std::min(account / total_price, 1.0);
+    log_shopping_deficit(std::max(0.0, 1.0 - price_scalar)); 
+    for (std::pair<Product *, int> p : purchase_quantities) {
+        int quantity = (int) (price_scalar * p.second);
+        if (quantity > 0) {
+            purchase_good(p.first, quantity);
+            log_shopping(p.first->product_name, quantity);
         }
     }
 }
@@ -153,7 +150,7 @@ void Person::shop() {
 bool Person::will_retire() {
     static std::uniform_real_distribution<> dist(0, 1);
     if (age >= GUARANTEED_RETIREMENT_AGE) { return true; }
-    return dist(Sim::gen) < RANDOM_RETIREMENT_CHANCE;
+    return dist(Sim::get_random_generator()) < RANDOM_RETIREMENT_CHANCE;
 }
 
 void Person::retire() {
@@ -163,25 +160,46 @@ void Person::retire() {
 void Person::update_health_status() {
 	static std::uniform_real_distribution<> dist(0, 1);
 	if (health_status == HEALTHY &&
-		dist(Sim::gen) < 1 - pow(1 - DAILY_SICKNESS_CHANCE, 1.0 / DAY)) {
+		dist(Sim::get_random_generator()) < 1 - pow(1 - DAILY_SICKNESS_CHANCE, 1.0 / DAY)) {
 		health_status = UNHEALTHY;
 	} else if (health_status == UNHEALTHY &&
-	   dist(Sim::gen) < 1 - pow(1 - DAILY_RECOVERY_CHANCE, 1.0 / DAY)) {
+	   dist(Sim::get_random_generator()) < 1 - pow(1 - DAILY_RECOVERY_CHANCE, 1.0 / DAY)) {
 		health_status = HEALTHY;
 	} 
 }
 
+void Person::update_busyness() {
+    double duration_prop = 1.0 / BUSYNESS_AVERAGING_WINDOW;
+    busyness = busyness * (1 - duration_prop) + busy_this_time_step * duration_prop;
+    busy_this_time_step = false;
+}
 
 void Person::on_time_step() {
 	++age;
+    consume();
 	if (will_shop()) { shop(); }
 	if (will_retire()) { retire(); }
 	update_health_status();
+    update_busyness();
     log_state();
 }
 
 void Person::set_firm(Firm * workplace) {
     firm = workplace;
+}
+
+Firm * Person::get_firm() {
+    return firm;
+}
+
+double Person::suitability(std::vector<Ability>& required_abilities) {
+    double suitability = 0.0;
+    for (Ability ability : required_abilities) {
+        suitability += abilities[ability];
+    }
+    suitability /= required_abilities.size();
+    suitability *= productivity();
+    return suitability;
 }
 
 void Person::log_hours(const double hours) {

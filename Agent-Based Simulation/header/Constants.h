@@ -2,17 +2,21 @@
 
 #include <cmath>
 
-const int DAY = 24;
-const int WEEK = DAY * 7;
-const int MONTH = DAY * 30;
-const int YEAR = DAY * 365;
+const unsigned int NUM_SIM_RUNS = 10;
 
-// Threshold for productivity before lowering working hours
-const double PRODUCTIVITY_THRESHOLD = 60.0;
-const int INITIAL_WORK_HOURS_DAILY = 8;
-const int INITIAL_WORK_DAYS_WEEKLY = 5;
-const int INITIAL_WORK_WEEK = INITIAL_WORK_HOURS_DAILY * \
+const unsigned int DAY = 24;
+const unsigned int WEEK = DAY * 7;
+const unsigned int MONTH = DAY * 30;
+const unsigned int YEAR = DAY * 365;
+
+const unsigned int INITIAL_WORK_HOURS_DAILY = 8;
+const unsigned int INITIAL_WORK_DAYS_WEEKLY = 5;
+const unsigned int INITIAL_WORK_WEEK = INITIAL_WORK_HOURS_DAILY * \
                               INITIAL_WORK_DAYS_WEEKLY;
+const double INITIAL_ACCOUNT_MULT = 1000;
+const int WORK_HOURS_UPDATE_START = YEAR;
+const int WORK_HOURS_UPDATE_PERIOD = MONTH;
+const double INEFFICIENCY_OF_WORK = 1.5;
 
 const int STARTING_NUM_PEOPLE = 1000;
 const int STARTING_NUM_PRODUCTS = 100;
@@ -28,46 +32,52 @@ const double AVERAGE_RETIREMENT_AGE = (
     RANDOM_RETIREMENT_CHANCE +
     INITIAL_AGE; // approx 62 years in hours
 
+const int PRODUCT_ABILITY_COUNT_MAX = 1;
 const int PRODUCT_ORDER_SIZE_MIN = 1;
-const int PRODUCT_ORDER_SIZE_MAX = 1000;
-const int PRODUCT_NUM_INPUTS_MIN = 0;
-const int PRODUCT_NUM_INPUTS_MAX = 10;
-const double PRODUCT_INPUT_PER_UNIT_MIN = 0.01;
+const int PRODUCT_ORDER_SIZE_MAX = 10;
+const int PRODUCT_NUM_INPUTS_MIN = 1;
+const int PRODUCT_NUM_INPUTS_MAX = STARTING_NUM_PRODUCTS / 2;
+const double PRODUCT_INPUT_PER_UNIT_MIN = 0.1;
 const double PRODUCT_INPUT_PER_UNIT_MAX = 0.25;
 const double PRODUCT_INPUT_EPSILON = 0.0001;
 const int PRODUCT_NUM_MACHINES_MIN = 0;
-const int PRODUCT_NUM_MACHINES_MAX = 5;
-const int PRODUCT_LABOR_PER_UNIT_MIN = 1;
-const int PRODUCT_LABOR_PER_UNIT_MAX = INITIAL_WORK_WEEK; 
+const int PRODUCT_NUM_MACHINES_MAX = STARTING_NUM_MACHINES / 5;
+const double PRODUCT_LABOR_PER_UNIT_MIN = 0.05;
+const double PRODUCT_LABOR_PER_UNIT_MAX = 0.1; 
 const double DISTRIBUTION_LABOR_PER_UNIT = 0.2;
-const double PRODUCT_CONSUMPTION_FREQUENCY_MIN = 0;
-const double PRODUCT_CONSUMPTION_FREQUENCY_MAX = 1;
+const int PRODUCT_CONSUMPTION_GROUP_SIZE = 5;
+const double PRODUCT_CONSUMPTION_FALLOFF = 0.97;
+const double PRODUCT_CONSUMPTION_MULT = 0.95;
 const int PRICE_AVERAGING_WINDOW = MONTH;
 
 const int MACHINE_LIFETIME_MIN = 1000;
 const int MACHINE_LIFETIME_MAX = MACHINE_LIFETIME_MIN * 10;
 
 const int FIRM_TRAINING_TIME = INITIAL_WORK_HOURS_DAILY * WEEK / DAY;
-const int FIRM_STOCKPILE_DURATION = MONTH;
-const int FIRM_DEMAND_WINDOW = WEEK;
-const double FIRM_INITIAL_INVENTORY_MULTIPLIER = 2;
-const double DEADLINE_SAFETY_MULTIPLIER = 0.75;
+const int FIRM_STOCKPILE_DURATION = 1.5 * WEEK;
+const unsigned int FIRM_DEMAND_WINDOW_MIN = WEEK;
+const unsigned int FIRM_DEMAND_WINDOW_MAX = MONTH;
+const double PRODUCER_INITIAL_INVENTORY_MULT = 10;
+const double DISTRIBUTOR_INITIAL_INVENTORY_MULT = 2;
+const double DEADLINE_SAFETY_MULT = 0.6;
+const int BUSYNESS_AVERAGING_WINDOW = WEEK;
+const double TRANSFER_BUSYNESS_THRESHOLD = 0.05;
+
+const int RAW_MATERIAL_THRESHOLD = 50;
+const double RAW_MATERIAL_SURPLUS_FACTOR = 1.5;
+const double RAW_MATERIAL_ORDER_MULTIPLIER = 1.2;
 
 const int DRAFT_ORDER_REJECTED = -1;
 const double EXPAND_CATALOG_DEMAND_THRESHOLD = 1;
 
-const double PERSON_FREQUENCY_MULTIPLIER_STDDEV = 0.1;
-const double PERSON_SHOPPING_MULTIPLIER_STDDEV = 0.1;
-const int PERSON_SHOPPING_PERIOD = WEEK;
-const double PERSON_SHOPPING_OFFSET_STDDEV = DAY / 2.0;
-const double PERSON_ABILITY_STDDEV = 0.2;
+const double PERSON_STOCKPILE_DURATION = WEEK; 
+const double PERSON_DEFICIT_THRESHOLD = WEEK / 2.0;
+const int PERSON_VARIATED_ABILITY_COUNT = 3;
+const double PERSON_ABILITY_STDDEV = 0.05;
 
 const double UNHEALTHY_PRODUCTIVITY = 0.5;
 const double DAILY_SICKNESS_CHANCE = 0.01;
 const double DAILY_RECOVERY_CHANCE = 0.1;
-
-const int PERSON_ABILITY_COUNT_MAX = 3;
-const int PRODUCT_ABILITY_COUNT_MAX = 3;
 
 const char * const LOGGING_DIR = "data";
 const char * const LOG_FILE = "data/lte.db";

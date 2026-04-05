@@ -9,7 +9,8 @@
 struct Machine;
 
 struct Product {
-    Product(const std::string name);
+    Product() = default;
+    Product(int id, const std::string& name);
     int id;
     void set_inputs(std::vector<Product *>& products);
     void set_machines(std::vector<Machine*> machines);
@@ -19,6 +20,7 @@ struct Product {
     std::vector<Machine *> machines_needed;
     std::unordered_map<Product *, double> inputs_per_unit;
  	double living_labor_per_unit; 
+    double global_living_labor_per_unit;
 	std::vector<Person::Ability> required_abilities;
 	double mean_consumption_frequency;
 };
