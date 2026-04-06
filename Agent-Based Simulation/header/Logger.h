@@ -75,6 +75,13 @@ class Logger {
                 const Client client,
                 const std::string label,
                 const unsigned int id,
+                const unsigned int index,
+                const double value
+                );
+        void log(
+                const Client client,
+                const std::string label,
+                const unsigned int id,
                 const std::pair<int, int> coords,
                 const double value
                 );

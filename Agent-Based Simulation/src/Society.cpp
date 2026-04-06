@@ -335,7 +335,7 @@ void Society::log_labor_vector(Eigen::VectorXd& l, size_t dim) {
     Logger::get_instance()->log(Logger::SOCIETY, "l_dim", id, static_cast<int>(dim));
     for (size_t i = 0; i < dim; ++i) {
         if (l(i)) {
-            Logger::get_instance()->log(Logger::SOCIETY, "l", id, std::to_string(i), l(i));
+            Logger::get_instance()->log(Logger::SOCIETY, "l", id, i, l(i));
         }
     }
 }
