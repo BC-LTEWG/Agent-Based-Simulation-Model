@@ -239,7 +239,7 @@ void Person::log_placement() {
 
 void Person::log_abilities() {
     for (std::pair<Ability, double> ability : abilities) {
-        Logger::get_instance()->log(
+        Logger::get_instance()->log<double>(
                 Logger::PERSON,"ability",
                 id,
                 "ability",
@@ -252,7 +252,7 @@ void Person::log_abilities() {
 
 void Person::log_inventory() {
     for (std::pair<Product *, int> entry : inventory) {
-        Logger::get_instance()->log(
+        Logger::get_instance()->log<int>(
                 Logger::PERSON,
                 "inventory",
                 id,

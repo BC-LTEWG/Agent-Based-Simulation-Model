@@ -414,7 +414,7 @@ void Firm::log_product_quantity(
         const Product * product,
         const int quantity
         ) {
-    Logger::get_instance()->log(
+    Logger::get_instance()->log<int>(
             get_client_type(),
             label,
             id,
