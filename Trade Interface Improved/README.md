@@ -15,10 +15,10 @@ In addition to tracking prices and supplies, the simulation explicitly computes 
 - Evolves the economy forward in discrete time by repeatedly applying a single event-based update step
 - Records trajectories of prices, supplies, and related state variables at each time step
 - Computes total reproduction demand at each time step as:
-  - Intermediate production demand (A · q)
+  - Intermediate production demand (Aq)
   - Worker consumption demand
   - Capitalist consumption demand
-  - Total reproduction requirement = A·q + b + c
+  - Total reproduction requirement = Aq + b + c
 - Tracks both current total reproduction demand and equilibrium total reproduction demand for comparison with supply levels
 - Detects equilibrium by identifying a time step with no change in prices and supplies relative to the previous step
 - Records the continuous equilibrium time and extracts equilibrium price, supply, and total reproduction demand vectors as benchmarks
