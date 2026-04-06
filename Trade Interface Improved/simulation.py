@@ -1,12 +1,61 @@
 import csv
 import random 
 import os
+import sys
+import importlib.util
+import numpy as np
 import matplotlib.pyplot as plt
 
-from CapitalistEconomy import CapitalistEconomy
+from CapitalistEconomy import CapitalistEconomy as LocalCapitalistEconomy
 from CapitalistProduct import CapitalistProduct
 from LaborTimeEconomy import LaborTimeEconomy
 from LaborTimeProduct import LaborTimeProduct 
+
+# Load live CE modules from Event-Based Simulation.
+EVENT_BASED_SIM_DIR = os.path.join(
+    os.path.dirname(__file__),
+    "..",
+    "Event-Based Simulation"
+)
+
+sys.path.insert(0, EVENT_BASED_SIM_DIR)
+
+
+def load_module_from_event_based_sim(filename, module_name):
+    """Load one module from Event-Based Simulation."""
+    module_path = os.path.join(EVENT_BASED_SIM_DIR, filename)
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+# Import the live CE class and its setup helpers.
+event_params_module = load_module_from_event_based_sim(
+    "parameters.py",
+    "event_params_module",
+)
+event_dep_module = load_module_from_event_based_sim(
+    "generate_dependency_matrix.py",
+    "event_dep_module",
+)
+event_random_module = load_module_from_event_based_sim(
+    "random_events.py",
+    "event_random_module",
+)
+event_ce_module = load_module_from_event_based_sim(
+    "CapitalistEconomy.py",
+    "event_ce_module",
+)
+
+Params = event_params_module.Params
+generate_dependencies = event_dep_module.generate_dependencies
+generate_l = event_dep_module.generate_l
+construct_A_matrix_and_production_cost_map = (
+    event_dep_module.construct_A_matrix_and_production_cost_map
+)
+normalize_A_and_l = event_dep_module.normalize_A_and_l
+load_event_table = event_random_module.load_event_table
+EventBasedSimulationCapitalistEconomy = event_ce_module.CapitalistEconomy
 
 # Use labor time value + order size for LTE products 
 # use MELT for the US, perhaps the mechanics from the summer project 
@@ -28,73 +77,76 @@ CE_PRICE_SCALE_FACTOR = 938.07
 # Scaling changes size, not structure.
 CE_PHYSICAL_SCALE = 1000
 
-# Note: the prices are in ratios, not in any currency. 
-def build_ce_map(ce_csv_path):
-    """
-    Build the CE commodity → CapitalistProduct map using the equilibrium row
-    from trajectories_with_equilibrium.csv.
-    Includes equilibrium price, supply, and total internal demand.
-    """
-    # Ensure CSV file exists
-    if not os.path.exists(ce_csv_path):
-        raise FileNotFoundError(f"CSV not found at: {ce_csv_path}")
+# Build the live CE instance 
+def build_live_ce(debug=True):
+    """Build the live CE instance from Event-Based Simulation."""
+    generate_dependencies()
+    l = generate_l()
+    A_matrix, _, normalizing_value = construct_A_matrix_and_production_cost_map()
+    A_matrix, l = normalize_A_and_l(A_matrix, l, normalizing_value)
 
-    eq_row = None  # Will store the equilibrium row
+    A = np.array(A_matrix)
+    l = np.array(l)
 
-    # Read CSV as a dictionary per row
-    with open(ce_csv_path, "r", newline="") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            # Identify the unique equilibrium row
-            if row.get("is_equilibrium_step") == "1":
-                eq_row = row
-                break
+    params = Params(
+        A=A,
+        l=l,
+        b_bar=np.ones(len(l)) * 0.1,
+        c_bar=np.ones(len(l)) * 0.05,
+        alpha_w=0.8,
+        alpha_c=0.7,
+        alpha_L=0.0,
+        kappa=np.ones(len(l)),
+        eta=np.ones(len(l)) * 2,
+        eta_w=0.25,
+        L=1.0,
+        eta_r=2.0,
+        q0=np.ones(len(l)) * 0.1,
+        p0=np.ones(len(l)) * 0.8,
+        s0=np.ones(len(l)) * 0.2,
+        m_w0=0.5,
+        w0=0.5,
+        r0=0.0,
+        T=200,
+    )
 
-    # Equilibrium must exist
-    if eq_row is None:
-        raise ValueError("No equilibrium row found (is_equilibrium_step == 1).")
+    ce = EventBasedSimulationCapitalistEconomy(params, debug=debug)
+    ce.events_catalog = load_event_table()
+    return ce
 
-    ce_map = {}
+# Print a small state check for the live CE instance.
+def debug_live_ce_instance(ce, num_steps=3):
+    """Print a small live-state check for the CE instance."""
+    print("\n--- LIVE CE DEBUG START ---")
+    print(f"Number of commodities: {ce.n}")
+    print(f"Initial current_t: {ce.current_t}")
 
-    # Build CE product objects for A–Z
-    for i in range(CE_NUMBER_OF_PRODUCT_TYPES):
-        name = chr(ord("A") + i)
+    q, p, s, l, m_w, L = ce._split_state(ce.y)
 
-        price_key = f"equilibrium_price_{name}"
-        supply_key = f"equilibrium_supply_{name}"
-        demand_key = f"equilibrium_total_demand_{name}"
+    print("\nInitial state snapshot:")
+    print(f"Commodity A price: {p[0]:.6f}")
+    print(f"Commodity A supply: {s[0]:.6f}")
+    print(f"Commodity A output: {q[0]:.6f}")
+    print(f"m_w: {m_w:.6f}")
+    print(f"L: {L:.6f}")
 
-        price_val = eq_row.get(price_key)
-        supply_val = eq_row.get(supply_key)
-        demand_val = eq_row.get(demand_key)
+    for step_index in range(num_steps):
+        ce.step()
+        q, p, s, l, m_w, L = ce._split_state(ce.y)
 
-        if price_val in (None, ""):
-            raise ValueError(f"Missing {price_key} in equilibrium row.")
-        if supply_val in (None, ""):
-            raise ValueError(f"Missing {supply_key} in equilibrium row.")
-        if demand_val in (None, ""):
-            raise ValueError(f"Missing {demand_key} in equilibrium row.")
+        print(f"\nAfter ce.step() #{step_index + 1}:")
+        print(f"current_t: {ce.current_t}")
+        print(f"Commodity A price: {p[0]:.6f}")
+        print(f"Commodity A supply: {s[0]:.6f}")
+        print(f"Commodity A output: {q[0]:.6f}")
+        print(f"m_w: {m_w:.6f}")
+        print(f"L: {L:.6f}")
 
-        eq_price = float(price_val) * CE_PRICE_SCALE_FACTOR
-        eq_supply = float(supply_val)
-        eq_total_demand = float(demand_val)
-
-        # Current values initialized at equilibrium
-        current_price = eq_price
-        current_supply = eq_supply
-
-        ce_map[name] = CapitalistProduct(
-            name=name,
-            price=current_price,
-            supply=current_supply,
-            current_total_demand=eq_total_demand,
-            eq_price=eq_price,
-            eq_supply=eq_supply,
-            eq_total_demand=eq_total_demand
-        )
-
-    return ce_map
-
+    print("\nHistory lengths:")
+    print(f"len(ce.t): {len(ce.t)}")
+    print(f"history['p'] shape: {ce.history['p'].shape}")
+    print(f"history['s'] shape: {ce.history['s'].shape}")
+    print("--- LIVE CE DEBUG END ---\n")
 
 def build_lte_map(lte_csv_path):
     """
@@ -158,57 +210,6 @@ def print_maps(ce_map, lte_map):
     for name in sorted(lte_map.keys()):
         print(name, "->", lte_map[name])
 
-def load_ce_post_equilibrium_series(csv_path, window_size=40):
-    """
-    Load CE price and supply data starting at equilibrium
-    and continuing for `window_size` time steps after equilibrium.
-
-    Indexing convention:
-        t = 0  -> equilibrium
-        t = 1  -> equilibrium + 1
-        ...
-        t = window_size → equilibrium + window_size
-    """
-
-    with open(csv_path, "r", newline="") as f:
-        reader = csv.DictReader(f)
-        rows = list(reader)
-
-    # Locate equilibrium index
-    eq_index = None
-    for i, row in enumerate(rows):
-        if row.get("is_equilibrium_step") == "1":
-            eq_index = i
-            break
-
-    if eq_index is None:
-        raise ValueError("Equilibrium row not found in CSV.")
-
-    # Slice desired window
-    end_index = eq_index + window_size + 1
-    window_rows = rows[eq_index:end_index]
-
-    ce_time_series = []
-
-    for row in window_rows:
-        supply = {}
-        price = {}
-        demand = {}
-
-        for i in range(CE_NUMBER_OF_PRODUCT_TYPES):
-            name = chr(ord("A") + i)
-            supply[name] = float(row[f"supply_{name}"])
-            price[name] = float(row[f"price_{name}"]) * CE_PRICE_SCALE_FACTOR
-            demand[name] = float(row[f"current_total_demand_{name}"])
-
-        ce_time_series.append({
-            "supply": supply,
-            "price": price, 
-            "demand": demand
-        })
-
-    return ce_time_series
-
 # For debugging
 def print_equilibrium_total_demand(ce_map):
     print("\n--- Equilibrium Total Demand (REAL UNITS) ---")
@@ -222,46 +223,9 @@ LTE_Import = []
 CE_Export = []
 LTE_Export = []
 
-def update_ce_map(ce_map, ce_time_series, time_step):
-    """
-    Update CE product state at a given time step.
-
-    For each CE product i:
-        - Update current supply and price from simulation data.
-        - Compute net_excess_supply_i(t):
-
-            net_excess_supply_i(t)
-                = current_supply_i(t) - current_total_demand_i
-
-    Interpretation:
-        If net_excess_supply_i(t) > 0:
-            The CE has excess stock available for export.
-        If net_excess_supply_i(t) < 0:
-            The CE has a deficit and requires imports.
-        If net_excess_supply_i(t) = 0:
-            The CE is exactly reproducing its internal requirements.
-    """
-
-    for name, product in ce_map.items():
-        # Update current supply from the simulation time step
-        product.supply = ce_time_series[time_step]["supply"][name]
-        
-        # Update current price from the time series 
-        product.price = ce_time_series[time_step]["price"][name]
-        
-        # Update current total demand 
-        product.current_total_demand = ce_time_series[time_step]["demand"][name]
-        
-        product.physical_net_excess = (
-            product.net_excess_supply * CE_PHYSICAL_SCALE
-        )
-        
-        # This is the absolute monetary value of the goods that are either 
-        # available for export or in need of import 
-        product.value_of_goods_for_trade = (
-            abs(product.physical_net_excess) * product.price
-        )
-        
+# Update the live CE instance per step 
+# def update_ce():
+    
 def compute_melt(ce):
     # update the two fields here 
     ce.new_gdp_ppp_per_capita()
@@ -461,12 +425,8 @@ def plot_currency(time, ce_history, lte_history):
     plt.close()
 
 if __name__ == "__main__":
-    ce_data_path = os.path.join(
-    "..",
-    "Event-Based Simulation",
-    "graphs",
-    "trajectories_with_equilibrium.csv"
-    )
+
+    # Build a live CE instance 
 
     lte_data_path = os.path.join(
         "..",
@@ -474,7 +434,7 @@ if __name__ == "__main__":
         "data"
     )
     
-    usa = CapitalistEconomy(
+    usa = LocalCapitalistEconomy(
         name="United States",
         total_currency=0, 
         melt=0.0,  # placeholder 
@@ -483,38 +443,39 @@ if __name__ == "__main__":
         avg_hours_worked_by_employees_only=1809.583,
     )
     
+    ce = build_live_ce(debug=True)
+    
     lte = LaborTimeEconomy(
         name="Labor Time Economy",
         total_currency=0,
     )
     
-    # Build CE and LTE maps
-    ce_map = build_ce_map(ce_data_path)
-    lte_map = build_lte_map(lte_data_path)
+    # Build CE instance
     
-    # Load CE data for access in O(1) time 
-    ce_time_series = load_ce_post_equilibrium_series(ce_data_path)
+    # Build LTE map
+    lte_map = build_lte_map(lte_data_path)
 
     # Display results
-    print_maps(ce_map, lte_map)
-    print_equilibrium_total_demand(ce_map)
+ #   print_maps(ce_map, lte_map)
+ #   print_equilibrium_total_demand(ce_map)
+    debug_live_ce_instance(ce, num_steps=3)
     
     # Record for graphing 
-    ce_currency_history = []
-    lte_currency_history = []
-    time_axis = []
+    # ce_currency_history = []
+    # lte_currency_history = []
+    # time_axis = []
     
-    for i in range (NUMBER_OF_TIME_STEPS):
-        trade(usa, lte, ce_map, ce_time_series, lte_map, i)
+    # for i in range (NUMBER_OF_TIME_STEPS):
+    #     trade(usa, lte, ce_map, ce_time_series, lte_map, i)
         
-        # Record currency values
-        ce_currency_history.append(usa.total_currency)
-        lte_currency_history.append(lte.total_currency)
-        time_axis.append(i + 1)
+    #     # Record currency values
+    #     ce_currency_history.append(usa.total_currency)
+    #     lte_currency_history.append(lte.total_currency)
+    #     time_axis.append(i + 1)
         
-        # Print for debug 
-        print(f"Time step: {i+1}")
-        print(f"CE currency: {usa.total_currency:.4f}")
-        print(f"LTE currency: {lte.total_currency:.4f}")
+    #     # Print for debug 
+    #     print(f"Time step: {i+1}")
+    #     print(f"CE currency: {usa.total_currency:.4f}")
+    #     print(f"LTE currency: {lte.total_currency:.4f}")
     
-    plot_currency(time_axis, ce_currency_history, lte_currency_history)
+    # plot_currency(time_axis, ce_currency_history, lte_currency_history)
