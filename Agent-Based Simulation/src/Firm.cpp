@@ -72,8 +72,8 @@ void Firm::receive_shipment(Plan * plan) {
     int transaction_amount = order->product->price_per_unit * order->quantity;
     pooled_input_value_account -= transaction_amount;
     plan->firm->receive_payment(plan, transaction_amount);
-    log_shipment_received(order->product->product_name, order->quantity);
-    log_inventory_level(order->product->product_name, input_inventory[order->product]);
+    log_shipment_received(order->product, order->quantity);
+    log_inventory_level(order->product, input_inventory[order->product]);
 
 }
 
@@ -88,6 +88,7 @@ bool Firm::remove_input_from_inventory(Product * product, int quantity) {
         std::cerr << "No good to remove from" << std::endl;
     }
     input_inventory[product] -= quantity;
+    log_inventory_reduction(product, quantity);
     return true;
 }
 
@@ -388,22 +389,32 @@ void Firm::move_worker_off_standby(Person * worker) {
     workers.insert(worker);
 }
 
-void Firm::log_shipment_received(std::string product_name, int quantity) {
+void Firm::log_shipment_received(const Product * product, const int quantity) {
     Logger::get_instance()->log(
             get_client_type(),
             "shipment_received",
             id,
-            product_name,
+            product->product_name,
             quantity
             );
 }
 
-void Firm::log_inventory_level(std::string product_name, int quantity) {
+void Firm::log_inventory_level(const Product * product, const int quantity) {
     Logger::get_instance()->log(
             get_client_type(),
             "inventory_level",
             id,
-            product_name,
+            product->product_name,
+            quantity
+            );
+}
+
+void Firm::log_inventory_reduction(const Product * product, const int quantity) {
+    Logger::get_instance()->log(
+            get_client_type(),
+            "inventory_reduction",
+            id,
+            product->product_name,
             quantity
             );
 }

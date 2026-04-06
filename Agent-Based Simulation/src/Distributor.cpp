@@ -39,7 +39,7 @@ Distributor::Distributor(
         plans_in_progress.push_back(plan);
         product_to_plan[product] = plan;
         input_inventory[product] = quantity;
-        log_inventory_level(product->product_name, input_inventory[product]);
+        log_inventory_level(product, input_inventory[product]);
     }
 }
 
