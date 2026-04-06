@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstdarg>
 #include <fstream>
 #include <map>
@@ -5,20 +7,18 @@
 #include <variant>
 #include <unordered_map>
 
-#include "sqlite3.h"
+#include "Sim.h"
 
 using TupleNone = std::tuple<>;
 using TupleInt = std::tuple<int>;
 using TupleDouble = std::tuple<double>;
-using TupleStringInt = std::tuple<std::string, int>;
-using TupleStringDouble = std::tuple<std::string, double>;
 using TupleIntDoubleInt = std::tuple<int, double, int>;
+using TupleString = std::tuple<std::string>;
 using TupleStringStringInt = std::tuple<std::string, std::string, int>;
 using Tuple = std::variant<TupleNone,
       TupleInt,
       TupleDouble,
-      TupleStringInt,
-      TupleStringDouble,
+      TupleString,
       TupleIntDoubleInt
       >;
 
@@ -57,6 +57,12 @@ class Logger {
                 const Client client,
                 const std::string label,
                 const unsigned int id,
+                const std::string value
+                );
+        void log(
+                const Client client,
+                const std::string label,
+                const unsigned int id,
                 const std::string name,
                 const int quantity
                 );
@@ -71,17 +77,55 @@ class Logger {
                 const Client client,
                 const std::string label,
                 const unsigned int id,
-                const std::unordered_map<Product *, int> inventory
+                const unsigned int index,
+                const double value
                 );
-        void write_data();
+        void log(
+                const Client client,
+                const std::string label,
+                const unsigned int id,
+                const std::pair<int, int> coords,
+                const double value
+                );
+        template <typename T>
+            void log(
+                    const Client client,
+                    const std::string label1,
+                    const unsigned int id1,
+                    const std::string label2,
+                    const unsigned int id2,
+                    const std::string label3,
+                    const T value
+                    ) {
+                if (!Sim::does_json()) {
+                    return;
+                }
+                if (client >= ERROR) {
+                    throw std::invalid_argument("Logging client does not exist");
+                }
+                unsigned int time_step = Sim::get_current_time_step();
+                std::cout <<
+                    "{\"t\":" << time_step << "," <<
+                    "\"client\":\"" << clients[client] << "\"," <<
+                    "\"id\":" << id1 << "," <<
+                    "\"label\":\"" << label1 << "\"," <<
+                    "\"" << label2 << "\":" << id2 << "," <<
+                    "\"" << label3 << "\":" << value << "}" << std::endl;
+            }
     private:
-        Logger();
-        ~Logger();
         void log_impl(
                 const Client client,
                 const std::string label,
                 const unsigned int id,
                 const Tuple& values
+                );
+        template <typename T>
+        void log_impl(
+                const Client client,
+                const std::string label,
+                const unsigned int id,
+                const std::string& key,
+                const T value
                 );
         static void json(
                 const int time_step,
@@ -90,22 +134,18 @@ class Logger {
                 unsigned int id,
                 const Tuple& values
                 );
-        static void log_to_db(
+        template <typename T>
+        static void json(
                 const int time_step,
                 const Client client,
                 std::string label,
                 unsigned int id,
-                const Tuple& values
+                const std::string key,
+                const T value
                 );
         template<typename TupleT>
             static void trace_tuple(const TupleT& values);
-        template<typename TupleT>
-            static void write_tuple(std::ofstream& file, const TupleT& values);
         static const char * clients[];
-        sqlite3 * db;
-        // client -> label -> id -> time step -> data
-        std::unordered_map<Client,
-            std::unordered_map<std::string,
-            std::map<unsigned int,
-            std::map<int, Tuple>>>> data;
 };
+
+

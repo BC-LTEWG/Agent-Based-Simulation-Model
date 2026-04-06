@@ -10,6 +10,7 @@
 #include "Person.h"
 #include "Producer.h"
 #include "Product.h"
+#include "Sim.h"
 #include "Society.h"
 
 Distributor::Distributor(
@@ -23,7 +24,7 @@ Distributor::Distributor(
         int quantity =
             product->mean_consumption_frequency *
             (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN * DISTRIBUTOR_INITIAL_INVENTORY_MULT) * 
-            STARTING_NUM_PEOPLE;
+            Sim::get_num_people();
         Order * order = new Order(product, quantity, this, 0);
         Plan * plan = new Plan;
         plan->order = order;
@@ -38,7 +39,12 @@ Distributor::Distributor(
         plans_in_progress.push_back(plan);
         product_to_plan[product] = plan;
         input_inventory[product] = quantity;
+        log_inventory_level(product, input_inventory[product]);
     }
+}
+
+Logger::Client Distributor::get_client_type() {
+    return Logger::DISTRIBUTOR;
 }
 
 void Distributor::on_time_step() {
@@ -50,7 +56,6 @@ void Distributor::on_time_step() {
         }
     }
     check_expand_catalog();
-    log_catalog_size(catalog.size());
 }
 
 int Distributor::get_inventory(Product * product) {
@@ -83,7 +88,7 @@ bool Distributor::try_sell_goods(Product& product, int quantity, Person * person
     Plan * plan = product_to_plan[&product];
     plan->outgoing_units_consumed += quantity;
     plan->prd += cost;
-    input_inventory[&product] -= quantity;
+    remove_input_from_inventory(&product, quantity);
     check_and_reorder_input(&product);
     return true;
 }
@@ -110,11 +115,3 @@ void Distributor::log_shortfall(std::string product_name, int shortfall) {
             );
 }
 
-void Distributor::log_catalog_size(int size) {
-    Logger::get_instance()->log(
-            Logger::DISTRIBUTOR,
-            "catalog_size",
-            id,
-            size
-            );
-}

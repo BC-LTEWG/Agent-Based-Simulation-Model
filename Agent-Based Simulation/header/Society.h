@@ -33,6 +33,8 @@ class Society : public Agent {
         std::unordered_map<Product *, double>& get_initial_production();
         std::vector<Producer *>& get_producers();
         double get_busyness();
+        double get_total_employment();
+        void log_total_employment();
 
     private:
         Society();
@@ -49,6 +51,9 @@ class Society : public Agent {
         void adjust_io_matrix(Eigen::MatrixXd&, double max_eigenvalue);
         void set_initial_account();
         void update_work_hours_daily();
+        void log_io_matrix(Eigen::MatrixXd&, size_t);
+        void log_labor_vector(Eigen::VectorXd&, size_t);
+        void log_consumption_frequencies();
 
         std::vector<Person *> people;
         std::vector<Product *> goods;

@@ -22,7 +22,10 @@ Society *Society::get_instance() {
     return instance;
 }
 
-Society::Society() {
+Society::Society() :
+    current_work_hours_daily{Sim::get_work_hours_daily()},
+    current_work_days_weekly{Sim::get_work_days_weekly()}
+{
     static unsigned int unique_id = 0;
     id = unique_id++;
     set_initial_products();
@@ -30,13 +33,13 @@ Society::Society() {
         Logger::get_instance()->log(Logger::SOCIETY, "price", product->id, product->price_per_unit);
         Logger::get_instance()->log(Logger::SOCIETY, "order_size", product->id, product->order_size);
     }
-    for (int i = 0; i < STARTING_NUM_PRODUCERS; i++) {
-        Producer *producer = new Producer(this, {goods[i % STARTING_NUM_PRODUCTS]});
+    for (unsigned int i = 0; i < Sim::get_num_producers(); i++) {
+        Producer *producer = new Producer(this, {goods[i % Sim::get_num_products()]});
         producers.push_back(producer);
         firms.push_back(producer);
     }
-    for (int i = 0; i < STARTING_NUM_DISTRIBUTORS; i++) {
-        Distributor *distributor = new Distributor(this, {goods[i % STARTING_NUM_PRODUCTS]});
+    for (unsigned int i = 0; i < Sim::get_num_distributors(); i++) {
+        Distributor *distributor = new Distributor(this, {goods[i % Sim::get_num_products()]});
         distributors.push_back(distributor);
         firms.push_back(distributor);
     }
@@ -48,7 +51,7 @@ Society::Society() {
         }
     }
     set_initial_account();
-    for (int i = 0; i < STARTING_NUM_PEOPLE; i++) {
+    for (unsigned int i = 0; i < Sim::get_num_people(); i++) {
         birth_person();
     }
 }
@@ -74,43 +77,47 @@ void Society::on_time_step() {
 }
 
 void Society::set_initial_products() {
+    unsigned int starting_num_products = Sim::get_num_products();
     std::size_t i = 0;
-    for (; i < STARTING_NUM_PRODUCTS; ++i) {
+    for (; i < starting_num_products; ++i) {
         Product *new_product = new Product(
             i,
-            "Product " + std::to_string(i));
+            "Product_" + std::to_string(i));
         goods.push_back(new_product);
         products.push_back(new_product);
         product_to_index[new_product] = i;
     }
     static std::uniform_int_distribution<>
         machine_lifetime_dist(MACHINE_LIFETIME_MIN, MACHINE_LIFETIME_MAX);
-    for (std::size_t j = 0; j < STARTING_NUM_MACHINES; ++j, ++i) {
+    const unsigned int starting_num_machines =
+        starting_num_products / Sim::get_products_per_machine();
+    for (std::size_t j = 0; j < starting_num_machines; ++j, ++i) {
         Machine *new_machine = new Machine(
             i,
-            "Machine " + std::to_string(i),
+            "Machine_" + std::to_string(i),
             machine_lifetime_dist(Sim::get_random_generator()));
         machines.push_back(new_machine);
         products.push_back(new_machine);
         product_to_index[new_machine] = i;
     }
-    for (Product *product : products) {
+    for (Product * product : products) {
         product->set_inputs(goods);
         product->set_machines(machines);
     }
     set_product_prices_production_consumption();
+    log_consumption_frequencies();
 }
 
 void Society::populate_io_matrix_and_labor_vector(
     std::unordered_map<Product *, std::size_t> &product_to_index,
     Eigen::MatrixXd &input_output_matrix,
     Eigen::VectorXd &labor_vector) {
-    static const int starting_num_firms = STARTING_NUM_PRODUCERS +
-                                          STARTING_NUM_DISTRIBUTORS;
-    static const int average_team_size =
-        STARTING_NUM_PEOPLE / starting_num_firms;
-    for (Product *output_product : products) {
-        for (const std::pair<Product *const, double> &input :
+    const unsigned int starting_num_firms =
+        Sim::get_num_producers() + Sim::get_num_distributors();
+    const unsigned int average_team_size =
+        std::max<unsigned int>(Sim::get_num_people() / starting_num_firms, 1);
+    for (Product * output_product : products) {
+        for (const std::pair<Product * const, double> &input :
              output_product->inputs_per_unit) {
             input_output_matrix(
                 product_to_index[input.first],
@@ -118,9 +125,9 @@ void Society::populate_io_matrix_and_labor_vector(
         }
         double machine_use_hours =
             output_product->living_labor_per_unit / average_team_size;
-        for (Machine *const machine : output_product->machines_needed) {
+        for (Machine * const machine : output_product->machines_needed) {
             input_output_matrix(
-                product_to_index[static_cast<Product *const>(machine)],
+                product_to_index[static_cast<Product * const>(machine)],
                 product_to_index[output_product]) = machine_use_hours / machine->lifetime;
         }
         labor_vector(product_to_index[output_product]) =
@@ -153,14 +160,27 @@ double Society::get_busyness() {
     return busyness / people.size();
 }
 
+double Society::get_total_employment() {
+    unsigned int employed = 0;
+    for (Person * person : people) {
+        employed += (person->get_firm() != nullptr);
+    }
+    return static_cast<double>(employed) / people.size();
+}
+
+void Society::log_total_employment() {
+    Logger::get_instance()->log(Logger::SOCIETY, "employment", id, get_total_employment());
+}
+
 void Society::adjust_io_matrix(
-    Eigen::MatrixXd &io_matrix,
+    Eigen::MatrixXd& io_matrix,
     double max_eigenvalue) {
     io_matrix /= (max_eigenvalue + PRODUCT_INPUT_EPSILON);
     const size_t dim = io_matrix.rows();
     for (std::size_t j = 0; j < dim; ++j) {
         for (std::size_t i = 0; i < dim; ++i) {
-            if (io_matrix(i, j)) {
+            if (io_matrix(i, j) &&
+                    products[i]->product_type == Product::ProductType::TYPE_GOOD) {
                 products[j]->inputs_per_unit[products[i]] = io_matrix(i, j);
             }
         }
@@ -184,6 +204,8 @@ void Society::set_product_prices_production_consumption() {
     if (max_eigenvalue >= 1.0) {
         adjust_io_matrix(A, max_eigenvalue);
     }
+    log_io_matrix(A, dim);
+    log_labor_vector(l, dim);
     Eigen::MatrixXd leontief_inverse = get_leontief_inverse(A);
     Eigen::VectorXd values = leontief_inverse.transpose() * l;
     for (std::size_t i = 0; i < dim; ++i) {
@@ -195,10 +217,12 @@ void Society::set_product_prices_production_consumption() {
         products[i]->price_per_unit = values(i);
     }
     double consumption_scalar = 0.0;
-    for (Product *product : products) {
+    for (Product * product : products) {
         consumption_scalar += product->price_per_unit * product->mean_consumption_frequency;
     }
-    consumption_scalar = PRODUCT_CONSUMPTION_MULT * INITIAL_WORK_WEEK / WEEK / consumption_scalar;
+    const unsigned int initial_work_week =
+        Sim::get_work_hours_daily() * Sim::get_work_days_weekly();
+    consumption_scalar = PRODUCT_CONSUMPTION_MULT * initial_work_week / WEEK / consumption_scalar;
     for (Product *product : products) {
         product->mean_consumption_frequency *= consumption_scalar;
     }
@@ -220,7 +244,7 @@ std::vector<Product *> &Society::get_goods() {
     return goods;
 }
 
-ConsumerGood *Society::get_consumer_good(Product *product) {
+ConsumerGood * Society::get_consumer_good(Product *product) {
     if (consumer_goods.count(product)) {
         return consumer_goods[product];
     }
@@ -276,7 +300,7 @@ std::unordered_map<Product *, double> &Society::get_initial_production() {
 
 void Society::update_work_hours_daily() {
     current_work_hours_daily = std::ceil(get_busyness() * INEFFICIENCY_OF_WORK * 
-            WEEK / INITIAL_WORK_DAYS_WEEKLY);
+            WEEK / Sim::get_work_days_weekly());
     current_work_hours_daily = std::min(DAY, current_work_hours_daily);
 }
 
@@ -289,4 +313,43 @@ Person * Society::birth_person() {
 
 void Society::retire_person(Person *person) {
     // unimplemented until hiring/reallocation is done
+}
+
+void Society::log_io_matrix(Eigen::MatrixXd& A, size_t dim) {
+    Logger::get_instance()->log(Logger::SOCIETY, "A_dim", id, static_cast<int>(dim));
+    for (size_t i = 0; i < dim; ++i) {
+        for (size_t j = 0; j < dim; ++j) {
+            if (A(i, j)) {
+                Logger::get_instance()->log(
+                        Logger::SOCIETY,
+                        "A",
+                        id,
+                        std::make_pair(i, j),
+                        A(i, j)
+                        );
+            }
+        }
+    }
+}
+
+void Society::log_labor_vector(Eigen::VectorXd& l, size_t dim) {
+    Logger::get_instance()->log(Logger::SOCIETY, "l_dim", id, static_cast<int>(dim));
+    for (size_t i = 0; i < dim; ++i) {
+        if (l(i)) {
+            Logger::get_instance()->log(Logger::SOCIETY, "l", id, i, l(i));
+        }
+    }
+}
+
+void Society::log_consumption_frequencies() {
+    Logger * logger = Logger::get_instance();
+    for (const Product * product : goods) {
+        logger->log(
+                Logger::SOCIETY,
+                "mean_consumption_frequency",
+                id,
+                product->product_name,
+                product->mean_consumption_frequency
+                );
+    }
 }

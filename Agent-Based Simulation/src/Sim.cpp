@@ -17,12 +17,32 @@ Sim::Sim() :
     gen{rd()}
 {}
 
-bool Sim::does_csv() {
-    return get_instance().args.csv;
+unsigned int Sim::get_num_people() {
+    return get_instance().args.num_people;
 }
 
-bool Sim::does_db() {
-    return get_instance().args.db;
+unsigned int Sim::get_work_hours_daily() {
+    return get_instance().args.work_hours_daily;
+}
+
+unsigned int Sim::get_work_days_weekly() {
+    return get_instance().args.work_days_weekly;
+}
+
+unsigned int Sim::get_num_products() {
+    return get_instance().args.num_products;
+}
+
+unsigned int Sim::get_products_per_machine() {
+    return get_instance().args.products_per_machine;
+}
+
+unsigned int Sim::get_num_producers() {
+    return get_instance().args.num_producers;
+}
+
+unsigned int Sim::get_num_distributors() {
+    return get_instance().args.num_distributors;
 }
 
 bool Sim::does_json() {
@@ -49,9 +69,6 @@ void Sim::run() {
     society = Society::get_instance();
     for (std::size_t i = 0; i < args.time_steps; ++i) {
         society->on_time_step();
-        current_time_step++;
-    }
-    if (args.csv) {
-        Logger::get_instance()->write_data();
+        ++current_time_step;
     }
 }
