@@ -88,7 +88,7 @@ bool Distributor::try_sell_goods(Product& product, int quantity, Person * person
     Plan * plan = product_to_plan[&product];
     plan->outgoing_units_consumed += quantity;
     plan->prd += cost;
-    input_inventory[&product] -= quantity;
+    remove_input_from_inventory(&product, quantity);
     check_and_reorder_input(&product);
     return true;
 }

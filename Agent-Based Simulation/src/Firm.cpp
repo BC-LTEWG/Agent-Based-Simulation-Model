@@ -223,10 +223,10 @@ void Firm::reorder_input_product_to_threshold(
             );
     Producer * chosen_producer = send_order(order);
     if (chosen_producer) {
-        log_reorder(product->product_name, reorder_quantity);
+        log_reorder(product, reorder_quantity);
         log_accepted_order(product->product_name, order->requested_turnaround_time);
     } else {
-        log_reorder("No producer found for " + product->product_name, reorder_quantity);
+        log_reorder_failure(product, reorder_quantity);
     }
 }
 
@@ -390,41 +390,37 @@ void Firm::move_worker_off_standby(Person * worker) {
 }
 
 void Firm::log_shipment_received(const Product * product, const int quantity) {
-    Logger::get_instance()->log(
-            get_client_type(),
-            "shipment_received",
-            id,
-            product->product_name,
-            quantity
-            );
+    log_product_quantity("shipment_received", product, quantity);
 }
 
 void Firm::log_inventory_level(const Product * product, const int quantity) {
-    Logger::get_instance()->log(
-            get_client_type(),
-            "inventory_level",
-            id,
-            product->product_name,
-            quantity
-            );
+    log_product_quantity("inventory_level", product, quantity);
 }
 
 void Firm::log_inventory_reduction(const Product * product, const int quantity) {
-    Logger::get_instance()->log(
-            get_client_type(),
-            "inventory_reduction",
-            id,
-            product->product_name,
-            quantity
-            );
+    log_product_quantity("inventory_reduction", product, quantity);
 }
 
-void Firm::log_reorder(std::string product_name, int quantity) {
+void Firm::log_reorder(const Product * product, const int quantity) {
+    log_product_quantity("reorder", product, quantity);
+}
+
+void Firm::log_reorder_failure(const Product * product, const int quantity) {
+    log_product_quantity("reorder_failure", product, quantity);
+}
+
+void Firm::log_product_quantity(
+        const char * const label,
+        const Product * product,
+        const int quantity
+        ) {
     Logger::get_instance()->log(
             get_client_type(),
-            "reorder",
+            label,
             id,
-            product_name,
+            "product_id",
+            product->id,
+            "amount",
             quantity
             );
 }

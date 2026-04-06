@@ -144,7 +144,13 @@ class Firm : public Agent {
     void log_shipment_received(const Product * product, const int quantity);
     void log_inventory_level(const Product * product, const int quantity);
     void log_inventory_reduction(const Product * product, const int quantity);
-    void log_reorder(std::string product_name, int quantity);
+    void log_reorder(const Product * product, int quantity);
+    void log_reorder_failure(const Product * product, int quantity);
+    void log_product_quantity(
+            const char * const label,
+            const Product * product,
+            const int quantity
+            );
     void log_accepted_order(std::string product_name, int requested_turnaround_time);
     void log_demand(std::string product_name, double demand);
 };

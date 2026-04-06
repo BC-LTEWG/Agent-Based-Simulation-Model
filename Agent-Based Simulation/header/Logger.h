@@ -73,6 +73,15 @@ class Logger {
                 );
         void log(
                 const Client client,
+                const std::string label1,
+                const unsigned int id1,
+                const std::string label2,
+                const unsigned int id2,
+                const std::string label3,
+                const int value
+                );
+        void log(
+                const Client client,
                 const std::string label,
                 const unsigned int id,
                 const unsigned int index,

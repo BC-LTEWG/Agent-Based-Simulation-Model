@@ -198,6 +198,7 @@ void Person::on_time_step() {
 }
 
 void Person::set_firm(Firm * workplace) {
+    std::cerr << "SET_FIRM " << id << workplace->get_id() << std::endl;
     firm = workplace;
     log_placement();
 }
@@ -238,13 +239,28 @@ void Person::log_placement() {
 
 void Person::log_abilities() {
     for (std::pair<Ability, double> ability : abilities) {
-        Logger::get_instance()->log(Logger::PERSON,"ability", id, ability_names[ability.first], ability.second);
+        Logger::get_instance()->log(
+                Logger::PERSON,"ability",
+                id,
+                "ability",
+                ability.first,
+                "value",
+                ability.second
+                );
     }
 }
 
 void Person::log_inventory() {
     for (std::pair<Product *, int> entry : inventory) {
-        Logger::get_instance()->log(Logger::PERSON, "inventory", id, entry.first->product_name, entry.second);
+        Logger::get_instance()->log(
+                Logger::PERSON,
+                "inventory",
+                id,
+                "product_id",
+                entry.first->id,
+                "amount",
+                entry.second
+                );
     }
 }
 
@@ -253,7 +269,11 @@ void Person::log_account() {
 }
 
 void Person::log_health_status() {
-    Logger::get_instance()->log(Logger::PERSON, "health_status", id, health_status_names[health_status]);
+    Logger::get_instance()->log(Logger::PERSON,
+            "health_status",
+            id,
+            std::string("\"") + health_status_names[health_status] + "\""
+            );
 }
 
 void Person::log_consumption(const Product * product, const int quantity) {
