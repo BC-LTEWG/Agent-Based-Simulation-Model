@@ -53,6 +53,7 @@ class Society : public Agent {
         void update_work_hours_daily();
         void log_io_matrix(Eigen::MatrixXd&, size_t);
         void log_labor_vector(Eigen::VectorXd&, size_t);
+        void log_consumption_frequencies();
 
         std::vector<Person *> people;
         std::vector<Product *> goods;

@@ -105,6 +105,7 @@ void Society::set_initial_products() {
         product->set_machines(machines);
     }
     set_product_prices_production_consumption();
+    log_consumption_frequencies();
 }
 
 void Society::populate_io_matrix_and_labor_vector(
@@ -337,5 +338,18 @@ void Society::log_labor_vector(Eigen::VectorXd& l, size_t dim) {
         if (l(i)) {
             Logger::get_instance()->log(Logger::SOCIETY, "l", id, i, l(i));
         }
+    }
+}
+
+void Society::log_consumption_frequencies() {
+    Logger * logger = Logger::get_instance();
+    for (const Product * product : goods) {
+        logger->log(
+                Logger::SOCIETY,
+                "mean_consumption_frequency",
+                id,
+                product->product_name,
+                product->mean_consumption_frequency
+                );
     }
 }
