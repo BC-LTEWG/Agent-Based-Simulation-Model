@@ -90,6 +90,31 @@ void Logger::log(
 
 void Logger::log(
         const Client client,
+        const std::string label1,
+        const unsigned int id1,
+        const std::string label2,
+        const unsigned int id2,
+        const std::string label3,
+        const double value
+        ) {
+    if (!Sim::does_json()) {
+        return;
+    }
+    if (client >= ERROR) {
+        throw std::invalid_argument("Logging client does not exist");
+    }
+    unsigned int time_step = Sim::get_current_time_step();
+    std::cout <<
+        "{\"t\":" << time_step << "," <<
+        "\"client\":\"" << clients[client] << "\"," <<
+        "\"id\":" << id1 << "," <<
+        "\"label\":\"" << label1 << "\"," <<
+        "\"" << label2 << "\":" << id2 << "," <<
+        "\"" << label3 << "\":" << value << "}" << std::endl;
+}
+
+void Logger::log(
+        const Client client,
         const std::string label,
         const unsigned int id,
         const std::string name,
