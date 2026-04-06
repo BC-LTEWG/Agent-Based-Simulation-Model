@@ -284,10 +284,10 @@ void Producer::log_plans() {
     for (Plan * plan : plans_in_progress) {
         Logger::get_instance()->log(
                 Logger::PRODUCER,
-                "plan",
+                "plan_quantity_remaining",
                 id,
                 plan->order->product->product_name,
-                plan->order->quantity
+                plan->quantity_remaining
                 );
     }
 }
