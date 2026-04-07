@@ -20,8 +20,8 @@ class Producer : public Firm {
         Society * society,
         const std::unordered_set<Product *>& initial_catalog
     );
+    Logger::Client get_client_type() override;
     void on_time_step() override;
-
     bool can_produce(Product * product);
 	int draft_plan(Order * order);
 	void drop_order(Order * order);

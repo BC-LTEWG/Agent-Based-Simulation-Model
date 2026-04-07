@@ -31,8 +31,13 @@ Producer::Producer(
         this->input_inventory[product] =
             (society->get_initial_production()[product] - product->mean_consumption_frequency) * 
             (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN * PRODUCER_INITIAL_INVENTORY_MULT) *
-            STARTING_NUM_PEOPLE;
+            Sim::get_num_people();
+            log_inventory_level(product, input_inventory[product]);
     }
+}
+
+Logger::Client Producer::get_client_type() {
+    return Logger::PRODUCER;
 }
 
 void Producer::on_time_step() {
@@ -149,6 +154,7 @@ bool Producer::pursue_order(Order * order) {
 	order_to_draft_plan[order] = nullptr;
 	plans_in_progress.push_back(draft_plan);
     log_pursued_plan(draft_plan);
+    society->log_total_employment();
 	return true;
 }
 
@@ -278,10 +284,10 @@ void Producer::log_plans() {
     for (Plan * plan : plans_in_progress) {
         Logger::get_instance()->log(
                 Logger::PRODUCER,
-                "plan",
+                "plan_quantity_remaining",
                 id,
                 plan->order->product->product_name,
-                plan->order->quantity
+                plan->quantity_remaining
                 );
     }
 }
