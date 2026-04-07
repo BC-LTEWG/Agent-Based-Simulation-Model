@@ -70,6 +70,7 @@ Plan * Producer::draft_optimal_plan(
     Plan * draft_plan = new Plan{};
     draft_plan->order = order;
     draft_plan->firm = this;
+    draft_plan->local_work_hours_daily = society->get_current_work_hours_daily();
     Plan * draft_plan_without_training = new Plan(*draft_plan);
     assign_workers(
         draft_plan_without_training,
@@ -125,19 +126,7 @@ void Producer::remove_workers_from_available_pools(
         const std::vector<Person *>& assigned_workers
         ) {
     for (Person * worker : assigned_workers) {
-        auto worker_it = std::find(workers.begin(), workers.end(), worker);
-        if (worker_it != workers.end()) {
-            workers.erase(worker_it);
-        }
-
-        auto unemployed_it = std::find(
-            society->get_unemployed_people().begin(),
-            society->get_unemployed_people().end(),
-            worker
-        );
-        if (unemployed_it != society->get_unemployed_people().end()) {
-            society->get_unemployed_people().erase(unemployed_it);
-        }
+        move_worker_off_standby(worker);
     }
 }
 

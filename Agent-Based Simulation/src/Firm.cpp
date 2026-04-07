@@ -267,7 +267,7 @@ void Firm::assign_workers(
             });
 
     int workers_left = predict_workers_needed(draft_plan);
-    for (Person * worker : standby_workers) {
+    for (Person * worker : sorted_standby_workers) {
         if (workers_left == 0) return;
         draft_plan->workers.push_back(worker);
         workers_left--;

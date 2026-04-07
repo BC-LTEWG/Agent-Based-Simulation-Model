@@ -6,6 +6,7 @@
 #include <tuple>
 #include <variant>
 #include <unordered_map>
+#include <iostream>
 
 #include "Sim.h"
 
