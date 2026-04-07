@@ -39,9 +39,11 @@ Person::Person(Society * society):
             ranked_distributors.end(),
             Sim::get_random_generator()
             );
+    static std::uniform_real_distribution<> inventory_dist(0.0, 1.0);
     for (Product * product : society->get_goods()) {
-        inventory[product] = 
-            (int) (PERSON_STOCKPILE_DURATION * product->mean_consumption_frequency);
+        inventory[product] = (inventory_dist(Sim::get_random_generator()) *
+                PERSON_STOCKPILE_DURATION *
+                product->mean_consumption_frequency);
     }
     account = society->get_initial_account();
 }
@@ -99,10 +101,9 @@ float Person::productivity() {
 
 void Person::purchase_good(Product * p, int quantity) {
     for (Distributor * distributor : ranked_distributors) {
-        if (distributor->try_sell_goods(*p, quantity, this)) {
-            inventory[p] += quantity;
-            return;
-        }
+        int available = distributor->try_sell_goods(*p, quantity, this);
+        quantity -= available;
+        inventory[p] += available;
     }
 }
 
@@ -110,6 +111,7 @@ void Person::consume() {
     for (Product * product : society->get_goods()) {
         to_consume[product] += product->mean_consumption_frequency;
         inventory[product] -= (int) to_consume[product];
+        inventory[product] = std::max(0, inventory[product]);
         to_consume[product] -= (int) to_consume[product];
     }
 }

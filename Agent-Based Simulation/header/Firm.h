@@ -56,7 +56,7 @@ struct Order {
 
 struct DemandSignal {
     int quantity;
-    unsigned int timestep;
+    int timestep;
 };
 
 class Firm : public Agent {
@@ -78,7 +78,6 @@ class Firm : public Agent {
     std::vector<Person *> propose_transfer(int workers_wanted);
     void finalize_transfer(Person * worker);
 
-    void log_input_inventory(Firm * firm, std::string product_name, int quantity);
 
   protected:
     Society * society;
@@ -99,14 +98,10 @@ class Firm : public Agent {
     std::vector<Plan *> plans_in_progress;
 
     Producer * send_order(Order * order);
-    Producer * select_fastest_supplier_for_order(Order * order);
+    Producer * select_fastest_producer_for_order(Order * order);
     void pursue_order_with_chosen_producer(
         Order * order,
         Producer * chosen_producer
-    );
-    void drop_order_from_unchosen_producer(
-        Order * order,
-        Producer * unchosen_producer
     );
     bool remove_input_from_inventory(Product * product, int quantity);
     void add_input_inventory(Product * product, int quantity);
@@ -128,11 +123,10 @@ class Firm : public Agent {
 	int predict_turnaround_time(Plan * plan, std::vector<Person*>& workers); 
 	int predict_labor_hours(Order * order, std::vector<Person*>& workers);
     int calculate_raw_material_cost_for_order(Order * order);
-    void initialize_plan_budget(
-        Plan * draft_plan
-    );
+    void initialize_plan_budget(Plan * draft_plan);
+    double calculate_machinery_cost_for_plan(Plan * draft_plan);
 	void assign_plan_dependent_fields(Plan * draft_plan, std::vector<Person::Ability>& required_abilities);
-	void train_workers(std::vector<Person *>& workers, std::vector<Person::Ability>& required_abilities);
+    Plan * draft_plan_with_required_abilities(Order * order, std::vector<Person::Ability>& required_abilities); 
     void add_demand_signal(Product * product, int quantity);
     void apply_demand_window();
     double get_demand(Product * product);
@@ -144,4 +138,5 @@ class Firm : public Agent {
     void log_reorder(std::string product_name, int quantity);
     void log_accepted_order(std::string product_name, int requested_turnaround_time);
     void log_demand(std::string product_name, double demand);
+    void log_input_inventory(Firm * firm, std::string product_name, int quantity);
 };
