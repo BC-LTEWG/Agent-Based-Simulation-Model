@@ -24,15 +24,16 @@ Person::Person(Society * society):
 
     static std::normal_distribution<>
         ability_dist(1.0, PERSON_ABILITY_STDDEV);
-    std::vector<Person::Ability> variated_abilities;
+    std::vector<Person::Ability> varied_abilities;
     for (int i = 0; i < Person::NUM_ABILITIES; i++) {
         abilities[(Person::Ability) i] = 1.0;
-        variated_abilities.push_back((Person::Ability) i);
+        varied_abilities.push_back((Person::Ability) i);
     }
-    std::shuffle(variated_abilities.begin(), variated_abilities.end(), Sim::get_random_generator());
-    for (int i = 0; i < PERSON_VARIATED_ABILITY_COUNT; i++) {
-        abilities[variated_abilities[i]] = std::max(0.0, ability_dist(Sim::get_random_generator()));
+    std::shuffle(varied_abilities.begin(), varied_abilities.end(), Sim::get_random_generator());
+    for (int i = 0; i < PERSON_VARIED_ABILITY_COUNT; i++) {
+        abilities[varied_abilities[i]] = std::max(0.0, ability_dist(Sim::get_random_generator()));
     }
+    log_abilities();
     ranked_distributors = society->get_distributors();
     std::shuffle(
             ranked_distributors.begin(),
@@ -45,7 +46,9 @@ Person::Person(Society * society):
                 PERSON_STOCKPILE_DURATION *
                 product->mean_consumption_frequency);
     }
+    log_inventory();
     account = society->get_initial_account();
+    log_account();
 }
 
 unsigned int Person::get_id() {
@@ -65,6 +68,7 @@ void Person::train(std::unordered_map<Person::Ability, double> target_abilities)
     for (auto &pair : target_abilities) {
         abilities[pair.first] = pair.second;
     }
+    log_abilities();
 }
 
 void Person::register_hours_worked(double hours_worked) {
@@ -99,20 +103,26 @@ float Person::productivity() {
 	}
 }
 
-void Person::purchase_good(Product * p, int quantity) {
+void Person::purchase_good(Product * product, int quantity) {
+    int purchased = 0;
     for (Distributor * distributor : ranked_distributors) {
-        int available = distributor->try_sell_goods(*p, quantity, this);
+        int available = distributor->try_sell_goods(*product, quantity, this);
         quantity -= available;
-        inventory[p] += available;
+        inventory[product] += available;
+        purchased += available;
     }
+    log_purchase(product->product_name, purchased);
 }
 
 void Person::consume() {
     for (Product * product : society->get_goods()) {
         to_consume[product] += product->mean_consumption_frequency;
-        inventory[product] -= (int) to_consume[product];
-        inventory[product] = std::max(0, inventory[product]);
-        to_consume[product] -= (int) to_consume[product];
+        int consumed = static_cast<int>(to_consume[product]);
+        to_consume[product] -= consumed;
+        if (consumed) {
+            inventory[product] -= consumed;
+            log_consumption(product, consumed);
+        }
     }
 }
 
@@ -144,7 +154,6 @@ void Person::shop() {
         int quantity = (int) (price_scalar * p.second);
         if (quantity > 0) {
             purchase_good(p.first, quantity);
-            log_shopping(p.first->product_name, quantity);
         }
     }
 }
@@ -161,13 +170,19 @@ void Person::retire() {
 
 void Person::update_health_status() {
 	static std::uniform_real_distribution<> dist(0, 1);
+    bool changed = false;
 	if (health_status == HEALTHY &&
 		dist(Sim::get_random_generator()) < 1 - pow(1 - DAILY_SICKNESS_CHANCE, 1.0 / DAY)) {
 		health_status = UNHEALTHY;
+        changed = true;
 	} else if (health_status == UNHEALTHY &&
 	   dist(Sim::get_random_generator()) < 1 - pow(1 - DAILY_RECOVERY_CHANCE, 1.0 / DAY)) {
 		health_status = HEALTHY;
+        changed = true;
 	} 
+    if (changed) {
+        log_health_status();
+    }
 }
 
 void Person::update_busyness() {
@@ -183,11 +198,12 @@ void Person::on_time_step() {
 	if (will_retire()) { retire(); }
 	update_health_status();
     update_busyness();
-    log_state();
 }
 
 void Person::set_firm(Firm * workplace) {
+    std::cerr << "SET_FIRM " << id << workplace->get_id() << std::endl;
     firm = workplace;
+    log_placement();
 }
 
 Firm * Person::get_firm() {
@@ -204,21 +220,65 @@ double Person::suitability(std::vector<Ability>& required_abilities) {
     return suitability;
 }
 
+const char * Person::ability_names[] = { "Ability_1", "Ability_2", "Ability_3" };
+
+const char * Person::health_status_names[] = { "Healthy", "Unhealthy" };
+
 void Person::log_hours(const double hours) {
     Logger::get_instance()->log(Logger::PERSON, "hours", id, hours);
 }
 
-void Person::log_shopping(const std::string product_name, const int quantity) {
-    Logger::get_instance()->log(Logger::PERSON, "shopping", id, product_name, quantity);
+void Person::log_purchase(const std::string& product_name, const int quantity) {
+    Logger::get_instance()->log(Logger::PERSON, "purchase", id, product_name, quantity);
 }
 
 void Person::log_shopping_deficit(const double deficit) {
     Logger::get_instance()->log(Logger::PERSON, "shopping_deficit", id, deficit);
 }
 
-void Person::log_state() {
-    Logger::get_instance()->log(Logger::PERSON, "age", id, age);
-    Logger::get_instance()->log(Logger::PERSON, "account", id, account);
-    Logger::get_instance()->log(Logger::PERSON, "health_status", id, health_status);
+void Person::log_placement() {
+    Logger::get_instance()->log(Logger::PERSON, "firm", id, firm ? static_cast<int>(firm->get_id()) : -1);
 }
 
+void Person::log_abilities() {
+    for (std::pair<Ability, double> ability : abilities) {
+        Logger::get_instance()->log<double>(
+                Logger::PERSON,"ability",
+                id,
+                "ability",
+                ability.first,
+                "value",
+                ability.second
+                );
+    }
+}
+
+void Person::log_inventory() {
+    for (std::pair<Product *, int> entry : inventory) {
+        Logger::get_instance()->log<int>(
+                Logger::PERSON,
+                "inventory",
+                id,
+                "product_id",
+                entry.first->id,
+                "amount",
+                entry.second
+                );
+    }
+}
+
+void Person::log_account() {
+    Logger::get_instance()->log(Logger::PERSON, "account", id, account);
+}
+
+void Person::log_health_status() {
+    Logger::get_instance()->log(Logger::PERSON,
+            "health_status",
+            id,
+            std::string("\"") + health_status_names[health_status] + "\""
+            );
+}
+
+void Person::log_consumption(const Product * product, const int quantity) {
+    Logger::get_instance()->log(Logger::PERSON, "consumption", id, product->product_name, quantity);
+}

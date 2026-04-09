@@ -9,8 +9,13 @@
 
 struct SimArgs {
     unsigned int time_steps = NUM_SIM_RUNS;
-    bool csv = false;
-    bool db = false;
+    unsigned int num_people = STARTING_NUM_PEOPLE;
+    unsigned int work_hours_daily = INITIAL_WORK_HOURS_DAILY;
+    unsigned int work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
+    unsigned int num_products = STARTING_NUM_PRODUCTS;
+    unsigned int products_per_machine = STARTING_PRODUCTS_PER_MACHINE;
+    unsigned int num_producers = STARTING_NUM_PRODUCERS;
+    unsigned int num_distributors = STARTING_NUM_DISTRIBUTORS;
     bool json = false;
 };
 
@@ -18,8 +23,13 @@ class Sim {
     public:
         static Sim& get_instance();
         static void run(SimArgs& args);
-        static bool does_csv();
-        static bool does_db();
+        static unsigned int get_num_people();
+        static unsigned int get_work_hours_daily();
+        static unsigned int get_work_days_weekly();
+        static unsigned int get_num_products();
+        static unsigned int get_products_per_machine();
+        static unsigned int get_num_producers();
+        static unsigned int get_num_distributors();
         static bool does_json();
         static int get_current_time_step();
         static std::random_device& get_random_device();

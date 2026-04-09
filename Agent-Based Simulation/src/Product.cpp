@@ -4,6 +4,7 @@
 #include <set>
 
 #include "Constants.h"
+#include "Logger.h"
 #include "Machine.h"
 #include "Product.h"
 #include "Sim.h"
@@ -11,7 +12,9 @@
 struct Machine;
 
 Product::Product(int id, const std::string& name) :
-    id{id}, product_name{name} {
+    id{id}, product_name{name},
+    product_type{TYPE_GOOD}
+{
     static std::uniform_int_distribution<>
         order_size_dist(PRODUCT_ORDER_SIZE_MIN, PRODUCT_ORDER_SIZE_MAX);
     order_size = order_size_dist(Sim::get_random_generator());
@@ -59,8 +62,12 @@ void Product::set_inputs(std::vector<Product *>& goods) {
 
 void Product::set_machines(std::vector<Machine*> machines) {
     if (!machines.size()) return;
+    const unsigned int global_num_machines =
+        Sim::get_num_products() / Sim::get_products_per_machine();
+    const int num_machines_max =
+        global_num_machines / MAX_PROPORTION_OF_MACHINES_PER_PRODUCT;
     static std::uniform_int_distribution<>
-        num_machines_dist(PRODUCT_NUM_MACHINES_MIN, PRODUCT_NUM_MACHINES_MAX);
+        num_machines_dist(PRODUCT_NUM_MACHINES_MIN, num_machines_max);
     const std::size_t num_machines = num_machines_dist(Sim::get_random_generator());
     std::uniform_int_distribution<>
         product_machine_index_dist(0, machines.size() - 1);
@@ -72,3 +79,8 @@ void Product::set_machines(std::vector<Machine*> machines) {
         machines_needed.push_back(machines[index]);
     }
  }
+
+
+void Product::log_mean_consumption_frequency() {
+    Logger::get_instance()->log(Logger::PRODUCT, "mean_consumption_frequency", id, mean_consumption_frequency);
+}

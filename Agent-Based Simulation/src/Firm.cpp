@@ -47,7 +47,6 @@ unsigned int Firm::get_id() {
 
 void Firm::on_time_step() {
     apply_demand_window();
-    check_and_reorder_inputs();
 }
 
 int Firm::get_inventory(Product * product) {
@@ -65,8 +64,8 @@ void Firm::receive_shipment(Plan * plan) {
     int transaction_amount = order->product->price_per_unit * order->quantity;
     pooled_input_value_account -= transaction_amount;
     plan->firm->receive_payment(plan, transaction_amount);
-    log_shipment_received(order->product->product_name, order->quantity);
-    log_inventory_level(order->product->product_name, input_inventory[order->product]);
+    log_shipment_received(order->product, order->quantity);
+    log_inventory_level(order->product, input_inventory[order->product]);
 
 }
 
@@ -80,6 +79,7 @@ bool Firm::remove_input_from_inventory(Product * product, int quantity) {
         std::cerr << "No good to remove from" << std::endl;
     }
     input_inventory[product] -= quantity;
+    log_inventory_reduction(product, quantity);
     return true;
 }
 
@@ -212,13 +212,13 @@ void Firm::reorder_input_product_to_threshold(
         if (order->quantity == 0 || order->requested_turnaround_time == 0) break;
         Producer * chosen_producer = send_order(order);
         if (chosen_producer) {
-            log_reorder(product->product_name, reorder_quantity);
+            log_reorder(product, reorder_quantity);
             log_accepted_order(product->product_name, order->requested_turnaround_time);
             return;
         }
     }
     std::cerr << "No producer found for product " << product->product_name << std::endl;
-    log_reorder("No producer found for " + product->product_name, reorder_quantity);
+    log_reorder_failure(product, reorder_quantity);
 }
 
 void Firm::check_and_reorder_inputs() {
@@ -240,7 +240,7 @@ int Firm::predict_workers_needed(Plan * plan) {
             plan->order->quantity *
             plan->order->product->societal_living_labor_per_unit *
             WEEK /
-            INITIAL_WORK_DAYS_WEEKLY / 
+            Sim::get_work_days_weekly() / 
             plan->local_work_hours_daily /
             plan->order->requested_turnaround_time
             );
@@ -284,7 +284,7 @@ int Firm::predict_turnaround_time(Plan * plan, std::vector<Person *>& workers) {
             plan->order->quantity *
             recorded_living_labor_per_unit[plan->order->product] *
             WEEK /
-            INITIAL_WORK_DAYS_WEEKLY / 
+            Sim::get_work_days_weekly() / 
             plan->local_work_hours_daily /
             workers.size()
             );
@@ -403,39 +403,45 @@ void Firm::move_worker_off_standby(Person * worker) {
     workers.insert(worker);
 }
 
-void Firm::log_shipment_received(std::string product_name, int quantity) {
-    Logger::get_instance()->log(
-            Logger::FIRM,
-            "shipment_received",
-            id,
-            product_name,
-            quantity
-            );
+void Firm::log_shipment_received(const Product * product, const int quantity) {
+    log_product_quantity("shipment_received", product, quantity);
 }
 
-void Firm::log_inventory_level(std::string product_name, int quantity) {
-    Logger::get_instance()->log(
-            Logger::FIRM,
-            "inventory_level",
-            id,
-            product_name,
-            quantity
-            );
+void Firm::log_inventory_level(const Product * product, const int quantity) {
+    log_product_quantity("inventory_level", product, quantity);
 }
 
-void Firm::log_reorder(std::string product_name, int quantity) {
-    Logger::get_instance()->log(
-            Logger::FIRM,
-            "reorder",
+void Firm::log_inventory_reduction(const Product * product, const int quantity) {
+    log_product_quantity("inventory_reduction", product, quantity);
+}
+
+void Firm::log_reorder(const Product * product, const int quantity) {
+    log_product_quantity("reorder", product, quantity);
+}
+
+void Firm::log_reorder_failure(const Product * product, const int quantity) {
+    log_product_quantity("reorder_failure", product, quantity);
+}
+
+void Firm::log_product_quantity(
+        const char * const label,
+        const Product * product,
+        const int quantity
+        ) {
+    Logger::get_instance()->log<int>(
+            get_client_type(),
+            label,
             id,
-            product_name,
+            "product_id",
+            product->id,
+            "amount",
             quantity
             );
 }
 
 void Firm::log_accepted_order(std::string product_name, int requested_turnaround_time) {
     Logger::get_instance()->log(
-            Logger::FIRM,
+            get_client_type(),
             "accepted_order",
             id,
             product_name,
@@ -445,7 +451,7 @@ void Firm::log_accepted_order(std::string product_name, int requested_turnaround
 
 void Firm::log_input_inventory(Firm * firm, std::string product_name, int quantity) {
     Logger::get_instance()->log(
-            Logger::FIRM,
+            get_client_type(),
             "input_inventory",
             firm->get_id(),
             product_name,

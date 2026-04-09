@@ -8,6 +8,7 @@
 #include <queue>
 
 #include "Agent.h"
+#include "Logger.h"
 #include "Person.h"
 
 class Firm;
@@ -21,7 +22,7 @@ struct Plan {
 	// independent/input fields
 	Order * order;
     Firm * firm;
-	std::vector<Person*> workers;
+	std::vector<Person *> workers;
     unsigned int local_work_hours_daily;
 
 	// dependent/output fields	
@@ -66,6 +67,7 @@ class Firm : public Agent {
         const std::unordered_set<Product *>& initial_catalog
     );
     unsigned int get_id() override;
+    virtual Logger::Client get_client_type() = 0;
     virtual void on_time_step() override;
 
     double get_avg_productivity();
@@ -133,9 +135,16 @@ class Firm : public Agent {
     virtual std::unordered_set<Product *> get_products_to_reorder() = 0;
     void move_worker_off_standby(Person * worker);
 
-    void log_shipment_received(std::string product_name, int quantity);
-    void log_inventory_level(std::string product_name, int quantity);
-    void log_reorder(std::string product_name, int quantity);
+    void log_shipment_received(const Product * product, const int quantity);
+    void log_inventory_level(const Product * product, const int quantity);
+    void log_inventory_reduction(const Product * product, const int quantity);
+    void log_reorder(const Product * product, int quantity);
+    void log_reorder_failure(const Product * product, int quantity);
+    void log_product_quantity(
+            const char * const label,
+            const Product * product,
+            const int quantity
+            );
     void log_accepted_order(std::string product_name, int requested_turnaround_time);
     void log_demand(std::string product_name, double demand);
     void log_input_inventory(Firm * firm, std::string product_name, int quantity);
