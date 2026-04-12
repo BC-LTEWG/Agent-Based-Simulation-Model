@@ -36,7 +36,7 @@ Firm::Firm(
     static unsigned int unique_id = 0;
     id = unique_id++;
     for (Product * product : society->get_products()) {
-        recorded_living_labor_per_unit[product] = product->living_labor_per_unit;
+        recorded_living_labor_per_unit[product] = product->global_living_labor_per_unit;
     }
 }
 
@@ -89,6 +89,7 @@ bool Firm::remove_input_from_inventory(Product * product, int quantity) {
     }
     input_inventory[product] -= quantity;
     log_inventory_reduction(product, quantity);
+    log_inventory_level(product, input_inventory[product]);
     return true;
 }
 

@@ -27,9 +27,10 @@ Producer::Producer(
     for (Machine * machine : initial_machines) {
         machines.push_back(machine);
     }
+
     for (Product * product : get_products_to_reorder()) {
         this->input_inventory[product] =
-            (society->get_initial_production()[product] - product->mean_consumption_frequency) * 
+            society->get_initial_production()[product] * 
             (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN * PRODUCER_INITIAL_INVENTORY_MULT) *
             Sim::get_num_people();
             log_inventory_level(product, input_inventory[product]);
@@ -223,7 +224,7 @@ double Producer::calculate_quantity_produced_from_worker_suitability(Plan * plan
     if (total_worker_suitability <= 0.0) {
         return 0.0;
     }
-    return total_worker_suitability / plan->order->product->living_labor_per_unit;
+    return total_worker_suitability / plan->order->product->global_living_labor_per_unit;
 }
 
 

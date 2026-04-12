@@ -106,30 +106,42 @@ void Person::purchase_good(Product * product, int quantity) {
         if (distributor->try_sell_goods(*product, quantity, this)) {
             inventory[product] += quantity;
             log_purchase(product->product_name, quantity);
+            log_account();
             return;
         }
     }
 }
 
 void Person::consume() {
+    int time = Sim::get_current_time_step();
     for (Product * product : society->get_goods()) {
-        to_consume[product] += product->mean_consumption_frequency;
-        int consumed = static_cast<int>(to_consume[product]);
-        if (consumed) {
-            inventory[product] -= consumed;
-            log_consumption(product, consumed);
+        int period = product->mean_consumption_period;
+        if (time % period == 0) {
+            inventory[product] -= 1;
+            log_consumption(product, 1);
         }
-        to_consume[product] -= (int) to_consume[product];
+        // int consumed = static_cast<int>(to_consume[product]);
+        // if (consumed) {
+        //     inventory[product] -= consumed;
+        // }
+        // to_consume[product] -= (int) to_consume[product];
     }
 }
 
 bool Person::will_shop() {
     double total_deficit = 0.0;
     for (Product * product : society->get_goods()) {
-        total_deficit += std::max(0.0, 
-            PERSON_STOCKPILE_DURATION - 
-            inventory[product] / product->mean_consumption_frequency
-        );
+        double desired_stockpile = PERSON_STOCKPILE_DURATION * product->mean_consumption_frequency;
+        if (desired_stockpile > inventory[product]) {
+            total_deficit += desired_stockpile - inventory[product];
+        }
+        // total_deficit += std::max(0.0, 
+        //     PERSON_STOCKPILE_DURATION*product->mean_consumption_frequency - 
+        //     inventory[product]
+        // );
+    }
+    if (total_deficit > PERSON_DEFICIT_THRESHOLD) {
+        log_shopping(account);
     }
     return total_deficit > PERSON_DEFICIT_THRESHOLD;
 }
@@ -149,8 +161,11 @@ void Person::shop() {
     log_shopping_deficit(std::max(0.0, 1.0 - price_scalar)); 
     for (std::pair<Product *, int> p : purchase_quantities) {
         int quantity = (int) (price_scalar * p.second);
+        
         if (quantity > 0) {
             purchase_good(p.first, quantity);
+        } else {
+            log_shopping_deficit((double) quantity); 
         }
     }
 }
@@ -198,7 +213,6 @@ void Person::on_time_step() {
 }
 
 void Person::set_firm(Firm * workplace) {
-    std::cerr << "SET_FIRM " << id << workplace->get_id() << std::endl;
     firm = workplace;
     log_placement();
 }
@@ -231,6 +245,10 @@ void Person::log_purchase(const std::string& product_name, const int quantity) {
 
 void Person::log_shopping_deficit(const double deficit) {
     Logger::get_instance()->log(Logger::PERSON, "shopping_deficit", id, deficit);
+}
+
+void Person::log_shopping(const double deficit) {
+    Logger::get_instance()->log(Logger::PERSON, "is_shopping", id, deficit);
 }
 
 void Person::log_placement() {

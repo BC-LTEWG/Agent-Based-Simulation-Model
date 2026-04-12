@@ -6,6 +6,7 @@
 #include <sstream>
 #include <stdexcept>
 
+#include "Constants.h"
 #include "ConsumerGood.h"
 #include "Distributor.h"
 #include "Firm.h"
@@ -106,6 +107,7 @@ void Society::set_initial_products() {
     }
     set_product_prices_production_consumption();
     log_consumption_frequencies();
+    log_consumption_periods();
 }
 
 void Society::populate_io_matrix_and_labor_vector(
@@ -226,11 +228,14 @@ void Society::set_product_prices_production_consumption() {
     for (Product *product : products) {
         product->mean_consumption_frequency *= consumption_scalar;
     }
+    for (Product *product : products) {
+        product->mean_consumption_period = static_cast<int>(std::ceil(1 / product->mean_consumption_frequency));
+    }
     Eigen::VectorXd demands(dim);
     for (Product *product : products) {
         demands[product_to_index[product]] = product->mean_consumption_frequency;
     }
-    Eigen::VectorXd production = leontief_inverse * demands;
+    Eigen::VectorXd production = A * demands; // this should be the matrix A, not the leontief inverse.
     for (std::size_t i = 0; i < dim; ++i) {
         initial_production[products[i]] = production(i);
     }
@@ -350,6 +355,19 @@ void Society::log_consumption_frequencies() {
                 id,
                 product->product_name,
                 product->mean_consumption_frequency
+                );
+    }
+}
+
+void Society::log_consumption_periods() {
+    Logger * logger = Logger::get_instance();
+    for (const Product * product : goods) {
+        logger->log(
+                Logger::SOCIETY,
+                "mean_consumption_period",
+                id,
+                product->product_name,
+                product->mean_consumption_period
                 );
     }
 }
