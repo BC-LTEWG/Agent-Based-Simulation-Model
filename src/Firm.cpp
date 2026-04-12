@@ -444,7 +444,7 @@ void Firm::log_demand(std::string product_name, double demand) {
             "current_demand",
             id,
             product_name,
-            demand
+            demand*FIRM_STOCKPILE_DURATION
             );
 }
 
