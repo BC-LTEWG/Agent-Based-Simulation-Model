@@ -37,7 +37,7 @@ void PriceController::update_price(Plan * plan) {
     int workers = 0;
     for (std::pair<Plan *, int> entry : plan_history[product]) {
         Plan * plan = entry.first;
-        units += plan->order->quantity;
+        units += plan->order->quantity - plan->quantity_remaining;
         hours += plan->labor_hours - plan->labor_hours_remaining;
         workers += plan->workers.size();
     }
@@ -57,7 +57,7 @@ void PriceController::update_price(Plan * plan) {
         price += machine_cost_per_hour * machine_hours_per_unit;
     }
     product->price_per_unit = price;
-    std::cerr << "Updating per-unit price to " << price << std::endl;
+    // std::cerr << "Updating per-unit price to " << price << std::endl;
     Logger::get_instance()->log(Logger::SOCIETY, "price", product->id, price);
 }
 

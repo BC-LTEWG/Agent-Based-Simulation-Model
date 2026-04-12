@@ -153,4 +153,5 @@ class Firm : public Agent {
             );
     void log_accepted_order(std::string product_name, int requested_turnaround_time);
     void log_demand(std::string product_name, double demand);
+    void log_pending_inventory(std::string product_name, double pending_inventory);
 };

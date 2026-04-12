@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cmath>
 #include <Eigen/Dense>
 #include <Eigen/Eigenvalues>
@@ -208,8 +209,18 @@ void Society::set_product_prices_production_consumption() {
     }
     log_io_matrix(A, dim);
     log_labor_vector(l, dim);
+    std::cerr << "max eigenvalue of adjusted matrix is " << get_max_eigenvalue(A) << std::endl;
+    std::cerr << "A = " << std::endl << A << std::endl;
+    // for (std::size_t j = 0; j < dim; ++j) {
+    //     for (std::size_t i = 0; i < dim; ++i) {
+    //         std::cout << "amount of " << i << " needed to make a unit of " << j << " = " << products[j]->inputs_per_unit[products[i]] << std::endl;
+    //     }
+    // }
+    std::cerr << "l = " << std::endl << l << std::endl;
     Eigen::MatrixXd leontief_inverse = get_leontief_inverse(A);
     Eigen::VectorXd values = leontief_inverse.transpose() * l;
+    std::cerr << "value vector = " << std::endl << values << std::endl;
+    std::cerr << "sanity check: living labor per unit for first commodity is " << products[0]->global_living_labor_per_unit << std::endl;
     for (std::size_t i = 0; i < dim; ++i) {
         if (values(i) <= 0.0) {
             std::stringstream message;
@@ -227,6 +238,7 @@ void Society::set_product_prices_production_consumption() {
     consumption_scalar = PRODUCT_CONSUMPTION_MULT * initial_work_week / WEEK / consumption_scalar;
     for (Product *product : products) {
         product->mean_consumption_frequency *= consumption_scalar;
+        std::cerr << "mean consumption frequency for product " << product << " = " << product->mean_consumption_frequency << std::endl;
     }
     for (Product *product : products) {
         product->mean_consumption_period = static_cast<int>(std::ceil(1 / product->mean_consumption_frequency));

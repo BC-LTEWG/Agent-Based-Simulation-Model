@@ -131,14 +131,10 @@ void Person::consume() {
 bool Person::will_shop() {
     double total_deficit = 0.0;
     for (Product * product : society->get_goods()) {
-        double desired_stockpile = PERSON_STOCKPILE_DURATION * product->mean_consumption_frequency;
-        if (desired_stockpile > inventory[product]) {
-            total_deficit += desired_stockpile - inventory[product];
-        }
-        // total_deficit += std::max(0.0, 
-        //     PERSON_STOCKPILE_DURATION*product->mean_consumption_frequency - 
-        //     inventory[product]
-        // );
+        total_deficit += std::max(0.0, 
+            PERSON_STOCKPILE_DURATION - 
+            inventory[product] / product->mean_consumption_frequency
+        );
     }
     if (total_deficit > PERSON_DEFICIT_THRESHOLD) {
         log_shopping(account);
@@ -146,13 +142,31 @@ bool Person::will_shop() {
     return total_deficit > PERSON_DEFICIT_THRESHOLD;
 }
 
+// bool Person::will_shop() {
+//     double total_deficit = 0.0;
+//     for (Product * product : society->get_goods()) {
+//         double desired_stockpile = PERSON_STOCKPILE_DURATION * product->mean_consumption_frequency;
+//         if (desired_stockpile > inventory[product]) {
+//             total_deficit += desired_stockpile - inventory[product];
+//         }
+//         // total_deficit += std::max(0.0, 
+//         //     PERSON_STOCKPILE_DURATION*product->mean_consumption_frequency - 
+//         //     inventory[product]
+//         // );
+//     }
+//     if (total_deficit > PERSON_DEFICIT_THRESHOLD) {
+//         log_shopping(account);
+//     }
+//     return total_deficit > PERSON_DEFICIT_THRESHOLD;
+// }
+
 void Person::shop() {
     double total_price = 0.0;
     static std::unordered_map<Product *, int> purchase_quantities;
     for (Product * product : society->get_goods()) {
         purchase_quantities[product] = std::max(0, 
             (int) (PERSON_STOCKPILE_DURATION * product->mean_consumption_frequency) - 
-            inventory[product]
+            std::max(-1*static_cast<int>(PERSON_STOCKPILE_DURATION), inventory[product])
         );
         total_price += purchase_quantities[product] * 
             society->get_consumer_good(product)->price_per_unit;
