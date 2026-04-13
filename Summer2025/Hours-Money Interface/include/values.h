@@ -1,5 +1,0 @@
-#pragma once
-
-#define INVALID_VALUE -1
-#define INITIAL_HOURS 1600
-#define INITIAL_EARNINGS_PER_CAPITA 80000
