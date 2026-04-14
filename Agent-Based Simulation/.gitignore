@@ -8,4 +8,4 @@ src/lte_program
 src/*.swp
 header/*.swp
 test/*.swp
-
+*.txt

@@ -34,7 +34,7 @@ void PriceController::update_price(Plan * plan) {
         hours += plan->labor_hours - plan->labor_hours_remaining;
         workers += plan->workers.size();
     }
-    double price = product->global_living_labor_per_unit = hours / units;
+    double price = product->living_labor_per_unit = hours / units;
     for (std::pair<Product *, double> input : product->inputs_per_unit) {
         price += input.first->price_per_unit * input.second;
     }
