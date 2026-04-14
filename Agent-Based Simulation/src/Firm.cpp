@@ -247,7 +247,7 @@ void Firm::check_and_reorder_input(Product * product) {
 int Firm::predict_workers_needed(Plan * plan) {
     return std::ceil(
             plan->order->quantity *
-            plan->order->product->global_living_labor_per_unit *
+            plan->order->product->living_labor_per_unit *
             WEEK /
             Sim::get_work_days_weekly() / 
             plan->local_work_hours_daily /
