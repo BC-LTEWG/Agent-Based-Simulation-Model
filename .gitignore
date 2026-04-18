@@ -60,3 +60,16 @@ __pycache__/
 *.eggs/
 build/
 dist/
+
+
+bin/*
+build/*
+data/*
+lte_program
+src/lte_program
+*.o
+*.swp
+src/*.swp
+header/*.swp
+test/*.swp
+*.txt
