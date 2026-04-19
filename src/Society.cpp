@@ -198,63 +198,6 @@ Eigen::MatrixXd get_leontief_inverse(
     return leontief_matrix.inverse();
 }
 
-// MINE
-// void Society::set_product_prices_production_consumption() {
-//     const size_t dim = products.size();
-//     Eigen::MatrixXd A(dim, dim);
-//     Eigen::VectorXd l(dim);
-//     populate_io_matrix_and_labor_vector(product_to_index, A, l);
-//     double max_eigenvalue = get_max_eigenvalue(A);
-//     if (max_eigenvalue >= 1.0) {
-//         adjust_io_matrix(A, max_eigenvalue);
-//     }
-//     log_io_matrix(A, dim);
-//     log_labor_vector(l, dim);
-//     // std::cerr << "max eigenvalue of adjusted matrix is " << get_max_eigenvalue(A) << std::endl;
-//     // std::cerr << "A = " << std::endl << A << std::endl;
-//     // for (std::size_t j = 0; j < dim; ++j) {
-//     //     for (std::size_t i = 0; i < dim; ++i) {
-//     //         std::cout << "amount of " << i << " needed to make a unit of " << j << " = " << products[j]->inputs_per_unit[products[i]] << std::endl;
-//     //     }
-//     // }
-//     // std::cerr << "l = " << std::endl << l << std::endl;
-//     Eigen::MatrixXd leontief_inverse = get_leontief_inverse(A);
-//     Eigen::VectorXd values = leontief_inverse.transpose() * l;
-//     // std::cerr << "value vector = " << std::endl << values << std::endl;
-//     // std::cerr << "sanity check: living labor per unit for first commodity is " << products[0]->living_labor_per_unit << std::endl;
-//     for (std::size_t i = 0; i < dim; ++i) {
-//         if (values(i) <= 0.0) {
-//             std::stringstream message;
-//             message << "Value of item " << i << " <= 0.";
-//             throw std::domain_error(message.str());
-//         }
-//         products[i]->price_per_unit = values(i);
-//     }
-//     double consumption_scalar = 0.0;
-//     for (Product * product : products) {
-//         consumption_scalar += product->price_per_unit * product->mean_consumption_frequency;
-//     }
-//     const unsigned int initial_work_week =
-//         Sim::get_work_hours_daily() * Sim::get_work_days_weekly();
-//     consumption_scalar = PRODUCT_CONSUMPTION_MULT * initial_work_week / WEEK / consumption_scalar;
-//     for (Product *product : products) {
-//         product->mean_consumption_frequency *= consumption_scalar;
-//         std::cerr << "mean consumption frequency for product " << product << " = " << product->mean_consumption_frequency << std::endl;
-//     }
-//     for (Product *product : products) {
-//         product->mean_consumption_period = static_cast<int>(std::ceil(1 / product->mean_consumption_frequency));
-//     }
-//     Eigen::VectorXd demands(dim);
-//     for (Product *product : products) {
-//         demands[product_to_index[product]] = product->mean_consumption_frequency;
-//     }
-//     Eigen::VectorXd production = A * demands; // this should be the matrix A, not the leontief inverse.
-//     for (std::size_t i = 0; i < dim; ++i) {
-//         initial_production[products[i]] = production(i);
-//     }
-// }
-
-// MAIN
 void Society::set_product_prices_production_consumption() {
     const size_t dim = products.size();
     Eigen::MatrixXd A(dim, dim);
@@ -285,12 +228,16 @@ void Society::set_product_prices_production_consumption() {
     consumption_scalar = PRODUCT_CONSUMPTION_MULT * initial_work_week / WEEK / consumption_scalar;
     for (Product *product : products) {
         product->mean_consumption_frequency *= consumption_scalar;
+        std::cerr << "mean consumption frequency for product " << product << " = " << product->mean_consumption_frequency << std::endl;
+    }
+    for (Product *product : products) {
+        product->mean_consumption_period = static_cast<int>(std::ceil(1 / product->mean_consumption_frequency));
     }
     Eigen::VectorXd demands(dim);
     for (Product *product : products) {
         demands[product_to_index[product]] = product->mean_consumption_frequency;
     }
-    Eigen::VectorXd production = leontief_inverse * demands;
+    Eigen::VectorXd production = leontief_inverse * demands; 
     for (std::size_t i = 0; i < dim; ++i) {
         initial_production[products[i]] = production(i);
     }

@@ -69,7 +69,6 @@ Plan * Producer::draft_optimal_plan(
         std::vector<Person::Ability>& required_abilities
         ) {
     // try without training first
-    // std::cerr << "Drafting a plan for " << order->quantity << " much of product  " << order->product << std::endl;
     Plan * draft_plan = new Plan{};
     draft_plan->order = order;
     draft_plan->firm = this;
