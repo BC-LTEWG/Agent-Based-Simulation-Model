@@ -36,7 +36,7 @@ Firm::Firm(
     static unsigned int unique_id = 0;
     id = unique_id++;
     for (Product * product : society->get_products()) {
-        recorded_living_labor_per_unit[product] = product->global_living_labor_per_unit;
+        recorded_living_labor_per_unit[product] = product->living_labor_per_unit;
     }
 }
 
@@ -102,12 +102,15 @@ double Firm::get_busyness() {
 }
 
 std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
-    if (get_busyness() >= society->get_busyness() - TRANSFER_BUSYNESS_THRESHOLD) {
+    double firm_busyness = get_busyness();
+    double societal_busyness = society->get_busyness();
+    int max_workers_to_transfer = (int) (workers.size() * (1.0 - firm_busyness / 
+            (societal_busyness - TRANSFER_BUSYNESS_THRESHOLD))); 
+    max_workers_to_transfer = std::max(max_workers_to_transfer, workers_wanted);
+    log_busyness(firm_busyness, max_workers_to_transfer, societal_busyness);
+    if (firm_busyness >= societal_busyness - TRANSFER_BUSYNESS_THRESHOLD) {
         return {};
     }
-    int max_workers_to_transfer = (int) (workers.size() * (1.0 - get_busyness() / 
-            (society->get_busyness() - TRANSFER_BUSYNESS_THRESHOLD))); 
-    max_workers_to_transfer = std::max(max_workers_to_transfer, workers_wanted);
     std::vector<Person *> transfers;
     for (Person * worker : standby_workers) {
         if (static_cast<int>(transfers.size()) == max_workers_to_transfer) break;
@@ -282,6 +285,7 @@ void Firm::assign_workers(
     }
     for (Producer * producer : society->get_producers()) {
         if (workers_left == 0) return;
+        log_transfer_request();
         if (producer == this) continue;
         std::vector<Person *> transfers = producer->propose_transfer(workers_left);
         for (Person * transfer : transfers) {
@@ -383,10 +387,13 @@ double Firm::get_demand(Product * product) {
 void Firm::move_worker_off_standby(Person * worker) {
     if (worker->get_firm() == nullptr) {
         society->get_unemployed_people().erase(worker);
+        log_initial_employment(worker->get_id(), id);
     } else if (worker->get_firm() == this) {
         standby_workers.erase(worker);
     } else {
+        int old_employer = worker->get_firm()->get_id();
         worker->get_firm()->finalize_transfer(worker);
+        log_employment_transfer(worker->get_id(), old_employer, this->get_id());
     }
     worker->set_firm(this);
     workers.insert(worker);
@@ -402,6 +409,44 @@ void Firm::log_inventory_level(const Product * product, const int quantity) {
 
 void Firm::log_inventory_reduction(const Product * product, const int quantity) {
     log_product_quantity("inventory_reduction", product, quantity);
+}
+
+void Firm::log_initial_employment(const int worker_id, const int firm_id) {
+    Logger::get_instance()->log(
+        get_client_type(),
+        "newly employed",
+        static_cast<unsigned int>(worker_id),
+        firm_id
+    );
+}
+
+void Firm::log_employment_transfer(
+    const int worker_id,
+    const int old_employer_id,
+    const int new_employer_id
+) {
+    Logger::get_instance()->log(
+        get_client_type(),
+        "transfer",
+        worker_id,
+        old_employer_id,
+        new_employer_id
+    );
+}
+
+void Firm::log_busyness(
+    double firm_busyness,
+    double societal_busyness,
+    int max_workers_for_transfer
+) {
+    Logger::get_instance()->log(
+        get_client_type(),
+        "busyness",
+        id,
+        firm_busyness,
+        societal_busyness,
+        max_workers_for_transfer
+    );
 }
 
 void Firm::log_reorder(const Product * product, const int quantity) {
@@ -466,4 +511,28 @@ void Firm::log_input_inventory(Firm * firm, std::string product_name, int quanti
             product_name,
             quantity
             );
+}
+
+void Firm::log_transfer_request() {
+    Logger::get_instance()->log(
+        get_client_type(),
+        "transfer_request",
+        id
+    );
+}
+
+void Firm::log_catalog() {
+    std::vector<int> product_ids;
+    product_ids.reserve(catalog.size());
+
+    for (Product* p : catalog) {
+        product_ids.push_back(p->id);
+    }
+
+    Logger::get_instance()->log(
+        get_client_type(),
+        "catalog",
+        id,
+        product_ids
+    );
 }

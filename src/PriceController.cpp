@@ -8,6 +8,7 @@
 #include "PriceController.h"
 #include "Product.h"
 #include "Sim.h"
+#include "Society.h"
 
 PriceController * PriceController::get_instance() {
     static PriceController * instance = new PriceController;
@@ -17,13 +18,6 @@ PriceController * PriceController::get_instance() {
 PriceController::PriceController() {}
 
 void PriceController::update_price(Plan * plan) {
-    // std::cerr << "order complete for " << plan->order->product->id << " at time t= " << Sim::get_current_time_step() << std::endl;
-    // std::cerr << "plan quantity: " << plan->order->quantity << std::endl;
-    // std::cerr << "labor hours done: " << plan->total_hours - plan->total_hours_remaining << std::endl;
-    // std::cerr << "plan quantity produced: " << plan->order->quantity - plan->quantity_remaining << std::endl;
-    // std::cerr << "current recorded living labor required per unit: " << plan->order->product->global_living_labor_per_unit << std::endl;
-    // std::cerr << "theoretical labor hours necessary: " << plan->order->product->global_living_labor_per_unit * plan->order->quantity << std::endl;
-    // std::cerr << "current recorded price: " << plan->order->product->price_per_unit << std::endl;
     Product * product = plan->order->product;
     int now = Sim::get_current_time_step();
     int end_time = now - PRICE_AVERAGING_WINDOW;
@@ -32,7 +26,7 @@ void PriceController::update_price(Plan * plan) {
         plan_history[product].erase(plan_history[product].begin());
     }
     plan_history[product].push_back(std::make_pair(plan, now));
-    int units = 0;
+    double units = 0.0;
     double hours = 0.0;
     int workers = 0;
     for (std::pair<Plan *, int> entry : plan_history[product]) {
@@ -41,10 +35,7 @@ void PriceController::update_price(Plan * plan) {
         hours += plan->labor_hours - plan->labor_hours_remaining;
         workers += plan->workers.size();
     }
-    // std::cerr << "Total hours spend on production in window: " << hours << std::endl;
-    // std::cerr << "Total units produced in window: " << hours << std::endl;
-    // std::cerr << "Updating per-unit living labor to " << hours / units << std::endl;
-    double price = product->global_living_labor_per_unit = hours / units;
+    double price = product->living_labor_per_unit = hours / units;
     for (std::pair<Product *, double> input : product->inputs_per_unit) {
         price += input.first->price_per_unit * input.second;
     }

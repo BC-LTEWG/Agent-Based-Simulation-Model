@@ -74,8 +74,10 @@ const int PERSON_VARIED_ABILITY_COUNT = 3;
 const double PERSON_ABILITY_STDDEV = 0.05;
 
 const double UNHEALTHY_PRODUCTIVITY = 0.5;
-const double DAILY_SICKNESS_CHANCE = 0.01;
-const double DAILY_RECOVERY_CHANCE = 0.1;
+const double ANNUAL_SICKNESS_CHANCE = 0.1;
+// const double DAILY_SICKNESS_CHANCE = 0.01;
+// const double DAILY_RECOVERY_CHANCE = 0.1;
+const int AVG_DAYS_TO_RECOVERY = 5;
 
 const char * const LOGGING_DIR = "data";
 const char * const LOG_FILE = "data/lte.db";

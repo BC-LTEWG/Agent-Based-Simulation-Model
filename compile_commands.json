@@ -1,0 +1,52 @@
+[
+  {
+    "file": "src/Product.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wsign-compare",
+      "-Iheader",
+      "-std=c++17",
+      "-g",
+      "-c",
+      "src/Product.cpp",
+      "-o",
+      "build/Product.o"
+    ],
+    "directory": "/home/alex/github/Agent-Based-Simulation-Model",
+    "output": "build/Product.o"
+  },
+  {
+    "file": "src/Society.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wsign-compare",
+      "-Iheader",
+      "-std=c++17",
+      "-g",
+      "-c",
+      "src/Society.cpp",
+      "-o",
+      "build/Society.o"
+    ],
+    "directory": "/home/alex/github/Agent-Based-Simulation-Model",
+    "output": "build/Society.o"
+  },
+  {
+    "file": "src/main.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wsign-compare",
+      "-Iheader",
+      "-std=c++17",
+      "-g",
+      "src/main.cpp",
+      "-o",
+      "bin/sim"
+    ],
+    "directory": "/home/alex/github/Agent-Based-Simulation-Model",
+    "output": "bin/sim"
+  }
+]

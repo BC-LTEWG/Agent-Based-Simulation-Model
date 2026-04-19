@@ -63,6 +63,35 @@ void Logger::log(
 }
 
 void Logger::log(
+    const Client client,
+    const std::string label,
+    const unsigned int id,
+    const std::vector<int>& values
+) {
+    if (!Sim::does_json()) {
+        return;
+    }
+    if (client >= ERROR) {
+        throw std::invalid_argument("Logging client does not exist");
+    }
+
+    unsigned int time_step = Sim::get_current_time_step();
+
+    std::cout << "{\"t\":" << time_step << ","
+              << "\"client\":\"" << clients[client] << "\","
+              << "\"id\":" << id << ","
+              << "\"label\":\"" << label << "\","
+              << "\"values\":[";
+
+    for (size_t i = 0; i < values.size(); ++i) {
+        if (i > 0) std::cout << ",";
+        std::cout << values[i];
+    }
+
+    std::cout << "]}" << std::endl;
+}
+
+void Logger::log(
         const Client client,
         const std::string label,
         const unsigned int id,
@@ -127,6 +156,29 @@ void Logger::log_impl(
     }
     int time_step = Sim::get_current_time_step();
     Logger::json(time_step, client, label, id, values);
+}
+
+void Logger::log(
+    const Client client,
+    const std::string label,
+    const unsigned int id,
+    const int value1,
+    const int value2
+) {
+    TupleIntInt tuple = std::make_tuple(value1, value2);
+    log_impl(client, label, id, tuple);
+}
+
+void Logger::log(
+    const Client client,
+    const std::string label,
+    const unsigned int id,
+    const double value1,
+    const double value2,
+    const int value3
+) {
+    TupleDoubleDoubleInt tuple = std::make_tuple(value1, value2, value3);
+    log_impl(client, label, id, tuple);
 }
 
 template <typename T>

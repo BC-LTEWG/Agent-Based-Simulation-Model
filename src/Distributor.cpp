@@ -40,6 +40,7 @@ Distributor::Distributor(
         product_to_plan[product] = plan;
         input_inventory[product] = quantity;
         log_inventory_level(product, input_inventory[product]);
+        log_catalog();
     }
 }
 

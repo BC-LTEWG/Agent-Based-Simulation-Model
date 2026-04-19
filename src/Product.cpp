@@ -11,6 +11,35 @@
 
 struct Machine;
 
+// MINE
+// Product::Product(int id, const std::string& name) :
+//     id{id}, product_name{name},
+//     product_type{TYPE_GOOD}
+// {
+//     static std::uniform_int_distribution<>
+//         order_size_dist(PRODUCT_ORDER_SIZE_MIN, PRODUCT_ORDER_SIZE_MAX);
+//     order_size = order_size_dist(Sim::get_random_generator());
+//     static std::uniform_real_distribution<>
+//         living_labor_dist(
+//                 PRODUCT_LABOR_PER_UNIT_MIN,
+//                 PRODUCT_LABOR_PER_UNIT_MAX
+//                 );
+//     living_labor_per_unit = (double)living_labor_dist(Sim::get_random_generator());
+//     for (int i = 0; i < Person::NUM_ABILITIES; i++) {
+//         required_abilities.push_back((Person::Ability) i);
+//     }
+//     std::shuffle(required_abilities.begin(), required_abilities.end(), Sim::get_random_generator());
+//     static std::uniform_int_distribution<>
+//         ability_count_dist(1, PRODUCT_ABILITY_COUNT_MAX);
+//     required_abilities.resize(ability_count_dist(Sim::get_random_generator()));
+//     static std::uniform_real_distribution<>
+//         consumption_freq_dist(0, 0.5);
+//     mean_consumption_frequency = consumption_freq_dist(Sim::get_random_generator());
+//     mean_consumption_period = static_cast<int>(std::ceil(1 / mean_consumption_frequency));
+//     // mean_consumption_frequency = std::pow(PRODUCT_CONSUMPTION_FALLOFF, static_cast<double>(id) / PRODUCT_CONSUMPTION_GROUP_SIZE);
+// }
+
+// MAIN
 Product::Product(int id, const std::string& name) :
     id{id}, product_name{name},
     product_type{TYPE_GOOD}
@@ -31,11 +60,8 @@ Product::Product(int id, const std::string& name) :
     static std::uniform_int_distribution<>
         ability_count_dist(1, PRODUCT_ABILITY_COUNT_MAX);
     required_abilities.resize(ability_count_dist(Sim::get_random_generator()));
-    static std::uniform_real_distribution<>
-        consumption_freq_dist(0, 0.5);
-    mean_consumption_frequency = consumption_freq_dist(Sim::get_random_generator());
-    mean_consumption_period = static_cast<int>(std::ceil(1 / mean_consumption_frequency));
-    // mean_consumption_frequency = std::pow(PRODUCT_CONSUMPTION_FALLOFF, static_cast<double>(id) / PRODUCT_CONSUMPTION_GROUP_SIZE);
+    mean_consumption_frequency = std::pow(PRODUCT_CONSUMPTION_FALLOFF, id /
+            PRODUCT_CONSUMPTION_GROUP_SIZE);
 }
 
 void Product::set_inputs(std::vector<Product *>& goods) {

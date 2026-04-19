@@ -35,6 +35,7 @@ Producer::Producer(
             Sim::get_num_people();
             log_inventory_level(product, input_inventory[product]);
     }
+    log_catalog();
 }
 
 Logger::Client Producer::get_client_type() {
@@ -207,7 +208,7 @@ void Producer::end_plan(Plan * plan) {
     // update local labor time
     recorded_living_labor_per_unit[plan->order->product] = 
         (double) (plan->labor_hours - plan->labor_hours_remaining) 
-        / plan->order->quantity;
+        / (plan->order->quantity - plan->quantity_remaining); // RECORDED WAS CALCULATED WITHOUT USING THE QUANTITY ACTUALLY PRODUCED
     // update global price
     PriceController::get_instance()->update_price(plan);
     
@@ -225,7 +226,7 @@ double Producer::calculate_quantity_produced_from_worker_suitability(Plan * plan
     if (total_worker_suitability <= 0.0) {
         return 0.0;
     }
-    return total_worker_suitability / plan->order->product->global_living_labor_per_unit;
+    return total_worker_suitability / plan->order->product->living_labor_per_unit;
 }
 
 
