@@ -5,6 +5,7 @@
 
 #include "ConsumerGood.h"
 #include "Distributor.h"
+#include "Firm.h"
 #include "Logger.h"
 #include "Machine.h"
 #include "Person.h"
@@ -21,25 +22,7 @@ Distributor::Distributor(
 {
     for (Product * product : get_products_to_reorder()) {
         society->add_consumer_good(product);
-        int quantity =
-            product->mean_consumption_frequency *
-            (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN * DISTRIBUTOR_INITIAL_INVENTORY_MULT) * 
-            Sim::get_num_people();
-        Order * order = new Order(product, quantity, this, 0);
-        Plan * plan = new Plan;
-        plan->order = order;
-        plan->firm = this;
-        plan->labor_hours = DISTRIBUTION_LABOR_PER_UNIT * quantity;
-        plan->raw_materials_remaining = plan->raw_materials = pooled_input_value_account += product->price_per_unit * quantity;
-        plan->total_hours_remaining = plan->total_hours =
-            plan->labor_hours + plan->raw_materials;
-        plan->prd = -(plan->total_hours);
-        plan->outgoing_units_consumed = 0;
-        plan->machinery_cost = 0.0;
-        plans_in_progress.push_back(plan);
-        product_to_plan[product] = plan;
-        input_inventory[product] = quantity;
-        log_inventory_level(product, input_inventory[product]);
+        start_new_plan(product);
     }
 }
 
@@ -53,6 +36,11 @@ void Distributor::on_time_step() {
         plan->labor_hours_remaining -= plan->workers.size();
         for (Person * worker : plan->workers) {
             worker->register_hours_worked(1);
+        }
+        if (plan->outgoing_units_consumed == plan->order->quantity  i0) {
+            start_new_plan(plan->order->product, plan->order->quantity);
+            plan->order->status = Order::ORDER_FINISHED;
+
         }
     }
     check_expand_catalog();
@@ -103,6 +91,28 @@ void Distributor::check_expand_catalog() {
             catalog.insert(product);
         }
     }
+}
+
+void Distributor::start_new_plan(Product * product) {
+    int quantity = product->mean_consumption_frequency *
+        (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN * DISTRIBUTOR_INITIAL_INVENTORY_MULT) *
+        Sim::get_num_people();
+    Order * order = new Order(product, quantity, this, 0);
+    Plan * plan = new Plan;
+    plan->order = order;
+    plan->firm = this;
+    plan->labor_hours = DISTRIBUTION_LABOR_PER_UNIT * quantity;
+    plan->raw_materials_remaining = plan->raw_materials = pooled_input_value_account += product->price_per_unit * quantity;
+    plan->total_hours_remaining = plan->total_hours =
+        plan->labor_hours + plan->raw_materials;
+    plan->prd = -(plan->total_hours);
+    plan->outgoing_units_consumed = 0;
+    plan->machinery_cost = 0.0;
+    plans_in_progress.push_back(plan);
+    product_to_plan[product] = plan;
+    input_inventory[product] += quantity;
+    order->status = Order::ORDER_IN_PROGRESS;
+    log_inventory_level(product, input_inventory[product]);
 }
 
 void Distributor::log_shortfall(std::string product_name, int shortfall) {
