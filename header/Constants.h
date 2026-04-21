@@ -32,22 +32,22 @@ const double AVERAGE_RETIREMENT_AGE = (
 
 const int PRODUCT_ABILITY_COUNT_MAX = 1;
 const int PRODUCT_ORDER_SIZE_MIN = 1;
-const int PRODUCT_ORDER_SIZE_MAX = 1000;
+const int PRODUCT_ORDER_SIZE_MAX = 10;
 const int PRODUCT_NUM_INPUTS_MIN = 1;
 const int PRODUCT_NUM_INPUTS_MAX = STARTING_NUM_PRODUCTS / 2;
-const double PRODUCT_INPUT_PER_UNIT_MIN = 0.1; // these constraints are unnnecessessarily narrow
+const double PRODUCT_INPUT_PER_UNIT_MIN = 0.1; 
 const double PRODUCT_INPUT_PER_UNIT_MAX = 0.25;
 const int MAX_CONSUMPTION_PERIOD = 100;
 const double PRODUCT_INPUT_EPSILON = 0.0001;
 const int PRODUCT_NUM_MACHINES_MIN = 0;
 const int MAX_PROPORTION_OF_MACHINES_PER_PRODUCT = 5;
-const double PRODUCT_LABOR_PER_UNIT_MIN = 0.05; // also way too narrow
+const double PRODUCT_LABOR_PER_UNIT_MIN = 0.05; 
 const double PRODUCT_LABOR_PER_UNIT_MAX = 0.1; 
 const double DISTRIBUTION_LABOR_PER_UNIT = 0.2;
-const int PRODUCT_CONSUMPTION_GROUP_SIZE = 1;
+const int PRODUCT_CONSUMPTION_GROUP_SIZE = 5;
 const double PRODUCT_CONSUMPTION_FALLOFF = 0.97;
 const double PRODUCT_CONSUMPTION_MULT = 0.95;
-const int PRICE_AVERAGING_WINDOW = 2*MONTH;
+const int PRICE_AVERAGING_WINDOW = MONTH;
 
 const int MACHINE_LIFETIME_MIN = 1000;
 const int MACHINE_LIFETIME_MAX = MACHINE_LIFETIME_MIN * 10;
@@ -75,8 +75,6 @@ const double PERSON_ABILITY_STDDEV = 0.05;
 
 const double UNHEALTHY_PRODUCTIVITY = 0.5;
 const double ANNUAL_SICKNESS_CHANCE = 0.1;
-// const double DAILY_SICKNESS_CHANCE = 0.01;
-// const double DAILY_RECOVERY_CHANCE = 0.1;
 const int AVG_DAYS_TO_RECOVERY = 5;
 
 const char * const LOGGING_DIR = "data";
