@@ -1,0 +1,35 @@
+[
+  {
+    "file": "src/Person.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wsign-compare",
+      "-Iheader",
+      "-std=c++17",
+      "-g",
+      "-c",
+      "src/Person.cpp",
+      "-o",
+      "build/Person.o"
+    ],
+    "directory": "/home/alex/github/Agent-Based-Simulation-Model",
+    "output": "build/Person.o"
+  },
+  {
+    "file": "src/main.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wsign-compare",
+      "-Iheader",
+      "-std=c++17",
+      "-g",
+      "src/main.cpp",
+      "-o",
+      "bin/sim"
+    ],
+    "directory": "/home/alex/github/Agent-Based-Simulation-Model",
+    "output": "bin/sim"
+  }
+]

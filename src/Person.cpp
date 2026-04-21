@@ -126,10 +126,11 @@ bool Person::will_shop() {
             inventory[product] / product->mean_consumption_frequency
         );
     }
-    if (total_deficit > PERSON_DEFICIT_THRESHOLD) {
-        log_shopping(account);
+    bool should_shop = total_deficit > PERSON_DEFICIT_THRESHOLD;
+    if (should_shop) {
+        log_shopping();
     }
-    return total_deficit > PERSON_DEFICIT_THRESHOLD;
+    return should_shop;
 }
 
 void Person::shop() {
@@ -165,22 +166,21 @@ void Person::retire() {
 
 void Person::update_health_status() {
     bool changed = false;
-    auto& rng = Sim::get_random_generator();
 
     double annual_prob = Sim::get_annual_sickness_chance();
     double sickness_rate = -std::log(1.0 - annual_prob);
 
-    double p_sick_hour = 1.0 - std::exp(-sickness_rate / 8760.0);
-    double p_recover_hour = 1.0 - std::exp(-1.0 / (AVG_DAYS_TO_RECOVERY * 24.0));
+    double p_sick_hour = 1.0 - std::exp(-sickness_rate / YEAR);
+    double p_recover_hour = 1.0 - std::exp(-1.0 / (AVG_DAYS_TO_RECOVERY * DAY));
 
     std::bernoulli_distribution get_sick(p_sick_hour);
     std::bernoulli_distribution recover(p_recover_hour);
 
-    if (health_status == HEALTHY && get_sick(rng)) {
+    if (health_status == HEALTHY && get_sick(Sim::get_random_generator())) {
         health_status = UNHEALTHY;
         changed = true;
 
-    } else if (health_status == UNHEALTHY && recover(rng)) {
+    } else if (health_status == UNHEALTHY && recover(Sim::get_random_generator())) {
         health_status = HEALTHY;
         changed = true;
     }
@@ -240,8 +240,8 @@ void Person::log_shopping_deficit(const double deficit) {
     Logger::get_instance()->log(Logger::PERSON, "shopping_deficit", id, deficit);
 }
 
-void Person::log_shopping(const double deficit) {
-    Logger::get_instance()->log(Logger::PERSON, "is_shopping", id, deficit);
+void Person::log_shopping() {
+    Logger::get_instance()->log(Logger::PERSON, "is_shopping", id, account);
 }
 
 void Person::log_placement() {

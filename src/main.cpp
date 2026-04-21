@@ -76,7 +76,6 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 case 's':
                     ++i;
                     dvalue = strtod(argv[i], NULL);
-                    std::cerr << "dvalue = " << dvalue << std::endl;
                     if (dvalue <= 0.0 || dvalue >= 1.0) {
                         error = true;
                     } else {
@@ -86,14 +85,12 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 case 'v':
                     ++i;
                     dvalue = strtod(argv[i], NULL);
-                    std::cerr << "dvalue = " << dvalue << std::endl;
                     if (dvalue <= 0.0) {
                         error = true;
                     } else {
                         args.ability_stddev = dvalue;
                     }
                     break;
-
 
                 case 'j':
                     args.json = true;
