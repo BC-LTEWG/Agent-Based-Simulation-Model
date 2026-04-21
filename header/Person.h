@@ -2,7 +2,6 @@
 
 #include <unordered_map>
 #include <vector>
-#include <deque>
 #include "Agent.h"
 
 struct Product;
@@ -44,7 +43,6 @@ class Person : public Agent {
     double account;
     bool busy_this_time_step = false;
     double busyness = 0.0;
-    std::deque<int> recent_busy_history;
     int busy_hours_in_window = 0;
  	std::vector<Distributor *> ranked_distributors;
     static const char * ability_names[];

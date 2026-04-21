@@ -3,7 +3,6 @@
 #include <random>
 #include <string>
 #include <vector>
-
 #include "Constants.h"
 #include "Society.h"
 

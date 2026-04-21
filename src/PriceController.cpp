@@ -8,7 +8,6 @@
 #include "PriceController.h"
 #include "Product.h"
 #include "Sim.h"
-#include "Society.h"
 
 PriceController * PriceController::get_instance() {
     static PriceController * instance = new PriceController;
@@ -39,7 +38,6 @@ void PriceController::update_price(Plan * plan) {
     for (std::pair<Product *, double> input : product->inputs_per_unit) {
         price += input.first->price_per_unit * input.second;
     }
-    // std::cerr << "Updated living labor per unit plus cost of inputs is: " << price << std::endl;
     double machine_use_hours = hours / workers;
     double machine_hours_per_unit = machine_use_hours / units;
     for (Machine * machine : product->machines_needed) {
@@ -48,7 +46,6 @@ void PriceController::update_price(Plan * plan) {
         price += machine_cost_per_hour * machine_hours_per_unit;
     }
     product->price_per_unit = price;
-    // std::cerr << "Updating per-unit price to " << price << std::endl;
     Logger::get_instance()->log(Logger::SOCIETY, "price", product->id, price);
 }
 

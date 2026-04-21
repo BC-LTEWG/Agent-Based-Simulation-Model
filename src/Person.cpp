@@ -22,10 +22,6 @@ Person::Person(Society * society):
     static unsigned int unique_id = 0;
     id = unique_id++;
 
-    if (id == 1) {
-        std::cerr << "ability stddev = " << Sim::get_person_ability_stddev() << std::endl; 
-    }
-
     std::lognormal_distribution<>
         ability_dist(0.0, Sim::get_person_ability_stddev());
     std::vector<Person::Ability> varied_abilities;
@@ -111,17 +107,14 @@ void Person::purchase_good(Product * product, int quantity) {
     }
 }
 
-
-// MAIN
 void Person::consume() {
+    int time = Sim::get_current_time_step();
     for (Product * product : society->get_goods()) {
-        to_consume[product] += product->mean_consumption_frequency;
-        int consumed = static_cast<int>(to_consume[product]);
-        if (consumed) {
-            inventory[product] -= consumed;
-            log_consumption(product, consumed);
+        int period = product->mean_consumption_period;
+        if (time % period == 0) {
+            inventory[product] -= 1;
+            log_consumption(product, 1);
         }
-        to_consume[product] -= (int) to_consume[product];
     }
 }
 
@@ -159,60 +152,6 @@ void Person::shop() {
         }
     }
 }
-
-// MINE
-// void Person::consume() {
-//     int time = Sim::get_current_time_step();
-//     for (Product * product : society->get_goods()) {
-//         int period = product->mean_consumption_period;
-//         if (time % period == 0) {
-//             inventory[product] -= 1;
-//             log_consumption(product, 1);
-//         }
-//     }
-// }
-
-// bool Person::will_shop() {
-//     double total_deficit = 0.0;
-//     for (Product * product : society->get_goods()) {
-//         double desired_stockpile = PERSON_STOCKPILE_DURATION * product->mean_consumption_frequency;
-//         if (desired_stockpile > inventory[product]) {
-//             total_deficit += desired_stockpile - inventory[product];
-//         }
-//         total_deficit += std::max(0.0, 
-//             PERSON_STOCKPILE_DURATION*product->mean_consumption_frequency - 
-//             inventory[product]
-//         );
-//     }
-//     if (total_deficit > PERSON_DEFICIT_THRESHOLD) {
-//         log_shopping(account);
-//     }
-//     return total_deficit > PERSON_DEFICIT_THRESHOLD;
-// }
-
-// void Person::shop() {
-//     double total_price = 0.0;
-//     static std::unordered_map<Product *, int> purchase_quantities;
-//     for (Product * product : society->get_goods()) {
-//         purchase_quantities[product] = std::max(0, 
-//             (int) (PERSON_STOCKPILE_DURATION * product->mean_consumption_frequency) - 
-//             std::max(-1*static_cast<int>(PERSON_STOCKPILE_DURATION), inventory[product])
-//         );
-//         total_price += purchase_quantities[product] * 
-//             society->get_consumer_good(product)->price_per_unit;
-//     }
-//     double price_scalar = std::min(account / total_price, 1.0);
-//     log_shopping_deficit(std::max(0.0, 1.0 - price_scalar)); 
-//     for (std::pair<Product *, int> p : purchase_quantities) {
-//         int quantity = (int) (price_scalar * p.second);
-        
-//         if (quantity > 0) {
-//             purchase_good(p.first, quantity);
-//         } else {
-//             log_shopping_deficit((double) quantity); 
-//         }
-//     }
-// }
 
 bool Person::will_retire() {
     static std::uniform_real_distribution<> dist(0, 1);

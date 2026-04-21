@@ -237,7 +237,7 @@ void Society::set_product_prices_production_consumption() {
     for (Product *product : products) {
         demands[product_to_index[product]] = product->mean_consumption_frequency;
     }
-    Eigen::VectorXd production = leontief_inverse * demands; 
+    Eigen::VectorXd production = leontief_inverse * demands;
     for (std::size_t i = 0; i < dim; ++i) {
         initial_production[products[i]] = production(i);
     }
