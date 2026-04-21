@@ -1,3 +1,0 @@
-matched_transactions=0
-unmatched_distributor_reorders=0
-unmatched_producer_pursued_plans=0
