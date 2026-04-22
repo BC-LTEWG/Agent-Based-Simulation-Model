@@ -228,7 +228,7 @@ void Firm::reorder_input_product_to_threshold(
     Producer * chosen_producer = send_order(order);
     if (chosen_producer) {
         log_reorder(product, reorder_quantity);
-        log_accepted_order(product->product_name, order->requested_turnaround_time);
+        log_accepted_order(product, order->requested_turnaround_time);
     } else {
         log_reorder_failure(product, reorder_quantity);
     }
@@ -242,9 +242,9 @@ void Firm::check_and_reorder_inputs() {
 
 void Firm::check_and_reorder_input(Product * product) {
     double threshold = get_reorder_threshold(product);
-    log_demand(product->product_name, threshold);
+    log_demand(product, threshold);
     int pending_inventory = get_pending_input_inventory(product);
-    log_pending_inventory(product->product_name, pending_inventory);
+    log_pending_inventory(product, pending_inventory);
     if (pending_inventory < threshold) {
         reorder_input_product_to_threshold(product, threshold, pending_inventory);
     }
@@ -473,32 +473,32 @@ void Firm::log_product_quantity(
             );
 }
 
-void Firm::log_accepted_order(std::string product_name, int requested_turnaround_time) {
+void Firm::log_accepted_order(const Product * product, int requested_turnaround_time) {
     Logger::get_instance()->log(
             get_client_type(),
             "accepted_order",
             id,
-            product_name,
+            product->product_name,
             requested_turnaround_time
             );
 }
 
-void Firm::log_demand(std::string product_name, double demand) {
+void Firm::log_demand(const Product * product, double demand) {
     Logger::get_instance()->log(
             get_client_type(),
             "current_demand",
             id,
-            product_name,
+            product->product_name,
             demand*FIRM_STOCKPILE_DURATION
             );
 }
 
-void Firm::log_pending_inventory(std::string product_name, double pending_inventory) {
+void Firm::log_pending_inventory(const Product * product, double pending_inventory) {
     Logger::get_instance()->log(
             get_client_type(),
             "pending_inventory",
             id,
-            product_name,
+            product->product_name,
             pending_inventory
             );
 }

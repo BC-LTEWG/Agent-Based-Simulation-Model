@@ -154,8 +154,11 @@ class Firm : public Agent {
             const Product * product,
             const int quantity
             );
-    void log_accepted_order(std::string product_name, int requested_turnaround_time);
-    void log_demand(std::string product_name, double demand);
-    void log_pending_inventory(std::string product_name, double pending_inventory);
+    void log_accepted_order(const Product * product, int requested_turnover_time);
+    // void log_accepted_order(std::string product_name, int requested_turnaround_time);
+    void log_demand(const Product * Product, double demand);
+    // void log_demand(std::string product_name, double demand);
+    void log_pending_inventory(const Product * product, double pending_inventory);
+    // void log_pending_inventory(std::string product_name, double pending_inventory);
     void log_catalog();
 };

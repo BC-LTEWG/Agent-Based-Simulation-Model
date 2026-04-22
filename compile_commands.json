@@ -1,6 +1,6 @@
 [
   {
-    "file": "src/Person.cpp",
+    "file": "src/Firm.cpp",
     "arguments": [
       "/usr/bin/g++",
       "-Wall",
@@ -9,12 +9,12 @@
       "-std=c++17",
       "-g",
       "-c",
-      "src/Person.cpp",
+      "src/Firm.cpp",
       "-o",
-      "build/Person.o"
+      "build/Firm.o"
     ],
     "directory": "/home/alex/github/Agent-Based-Simulation-Model",
-    "output": "build/Person.o"
+    "output": "build/Firm.o"
   },
   {
     "file": "src/main.cpp",
