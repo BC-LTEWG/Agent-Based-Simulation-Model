@@ -2,7 +2,6 @@
 
 #include <unordered_map>
 #include <vector>
-
 #include "Agent.h"
 
 struct Product;
@@ -44,6 +43,7 @@ class Person : public Agent {
     double account;
     bool busy_this_time_step = false;
     double busyness = 0.0;
+    int busy_hours_in_window = 0;
  	std::vector<Distributor *> ranked_distributors;
     static const char * ability_names[];
     static const char * health_status_names[];
@@ -57,6 +57,7 @@ class Person : public Agent {
     void update_busyness();
     void log_hours(const double hours);
     void log_purchase(const std::string& product_name, int quantity);
+    void log_shopping();
     void log_shopping_deficit(double deficit);
     void log_placement();
     void log_abilities();

@@ -12,13 +12,17 @@
 
 using TupleNone = std::tuple<>;
 using TupleInt = std::tuple<int>;
+using TupleIntInt = std::tuple<int, int>;
 using TupleDouble = std::tuple<double>;
+using TupleDoubleDoubleInt = std::tuple<double, double, int>;
 using TupleIntDoubleInt = std::tuple<int, double, int>;
 using TupleString = std::tuple<std::string>;
 using TupleStringStringInt = std::tuple<std::string, std::string, int>;
 using Tuple = std::variant<TupleNone,
       TupleInt,
+      TupleIntInt,
       TupleDouble,
+      TupleDoubleDoubleInt,
       TupleString,
       TupleIntDoubleInt
       >;
@@ -81,6 +85,27 @@ class Logger {
                 const unsigned int index,
                 const double value
                 );
+        void log(
+                const Client client,
+                const std::string label,
+                const unsigned int id,
+                const double value1,
+                const double value2,
+                const int value3
+                );
+        void log(
+            const Client client,
+            const std::string label,
+            const unsigned int id,
+            const int value1,
+            const int value2
+                );
+        void log(
+            const Client client,
+            const std::string label,
+            const unsigned int id,
+            const std::vector<int>& values
+        );
         void log(
                 const Client client,
                 const std::string label,

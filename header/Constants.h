@@ -11,7 +11,7 @@ const unsigned int YEAR = DAY * 365;
 
 const unsigned int INITIAL_WORK_HOURS_DAILY = 8;
 const unsigned int INITIAL_WORK_DAYS_WEEKLY = 5;
-const double INITIAL_ACCOUNT_MULT = 1000;
+const double INITIAL_ACCOUNT_MULT = 10;
 const int WORK_HOURS_UPDATE_START = YEAR;
 const int WORK_HOURS_UPDATE_PERIOD = MONTH;
 const double INEFFICIENCY_OF_WORK = 1.5;
@@ -37,6 +37,7 @@ const int PRODUCT_NUM_INPUTS_MIN = 1;
 const int PRODUCT_NUM_INPUTS_MAX = STARTING_NUM_PRODUCTS / 2;
 const double PRODUCT_INPUT_PER_UNIT_MIN = 0.1;
 const double PRODUCT_INPUT_PER_UNIT_MAX = 0.25;
+const int MAX_CONSUMPTION_PERIOD = 100;
 const double PRODUCT_INPUT_EPSILON = 0.0001;
 const int PRODUCT_NUM_MACHINES_MIN = 0;
 const int MAX_PROPORTION_OF_MACHINES_PER_PRODUCT = 5;
@@ -73,8 +74,8 @@ const int PERSON_VARIED_ABILITY_COUNT = 3;
 const double PERSON_ABILITY_STDDEV = 0.05;
 
 const double UNHEALTHY_PRODUCTIVITY = 0.5;
-const double DAILY_SICKNESS_CHANCE = 0.01;
-const double DAILY_RECOVERY_CHANCE = 0.1;
+const double ANNUAL_SICKNESS_CHANCE = 0.1;
+const int AVG_DAYS_TO_RECOVERY = 5;
 
 const char * const LOGGING_DIR = "data";
 const char * const LOG_FILE = "data/lte.db";

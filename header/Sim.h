@@ -3,7 +3,6 @@
 #include <random>
 #include <string>
 #include <vector>
-
 #include "Constants.h"
 #include "Society.h"
 
@@ -16,6 +15,8 @@ struct SimArgs {
     unsigned int products_per_machine = STARTING_PRODUCTS_PER_MACHINE;
     unsigned int num_producers = STARTING_NUM_PRODUCERS;
     unsigned int num_distributors = STARTING_NUM_DISTRIBUTORS;
+    double sickness_chance = ANNUAL_SICKNESS_CHANCE;
+    double ability_stddev = PERSON_ABILITY_STDDEV;
     bool json = false;
 };
 
@@ -30,6 +31,8 @@ class Sim {
         static unsigned int get_products_per_machine();
         static unsigned int get_num_producers();
         static unsigned int get_num_distributors();
+        static double get_annual_sickness_chance();
+        static double get_person_ability_stddev();
         static bool does_json();
         static unsigned int get_current_time_step();
         static std::random_device& get_random_device();

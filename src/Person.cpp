@@ -22,16 +22,11 @@ Person::Person(Society * society):
     static unsigned int unique_id = 0;
     id = unique_id++;
 
-    static std::normal_distribution<>
-        ability_dist(1.0, PERSON_ABILITY_STDDEV);
+    std::lognormal_distribution<>
+        ability_dist(0.0, Sim::get_person_ability_stddev());
     std::vector<Person::Ability> varied_abilities;
     for (int i = 0; i < Person::NUM_ABILITIES; i++) {
-        abilities[(Person::Ability) i] = 1.0;
-        varied_abilities.push_back((Person::Ability) i);
-    }
-    std::shuffle(varied_abilities.begin(), varied_abilities.end(), Sim::get_random_generator());
-    for (int i = 0; i < PERSON_VARIED_ABILITY_COUNT; i++) {
-        abilities[varied_abilities[i]] = std::max(0.0, ability_dist(Sim::get_random_generator()));
+        abilities[(Person::Ability) i] = ability_dist(Sim::get_random_generator());
     }
     log_abilities();
     ranked_distributors = society->get_distributors();
@@ -106,20 +101,20 @@ void Person::purchase_good(Product * product, int quantity) {
         if (distributor->try_sell_goods(*product, quantity, this)) {
             inventory[product] += quantity;
             log_purchase(product->product_name, quantity);
+            log_account();
             return;
         }
     }
 }
 
 void Person::consume() {
+    int time = Sim::get_current_time_step();
     for (Product * product : society->get_goods()) {
-        to_consume[product] += product->mean_consumption_frequency;
-        int consumed = static_cast<int>(to_consume[product]);
-        if (consumed) {
-            inventory[product] -= consumed;
-            log_consumption(product, consumed);
+        int period = product->mean_consumption_period;
+        if (time % period == 0) {
+            inventory[product] -= 1;
+            log_consumption(product, 1);
         }
-        to_consume[product] -= (int) to_consume[product];
     }
 }
 
@@ -131,7 +126,11 @@ bool Person::will_shop() {
             inventory[product] / product->mean_consumption_frequency
         );
     }
-    return total_deficit > PERSON_DEFICIT_THRESHOLD;
+    bool should_shop = total_deficit > PERSON_DEFICIT_THRESHOLD;
+    if (should_shop) {
+        log_shopping();
+    }
+    return should_shop;
 }
 
 void Person::shop() {
@@ -166,17 +165,26 @@ void Person::retire() {
 }
 
 void Person::update_health_status() {
-	static std::uniform_real_distribution<> dist(0, 1);
     bool changed = false;
-	if (health_status == HEALTHY &&
-		dist(Sim::get_random_generator()) < 1 - pow(1 - DAILY_SICKNESS_CHANCE, 1.0 / DAY)) {
-		health_status = UNHEALTHY;
+
+    double annual_prob = Sim::get_annual_sickness_chance();
+    double sickness_rate = -std::log(1.0 - annual_prob);
+
+    double p_sick_hour = 1.0 - std::exp(-sickness_rate / YEAR);
+    double p_recover_hour = 1.0 - std::exp(-1.0 / (AVG_DAYS_TO_RECOVERY * DAY));
+
+    std::bernoulli_distribution get_sick(p_sick_hour);
+    std::bernoulli_distribution recover(p_recover_hour);
+
+    if (health_status == HEALTHY && get_sick(Sim::get_random_generator())) {
+        health_status = UNHEALTHY;
         changed = true;
-	} else if (health_status == UNHEALTHY &&
-	   dist(Sim::get_random_generator()) < 1 - pow(1 - DAILY_RECOVERY_CHANCE, 1.0 / DAY)) {
-		health_status = HEALTHY;
+
+    } else if (health_status == UNHEALTHY && recover(Sim::get_random_generator())) {
+        health_status = HEALTHY;
         changed = true;
-	} 
+    }
+
     if (changed) {
         log_health_status();
     }
@@ -198,7 +206,6 @@ void Person::on_time_step() {
 }
 
 void Person::set_firm(Firm * workplace) {
-    std::cerr << "SET_FIRM " << id << workplace->get_id() << std::endl;
     firm = workplace;
     log_placement();
 }
@@ -231,6 +238,10 @@ void Person::log_purchase(const std::string& product_name, const int quantity) {
 
 void Person::log_shopping_deficit(const double deficit) {
     Logger::get_instance()->log(Logger::PERSON, "shopping_deficit", id, deficit);
+}
+
+void Person::log_shopping() {
+    Logger::get_instance()->log(Logger::PERSON, "is_shopping", id, account);
 }
 
 void Person::log_placement() {

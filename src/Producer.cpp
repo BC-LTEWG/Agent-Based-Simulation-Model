@@ -27,13 +27,15 @@ Producer::Producer(
     for (Machine * machine : initial_machines) {
         machines.push_back(machine);
     }
+
     for (Product * product : get_products_to_reorder()) {
         this->input_inventory[product] =
-            (society->get_initial_production()[product] - product->mean_consumption_frequency) * 
+            society->get_initial_production()[product] * 
             (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN * PRODUCER_INITIAL_INVENTORY_MULT) *
             Sim::get_num_people();
             log_inventory_level(product, input_inventory[product]);
     }
+    log_catalog();
 }
 
 Logger::Client Producer::get_client_type() {
@@ -203,9 +205,10 @@ void Producer::end_plan(Plan * plan) {
 	input_inventory[plan->order->product] -= plan->order->quantity;
     plan->order->customer->receive_shipment(plan);
     // update local labor time
+    // recorded was being calculated without using the quantity actually produced (same problem as price controller)
     recorded_living_labor_per_unit[plan->order->product] = 
         (double) (plan->labor_hours - plan->labor_hours_remaining) 
-        / plan->order->quantity;
+        / (plan->order->quantity - plan->quantity_remaining); 
     // update global price
     PriceController::get_instance()->update_price(plan);
     

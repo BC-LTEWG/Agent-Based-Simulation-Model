@@ -12,6 +12,7 @@ void print_usage() {
     std::cout << "\t-m N: Set the initial number of products per machine to N." << std::endl;
     std::cout << "\t-r N: Set the initial number of producers to N." << std::endl;
     std::cout << "\t-d N: Set the initial number of distributors to N." << std::endl;
+    std::cout << "\t-s N: Set the annual chance of an agent getting sick." << std::endl;
     std::cout << "\t-j: Write JSON log traces to stdout." << std::endl;
 }
 
@@ -20,6 +21,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
     for (int i = 1; i < argc; ++i) {
         unsigned j = 0;
         unsigned int value = 0;
+        double dvalue = 0.0;
         char flag = 0;
         if (argv[i][j] == '-') {
             ++j;
@@ -70,6 +72,26 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                         }
                     }
                     break;
+
+                case 's':
+                    ++i;
+                    dvalue = strtod(argv[i], NULL);
+                    if (dvalue <= 0.0 || dvalue >= 1.0) {
+                        error = true;
+                    } else {
+                        args.sickness_chance = dvalue;
+                    }
+                    break;
+                case 'v':
+                    ++i;
+                    dvalue = strtod(argv[i], NULL);
+                    if (dvalue <= 0.0) {
+                        error = true;
+                    } else {
+                        args.ability_stddev = dvalue;
+                    }
+                    break;
+
                 case 'j':
                     args.json = true;
                     break;
