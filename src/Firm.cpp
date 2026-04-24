@@ -7,6 +7,7 @@
 #include "Distributor.h"
 #include "Firm.h"
 #include "Logger.h"
+#include "Machine.h"
 #include "Person.h"
 #include "Producer.h"
 #include "Product.h"
@@ -49,11 +50,7 @@ void Firm::on_time_step() {
 }
 
 int Firm::get_inventory(Product * product) {
-    std::unordered_map<Product *, int>::iterator it = input_inventory.find(product);
-    if (it == input_inventory.end()) {
-        return 0;
-    }
-    return input_inventory[product];
+    return input_inventory.count(product) ? input_inventory[product] : 0;
 }
 
 void Firm::add_supplier(Producer * producer) {
@@ -62,30 +59,22 @@ void Firm::add_supplier(Producer * producer) {
 
 void Firm::receive_shipment(Plan * plan) {
     Order * order = plan->order;
-    if (order->status != Order::ORDER_FINISHED) {
-        std::cerr << "Attempted to recieve a shipment for an incomplete order."
-            << std::endl;
-        return;
-    }
-    input_inventory[order->product] += order->quantity;
+    input_inventory[order->product] += order->quantity - plan->quantity_remaining;
     product_to_outbound_orders[order->product].erase(order);
     int transaction_amount = order->product->price_per_unit * order->quantity;
     pooled_input_value_account -= transaction_amount;
     plan->firm->receive_payment(plan, transaction_amount);
     log_shipment_received(order->product, order->quantity);
     log_inventory_level(order->product, input_inventory[order->product]);
-
 }
 
 void Firm::receive_payment(Plan * plan, int transaction_amount) {
     plan->prd += transaction_amount;
-
 }
 
 bool Firm::remove_input_from_inventory(Product * product, int quantity) {
     if (input_inventory[product] < quantity) {
         return false;
-        std::cerr << "No good to remove from" << std::endl;
     }
     input_inventory[product] -= quantity;
     log_inventory_reduction(product, quantity);
@@ -129,7 +118,6 @@ Producer * Firm::send_order(Order * order) {
     if (chosen_producer) {
         pursue_order_with_chosen_producer(order, chosen_producer);
     }
-    drop_order_from_unchosen_producer(order, chosen_producer);
     return chosen_producer;
 }
 
@@ -148,18 +136,30 @@ Producer * Firm::select_fastest_supplier_for_order(Order * order) {
         }
     }
     for (Producer * producer : primary_producers) {
-        int draft_plan_time = producer->draft_plan(order);
+        int draft_plan_time = producer->draft_plan_or_reject(order);
         if (draft_plan_time == DRAFT_ORDER_REJECTED) {
             producer->drop_order(order);
             rejecting_primary_producers.push_back(producer);
-            continue;
-        }
-        if (draft_plan_time < order_time) {
+        } else if (draft_plan_time < order_time) {
             if (chosen_producer) {
                 chosen_producer->drop_order(order);
             }
             order_time = draft_plan_time;
             chosen_producer = producer;
+        } else {
+            producer->drop_order(order);
+        }
+    }
+    if (!chosen_producer) {
+        for (Producer * producer : secondary_producers) {
+            int draft_plan_time = producer->draft_plan_or_reject(order);
+            if (draft_plan_time == DRAFT_ORDER_REJECTED) {
+                producer->drop_order(order);
+            } else {
+                order_time = draft_plan_time;
+                chosen_producer = producer;
+                break;
+            }
         }
     }
     return chosen_producer;
@@ -175,20 +175,8 @@ void Firm::pursue_order_with_chosen_producer(
     product_to_outbound_orders[order->product].insert(order);
 }
 
-void Firm::drop_order_from_unchosen_producer(
-        Order * order,
-        Producer * unchosen_producer
-        ) {
-    for (Producer * producer : suppliers) {
-        if (producer != unchosen_producer) {
-            producer->drop_order(order);
-        }
-    }
-}
-
 double Firm::get_reorder_threshold(Product * product) {
-    return std::max((double) product->order_size,
-        get_demand(product) * FIRM_STOCKPILE_DURATION);
+    return get_demand(product) * FIRM_STOCKPILE_DURATION;
 }
 
 int Firm::get_pending_input_inventory(Product * product) {
@@ -204,34 +192,30 @@ void Firm::reorder_input_product_to_threshold(
         double threshold,
         int pending_inventory
         ) {
-    if (pending_inventory >= threshold) {
-        std::cerr << "Reordering product " << product->product_name
-            << " unnecessarily." << std::endl;
-        return;
-    }
-
-    int reorder_quantity = static_cast<int>(
-        std::ceil(threshold - pending_inventory)
-        );
-    int reorder_deadline = static_cast<int>(
+    double reorder_quantity = threshold;
+    double reorder_deadline = 
         pending_inventory *
-        FIRM_STOCKPILE_DURATION *
-        DEADLINE_SAFETY_MULT /
-        threshold
-        );
+        FIRM_STOCKPILE_DURATION /
+        threshold ;
     Order * order = new Order(
             product,
             reorder_quantity,
             this,
             reorder_deadline
             );
-    Producer * chosen_producer = send_order(order);
-    if (chosen_producer) {
-        log_reorder(product, reorder_quantity);
-        log_accepted_order(product, order->requested_turnaround_time);
-    } else {
-        log_reorder_failure(product, reorder_quantity);
+    if (!reorder_quantity) return;
+    for (int i = FIRM_REORDER_ATTEMPTS; i > 0; i--) {
+        double reorder_prop = FIRM_REORDER_START * i / FIRM_REORDER_ATTEMPTS;
+        order->quantity = std::ceil(reorder_quantity * reorder_prop);
+        order->requested_turnaround_time = std::max(1.0, reorder_deadline * reorder_prop);
+        Producer * chosen_producer = send_order(order);
+        if (chosen_producer) {
+            log_reorder(product, reorder_quantity);
+            log_accepted_order(product, order->requested_turnaround_time);
+            return;
+        }
     }
+    log_reorder_failure(product, reorder_quantity);
 }
 
 void Firm::check_and_reorder_inputs() {
@@ -253,11 +237,12 @@ void Firm::check_and_reorder_input(Product * product) {
 int Firm::predict_workers_needed(Plan * plan) {
     return std::ceil(
             plan->order->quantity *
-            plan->order->product->living_labor_per_unit *
+            plan->order->product->societal_living_labor_per_unit *
             WEEK /
             Sim::get_work_days_weekly() / 
             plan->local_work_hours_daily /
-            plan->order->requested_turnaround_time
+            plan->order->requested_turnaround_time / 
+            DEADLINE_SAFETY_MULT
             );
 }
 
@@ -337,6 +322,15 @@ void Firm::initialize_plan_budget(
     draft_plan->prd = -(draft_plan->total_hours);
 }
 
+double Firm::calculate_machinery_cost_for_plan(Plan * draft_plan) {
+    double machinery_cost_per_hour = 0.0;
+    for (Machine * machine : machines) {
+        machinery_cost_per_hour += machine->price_per_unit / machine->lifetime;
+    }
+    return machinery_cost_per_hour *
+        (static_cast<double>(draft_plan->labor_hours) / draft_plan->workers.size());
+}
+
 void Firm::assign_plan_dependent_fields(
         Plan * draft_plan,
         std::vector<Person::Ability>& required_abilities
@@ -347,13 +341,27 @@ void Firm::assign_plan_dependent_fields(
         draft_plan->labor_hours_remaining =
         predict_labor_hours(draft_plan->order, draft_plan->workers); 
     initialize_plan_budget(draft_plan);
+    draft_plan->machinery_cost = calculate_machinery_cost_for_plan(draft_plan);
 }
 
-void Firm::train_workers(
-        std::vector<Person *>& workers,
+Plan * Firm::draft_plan_with_required_abilities(
+        Order * order,
         std::vector<Person::Ability>& required_abilities
         ) {
-    // training has to be revised.
+    Plan * draft_plan = new Plan{};
+    draft_plan->order = order;
+    draft_plan->firm = this;
+    draft_plan->local_work_hours_daily = society->get_current_work_hours_daily();
+
+    assign_workers(
+        draft_plan,
+        required_abilities
+    );
+    assign_plan_dependent_fields(
+        draft_plan,
+        required_abilities
+    );
+    return draft_plan;
 }
 
 void Firm::add_demand_signal(Product * product, int quantity) {
