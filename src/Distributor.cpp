@@ -6,6 +6,7 @@
 #include "ConsumerGood.h"
 #include "Distributor.h"
 #include "Firm.h"
+#include "PriceController.h"
 #include "Logger.h"
 #include "Machine.h"
 #include "Person.h"
@@ -37,8 +38,9 @@ void Distributor::on_time_step() {
         for (Person * worker : plan->workers) {
             worker->register_hours_worked(1);
         }
-        if (plan->outgoing_units_consumed == plan->order->quantity  i0) {
-            start_new_plan(plan->order->product, plan->order->quantity);
+        if (plan->outgoing_units_consumed >= plan->order->quantity) {
+            PriceController::get_instance()->update_price(plan);
+            start_new_plan(plan->order->product);
             plan->order->status = Order::ORDER_FINISHED;
 
         }
