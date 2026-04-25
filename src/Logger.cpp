@@ -181,6 +181,18 @@ void Logger::log(
     log_impl(client, label, id, tuple);
 }
 
+void Logger::log(
+    const Client client,
+    const std::string label,
+    const unsigned int id, // producer id
+    const unsigned int id2, // customer id
+    const int id3, // product id
+    const int value //quantity
+) {
+    Tuple tuple = std::make_tuple(id2, id3, value);
+    log_impl(client, label, id, tuple);
+}
+
 template <typename T>
 void Logger::log_impl(
         const Client client,

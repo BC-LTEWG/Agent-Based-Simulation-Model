@@ -225,9 +225,9 @@ void Firm::reorder_input_product_to_threshold(
             this,
             reorder_deadline
             );
+    log_reorder(product, reorder_quantity);
     Producer * chosen_producer = send_order(order);
     if (chosen_producer) {
-        log_reorder(product, reorder_quantity);
         log_accepted_order(product, order->requested_turnaround_time);
     } else {
         log_reorder_failure(product, reorder_quantity);
@@ -489,7 +489,7 @@ void Firm::log_demand(const Product * product, double demand) {
             "current_demand",
             id,
             product->product_name,
-            demand*FIRM_STOCKPILE_DURATION
+            demand
             );
 }
 
