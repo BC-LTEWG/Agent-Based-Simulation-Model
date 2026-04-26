@@ -33,8 +33,9 @@ Product::Product(int id, const std::string& name) :
     static std::uniform_int_distribution<>
         ability_count_dist(1, PRODUCT_ABILITY_COUNT_MAX);
     required_abilities.resize(ability_count_dist(Sim::get_random_generator()));
-    mean_consumption_frequency = std::pow(PRODUCT_CONSUMPTION_FALLOFF, id /
-            PRODUCT_CONSUMPTION_GROUP_SIZE);
+    static std::uniform_real_distribution<>
+        consumption_freq_dist(0.1, 1.0);
+    mean_consumption_frequency = consumption_freq_dist(Sim::get_random_generator());
 }
 
 void Product::set_inputs(std::vector<Product *>& goods) {

@@ -64,9 +64,8 @@ void Firm::receive_shipment(Plan * plan) {
     int transaction_amount = order->product->price_per_unit * order->quantity;
     pooled_input_value_account -= transaction_amount;
     plan->firm->receive_payment(plan, transaction_amount);
-    log_shipment_received(order->product, order->quantity);
+    // log_shipment_received(order->product, order->quantity);
     log_inventory_level(order->product, input_inventory[order->product]);
-
 }
 
 void Firm::receive_payment(Plan * plan, int transaction_amount) {
@@ -76,10 +75,11 @@ void Firm::receive_payment(Plan * plan, int transaction_amount) {
 bool Firm::remove_input_from_inventory(Product * product, int quantity) {
     if (input_inventory[product] < quantity) {
         return false;
-        std::cerr << "No good to remove from" << std::endl;
+        // std::cerr << "No good to remove from" << std::endl;
     }
     input_inventory[product] -= quantity;
-    log_inventory_reduction(product, quantity);
+    // log_inventory_reduction(product, quantity);
+    log_inventory_level(product, input_inventory[product]);
     return true;
 }
 
@@ -190,34 +190,26 @@ void Firm::reorder_input_product_to_threshold(
         double threshold,
         int pending_inventory
         ) {
-    if (pending_inventory >= threshold) {
-        std::cerr << "Reordering product " << product->product_name
-            << " unnecessarily." << std::endl;
-        return;
-    }
-    
     Order * order = new Order(product, 0, this, 0);
     double reorder_quantity = threshold;
     double reorder_deadline = 
         pending_inventory *
-        FIRM_STOCKPILE_DURATION *
-        DEADLINE_SAFETY_MULT /
+        FIRM_STOCKPILE_DURATION /
         threshold;
-    if (!reorder_quantity || !reorder_deadline) return;
+    if (!reorder_quantity) return;
     for (int i = FIRM_REORDER_ATTEMPTS; i > 0; i--) {
-        order->quantity = std::ceil(reorder_quantity * i / FIRM_REORDER_ATTEMPTS);
-        order->requested_turnaround_time = static_cast<int>(
-                reorder_deadline * i / FIRM_REORDER_ATTEMPTS
-                );
-        if (order->quantity == 0 || order->requested_turnaround_time == 0) break;
+        double reorder_prop = FIRM_REORDER_START * i / FIRM_REORDER_ATTEMPTS;
+        order->quantity = std::ceil(reorder_quantity * reorder_prop);
+        order->requested_turnaround_time = std::max(1.0, reorder_deadline * reorder_prop);
         Producer * chosen_producer = send_order(order);
         if (chosen_producer) {
+            std::cout << "chosen deadline: " << order->requested_turnaround_time << std::endl;
             log_reorder(product, reorder_quantity);
             log_accepted_order(product->product_name, order->requested_turnaround_time);
             return;
         }
     }
-    std::cerr << "No producer found for product " << product->product_name << std::endl;
+    // std::cerr << "No producer found for product " << product->product_name << std::endl;
     log_reorder_failure(product, reorder_quantity);
 }
 
@@ -242,7 +234,8 @@ int Firm::predict_workers_needed(Plan * plan) {
             WEEK /
             Sim::get_work_days_weekly() / 
             plan->local_work_hours_daily /
-            plan->order->requested_turnaround_time
+            plan->order->requested_turnaround_time / 
+            DEADLINE_SAFETY_MULT
             );
 }
 

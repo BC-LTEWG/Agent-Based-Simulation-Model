@@ -40,11 +40,9 @@ Person::Person(Society * society):
             ranked_distributors.end(),
             Sim::get_random_generator()
             );
-    static std::uniform_real_distribution<> inventory_dist(0.0, 1.0);
     for (Product * product : society->get_goods()) {
-        inventory[product] = (inventory_dist(Sim::get_random_generator()) *
-                PERSON_STOCKPILE_DURATION *
-                product->mean_consumption_frequency);
+        inventory[product] = PERSON_STOCKPILE_DURATION *
+                product->mean_consumption_frequency;
     }
     log_inventory();
     account = society->get_initial_account();
@@ -119,6 +117,7 @@ void Person::consume() {
         to_consume[product] += product->mean_consumption_frequency;
         int consumed = static_cast<int>(to_consume[product]);
         to_consume[product] -= consumed;
+        consumed = std::min(consumed, inventory[product]);
         if (consumed) {
             inventory[product] -= consumed;
             log_consumption(product, consumed);
@@ -201,7 +200,6 @@ void Person::on_time_step() {
 }
 
 void Person::set_firm(Firm * workplace) {
-    std::cerr << "SET_FIRM " << id << workplace->get_id() << std::endl;
     firm = workplace;
     log_placement();
 }

@@ -38,8 +38,9 @@ Society::Society() :
         producers.push_back(producer);
         firms.push_back(producer);
     }
+    std::unordered_set<Product *> distributor_catalog(goods.begin(), goods.end());
     for (unsigned int i = 0; i < Sim::get_num_distributors(); i++) {
-        Distributor * distributor = new Distributor(this, {goods[i % Sim::get_num_products()]});
+        Distributor * distributor = new Distributor(this, distributor_catalog);
         distributors.push_back(distributor);
         firms.push_back(distributor);
     }
@@ -285,7 +286,7 @@ void Society::set_initial_account() {
         initial_account += consumer_good->price_per_unit *
                            consumer_good->mean_consumption_frequency;
     }
-    initial_account *= FIRM_DEMAND_WINDOW_MIN * INITIAL_ACCOUNT_MULT;
+    initial_account *= INITIAL_ACCOUNT_DURATION;
 }
 
 int Society::get_initial_account() {

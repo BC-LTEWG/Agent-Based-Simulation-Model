@@ -33,8 +33,8 @@ Producer::Producer(
             this->input_inventory[input.first] +=
                 input.second * 
                 society->get_initial_production()[product] * 
-                (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN * PRODUCER_INITIAL_INVENTORY_MULT) *
-                Sim::get_num_people();
+                (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN) *
+                Sim::get_num_people() * Sim::get_num_products() / Sim::get_num_producers();
         }
     }
     for (Product * product : get_products_to_reorder()) {
@@ -104,7 +104,9 @@ bool Producer::pursue_order(Order * order) {
 		return false;
 	}
 	Plan * draft_plan = order_to_draft_plan[order];
-
+    if (!draft_plan) {
+        std::cerr << "nullptr draft plan\n";
+    }
     add_order_input_demand_signals(order);
     for (Person * worker : draft_plan->workers) {
         move_worker_off_standby(worker);
@@ -200,6 +202,7 @@ void Producer::move_plans_forward_one_step() {
             ++iter
             ) {
 		Plan * plan = *iter;
+        std::cerr << plan << '\n';
         if (plan->order->status == Order::ORDER_REQUESTED) {
 			start_plan(plan);
 		}
