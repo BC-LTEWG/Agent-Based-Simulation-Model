@@ -18,13 +18,15 @@ using TupleDoubleDoubleInt = std::tuple<double, double, int>;
 using TupleIntDoubleInt = std::tuple<int, double, int>;
 using TupleString = std::tuple<std::string>;
 using TupleStringStringInt = std::tuple<std::string, std::string, int>;
+using TupleIntIntInt = std::tuple<unsigned int, int, int>;
 using Tuple = std::variant<TupleNone,
       TupleInt,
       TupleIntInt,
       TupleDouble,
       TupleDoubleDoubleInt,
       TupleString,
-      TupleIntDoubleInt
+      TupleIntDoubleInt,
+      TupleIntIntInt
       >;
 
 struct Product;
@@ -92,6 +94,14 @@ class Logger {
                 const double value1,
                 const double value2,
                 const int value3
+                );
+        void log(
+                const Client client,
+                const std::string label,
+                const unsigned int id,
+                const unsigned int id2,
+                const int id3,
+                const int value
                 );
         void log(
             const Client client,

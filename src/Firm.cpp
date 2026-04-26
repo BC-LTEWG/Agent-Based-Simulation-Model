@@ -497,7 +497,7 @@ void Firm::log_demand(const Product * product, double demand) {
             "current_demand",
             id,
             product->product_name,
-            demand*FIRM_STOCKPILE_DURATION
+            demand
             );
 }
 

@@ -262,7 +262,8 @@ void Producer::log_pursued_plan(const Plan * draft_plan) {
             Logger::PRODUCER,
             "pursued_plan",
             id,
-            draft_plan->order->product->product_name,
+            draft_plan->order->customer->get_id(),
+            draft_plan->order->product->id,
             draft_plan->order->quantity
             );
 }
