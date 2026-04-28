@@ -75,7 +75,7 @@ void Logger::log(
         throw std::invalid_argument("Logging client does not exist");
     }
 
-    unsigned int time_step = Sim::get_current_time_step();
+    int time_step = Sim::get_current_time_step();
 
     std::cout << "{\"t\":" << time_step << ","
               << "\"client\":\"" << clients[client] << "\","
@@ -114,7 +114,7 @@ void Logger::log(
     if (client >= ERROR) {
         throw std::invalid_argument("Logging client does not exist");
     }
-    unsigned int time_step = Sim::get_current_time_step();
+    int time_step = Sim::get_current_time_step();
     std::cout << "{\"t\":" << time_step << "," <<
         "\"client\":\"" << clients[client] << "\"," <<
         "\"id\":" << id << "," <<
@@ -136,7 +136,7 @@ void Logger::log(
     if (client >= ERROR) {
         throw std::invalid_argument("Logging client does not exist");
     }
-    unsigned int time_step = Sim::get_current_time_step();
+    int time_step = Sim::get_current_time_step();
     std::cout << "{\"t\":" << time_step << "," <<
         "\"client\":\"" << clients[client] << "\"," <<
         "\"id\":" << id << "," <<
@@ -178,6 +178,18 @@ void Logger::log(
     const int value3
 ) {
     TupleDoubleDoubleInt tuple = std::make_tuple(value1, value2, value3);
+    log_impl(client, label, id, tuple);
+}
+
+void Logger::log(
+    const Client client,
+    const std::string label,
+    const unsigned int id, // producer id
+    const unsigned int id2, // customer id
+    const int id3, // product id
+    const int value //quantity
+) {
+    Tuple tuple = std::make_tuple(id2, id3, value);
     log_impl(client, label, id, tuple);
 }
 
