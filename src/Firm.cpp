@@ -96,7 +96,7 @@ std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
     int max_workers_to_transfer = (int) (workers.size() * (1.0 - firm_busyness / 
             (societal_busyness - TRANSFER_BUSYNESS_THRESHOLD))); 
     max_workers_to_transfer = std::max(max_workers_to_transfer, workers_wanted);
-    log_busyness(firm_busyness, max_workers_to_transfer, societal_busyness);
+    log_busyness(firm_busyness, societal_busyness, max_workers_to_transfer);
     if (firm_busyness >= societal_busyness - TRANSFER_BUSYNESS_THRESHOLD) {
         return {};
     }
@@ -125,21 +125,16 @@ Producer * Firm::select_fastest_supplier_for_order(Order * order) {
     int order_time = INT_MAX;
     Producer * chosen_producer = nullptr;
 
-    std::vector<Producer *> primary_producers, 
-        secondary_producers,
-        rejecting_primary_producers;
+    std::vector<Producer *> primary_producers;
     for (Producer * producer : suppliers) {
         if (producer->can_produce(order->product)) {
             primary_producers.push_back(producer);
-        } else {
-            secondary_producers.push_back(producer);
         }
     }
     for (Producer * producer : primary_producers) {
         int draft_plan_time = producer->draft_plan_or_reject(order);
         if (draft_plan_time == DRAFT_ORDER_REJECTED) {
             producer->drop_order(order);
-            rejecting_primary_producers.push_back(producer);
         } else if (draft_plan_time < order_time) {
             if (chosen_producer) {
                 chosen_producer->drop_order(order);
@@ -148,18 +143,6 @@ Producer * Firm::select_fastest_supplier_for_order(Order * order) {
             chosen_producer = producer;
         } else {
             producer->drop_order(order);
-        }
-    }
-    if (!chosen_producer) {
-        for (Producer * producer : secondary_producers) {
-            int draft_plan_time = producer->draft_plan_or_reject(order);
-            if (draft_plan_time == DRAFT_ORDER_REJECTED) {
-                producer->drop_order(order);
-            } else {
-                order_time = draft_plan_time;
-                chosen_producer = producer;
-                break;
-            }
         }
     }
     return chosen_producer;
