@@ -34,9 +34,9 @@ Person::Person(Society * society):
             ranked_distributors.end(),
             Sim::get_random_generator()
             );
-    for (Product * product : society->get_goods()) {
-        inventory[product] = 
-            (int) (PERSON_STOCKPILE_DURATION * product->mean_consumption_frequency);
+    for (ConsumerGood * consumer_good : society->get_consumer_goods()) {
+        inventory[consumer_good] = 
+            (int) (PERSON_STOCKPILE_DURATION * consumer_good->mean_consumption_frequency);
     }
     log_inventory();
     account = society->get_initial_account();
@@ -92,48 +92,37 @@ float Person::productivity() {
 	}
 }
 
-void Person::purchase_good(Product * product, int quantity) {
+void Person::purchase_good(ConsumerGood * consumer_good, int quantity) {
     int purchased = 0;
     for (Distributor * distributor : ranked_distributors) {
-        int available = distributor->try_sell_goods(product, quantity, this);
+        int available = distributor->try_sell_goods(consumer_good, quantity, this);
         quantity -= available;
-        inventory[product] += available;
+        inventory[consumer_good] += available;
         purchased += available;
     }
-    log_purchase(product->product_name, purchased);
+    log_purchase("", purchased);
     log_account();
 }
 
 void Person::consume() {
-    for (Product * product : society->get_goods()) {
-        to_consume[product] += product->mean_consumption_frequency;
-        int consumed = static_cast<int>(to_consume[product]);
+    for (ConsumerGood * consumer_good : society->get_consumer_goods()) {
+        to_consume[consumer_good] += consumer_good->mean_consumption_frequency;
+        int consumed = static_cast<int>(to_consume[consumer_good]);
         if (consumed) {
-            inventory[product] -= consumed;
-            log_consumption(product, consumed);
+            inventory[consumer_good] -= consumed;
+            log_consumption(consumer_good, consumed);
         }
-        to_consume[product] -= (int) to_consume[product];
+        to_consume[consumer_good] -= (int) to_consume[consumer_good];
     }
 }
-
-// void Person::consume() {
-//     int time = Sim::get_current_time_step();
-//     for (Product * product : society->get_goods()) {
-//         int period = product->mean_consumption_period;
-//         if (time % period == 0) {
-//             inventory[product] -= 1;
-//             log_consumption(product, 1);
-//         }
-//     }
-// }
 
 bool Person::will_shop() {
     if (busyness_this_time_step) return false;
     double total_deficit = 0.0;
-    for (Product * product : society->get_goods()) {
+    for (ConsumerGood * consumer_good : society->get_consumer_goods()) {
         total_deficit += std::max(0.0, 
             PERSON_STOCKPILE_DURATION - 
-            inventory[product] / product->mean_consumption_frequency
+            inventory[consumer_good] / consumer_good->mean_consumption_frequency
         );
     }
     bool should_shop = total_deficit > PERSON_DEFICIT_THRESHOLD;
@@ -145,21 +134,21 @@ bool Person::will_shop() {
 
 void Person::shop() {
     double total_price = 0.0;
-    static std::unordered_map<Product *, int> purchase_quantities;
-    for (Product * product : society->get_goods()) {
-        purchase_quantities[product] = std::max(0, 
-            (int) (PERSON_STOCKPILE_DURATION * product->mean_consumption_frequency) - 
-            inventory[product]
+    static std::unordered_map<ConsumerGood *, int> purchase_quantities;
+    for (ConsumerGood * consumer_good : society->get_consumer_goods()) {
+        purchase_quantities[consumer_good] = std::max(0, 
+            (int) (PERSON_STOCKPILE_DURATION * consumer_good->mean_consumption_frequency) - 
+            inventory[consumer_good]
         );
-        total_price += purchase_quantities[product] * 
-            society->get_consumer_good(product)->price_per_unit;
+        total_price += purchase_quantities[consumer_good] * 
+            consumer_good->price_per_unit;
     }
     double price_scalar = std::min(account / total_price, 1.0);
     log_shopping_deficit(std::max(0.0, 1.0 - price_scalar)); 
-    for (std::pair<Product *, int> p : purchase_quantities) {
-        int quantity = (int) (price_scalar * p.second);
+    for (std::pair<ConsumerGood *, int> consumer_good : purchase_quantities) {
+        int quantity = (int) (price_scalar * consumer_good.second);
         if (quantity > 0) {
-            purchase_good(p.first, quantity);
+            purchase_good(consumer_good.first, quantity);
         }
     }
 }

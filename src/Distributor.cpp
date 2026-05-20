@@ -5,6 +5,7 @@
 
 #include "ConsumerGood.h"
 #include "Distributor.h"
+#include "Good.h"
 #include "Logger.h"
 #include "Machine.h"
 #include "Person.h"
@@ -19,12 +20,13 @@ Distributor::Distributor(
         ) :
     Firm(society, initial_catalog)
 {
-    for (Product * product : get_products_to_reorder()) {
-        input_inventory[product] =
-            product->mean_consumption_frequency *
+    for (Product * product : catalog) {
+        Good * good = static_cast<ConsumerGood *>(product)->corresponding_good;
+        input_inventory[good] =
+            good->corresponding_consumer_good->mean_consumption_frequency *
             (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN) * 
             Sim::get_num_people() / Sim::get_num_distributors();
-        log_inventory_level(product, input_inventory[product]);
+        log_inventory_level(good, input_inventory[good]);
     }
 }
 
@@ -36,30 +38,21 @@ void Distributor::on_time_step() {
     Firm::on_time_step();
 }
 
-int Distributor::try_sell_goods(Product * product, int quantity, Person * person) {
-    ConsumerGood * consumer_good = society->get_consumer_good(product);
-    add_demand_signal(product, quantity);
-    check_and_reorder_input(product);
-    if (!catalog.count(product)) return 0;
-    int available = std::min(static_cast<int>(get_inventory_level(consumer_good)), quantity);
+int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person) {
+    add_demand_signal(consumer_good->corresponding_good, quantity);
+    check_and_reorder_input(consumer_good->corresponding_good);
+    if (!catalog.count(consumer_good)) return 0;
+    int available = std::min(static_cast<int>(
+                get_inventory_level(consumer_good->corresponding_good)), quantity);
     if (available < quantity) {
-        log_shortfall(product->product_name, quantity - available);
+         log_shortfall("", quantity - available);
     }
     double cost = available * consumer_good->price_per_unit;
     if (!person->charge(cost)) {
-        return 0;
+         return 0;
     } 
-    Plan * plan = product_to_plan[product];
-    if (plan) {
-        plan->outgoing_units_consumed += quantity;
-        plan->prd += cost;
-    }
-    remove_input_from_inventory(consumer_good, quantity);
+    remove_input_from_inventory(consumer_good->corresponding_good, quantity);
     return available;
-}
-
-std::unordered_set<Product *> Distributor::get_products_to_reorder() {
-    return catalog;
 }
 
 void Distributor::log_shortfall(std::string product_name, int shortfall) {

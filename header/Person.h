@@ -4,6 +4,7 @@
 #include <vector>
 #include "Agent.h"
 
+struct ConsumerGood;
 struct Plan;
 struct Product;
 class Distributor;
@@ -26,7 +27,7 @@ class Person : public Agent {
     double suitability(std::vector<int>& required_abilities);
     void register_hours_worked(double hours_worked);
     bool charge(double cost);
-    void purchase_good(Product * p, int quantity);
+    void purchase_good(ConsumerGood * consumer_good, int quantity);
     void set_firm(Firm *);
     Firm * get_firm();
   
@@ -36,8 +37,8 @@ class Person : public Agent {
     std::unordered_map<int, double> abilities;
     int age;
     HealthStatus health_status;
-    std::unordered_map<Product *, int> inventory;
-    std::unordered_map<Product *, double> to_consume;
+    std::unordered_map<ConsumerGood *, int> inventory;
+    std::unordered_map<ConsumerGood *, double> to_consume;
     Firm * firm = nullptr;
     double account;
     double busyness_this_time_step = 0.0;

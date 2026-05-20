@@ -4,6 +4,7 @@
 #include <numeric>
 
 #include "Distributor.h"
+#include "Good.h"
 #include "Logger.h"
 #include "Person.h"
 #include "Producer.h"
@@ -17,7 +18,7 @@ Producer::Producer(
         ) :
     Firm(society, initial_catalog) {
     std::unordered_set<Machine *> initial_machines;
-    for (Product * product : initial_catalog) {
+    for (Product * product : catalog) {
         for (Machine * machine : product->machines_needed) {
             initial_machines.insert(machine);
         }
@@ -26,7 +27,7 @@ Producer::Producer(
         machines.push_back(machine);
     }
     for (Product * product : catalog) {
-        for (std::pair<Product * const, double>& input :
+        for (std::pair<Good * const, double>& input :
                 product->inputs_per_unit) {
             this->input_inventory[input.first] +=
                 input.second * 
@@ -35,9 +36,9 @@ Producer::Producer(
                 Sim::get_num_people() * Sim::get_num_products() / Sim::get_num_producers();
         }
     }
-    for (Product * product : get_products_to_reorder()) {
-        log_inventory_level(product, input_inventory[product]);
-    } 
+    for (std::pair<Product * const, double>& stockpile : input_inventory) {
+        log_inventory_level(stockpile.first, stockpile.second);
+    }
 }
 
 Logger::Client Producer::get_client_type() {
@@ -54,7 +55,7 @@ bool Producer::can_produce(Product * product) {
 
 int Producer::get_max_order_quantity(Product * product) {
     int max_order_quantity = INT_MAX;
-    for (std::pair<Product * const, double>& input : product->inputs_per_unit) {
+for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
         int input_max_order_quantity = static_cast<int>(
                 input_inventory[input.first] / input.second
                 );
@@ -64,7 +65,7 @@ int Producer::get_max_order_quantity(Product * product) {
 }
 
 void Producer::add_order_input_demand_signals(const Order * order) {
-    for (std::pair<Product * const, double>& input : order->product->inputs_per_unit) {
+    for (std::pair<Good * const, double>& input : order->product->inputs_per_unit) {
         add_demand_signal(input.first, input.second * order->quantity);
     }
 }
@@ -113,17 +114,6 @@ void Producer::pursue_order(Firm * customer) {
     // accounting
     plans_in_progress.back()->prd +=
         order->product->price_per_unit * order->quantity;
-}
-
-std::unordered_set<Product *> Producer::get_products_to_reorder() {
-    std::unordered_set<Product *> products_to_reorder;
-    for (Product * product : catalog) {
-        for (std::pair<Product * const, double>& input :
-                product->inputs_per_unit) {
-            products_to_reorder.insert(input.first);
-        }
-    }
-    return products_to_reorder;
 }
 
 void Producer::log_draft_plan(const Plan * draft_plan) {

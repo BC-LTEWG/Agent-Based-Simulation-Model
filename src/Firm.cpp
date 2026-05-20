@@ -7,6 +7,7 @@
 #include "ConsumerGood.h"
 #include "Distributor.h"
 #include "Firm.h"
+#include "Good.h"
 #include "Logger.h"
 #include "Machine.h"
 #include "Person.h"
@@ -160,9 +161,7 @@ double Firm::get_reorder_threshold(Product * product) {
 }
 
 double Firm::get_pending_inventory_level(Product * product) {
-    double pending_inventory = get_inventory_level(product) + 
-        get_inventory_level(static_cast<Product *>(
-                    Society::get_instance()->get_consumer_good(product)));
+    double pending_inventory = get_inventory_level(product);
     for (Order * order : product_to_outbound_orders[product]) {
         pending_inventory += order->quantity;
     }
@@ -193,7 +192,7 @@ void Firm::check_and_reorder_input(Product * product) {
 }
 
 void Firm::start_plan(Plan * plan) {
-	for (std::pair<Product * const, double>& input :
+	for (std::pair<Good * const, double>& input :
             plan->order->product->inputs_per_unit) {
         double required_input = input.second * plan->order->quantity;
         remove_input_from_inventory(input.first, required_input);
@@ -272,7 +271,8 @@ double Firm::calculate_quantity_produced_from_worker_suitability(Plan * plan) {
     if (total_worker_suitability <= 0.0) {
         return 0.0;
     }
-    return total_worker_suitability / plan->order->product->living_labor_per_unit;
+    return total_worker_suitability / 
+        Society::get_instance()->get_underlying_living_labor_per_unit(plan->order->product);
 }
 
 bool Firm::is_within_work_schedule() const {
@@ -285,7 +285,7 @@ bool Firm::is_within_work_schedule() const {
 int Firm::predict_workers_needed(Plan * plan) {
     return std::ceil(
             plan->order->quantity *
-            plan->order->product->societal_living_labor_per_unit *
+            plan->order->product->living_labor_per_unit *
             WEEK /
             Sim::get_work_days_weekly() / 
             plan->local_work_hours_daily /
@@ -344,7 +344,7 @@ double Firm::predict_labor_hours(Order * order, std::vector<Person *>& workers) 
 
 double Firm::calculate_raw_material_cost_for_order(Order * order) {
     double raw_material_cost = 0;
-    for (std::pair<Product * const, double>& input : order->product->inputs_per_unit) {
+    for (std::pair<Good * const, double>& input : order->product->inputs_per_unit) {
         raw_material_cost += input.second * order->quantity *
             input.first->price_per_unit;
     }

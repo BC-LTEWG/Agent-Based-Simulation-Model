@@ -32,7 +32,6 @@ class Producer : public Firm {
 
     int get_max_order_quantity(Product * product);
     void add_order_input_demand_signals(const Order * order);
-    std::unordered_set<Product *> get_products_to_reorder() override;
     void log_draft_plan(const Plan * draft_plan);
     void log_dropped_order(const Order * order);
 };

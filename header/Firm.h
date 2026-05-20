@@ -132,7 +132,6 @@ class Firm : public Agent {
             std::vector<int>& required_abilities); 
     void apply_demand_window();
     double get_demand(Product * product);
-    virtual std::unordered_set<Product *> get_products_to_reorder() = 0;
     void move_worker_off_standby(Person * worker);
 
     void log_plans();
