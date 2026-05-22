@@ -391,7 +391,7 @@ void Firm::log_busyness(
     double societal_busyness,
     int max_workers_for_transfer
 ) {
-    Logger::log<LogPair, LogPair, LogPair>(
+    Logger::log(
         get_client_type(),
         id,
         "busyness",

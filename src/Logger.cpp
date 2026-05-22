@@ -20,3 +20,45 @@ std::ostream& operator<<(std::ostream& os, const LogPairS& lp) {
     return os;
 }
 
+void force_compiler_to_generate_specializations() {
+    Logger::log<LogPair>(
+            Logger::ERROR,
+            0,
+            "code_gen",
+            LogPair("x", 0)
+            );
+    Logger::log<LogPair, LogPair>(
+            Logger::ERROR,
+            0,
+            "code_gen",
+            LogPair("x", 0),
+            LogPair("x", 0)
+            );
+    Logger::log<LogPair, LogPair, LogPair>(
+            Logger::ERROR,
+            0,
+            "code_gen",
+            LogPair("x", 0), LogPair("x", 0),
+            LogPair("x", 0), LogPair("x", 0),
+            LogPair("x", 0), LogPair("x", 0)
+            );
+    Logger::log<LogPair, LogPair, LogPair, LogPair>(
+            Logger::ERROR,
+            0,
+            "code_gen",
+            LogPair("x", 0), LogPair("x", 0),
+            LogPair("x", 0), LogPair("x", 0),
+            LogPair("x", 0), LogPair("x", 0),
+            LogPair("x", 0), LogPair("x", 0)
+            );
+    Logger::log<LogPair, LogPair, LogPair, LogPair, LogPair>(
+            Logger::ERROR,
+            0,
+            "code_gen",
+            LogPair("x", 0), LogPair("x", 0),
+            LogPair("x", 0), LogPair("x", 0),
+            LogPair("x", 0), LogPair("x", 0),
+            LogPair("x", 0), LogPair("x", 0),
+            LogPair("x", 0), LogPair("x", 0)
+            );
+}

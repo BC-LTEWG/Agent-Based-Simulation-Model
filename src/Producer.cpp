@@ -267,7 +267,7 @@ void Producer::log_dropped_order(const Order * order) {
 
 void Producer::log_pursued_plan(const Plan * draft_plan) {
     Order * order = draft_plan->order;
-    Logger::log<LogPair, LogPair, LogPair, LogPair>(
+    Logger::log(
             Logger::PRODUCER,
             id,
             "pursued_plan",
