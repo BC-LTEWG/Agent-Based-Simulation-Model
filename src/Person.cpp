@@ -101,6 +101,7 @@ void Person::purchase_good(ConsumerGood * consumer_good, int quantity) {
         purchased += available;
     }
     log_purchase("", purchased);
+    log_shopping_deficit(1 - static_cast<double>(purchased) / (purchased + quantity));
     log_account();
 }
 
@@ -144,7 +145,6 @@ void Person::shop() {
             consumer_good->price_per_unit;
     }
     double price_scalar = std::min(account / total_price, 1.0);
-    log_shopping_deficit(std::max(0.0, 1.0 - price_scalar)); 
     for (std::pair<ConsumerGood *, int> consumer_good : purchase_quantities) {
         int quantity = (int) (price_scalar * consumer_good.second);
         if (quantity > 0) {
