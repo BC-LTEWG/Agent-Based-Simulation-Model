@@ -331,9 +331,13 @@ void Society::log_io_matrix(Eigen::MatrixXd& A, size_t dim) {
                         Logger::SOCIETY,
                         id,
                         "A",
-                        LogPair(
+                        LogPairS(
+                            "coords",
                             std::string("(") + std::to_string(i) +"," +
-                            std::to_string(j) + ")",
+                            std::to_string(j) + ")"
+                            ),
+                        LogPair(
+                            "value",
                             A(i, j)
                             )
                         );
@@ -350,7 +354,8 @@ void Society::log_labor_vector(Eigen::VectorXd& l, size_t dim) {
                     Logger::SOCIETY,
                     id,
                     "l",
-                    LogPair(std::to_string(i), l(i))
+                    LogPair("product_id", i),
+                    LogPair("value", l(i))
                     );
         }
     }
