@@ -2,6 +2,7 @@
 #include <climits>
 #include <iostream>
 #include <numeric>
+#include <sstream>
 
 #include "Constants.h"
 #include "Distributor.h"
@@ -119,9 +120,12 @@ Producer * Firm::send_order(Order * order) {
     Order * chosen_return_order = nullptr;
 
     for (Producer * producer : suppliers) {
-        if (!producer->can_produce(order->product)) continue;
+        if (!producer->can_produce(order->product)) {
+            continue;
+        }
         Order * return_order = producer->draft_plan_and_return_order(order);
-        double return_order_rate = static_cast<double>(return_order->quantity) /
+        double return_order_rate =
+            static_cast<double>(return_order->quantity) /
             return_order->requested_turnaround_time;
         if (return_order->status != Order::ORDER_REJECTED &&
                 return_order_rate > order_rate) {
@@ -139,7 +143,7 @@ Producer * Firm::send_order(Order * order) {
         chosen_producer->pursue_order(this);
         product_to_outbound_orders[order->product].insert(chosen_return_order);
         log_reorder(order->product, chosen_return_order->quantity);
-        log_accepted_order(order->product, chosen_return_order->requested_turnaround_time);
+        log_accepted_order(order, chosen_return_order);
     }
     return chosen_producer;
 }
@@ -358,26 +362,30 @@ void Firm::log_inventory_reduction(const Product * product, const double quantit
     log_product_quantity("inventory_reduction", product, quantity);
 }
 
-void Firm::log_initial_employment(const int worker_id, const int firm_id) {
-    Logger::get_instance()->log(
+void Firm::log_initial_employment(
+        const unsigned int worker_id,
+        const unsigned int workplace_id
+        ) {
+    Logger::log(
         get_client_type(),
-        "newly employed",
-        static_cast<unsigned int>(worker_id),
-        firm_id
+        id,
+        "newly_employed",
+        LogPair("worker_id", worker_id)
     );
 }
 
 void Firm::log_employment_transfer(
-    const int worker_id,
-    const int old_employer_id,
-    const int new_employer_id
+    const unsigned int worker_id,
+    const unsigned int old_workplace_id,
+    const unsigned int new_workplace_id
 ) {
-    Logger::get_instance()->log(
+    Logger::log(
         get_client_type(),
+        id,
         "transfer",
-        worker_id,
-        old_employer_id,
-        new_employer_id
+        LogPair("worker_id", worker_id),
+        LogPair("old_workplace_id", old_workplace_id),
+        LogPair("new_workplace_id", new_workplace_id)
     );
 }
 
@@ -386,13 +394,13 @@ void Firm::log_busyness(
     double societal_busyness,
     int max_workers_for_transfer
 ) {
-    Logger::get_instance()->log(
+    Logger::log(
         get_client_type(),
-        "busyness",
         id,
-        firm_busyness,
-        societal_busyness,
-        max_workers_for_transfer
+        "busyness",
+        LogPair("firm_busyness", firm_busyness),
+        LogPair("societal_busyness", societal_busyness),
+        LogPair("max_workers_for_transfer", max_workers_for_transfer)
     );
 }
 
@@ -409,77 +417,72 @@ void Firm::log_product_quantity(
         const Product * product,
         const double quantity
         ) {
-    Logger::get_instance()->log<int>(
+    Logger::log(
             get_client_type(),
-            label,
             id,
-            "product_id",
-            product->id,
-            "amount",
-            quantity
+            label,
+            LogPair("product_id", product->id),
+            LogPair("amount", quantity)
             );
 }
 
-void Firm::log_accepted_order(const Product * product, int requested_turnaround_time) {
-    Logger::get_instance()->log(
+void Firm::log_accepted_order(
+        const Order * original_order,
+        const Order * chosen_return_order
+        ) {
+    Logger::log(
             get_client_type(),
-            "accepted_order",
             id,
-            product->product_name,
-            requested_turnaround_time
+            "accepted_order",
+            LogPair("product_id", original_order->product->id),
+            LogPair("quantity", original_order->quantity),
+            LogPair(
+                "offered_turnaround_time",
+                chosen_return_order->requested_turnaround_time
+                ),
+            LogPair("offered_quantity", chosen_return_order->quantity)
             );
 }
 
 void Firm::log_demand(const Product * product, double demand) {
-    Logger::get_instance()->log(
+    Logger::log(
             get_client_type(),
-            "current_demand",
             id,
-            product->product_name,
-            demand
+            "current_demand",
+            LogPair("product_id", product->id),
+            LogPair("demand", demand)
             );
 }
 
 void Firm::log_pending_inventory(const Product * product, double pending_inventory) {
-    Logger::get_instance()->log(
+    Logger::log(
             get_client_type(),
-            "pending_inventory",
             id,
-            product->product_name,
-            pending_inventory
-            );
-}
-
-void Firm::log_input_inventory(Firm * firm, std::string product_name, double quantity) {
-    Logger::get_instance()->log(
-            get_client_type(),
-            "input_inventory",
-            firm->get_id(),
-            product_name,
-            quantity
+            "pending_inventory",
+            LogPair("product_id", product->id),
+            LogPair("pending_inventory", pending_inventory)
             );
 }
 
 void Firm::log_transfer_request() {
-    Logger::get_instance()->log(
-        get_client_type(),
-        "transfer_request",
-        id
-    );
+    Logger::log(get_client_type(), id, "transfer_request");
 }
 
 void Firm::log_catalog() {
-    std::vector<int> product_ids;
-    product_ids.reserve(catalog.size());
-
-    for (Product* p : catalog) {
-        product_ids.push_back(p->id);
+    std::ostringstream oss;
+    bool first = true;
+    for (Product * product : catalog) {
+        if (first) {
+            oss << product->id;
+            first = false;
+        } else {
+            oss << "," << product->id;
+        }
     }
-
-    Logger::get_instance()->log(
-        get_client_type(),
-        "catalog",
-        id,
-        product_ids
-    );
+    Logger::log(get_client_type(), id, "catalog", LogPairS("product_ids", oss.str()));
+    /*
+    for (Product * product : catalog) {
+        Logger::log(get_client_type(), id, "catalog", LogPair("product_id", product->id));
+    }
+    */
 }
