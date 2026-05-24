@@ -2,6 +2,7 @@
 #include <climits>
 #include <iostream>
 #include <numeric>
+#include <sstream>
 
 #include "Constants.h"
 #include "Distributor.h"
@@ -119,9 +120,12 @@ Producer * Firm::send_order(Order * order) {
     Order * chosen_return_order = nullptr;
 
     for (Producer * producer : suppliers) {
-        if (!producer->can_produce(order->product)) continue;
+        if (!producer->can_produce(order->product)) {
+            continue;
+        }
         Order * return_order = producer->draft_plan_and_return_order(order);
-        double return_order_rate = static_cast<double>(return_order->quantity) /
+        double return_order_rate =
+            static_cast<double>(return_order->quantity) /
             return_order->requested_turnaround_time;
         if (return_order->status != Order::ORDER_REJECTED &&
                 return_order_rate > order_rate) {
@@ -139,7 +143,7 @@ Producer * Firm::send_order(Order * order) {
         chosen_producer->pursue_order(this);
         product_to_outbound_orders[order->product].insert(chosen_return_order);
         log_reorder(order->product, chosen_return_order->quantity);
-        log_accepted_order(order->product, chosen_return_order->requested_turnaround_time);
+        log_accepted_order(order, chosen_return_order);
     }
     return chosen_producer;
 }
@@ -365,9 +369,8 @@ void Firm::log_initial_employment(
     Logger::log(
         get_client_type(),
         id,
-        "newly employed",
-        LogPair("worker_id", worker_id),
-        LogPair("workplace_id", id)
+        "newly_employed",
+        LogPair("worker_id", worker_id)
     );
 }
 
@@ -381,8 +384,8 @@ void Firm::log_employment_transfer(
         id,
         "transfer",
         LogPair("worker_id", worker_id),
-        LogPair("old_worksplace_id", old_workplace_id),
-        LogPair("new_worksplace_id", new_workplace_id)
+        LogPair("old_workplace_id", old_workplace_id),
+        LogPair("new_workplace_id", new_workplace_id)
     );
 }
 
@@ -423,13 +426,21 @@ void Firm::log_product_quantity(
             );
 }
 
-void Firm::log_accepted_order(const Product * product, int requested_turnaround_time) {
+void Firm::log_accepted_order(
+        const Order * original_order,
+        const Order * chosen_return_order
+        ) {
     Logger::log(
             get_client_type(),
             id,
             "accepted_order",
-            LogPair("product_id", product->id),
-            LogPair("requested_turnaround_time", requested_turnaround_time)
+            LogPair("product_id", original_order->product->id),
+            LogPair("quantity", original_order->quantity),
+            LogPair(
+                "offered_turnaround_time",
+                chosen_return_order->requested_turnaround_time
+                ),
+            LogPair("offered_quantity", chosen_return_order->quantity)
             );
 }
 
@@ -458,7 +469,20 @@ void Firm::log_transfer_request() {
 }
 
 void Firm::log_catalog() {
+    std::ostringstream oss;
+    bool first = true;
+    for (Product * product : catalog) {
+        if (first) {
+            oss << product->id;
+            first = false;
+        } else {
+            oss << "," << product->id;
+        }
+    }
+    Logger::log(get_client_type(), id, "catalog", LogPairS("product_ids", oss.str()));
+    /*
     for (Product * product : catalog) {
         Logger::log(get_client_type(), id, "catalog", LogPair("product_id", product->id));
     }
+    */
 }

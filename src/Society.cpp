@@ -323,7 +323,6 @@ void Society::retire_person(Person *person) {
 }
 
 void Society::log_io_matrix(Eigen::MatrixXd& A, size_t dim) {
-    Logger::log(Logger::SOCIETY, id, "A", LogPair("dim", static_cast<int>(dim)));
     for (size_t i = 0; i < dim; ++i) {
         for (size_t j = 0; j < dim; ++j) {
             if (A(i, j)) {
@@ -347,14 +346,13 @@ void Society::log_io_matrix(Eigen::MatrixXd& A, size_t dim) {
 }
 
 void Society::log_labor_vector(Eigen::VectorXd& l, size_t dim) {
-    Logger::log(Logger::SOCIETY, id, "l", LogPair("dim", static_cast<int>(dim)));
     for (size_t i = 0; i < dim; ++i) {
         if (l(i)) {
             Logger::log(
                     Logger::SOCIETY,
                     id,
                     "l",
-                    LogPair("product_id", i),
+                    LogPair("prod_id", i),
                     LogPair("value", l(i))
                     );
         }

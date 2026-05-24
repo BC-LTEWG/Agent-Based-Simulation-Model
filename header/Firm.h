@@ -143,7 +143,7 @@ class Firm : public Agent {
             const Product * product,
             const double quantity
             );
-    void log_accepted_order(const Product * product, int requested_turnover_time);
+    void log_accepted_order(const Order * original_order, const Order * chosen_return_Order);
     void log_demand(const Product * Product, double demand);
     void log_pending_inventory(const Product * product, double pending_inventory);
     void log_catalog();
