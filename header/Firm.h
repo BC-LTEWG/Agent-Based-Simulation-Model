@@ -11,6 +11,7 @@
 #include "Logger.h"
 #include "Person.h"
 
+struct Ability;
 struct Machine;
 struct Order;
 struct Product;
@@ -115,7 +116,7 @@ class Firm : public Agent {
 	int predict_workers_needed(Plan * plan);
     void assign_workers(
         Plan * draft_plan,
-        std::vector<int>& required_abilities
+        std::vector<Ability *>& required_abilities
     );
 	double predict_turnaround_time(Plan * plan, std::vector<Person*>& workers); 
 	double predict_labor_hours(Order * order, std::vector<Person*>& workers);
@@ -125,10 +126,10 @@ class Firm : public Agent {
     );
     double calculate_machinery_cost_for_plan(Plan * draft_plan);
 	void assign_plan_dependent_fields(Plan * draft_plan,
-            std::vector<int>& required_abilities);
+            std::vector<Ability *>& required_abilities);
     void add_demand_signal(Product * product, double quantity);
     Plan * draft_plan_with_required_abilities(Order * order,
-            std::vector<int>& required_abilities); 
+            std::vector<Ability *>& required_abilities); 
     void apply_demand_window();
     double get_demand(Product * product);
     void move_worker_off_standby(Person * worker);

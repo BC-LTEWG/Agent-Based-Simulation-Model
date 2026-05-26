@@ -21,8 +21,10 @@
 #include "Society.h"
 
 Society * Society::get_instance() {
+    static bool initialized = false;
     static Society * instance = new Society;
-    if (!instance->initialized) {
+    if (!initialized) {
+        initialized = true;
         instance->initialize();
     }
     return instance;
@@ -34,17 +36,8 @@ Society::Society() :
 {}
 
 void Society::initialize() {
-    initialized = true;
+    set_abilities();
     set_initial_products();
-    for (Product * product : products) {
-        Logger::log(
-                Logger::SOCIETY,
-                id,
-                "price",
-                LogPair("product_id", product->id),
-                LogPair("price_per_unit", product->price_per_unit)
-                );
-    }
     for (unsigned int i = 0; i < Sim::get_num_producers(); i++) {
         Producer * producer = new Producer(this, {goods[i % Sim::get_num_products()]});
         producers.push_back(producer);
@@ -83,10 +76,17 @@ void Society::on_time_step() {
     }
 }
 
+void Society::set_abilities() {
+    for (unsigned int i = 0; i < NUM_ABILITIES; i++) {
+        abilities.push_back(new Ability());
+    }
+}
+
 void Society::set_initial_products() {
     unsigned int starting_num_products = Sim::get_num_products();
     const unsigned int starting_num_machines =
         starting_num_products / Sim::get_products_per_machine();
+    // make sure to push back each product immediately after construction
     for (unsigned int i = 0; i < starting_num_products; ++i) {
         Good * new_good = new Good();
         goods.push_back(new_good);
@@ -108,6 +108,15 @@ void Society::set_initial_products() {
     }
     set_product_prices_production_consumption();
     log_consumption_frequencies();
+    for (Product * product : products) {
+        Logger::log(
+                Logger::SOCIETY,
+                id,
+                "price",
+                LogPair("product_id", product->id),
+                LogPair("price_per_unit", product->price_per_unit)
+                );
+    }
 }
 
 void Society::populate_io_matrix_and_labor_vector(
@@ -144,6 +153,10 @@ double get_max_eigenvalue(Eigen::MatrixXd &io_matrix) {
         }
     }
     return max_eigenvalue;
+}
+
+std::vector<Ability *>& Society::get_abilities() {
+    return abilities;
 }
 
 std::vector<Producer *> &Society::get_producers() {

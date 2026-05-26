@@ -299,7 +299,7 @@ int Firm::predict_workers_needed(Plan * plan) {
 
 void Firm::assign_workers(
         Plan * draft_plan,
-        std::vector<int>& required_abilities
+        std::vector<Ability *>& required_abilities
         ) {
     std::vector<Person *> sorted_standby_workers(standby_workers.begin(),
             standby_workers.end());
@@ -379,7 +379,7 @@ double Firm::calculate_machinery_cost_for_plan(Plan * draft_plan) {
 
 void Firm::assign_plan_dependent_fields(
         Plan * draft_plan,
-        std::vector<int>& required_abilities
+        std::vector<Ability *>& required_abilities
         ) {
     draft_plan->predicted_turnaround_time =
         predict_turnaround_time(draft_plan, draft_plan->workers);
@@ -392,7 +392,7 @@ void Firm::assign_plan_dependent_fields(
 
 Plan * Firm::draft_plan_with_required_abilities(
         Order * order,
-        std::vector<int>& required_abilities
+        std::vector<Ability *>& required_abilities
         ) {
     Plan * draft_plan = new Plan{};
     draft_plan->order = order;

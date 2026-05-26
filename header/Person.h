@@ -11,6 +11,11 @@ class Distributor;
 class Firm;
 class Society;
 
+struct Ability {
+    Ability();
+    int id;
+};
+
 class Person : public Agent {
   public:
     enum HealthStatus { HEALTHY, UNHEALTHY };
@@ -19,12 +24,12 @@ class Person : public Agent {
     unsigned int get_id() override;
 	void on_time_step() override;
   
-	std::unordered_map<int, double>& get_abilities();
+	std::unordered_map<Ability *, double>& get_abilities();
     double get_busyness();
-	void train(std::unordered_map<int, double>& target_abilities);
+	void train(std::unordered_map<Ability *, double>& target_abilities);
     HealthStatus get_health_status();
     float productivity();
-    double suitability(std::vector<int>& required_abilities);
+    double suitability(std::vector<Ability *>& required_abilities);
     void register_hours_worked(double hours_worked);
     bool charge(double cost);
     void purchase_good(ConsumerGood * consumer_good, int quantity);
@@ -34,7 +39,7 @@ class Person : public Agent {
   private:
     Society * society;
     unsigned int id;
-    std::unordered_map<int, double> abilities;
+    std::unordered_map<Ability *, double> abilities;
     int age;
     HealthStatus health_status;
     std::unordered_map<ConsumerGood *, int> inventory;

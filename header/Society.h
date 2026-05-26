@@ -7,6 +7,7 @@
 #include "Agent.h"
 #include "Constants.h"
 
+struct Ability;
 struct ConsumerGood;
 struct Good;
 struct Machine;
@@ -22,6 +23,7 @@ class Society : public Agent {
         unsigned int get_id() override;
         void on_time_step() override;
 
+        std::vector<Ability *>& get_abilities();
         std::vector<Good *>& get_goods();
         std::vector<ConsumerGood *>& get_consumer_goods();
         std::vector<Machine *>& get_machines();
@@ -43,11 +45,11 @@ class Society : public Agent {
 
     private:
         Society();
-        bool initialized = false;
         void initialize();
 
         unsigned int id = 0;
         Person * birth_person();
+        void set_abilities();
         void set_initial_products();
         void add_consumer_goods();
         void set_product_prices_production_consumption();
@@ -74,6 +76,7 @@ class Society : public Agent {
         std::vector<Distributor *> distributors;
         std::unordered_map<Product *, std::vector<Distributor *>>
             product_to_distributors;
+        std::vector<Ability *> abilities;
         unsigned int current_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
 		unsigned int current_work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
         std::unordered_set<Person *> unemployed_people;

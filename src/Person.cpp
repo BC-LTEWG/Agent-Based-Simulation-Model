@@ -14,6 +14,11 @@
 #include "Sim.h"
 #include "Society.h"
 
+Ability::Ability() {
+    static unsigned int unique_id = 0;
+    id = unique_id++;
+}
+
 Person::Person(Society * society):
     society{society},
     age(INITIAL_AGE),
@@ -24,8 +29,8 @@ Person::Person(Society * society):
 
     std::lognormal_distribution<>
         ability_dist(0.0, Sim::get_person_ability_stddev());
-    for (int i = 0; i < NUM_ABILITIES; i++) {
-        abilities[i] = ability_dist(Sim::get_random_generator());
+    for (Ability * ability : society->get_abilities()) {
+        abilities[ability] = ability_dist(Sim::get_random_generator());
     }
     log_abilities();
     ranked_distributors = society->get_distributors();
@@ -47,7 +52,7 @@ unsigned int Person::get_id() {
     return id;
 }
 
-std::unordered_map<int, double>& Person::get_abilities() {
+std::unordered_map<Ability *, double>& Person::get_abilities() {
     return this->abilities;
 }
 
@@ -55,7 +60,7 @@ double Person::get_busyness() {
     return busyness;
 }
 
-void Person::train(std::unordered_map<int, double>& target_abilities) {
+void Person::train(std::unordered_map<Ability *, double>& target_abilities) {
     // can introduce < 100% effectiveness on training later
     for (auto &pair : target_abilities) {
         abilities[pair.first] = pair.second;
@@ -214,10 +219,11 @@ Firm * Person::get_firm() {
     return firm;
 }
 
-double Person::suitability(std::vector<int>& required_abilities) {
+double Person::suitability(std::vector<Ability *>& required_abilities) {
     double suitability = 0.0;
-    for (int ability : required_abilities) {
+    for (Ability * ability : required_abilities) {
         suitability += abilities[ability];
+
     }
     suitability /= required_abilities.size();
     suitability *= productivity();
@@ -258,12 +264,12 @@ void Person::log_placement() {
 }
 
 void Person::log_abilities() {
-    for (std::pair<int, double> ability : abilities) {
+    for (std::pair<Ability *, double> ability : abilities) {
         Logger::log(
                 Logger::PERSON,
                 id,
                 "ability",
-                LogPair("ability", ability.first),
+                LogPair("ability", ability.first->id),
                 LogPair("value", ability.second)
                 );
     }

@@ -22,6 +22,6 @@ struct Product {
     std::vector<Machine *> machines_needed;
     std::unordered_map<Good *, double> inputs_per_unit;
     double living_labor_per_unit;
-	std::vector<int> required_abilities;
+	std::vector<Ability *> required_abilities;
 };
 

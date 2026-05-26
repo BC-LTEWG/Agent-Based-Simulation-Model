@@ -23,8 +23,8 @@ Product::Product() {
     living_labor_per_unit = living_labor_dist(Sim::get_random_generator());
     Society::get_instance()->
         set_underlying_living_labor_per_unit(this, living_labor_per_unit);
-    for (int i = 0; i < NUM_ABILITIES; i++) {
-        required_abilities.push_back(i);
+    for (Ability * ability : Society::get_instance()->get_abilities()) {
+        required_abilities.push_back(ability);
     }
     std::shuffle(required_abilities.begin(), required_abilities.end(), Sim::get_random_generator());
     static std::uniform_int_distribution<>
