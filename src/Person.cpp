@@ -58,7 +58,7 @@ double Person::get_busyness() {
 
 void Person::train(std::unordered_map<Person::Ability, double> target_abilities) {
     // can introduce < 100% effectiveness on training later
-    for (auto &pair : target_abilities) {
+    for (std::pair<const Person::Ability, double>& pair : target_abilities) {
         abilities[pair.first] = pair.second;
     }
     log_abilities();

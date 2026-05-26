@@ -72,6 +72,7 @@ void Firm::receive_payment(Plan * plan, double transaction_amount) {
     plan->prd += transaction_amount;
 }
 
+/*
 bool Firm::remove_input_from_inventory(Product * product, double quantity) {
     if (input_inventory[product] < quantity) {
         return false;
@@ -79,6 +80,17 @@ bool Firm::remove_input_from_inventory(Product * product, double quantity) {
     input_inventory[product] -= quantity;
     log_inventory_reduction(product, quantity);
     log_inventory_level(product, input_inventory[product]);
+    return true;
+}
+*/
+bool Firm::remove_input_from_inventory(Product * product, double quantity) {
+    auto iterate = input_inventory.find(product);
+    if (iterate == input_inventory.end() || iterate->second < quantity) {
+        return false;
+    }
+    iterate->second -= quantity;
+    log_inventory_reduction(product, quantity);
+    log_inventory_level(product, iterate->second);
     return true;
 }
 
@@ -93,13 +105,25 @@ double Firm::get_busyness() {
 std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
     double firm_busyness = get_busyness();
     double societal_busyness = society->get_busyness();
+    
+    double gap = societal_busyness - TRANSFER_BUSYNESS_THRESHOLD;
+    double safe_gap = safe_handle_zero(gap, "propose_transfer gap", 0.0);
+
+    if (safe_gap == 0 || firm_busyness >= gap) {
+        log_busyness(firm_busyness, societal_busyness, 0);
+        return {};
+    }
+
     int max_workers_to_transfer = (int) (workers.size() * (1.0 - firm_busyness / 
             (societal_busyness - TRANSFER_BUSYNESS_THRESHOLD))); 
     max_workers_to_transfer = std::max(max_workers_to_transfer, workers_wanted);
     log_busyness(firm_busyness, societal_busyness, max_workers_to_transfer);
+    /*
     if (firm_busyness >= societal_busyness - TRANSFER_BUSYNESS_THRESHOLD) {
         return {};
     }
+        supposedely redundant here (TEST REMOVE)
+    */ 
     std::vector<Person *> transfers;
     for (Person * worker : standby_workers) {
         if (static_cast<int>(transfers.size()) == max_workers_to_transfer) break;
@@ -148,6 +172,7 @@ double Firm::get_reorder_threshold(Product * product) {
     return get_demand(product) * FIRM_STOCKPILE_DURATION;
 }
 
+/*
 double Firm::get_pending_inventory_level(Product * product) {
     double pending_inventory = input_inventory[product];
     for (Order * order : product_to_outbound_orders[product]) {
@@ -155,6 +180,23 @@ double Firm::get_pending_inventory_level(Product * product) {
     }
     return pending_inventory;
 }
+*/
+double Firm::get_pending_inventory_level(Product * product) {
+    double pending_inventory = 0.0;
+    auto inv_it = input_inventory.find(product);
+    if (inv_it != input_inventory.end()) {
+        pending_inventory = inv_it->second;
+    }
+    
+    auto order_it = product_to_outbound_orders.find(product);
+    if (order_it != product_to_outbound_orders.end()) {
+        for (Order * order : order_it->second) {
+            pending_inventory += order->quantity;
+        }
+    }
+    return pending_inventory;
+}
+
 
 void Firm::check_and_reorder_inputs() {
     for (std::pair<Product *, double> stockpile : input_inventory) {
@@ -225,6 +267,10 @@ void Firm::assign_workers(
 }
 
 double Firm::predict_turnaround_time(Plan * plan, std::vector<Person *>& workers) {
+
+    double count = safe_handle_zero(static_cast<double>(workers.size()), "predict_turnaround_time workers", 0.0);
+    if (count == 0) return 0.0;
+
     return plan->order->quantity *
            recorded_living_labor_per_unit[plan->order->product] *
            WEEK /
@@ -234,6 +280,10 @@ double Firm::predict_turnaround_time(Plan * plan, std::vector<Person *>& workers
 }
 
 double Firm::predict_labor_hours(Order * order, std::vector<Person *>& workers) {
+
+    double count = safe_handle_zero(static_cast<double>(workers.size()), "predict_labor_hours workers", 0.0);
+    if (count == 0) return 0.0;
+
     return order->quantity *
            recorded_living_labor_per_unit[order->product] / 
            workers.size();
@@ -266,6 +316,10 @@ double Firm::calculate_machinery_cost_for_plan(Plan * draft_plan) {
     for (Machine * machine : machines) {
         machinery_cost_per_hour += machine->price_per_unit / machine->lifetime;
     }
+
+    double count = safe_handle_zero(static_cast<double>(draft_plan->workers.size()), "machinery_cost workers", 0.0);
+    if (count == 0) return 0.0;
+
     return machinery_cost_per_hour *
         (static_cast<double>(draft_plan->labor_hours) / draft_plan->workers.size());
 }
@@ -321,6 +375,7 @@ void Firm::apply_demand_window() {
     }
 }
 
+/*
 double Firm::get_demand(Product * product) {
     int window_start = Sim::get_current_time_step();
     if (!demand_signals[product].empty()) {
@@ -329,6 +384,31 @@ double Firm::get_demand(Product * product) {
     int window_length = std::max(FIRM_DEMAND_WINDOW_MIN, 
         Sim::get_current_time_step() - window_start);
     return total_demands[product] / window_length;
+}
+*/
+double Firm::get_demand(Product * product) {
+    int window_start = Sim::get_current_time_step();
+    
+    // check demand without new key
+    auto sig_it = demand_signals.find(product);
+    if (sig_it != demand_signals.end() && !sig_it->second.empty()) {
+        window_start = sig_it->second.front().timestep;
+    }
+    
+    int window_length = std::max(FIRM_DEMAND_WINDOW_MIN, 
+        Sim::get_current_time_step() - window_start);
+    
+    // Protect against window_length being 0
+    double safe_window = safe_handle_zero(static_cast<double>(window_length), "get_demand window", 1.0);
+    
+    // check total demands without new key
+    double total_d = 0.0;
+    auto dem_it = total_demands.find(product);
+    if (dem_it != total_demands.end()) {
+        total_d = dem_it->second;
+    }
+
+    return total_d / safe_window;
 }
 
 void Firm::move_worker_off_standby(Person * worker) {
@@ -482,4 +562,13 @@ void Firm::log_catalog() {
         id,
         product_ids
     );
+}
+
+double Firm::safe_handle_zero(double value, const std::string& context, double fallback) {
+    if (value <= 0) {
+        std::cerr << "Firm " << id << " | " << context 
+                  << " ran 0 or negative. Using safeguard: " << fallback << "\n";
+        return fallback;
+    }
+    return value;
 }

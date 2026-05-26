@@ -34,6 +34,16 @@ void PriceController::update_price(Plan * plan) {
         hours += plan->raw_materials - plan->raw_materials_remaining;
         workers += plan->workers.size();
     }
+    if(units <= 0) {
+        std::cerr << "PriceController units ran 0 or negative for product: " 
+                  << product->product_name << ". Using safeguard: 1\n";
+        units = 1;
+    }
+    if(workers <= 0) {
+        std::cerr << "PriceController workers ran 0 or negative for product: " 
+                  << product->product_name << ". Using safeguard: 1\n";
+        workers = 1;
+    }
     double price = product->societal_living_labor_per_unit = hours / units;
     double machine_use_hours = hours / workers;
     double machine_hours_per_unit = machine_use_hours / units;

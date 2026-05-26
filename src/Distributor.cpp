@@ -78,11 +78,20 @@ int Distributor::try_sell_goods(Product& product, int quantity, Person * person)
             << cost << std::endl;
         return 0;
     } 
+    /*
     Plan * plan = product_to_plan[&product];
     if (plan) {
         plan->outgoing_units_consumed += quantity;
         plan->prd += cost;
     }
+    */
+    auto iterate = product_to_plan.find(&product);
+    if (iterate != product_to_plan.end() && iterate->second != nullptr) {
+        Plan * plan = iterate->second;
+        plan->outgoing_units_consumed += quantity;
+        plan->prd += cost;
+    }
+
     remove_input_from_inventory(&product, quantity);
     return available;
 }

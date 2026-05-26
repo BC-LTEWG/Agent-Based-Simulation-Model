@@ -147,4 +147,5 @@ class Firm : public Agent {
     void log_pending_inventory(const Product * product, double pending_inventory);
     // void log_pending_inventory(std::string product_name, double pending_inventory);
     void log_catalog();
+    double safe_handle_zero(double value, const std::string& context, double fallback);
 };
