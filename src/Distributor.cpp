@@ -69,7 +69,7 @@ int Distributor::try_sell_goods(Product& product, int quantity, Person * person)
     if (!catalog.count(&product)) return 0;
     int available = std::min(static_cast<int>(get_inventory_level(&product)), quantity);
     if (available < quantity) {
-        log_shortfall(product.product_name, quantity - available);
+        log_shortfall(product.id, quantity - available);
     }
     double cost = available * consumer_good->price_per_unit;
     if (!person->charge(cost)) {
@@ -78,20 +78,11 @@ int Distributor::try_sell_goods(Product& product, int quantity, Person * person)
             << cost << std::endl;
         return 0;
     } 
-    /*
     Plan * plan = product_to_plan[&product];
     if (plan) {
         plan->outgoing_units_consumed += quantity;
         plan->prd += cost;
     }
-    */
-    auto iterate = product_to_plan.find(&product);
-    if (iterate != product_to_plan.end() && iterate->second != nullptr) {
-        Plan * plan = iterate->second;
-        plan->outgoing_units_consumed += quantity;
-        plan->prd += cost;
-    }
-
     remove_input_from_inventory(&product, quantity);
     return available;
 }
@@ -100,13 +91,13 @@ std::unordered_set<Product *> Distributor::get_products_to_reorder() {
     return catalog;
 }
 
-void Distributor::log_shortfall(std::string product_name, int shortfall) {
-    Logger::get_instance()->log(
+void Distributor::log_shortfall(unsigned int product_id, int shortfall) {
+    Logger::log(
             Logger::DISTRIBUTOR,
-            "shortfall",
             id,
-            product_name,
-            shortfall
+            "product_shortfall",
+            LogPair("product_id", product_id),
+            LogPair("shortfall", shortfall)
             );
 }
 
