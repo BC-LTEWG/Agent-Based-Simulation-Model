@@ -74,4 +74,3 @@ void Product::set_machines() {
         machines_needed.push_back(machines[index]);
     }
  }
-

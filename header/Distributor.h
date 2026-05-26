@@ -25,5 +25,5 @@ class Distributor : public Firm {
     
   private:
     std::unordered_map<Product *, Plan *> product_to_plan;
-    void log_shortfall(std::string product_name, int shortfall);
+    void log_shortfall(unsigned int product_id, int shortfall);
 };

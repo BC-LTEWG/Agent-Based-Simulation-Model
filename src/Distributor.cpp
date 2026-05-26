@@ -45,7 +45,7 @@ int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Pers
     int available = std::min(static_cast<int>(
                 get_inventory_level(consumer_good->corresponding_good)), quantity);
     if (available < quantity) {
-         log_shortfall("", quantity - available);
+        log_shortfall(consumer_good->id, quantity - available);
     }
     double cost = available * consumer_good->price_per_unit;
     if (!person->charge(cost)) {
@@ -55,13 +55,13 @@ int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Pers
     return available;
 }
 
-void Distributor::log_shortfall(std::string product_name, int shortfall) {
-    Logger::get_instance()->log(
+void Distributor::log_shortfall(unsigned int product_id, int shortfall) {
+    Logger::log(
             Logger::DISTRIBUTOR,
-            "shortfall",
             id,
-            product_name,
-            shortfall
+            "product_shortfall",
+            LogPair("product_id", product_id),
+            LogPair("shortfall", shortfall)
             );
 }
 

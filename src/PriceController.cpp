@@ -43,6 +43,12 @@ void PriceController::update_price(Plan * plan) {
         price += machine_cost_per_hour * machine_hours_per_unit;
     }
     product->price_per_unit = price;
-    Logger::get_instance()->log(Logger::SOCIETY, "price", product->id, price);
+    Logger::log(
+            Logger::SOCIETY,
+            0,
+            "new_price",
+            LogPair("product_id", product->id),
+            LogPair("price", price)
+            );
 }
 

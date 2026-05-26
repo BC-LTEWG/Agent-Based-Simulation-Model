@@ -117,21 +117,22 @@ void Producer::pursue_order(Firm * customer) {
 }
 
 void Producer::log_draft_plan(const Plan * draft_plan) {
-    Logger::get_instance()->log(
+    Order * order = draft_plan->order;
+    Logger::log(
             Logger::PRODUCER,
-            "draft_plan",
             id,
-            draft_plan->order->product->product_name,
-            draft_plan->order->quantity
+            "draft_plan",
+            LogPair("product_id", order->product->id),
+            LogPair("quantity", order->quantity)
             );
 }
 
 void Producer::log_dropped_order(const Order * order) {
-    Logger::get_instance()->log(
+    Logger::log(
             Logger::PRODUCER,
-            "dropped_order",
             id,
-            order->product->product_name,
-            order->quantity
+            "dropped_order",
+            LogPair("product_id", order->product->id),
+            LogPair("quantity", order->quantity)
             );
 }

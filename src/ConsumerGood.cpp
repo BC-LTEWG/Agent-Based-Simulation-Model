@@ -30,5 +30,10 @@ void ConsumerGood::set_machines() {
 }
 
 void ConsumerGood::log_mean_consumption_frequency() {
-    Logger::get_instance()->log(Logger::PRODUCT, "mean_consumption_frequency", id, mean_consumption_frequency);
+    Logger::log(
+            Logger::PRODUCT,
+            id,
+            "mean_consumption_frequency",
+            LogPair("value", mean_consumption_frequency)
+            );
 }

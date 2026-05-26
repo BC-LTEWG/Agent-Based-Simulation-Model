@@ -64,7 +64,7 @@ void Person::train(std::unordered_map<int, double>& target_abilities) {
 }
 
 void Person::register_hours_worked(double hours_worked) {
-    log_hours(hours_worked);
+    log_hours_worked(hours_worked);
     account += hours_worked;
     busyness_this_time_step += hours_worked;
 }
@@ -100,7 +100,7 @@ void Person::purchase_good(ConsumerGood * consumer_good, int quantity) {
         inventory[consumer_good] += available;
         purchased += available;
     }
-    log_purchase("", purchased);
+    log_purchase(consumer_good, purchased);
     log_shopping_deficit(1 - static_cast<double>(purchased) / (purchased + quantity));
     log_account();
 }
@@ -226,65 +226,80 @@ double Person::suitability(std::vector<int>& required_abilities) {
 
 const char * Person::health_status_names[] = { "Healthy", "Unhealthy" };
 
-void Person::log_hours(const double hours) {
-    Logger::get_instance()->log(Logger::PERSON, "hours", id, hours);
+void Person::log_hours_worked(const double hours) {
+    Logger::log(Logger::PERSON, id, "hours_worked", LogPair("hours", hours));
 }
 
-void Person::log_purchase(const std::string& product_name, const int quantity) {
-    Logger::get_instance()->log(Logger::PERSON, "purchase", id, product_name, quantity);
+void Person::log_purchase(const Product * product, const int quantity) {
+    Logger::log(
+            Logger::PERSON,
+            id,
+            "purchase",
+            LogPair("product_id", product->id),
+            LogPair("quantity", quantity)
+            );
 }
 
 void Person::log_shopping_deficit(const double deficit) {
-    Logger::get_instance()->log(Logger::PERSON, "shopping_deficit", id, deficit);
+    Logger::log(Logger::PERSON, id, "shopping_deficit", LogPair("deficit", deficit));
 }
 
 void Person::log_shopping() {
-    Logger::get_instance()->log(Logger::PERSON, "is_shopping", id, account);
+    Logger::log(Logger::PERSON, id, "is_shopping", LogPair("account", account));
 }
 
 void Person::log_placement() {
-    Logger::get_instance()->log(Logger::PERSON, "firm", id, firm ? static_cast<int>(firm->get_id()) : -1);
+    Logger::log(
+            Logger::PERSON,
+            id,
+            "placement",
+            LogPair("firm", firm ? firm->get_id() : -1)
+            );
 }
 
 void Person::log_abilities() {
     for (std::pair<int, double> ability : abilities) {
-        Logger::get_instance()->log<double>(
-                Logger::PERSON,"ability",
+        Logger::log(
+                Logger::PERSON,
                 id,
                 "ability",
-                ability.first,
-                "value",
-                ability.second
+                LogPair("ability", ability.first),
+                LogPair("value", ability.second)
                 );
     }
 }
 
 void Person::log_inventory() {
     for (std::pair<Product *, int> entry : inventory) {
-        Logger::get_instance()->log<int>(
+        Logger::log(
                 Logger::PERSON,
-                "inventory",
                 id,
-                "product_id",
-                entry.first->id,
-                "amount",
-                entry.second
+                "inventory",
+                LogPair("product_id", entry.first->id),
+                LogPair("amount", entry.second)
                 );
     }
 }
 
 void Person::log_account() {
-    Logger::get_instance()->log(Logger::PERSON, "account", id, account);
+    Logger::log(Logger::PERSON, id, "account", LogPair("value", account));
 }
 
 void Person::log_health_status() {
-    Logger::get_instance()->log(Logger::PERSON,
-            "health_status",
+    Logger::log(
+            Logger::PERSON,
             id,
-            std::string("\"") + health_status_names[health_status] + "\""
+            "health_status",
+            LogPairS("status", health_status_names[health_status])
             );
 }
 
 void Person::log_consumption(const Product * product, const int quantity) {
-    Logger::get_instance()->log(Logger::PERSON, "consumption", id, product->product_name, quantity);
+    Logger::log(
+            Logger::PERSON,
+            id,
+            "consumption",
+            LogPair("product_id", product->id),
+            LogPair("quantity", quantity)
+            );
 }
