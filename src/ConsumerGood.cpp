@@ -17,7 +17,7 @@ ConsumerGood::ConsumerGood(Good * good) :
     mean_consumption_frequency = consumption_freq_dist(Sim::get_random_generator());
     corresponding_good = good;
     inputs_per_unit[corresponding_good] = 1.0;
-    good->set_corresponding_consumer_good(this);
+    good->corresponding_consumer_good = this;
 }
 
 void ConsumerGood::set_inputs() {

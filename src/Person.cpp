@@ -41,7 +41,7 @@ Person::Person(Society * society):
             );
     for (ConsumerGood * consumer_good : society->get_consumer_goods()) {
         inventory[consumer_good] = 
-            (int) (PERSON_STOCKPILE_DURATION * consumer_good->mean_consumption_frequency);
+            static_cast<int>(PERSON_STOCKPILE_DURATION * consumer_good->mean_consumption_frequency);
     }
     log_inventory();
     account = society->get_initial_account();
@@ -53,7 +53,7 @@ unsigned int Person::get_id() {
 }
 
 std::unordered_map<Ability *, double>& Person::get_abilities() {
-    return this->abilities;
+    return abilities;
 }
 
 double Person::get_busyness() {
@@ -62,8 +62,8 @@ double Person::get_busyness() {
 
 void Person::train(std::unordered_map<Ability *, double>& target_abilities) {
     // can introduce < 100% effectiveness on training later
-    for (auto &pair : target_abilities) {
-        abilities[pair.first] = pair.second;
+    for (std::pair<Ability * const, double> ability : target_abilities) {
+        abilities[ability.first] = ability.second;
     }
     log_abilities();
 }
@@ -123,7 +123,9 @@ void Person::consume() {
 }
 
 bool Person::will_shop() {
-    if (busyness_this_time_step) return false;
+    if (busyness_this_time_step) {
+        return false;
+    }
     double total_deficit = 0.0;
     for (ConsumerGood * consumer_good : society->get_consumer_goods()) {
         total_deficit += std::max(0.0, 
@@ -203,10 +205,14 @@ void Person::update_busyness() {
 void Person::on_time_step() {
 	++age;
     consume();
-	if (will_retire()) { retire(); }
+	if (will_retire()) {
+        retire();
+    }
 	update_health_status();
 
-	if (will_shop()) { shop(); }
+	if (will_shop()) {
+        shop();
+    }
     update_busyness();
 }
 

@@ -208,6 +208,24 @@ Eigen::MatrixXd get_leontief_inverse(
     return leontief_matrix.inverse();
 }
 
+static void normalize_consumption_frequencies(
+        std::vector<ConsumerGood *>& consumer_goods
+        ) {
+    double value_consumed_per_hour = 0.0;
+    for (ConsumerGood * consumer_good : consumer_goods) {
+        value_consumed_per_hour += consumer_good->price_per_unit *
+            consumer_good->mean_consumption_frequency;
+    }
+    const unsigned int worked_proportion_of_week =
+        Sim::get_work_hours_daily() * Sim::get_work_days_weekly() / WEEK;
+    double consumption_scalar = PRODUCT_CONSUMPTION_MULT
+        * worked_proportion_of_week
+        / value_consumed_per_hour;
+    for (ConsumerGood * consumer_good : consumer_goods) {
+        consumer_good->mean_consumption_frequency *= consumption_scalar;
+    }
+}
+
 void Society::set_product_prices_production_consumption() {
     const size_t dim = products.size();
     Eigen::MatrixXd A(dim, dim);
@@ -229,20 +247,7 @@ void Society::set_product_prices_production_consumption() {
         }
         products[i]->price_per_unit = values(i);
     }
-    double consumption_scalar = 0.0;
-    for (ConsumerGood * consumer_good : consumer_goods) {
-        consumption_scalar += consumer_good->price_per_unit *
-            consumer_good->mean_consumption_frequency;
-    }
-    const unsigned int initial_work_week =
-        Sim::get_work_hours_daily() * Sim::get_work_days_weekly();
-    consumption_scalar = PRODUCT_CONSUMPTION_MULT
-        * initial_work_week
-        / WEEK
-        / consumption_scalar;
-    for (ConsumerGood * consumer_good : consumer_goods) {
-        consumer_good->mean_consumption_frequency *= consumption_scalar;
-    }
+    normalize_consumption_frequencies(consumer_goods);
     Eigen::VectorXd demands(dim);
     for (ConsumerGood * consumer_good : consumer_goods) {
         demands[consumer_good->id] = consumer_good->mean_consumption_frequency;
@@ -252,6 +257,7 @@ void Society::set_product_prices_production_consumption() {
         initial_production[products[i]] = production(i);
     }
 }
+
 
 std::vector<Product *>& Society::get_products() {
     return products;

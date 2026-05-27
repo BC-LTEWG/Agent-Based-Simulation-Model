@@ -56,7 +56,9 @@ void Product::set_inputs() {
 
 void Product::set_machines() {
     std::vector<Machine *> machines = Society::get_instance()->get_machines();
-    if (!machines.size()) return;
+    if (!machines.size()) {
+        return;
+    }
     const unsigned int global_num_machines =
         Sim::get_num_products() / Sim::get_products_per_machine();
     const int num_machines_max =
