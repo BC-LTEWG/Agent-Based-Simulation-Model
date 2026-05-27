@@ -77,7 +77,10 @@ int Distributor::try_sell_goods(Product& product, int quantity, Person * person)
             << " units of " << product.product_name << " costing " 
             << cost << std::endl;
         return 0;
-    } 
+    }
+    if (!product_to_plan.count(&product)) {
+        throw std::invalid_argument("Product does not exist.");
+    }
     Plan * plan = product_to_plan[&product];
     if (plan) {
         plan->outgoing_units_consumed += quantity;
