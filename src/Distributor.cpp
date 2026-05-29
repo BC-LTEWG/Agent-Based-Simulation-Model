@@ -29,6 +29,7 @@ Distributor::Distributor(
             Sim::get_num_people() / Sim::get_num_distributors();
         log_inventory_level(good, input_inventory[good]);
     }
+    log_catalog();
 }
 
 Logger::Client Distributor::get_client_type() {
@@ -40,11 +41,11 @@ void Distributor::on_time_step() {
 }
 
 int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person) {
-    add_demand_signal(consumer_good->corresponding_good, quantity);
-    check_and_reorder_input(consumer_good->corresponding_good);
     if (!catalog.count(consumer_good)) {
         return 0;
     }
+    add_demand_signal(consumer_good->corresponding_good, quantity);
+    check_and_reorder_input(consumer_good->corresponding_good);
     int available = std::min(static_cast<int>(
                 get_inventory_level(consumer_good->corresponding_good)), quantity);
     if (available < quantity) {

@@ -43,7 +43,6 @@ Firm::Firm(
     for (Product * product : society->get_products()) {
         recorded_living_labor_per_unit[product] = product->living_labor_per_unit;
     }
-    log_catalog();
 }
 
 unsigned int Firm::get_id() {
@@ -136,11 +135,13 @@ Producer * Firm::send_order(Order * order) {
             continue;
         }
         Order * return_order = producer->draft_plan_and_return_order(order);
+        if (return_order->status == Order::ORDER_REJECTED) {
+            continue;
+        }
         double return_order_rate =
             static_cast<double>(return_order->quantity) /
             return_order->requested_turnaround_time;
-        if (return_order->status != Order::ORDER_REJECTED &&
-                return_order_rate > order_rate) {
+        if (return_order_rate > order_rate) {
             if (chosen_producer) {
                 chosen_producer->drop_order(this);
             }
@@ -403,6 +404,9 @@ Plan * Firm::draft_plan_with_required_abilities(
         draft_plan,
         required_abilities
     );
+    if (draft_plan->workers.size() == 0) {
+        return nullptr;
+    }
     assign_plan_dependent_fields(
         draft_plan,
         required_abilities

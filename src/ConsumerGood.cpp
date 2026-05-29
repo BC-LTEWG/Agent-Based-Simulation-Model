@@ -16,7 +16,6 @@ ConsumerGood::ConsumerGood(Good * good) :
         consumption_freq_dist(0.0, 1.0);
     mean_consumption_frequency = consumption_freq_dist(Sim::get_random_generator());
     corresponding_good = good;
-    inputs_per_unit[corresponding_good] = 1.0;
     good->corresponding_consumer_good = this;
 }
 
@@ -26,13 +25,4 @@ void ConsumerGood::set_inputs() {
 
 void ConsumerGood::set_machines() {
     machines_needed = {};
-}
-
-void ConsumerGood::log_mean_consumption_frequency() {
-    Logger::log(
-            Logger::PRODUCT,
-            id,
-            "mean_consumption_frequency",
-            LogPair("value", mean_consumption_frequency)
-            );
 }

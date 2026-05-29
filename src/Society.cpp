@@ -216,8 +216,8 @@ static void normalize_consumption_frequencies(
         value_consumed_per_hour += consumer_good->price_per_unit *
             consumer_good->mean_consumption_frequency;
     }
-    const unsigned int worked_proportion_of_week =
-        Sim::get_work_hours_daily() * Sim::get_work_days_weekly() / WEEK;
+    double worked_proportion_of_week =
+        static_cast<double>(Sim::get_work_hours_daily()) * Sim::get_work_days_weekly() / WEEK;
     double consumption_scalar = PRODUCT_CONSUMPTION_MULT
         * worked_proportion_of_week
         / value_consumed_per_hour;
@@ -358,15 +358,13 @@ void Society::log_io_matrix(Eigen::MatrixXd& A, size_t dim) {
 
 void Society::log_labor_vector(Eigen::VectorXd& l, size_t dim) {
     for (size_t i = 0; i < dim; ++i) {
-        if (l(i)) {
-            Logger::log(
-                    Logger::SOCIETY,
-                    id,
-                    "l",
-                    LogPair("prod_id", i),
-                    LogPair("value", l(i))
-                    );
-        }
+        Logger::log(
+                Logger::SOCIETY,
+                id,
+                "l",
+                LogPair("prod_id", i),
+                LogPair("value", l(i))
+                );
     }
 }
 

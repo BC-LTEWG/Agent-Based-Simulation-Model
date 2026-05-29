@@ -39,6 +39,7 @@ Producer::Producer(
     for (std::pair<Product * const, double>& stockpile : input_inventory) {
         log_inventory_level(stockpile.first, stockpile.second);
     }
+    log_catalog();
 }
 
 Logger::Client Producer::get_client_type() {
@@ -81,8 +82,9 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
             );
 	Plan * draft_plan = draft_plan_with_required_abilities(return_order,
             order->product->required_abilities);
-    if (draft_plan->workers.empty()) {
+    if (!draft_plan) {
         return_order->status = Order::ORDER_REJECTED;
+        return return_order;
     }
     return_order->requested_turnaround_time = draft_plan->predicted_turnaround_time;
 	customer_to_draft_plan[order->customer] = draft_plan;
