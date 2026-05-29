@@ -15,6 +15,7 @@ void print_usage() {
     std::cout << "\t-m N: Set the initial number of products per machine to N." << std::endl;
     std::cout << "\t-r N: Set the initial number of producers to N." << std::endl;
     std::cout << "\t-d N: Set the initial number of distributors to N." << std::endl;
+    std::cout << "\t-a N: Set the number of abilities to N." << std::endl;
     std::cout << "\t-e N: Set the random seed to N." << std::endl;
     std::cout << "\t-s N: Set the annual chance of an agent getting sick." << std::endl;
     std::cout << "\t-j: Write JSON log traces to stdout." << std::endl;
@@ -29,6 +30,8 @@ enum class argType {
     ProductsPerMachine,
     Producers,
     Distributors,
+    Abilities,
+    AbilityStdDev,
     Seed
 };
 
@@ -44,6 +47,8 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
         {"-m", argType::ProductsPerMachine}, {"--products-per-machine", argType::ProductsPerMachine},
         {"-r", argType::Producers}, {"--producers", argType::Producers},
         {"-d", argType::Distributors}, {"--distributors", argType::Distributors},
+        {"-a", argType::Abilities}, {"--abilities", argType::Abilities},
+        {"-v", argType::AbilityStdDev}, {"--ability-stddev", argType::AbilityStdDev},
         {"-e", argType::Seed}, {"--seed", argType::Seed},
     };
 
@@ -102,6 +107,14 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                     }
                     case argType::Distributors: {
                         args.num_distributors = value;
+                        break;
+                    }
+                    case argType::Abilities: {
+                        args.num_abilities = value;
+                        break;
+                    }
+                    case argType::AbilityStdDev: {
+                        args.ability_stddev = value;
                         break;
                     }
                     case argType::Seed: {

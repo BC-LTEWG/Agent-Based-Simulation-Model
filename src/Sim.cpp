@@ -45,6 +45,10 @@ unsigned int Sim::get_num_distributors() {
     return get_instance().args.num_distributors;
 }
 
+unsigned int Sim::get_num_abilities() {
+    return get_instance().args.num_abilities;
+}
+
 double Sim::get_annual_sickness_chance() {
     return get_instance().args.sickness_chance;
 }
