@@ -19,6 +19,7 @@ PLOT_FLAGS = -std=c++17 -I${MATPLOT_INCLUDE} -L${MATPLOT_LIB} -Wl,-rpath,${MATPL
 ${APP} : ${BUILD_DIR}/Product.o \
 	${BUILD_DIR}/Machine.o \
 	${BUILD_DIR}/ConsumerGood.o \
+	${BUILD_DIR}/Good.o \
 	${BUILD_DIR}/Person.o \
 	${BUILD_DIR}/Firm.o \
 	${BUILD_DIR}/Producer.o \
@@ -38,6 +39,9 @@ ${BUILD_DIR}/Machine.o : ${SRC_DIR}/Machine.cpp ${HDR_DIR}/Machine.h ${HDR_DIR}/
 	g++ ${FLAGS} -c $< -o $@
 
 ${BUILD_DIR}/ConsumerGood.o : ${SRC_DIR}/ConsumerGood.cpp ${HDR_DIR}/ConsumerGood.h ${HDR_DIR}/Constants.h
+	g++ ${FLAGS} -c $< -o $@
+
+${BUILD_DIR}/Good.o : ${SRC_DIR}/Good.cpp ${HDR_DIR}/Good.h ${HDR_DIR}/Constants.h
 	g++ ${FLAGS} -c $< -o $@
 
 ${BUILD_DIR}/Person.o : ${SRC_DIR}/Person.cpp ${HDR_DIR}/Person.h ${HDR_DIR}/Constants.h

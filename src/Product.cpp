@@ -4,6 +4,7 @@
 #include <set>
 
 #include "Constants.h"
+#include "Good.h"
 #include "Logger.h"
 #include "Machine.h"
 #include "Product.h"
@@ -11,39 +12,29 @@
 
 struct Machine;
 
-Product::Product(const std::string& name) :
-    product_type{TYPE_GOOD}
-{
+Product::Product() {
     static unsigned int unique_id = 0;
     id = unique_id++;
-    static std::uniform_int_distribution<>
-        order_size_dist(PRODUCT_ORDER_SIZE_MIN, PRODUCT_ORDER_SIZE_MAX);
-    order_size = order_size_dist(Sim::get_random_generator());
     static std::uniform_real_distribution<>
         living_labor_dist(
                 PRODUCT_LABOR_PER_UNIT_MIN,
                 PRODUCT_LABOR_PER_UNIT_MAX
                 );
-    living_labor_per_unit = 
-        societal_living_labor_per_unit = 
-        living_labor_dist(Sim::get_random_generator());
-    for (int i = 0; i < Person::NUM_ABILITIES; i++) {
-        required_abilities.push_back((Person::Ability) i);
+    living_labor_per_unit = living_labor_dist(Sim::get_random_generator());
+    Society::get_instance()->
+        set_underlying_living_labor_per_unit(this, living_labor_per_unit);
+    for (Ability * ability : Society::get_instance()->get_abilities()) {
+        required_abilities.push_back(ability);
     }
     std::shuffle(required_abilities.begin(), required_abilities.end(), Sim::get_random_generator());
     static std::uniform_int_distribution<>
         ability_count_dist(1, PRODUCT_ABILITY_COUNT_MAX);
     required_abilities.resize(ability_count_dist(Sim::get_random_generator()));
-    static std::uniform_real_distribution<>
-        consumption_freq_dist(0, 0.5);
-    mean_consumption_frequency = consumption_freq_dist(Sim::get_random_generator());
-    mean_consumption_period = static_cast<int>(std::ceil(1 / mean_consumption_frequency));
 }
 
-void Product::set_inputs(std::vector<Product *>& goods) {
-    int max_num_inputs =
-        std::max<int>(PRODUCT_NUM_INPUTS_MAX, PRODUCT_NUM_INPUTS_MAX);
-    max_num_inputs = std::min<int>(max_num_inputs, goods.size());
+void Product::set_inputs() {
+    std::vector<Good *> goods = Society::get_instance()->get_goods();
+    int max_num_inputs = std::min<int>(PRODUCT_NUM_INPUTS_MAX, goods.size());
     static std::uniform_int_distribution<>
         num_inputs_dist(PRODUCT_NUM_INPUTS_MIN, max_num_inputs);
     const std::size_t num_inputs = num_inputs_dist(Sim::get_random_generator());
@@ -63,8 +54,11 @@ void Product::set_inputs(std::vector<Product *>& goods) {
     }
 }
 
-void Product::set_machines(std::vector<Machine*> machines) {
-    if (!machines.size()) return;
+void Product::set_machines() {
+    std::vector<Machine *> machines = Society::get_instance()->get_machines();
+    if (!machines.size()) {
+        return;
+    }
     const unsigned int global_num_machines =
         Sim::get_num_products() / Sim::get_products_per_machine();
     const int num_machines_max =
@@ -82,13 +76,3 @@ void Product::set_machines(std::vector<Machine*> machines) {
         machines_needed.push_back(machines[index]);
     }
  }
-
-
-void Product::log_mean_consumption_frequency() {
-    Logger::log(
-            Logger::PRODUCT,
-            id,
-            "mean_consumption_frequency",
-            LogPair("value", mean_consumption_frequency)
-            );
-}

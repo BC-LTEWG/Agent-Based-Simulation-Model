@@ -1,12 +1,12 @@
 #include <string>
 
 #include "Machine.h"
+#include "Sim.h"
 
-Machine::Machine(int id, const std::string& name, int lifetime) :
-    Product{name},
-    lifetime{lifetime}
-{
+Machine::Machine() : Product() {
     product_type = Product::ProductType::TYPE_MACHINE;
-    mean_consumption_frequency = 0;
+    static std::uniform_int_distribution<>
+        machine_lifetime_dist(MACHINE_LIFETIME_MIN, MACHINE_LIFETIME_MAX);
+    lifetime = machine_lifetime_dist(Sim::get_random_generator());
 }
 
