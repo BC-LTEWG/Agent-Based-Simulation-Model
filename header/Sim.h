@@ -17,7 +17,7 @@ struct SimArgs {
     unsigned int num_distributors = STARTING_NUM_DISTRIBUTORS;
     double sickness_chance = ANNUAL_SICKNESS_CHANCE;
     unsigned int num_abilities = NUM_ABILITIES;
-    double ability_stddev = PERSON_ABILITY_STDDEV;
+    double ability_stddev = ABILITY_STDDEV;
     bool json = false;
     unsigned int seed = 0;
     bool fixed_seed = false;
@@ -35,8 +35,8 @@ class Sim {
         static unsigned int get_num_producers();
         static unsigned int get_num_distributors();
         static unsigned int get_num_abilities();
+        static double get_ability_stddev();
         static double get_annual_sickness_chance();
-        static double get_person_ability_stddev();
         static bool does_json();
         static int get_current_time_step();
         static std::random_device& get_random_device();

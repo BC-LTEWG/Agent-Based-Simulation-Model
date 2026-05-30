@@ -77,7 +77,7 @@ void Society::on_time_step() {
 }
 
 void Society::set_abilities() {
-    for (unsigned int i = 0; i < NUM_ABILITIES; i++) {
+    for (unsigned int i = 0; i < Sim::get_num_abilities(); i++) {
         abilities.push_back(new Ability());
     }
 }

@@ -22,7 +22,6 @@ const unsigned int STARTING_PRODUCTS_PER_MACHINE = 5;
 const unsigned int STARTING_NUM_PRODUCERS = STARTING_NUM_PRODUCTS;
 const unsigned int STARTING_NUM_DISTRIBUTORS = STARTING_NUM_PRODUCTS;
 
-const unsigned int NUM_ABILITIES = 5;
 const int INITIAL_AGE = 17 * YEAR;
 const double RANDOM_RETIREMENT_CHANCE = 8.3e-7;
 const int GUARANTEED_RETIREMENT_AGE = 67 * YEAR;
@@ -57,7 +56,8 @@ const double TRANSFER_BUSYNESS_THRESHOLD = 0.00;
 
 const double PERSON_STOCKPILE_DURATION = WEEK; 
 const double PERSON_DEFICIT_THRESHOLD = WEEK / 2.0;
-const double PERSON_ABILITY_STDDEV = 0.05;
+const unsigned int NUM_ABILITIES = 5;
+const double ABILITY_STDDEV = 0.05;
 
 const double UNHEALTHY_PRODUCTIVITY = 0.5;
 const double ANNUAL_SICKNESS_CHANCE = 0.1;

@@ -15,7 +15,7 @@ void print_usage() {
     std::cout << "\t-m N: Set the initial number of products per machine to N." << std::endl;
     std::cout << "\t-r N: Set the initial number of producers to N." << std::endl;
     std::cout << "\t-d N: Set the initial number of distributors to N." << std::endl;
-    std::cout << "\t-a N: Set the number of abilities to N." << std::endl;
+    std::cout << "\t-a N: Set the number of modeled abilities (work skills) to N." << std::endl;
     std::cout << "\t-v N: Set the standard deviation of abilities to N." << std::endl;
     std::cout << "\t-e N: Set the random seed to N." << std::endl;
     std::cout << "\t-s N: Set the annual chance of an agent getting sick." << std::endl;
