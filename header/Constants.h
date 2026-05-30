@@ -32,8 +32,6 @@ const double AVERAGE_RETIREMENT_AGE = (
     INITIAL_AGE; // approx 62 years in hours
 
 const int PRODUCT_ABILITY_COUNT_MAX = 1;
-const int PRODUCT_ORDER_SIZE_MIN = 1;
-const int PRODUCT_ORDER_SIZE_MAX = 10;
 const int PRODUCT_NUM_INPUTS_MIN = 1;
 const int PRODUCT_NUM_INPUTS_MAX = STARTING_NUM_PRODUCTS / 2;
 const double PRODUCT_INPUT_PER_UNIT_MIN = 0.1;

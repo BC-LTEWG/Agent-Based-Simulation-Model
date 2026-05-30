@@ -16,6 +16,7 @@ void print_usage() {
     std::cout << "\t-r N: Set the initial number of producers to N." << std::endl;
     std::cout << "\t-d N: Set the initial number of distributors to N." << std::endl;
     std::cout << "\t-a N: Set the number of abilities to N." << std::endl;
+    std::cout << "\t-v N: Set the standard deviation of abilities to N." << std::endl;
     std::cout << "\t-e N: Set the random seed to N." << std::endl;
     std::cout << "\t-s N: Set the annual chance of an agent getting sick." << std::endl;
     std::cout << "\t-j: Write JSON log traces to stdout." << std::endl;
@@ -32,6 +33,7 @@ enum class argType {
     Distributors,
     Abilities,
     AbilityStdDev,
+    SickChance,
     Seed
 };
 
@@ -49,16 +51,14 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
         {"-d", argType::Distributors}, {"--distributors", argType::Distributors},
         {"-a", argType::Abilities}, {"--abilities", argType::Abilities},
         {"-v", argType::AbilityStdDev}, {"--ability-stddev", argType::AbilityStdDev},
+        {"-s", argType::SickChance}, {"--sick-chance", argType::SickChance},
         {"-e", argType::Seed}, {"--seed", argType::Seed},
     };
 
 
     for (int i = 1; i < argc; ++i) {
-        unsigned int value = 0;
-        double dvalue = 0.0;
         std::string arg = argv[i];
-
-        if(arg == "-j" || arg == "--json") { //"j" needs no additional value
+        if (arg == "-j" || arg == "--json") { //"j" needs no additional value
             args.json = true;
             continue;
         }
@@ -66,86 +66,101 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
             error = true;
             break;
         }
-        
-        if(valid_args.count(arg)) {
-            long negative_check = strtol(argv[++i], NULL, 10);
-            bool seed_exception = (arg == "-e" || arg == "--seed");
-            if(negative_check < 0 || (negative_check == 0 && !seed_exception)) {
-                error = true;
-            }
-            else {
-                value = static_cast<unsigned int>(negative_check);
-
-                switch(valid_args.at(arg)) {
-                    case argType::TimeSteps: {
-                        args.time_steps = value;
-                        break;
-                    }
-                    case argType::People: {
-                        args.num_people = value;
-                        break;
-                    }
-                    case argType::WorkHours: {
-                        args.work_hours_daily = value;
-                        break;
-                    }
-                    case argType::WorkDays: {
-                        args.work_days_weekly = value;
-                        break;
-                    }
-                    case argType::Products: {
-                        args.num_products = value;
-                        break;
-                    }
-                    case argType::ProductsPerMachine: {
-                        args.products_per_machine = value;
-                        break;
-                    }
-                    case argType::Producers: {
-                        args.num_producers = value;
-                        break;
-                    }
-                    case argType::Distributors: {
-                        args.num_distributors = value;
-                        break;
-                    }
-                    case argType::Abilities: {
-                        args.num_abilities = value;
-                        break;
-                    }
-                    case argType::AbilityStdDev: {
-                        args.ability_stddev = value;
-                        break;
-                    }
-                    case argType::Seed: {
-                        args.seed = value;
-                        args.fixed_seed = true;
-                        break;
-                    }
-                }
-            }
-        }
-        else if(arg == "-s" || arg == "--sick-chance") {
-            dvalue = strtod(argv[++i], NULL);
-            if (dvalue <= 0.0 || dvalue >= 1.0) {
-                error = true;
-            } else {
-                args.sickness_chance = dvalue;
-            }
-        }
-        else if(arg == "-v" || arg == "--ability-stddev") {
-            dvalue = strtod(argv[++i], NULL);
-            if (dvalue <= 0.0) {
-                error = true;
-            } else {
-                args.ability_stddev = dvalue;
-            }
-        } else {
+        if (!valid_args.count(arg)) {
             error = true;
             break;
         }
+        long value = strtol(argv[++i], NULL, 10);
+        double dvalue = strtod(argv[i], NULL);
+        switch (valid_args.at(arg)) {
+            case argType::TimeSteps: {
+                if (value <= 0) {
+                    error = true;
+                }
+                args.time_steps = value;
+                break;
+            }
+            case argType::People: {
+                args.num_people = value;
+                if (value <= 0) {
+                    error = true;
+                }
+                break;
+            }
+            case argType::WorkHours: {
+                args.work_hours_daily = value;
+                if (value <= 0 || value > 24) {
+                    error = true;
+                }
+                break;
+            }
+            case argType::WorkDays: {
+                if (value <= 0 || value > 7) {
+                    error = true;
+                }
+                args.work_days_weekly = value;
+                break;
+            }
+            case argType::Products: {
+                if (value <= 0) {
+                    error = true;
+                }
+                args.num_products = value;
+                break;
+            }
+            case argType::ProductsPerMachine: {
+                if (value <= 0) {
+                    error = true;
+                }
+                args.products_per_machine = value;
+                break;
+            }
+            case argType::Producers: {
+                if (value <= 0) {
+                    error = true;
+                }
+                args.num_producers = value;
+                break;
+            }
+            case argType::Distributors: {
+                if (value <= 0) {
+                    error = true;
+                }
+                args.num_distributors = value;
+                break;
+            }
+            case argType::Abilities: {
+                if (value <= 0) {
+                    error = true;
+                }
+                args.num_abilities = value;
+                break;
+            }
+            case argType::AbilityStdDev: {
+                if (dvalue < 0.0 || dvalue > 1.0) {
+                    error = true;
+                }
+                args.ability_stddev = dvalue;
+                break;
+            }
+            case argType::SickChance: {
+                if (dvalue < 0.0 || dvalue > 1.0) {
+                    error = true;
+                }
+                args.sickness_chance = dvalue;
+                break;
+            }
+            case argType::Seed: {
+                if (value < 0) {
+                    error = true;
+                }
+                args.seed = value;
+                args.fixed_seed = true;
+                break;
+            }
+        }
     }
-    if(error) {
+    if (error) {
         print_usage();
         exit(1);
     }
