@@ -23,10 +23,12 @@ Distributor::Distributor(
     for (Product * product : catalog) {
         ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
         Good * good = consumer_good->corresponding_good;
+        demands[good] = 
+            consumer_good->mean_consumption_frequency 
+            * Sim::get_num_people() 
+            / Sim::get_num_distributors();
         input_inventory[good] =
-            good->corresponding_consumer_good->mean_consumption_frequency *
-            (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN) * 
-            Sim::get_num_people() / Sim::get_num_distributors();
+            demands[good] * FIRM_STOCKPILE_DURATION;
         log_inventory_level(good, input_inventory[good]);
     }
     log_catalog();

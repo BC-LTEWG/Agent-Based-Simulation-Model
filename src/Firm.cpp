@@ -50,7 +50,7 @@ unsigned int Firm::get_id() {
 }
 
 void Firm::on_time_step() {
-    apply_demand_window();
+    update_demands();
 	move_plans_forward_one_step();
     if (plans_in_progress.size()) {
         log_plans();
@@ -162,7 +162,7 @@ Producer * Firm::send_order(Order * order) {
 }
 
 double Firm::get_reorder_threshold(Product * product) {
-    return get_demand(product) * FIRM_STOCKPILE_DURATION;
+    return demands[product] * FIRM_STOCKPILE_DURATION;
 }
 
 double Firm::get_pending_inventory_level(Product * product) {
@@ -415,31 +415,14 @@ Plan * Firm::draft_plan_with_required_abilities(
 }
 
 void Firm::add_demand_signal(Product * product, double quantity) {
-    demand_signals[product].push({quantity, Sim::get_current_time_step()});
-    total_demands[product] += quantity;
+    demands[product] += quantity / DEMAND_AVERAGING_WINDOW;
 }
 
-void Firm::apply_demand_window() {
-    for (std::pair<Product * const, std::queue<DemandSignal>>& product : demand_signals) {
-        std::queue<DemandSignal>& signals = product.second;
-        while (!signals.empty() && 
-                signals.front().timestep <= 
-                Sim::get_current_time_step() - FIRM_DEMAND_WINDOW_MAX) {
-            total_demands[product.first] -= 
-                signals.front().quantity;
-            signals.pop();
-        }
+void Firm::update_demands() {
+    for (std::pair<Product * const, double>& demand : demands) {
+        demand.second *=
+            (DEMAND_AVERAGING_WINDOW - 1.0) / DEMAND_AVERAGING_WINDOW;
     }
-}
-
-double Firm::get_demand(Product * product) {
-    int window_start = Sim::get_current_time_step();
-    if (!demand_signals[product].empty()) {
-        window_start = demand_signals[product].front().timestep;
-    }
-    int window_length = std::max(FIRM_DEMAND_WINDOW_MIN, 
-        Sim::get_current_time_step() - window_start);
-    return total_demands[product] / window_length;
 }
 
 void Firm::move_worker_off_standby(Person * worker) {

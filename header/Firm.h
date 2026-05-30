@@ -56,11 +56,6 @@ struct Order {
     );
 };
 
-struct DemandSignal {
-    double quantity;
-    int timestep;
-};
-
 class Firm : public Agent {
   public:
     Firm(
@@ -94,8 +89,7 @@ class Firm : public Agent {
     std::unordered_map<Product *, double> input_inventory;
     std::unordered_set<Product *> catalog;
     
-    std::unordered_map<Product *, std::queue<DemandSignal>> demand_signals;
-    std::unordered_map<Product *, double> total_demands;
+    std::unordered_map<Product *, double> demands;
     std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
     std::unordered_map<Product *, double> recorded_living_labor_per_unit;
     std::vector<Plan *> plans_in_progress;
@@ -134,8 +128,7 @@ class Firm : public Agent {
         Order * order,
         std::vector<Ability *>& required_abilities
     ); 
-    void apply_demand_window();
-    double get_demand(Product * product);
+    void update_demands();
     void move_worker_off_standby(Person * worker);
 
     void log_plans();
