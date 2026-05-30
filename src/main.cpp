@@ -76,86 +76,98 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
             case argType::TimeSteps: {
                 if (value <= 0) {
                     error = true;
+                } else {
+                    args.time_steps = value;
                 }
-                args.time_steps = value;
                 break;
             }
             case argType::People: {
-                args.num_people = value;
                 if (value <= 0) {
                     error = true;
+                } else {
+                    args.num_people = value;
                 }
                 break;
             }
             case argType::WorkHours: {
-                args.work_hours_daily = value;
                 if (value <= 0 || value > 24) {
                     error = true;
+                } else {
+                    args.work_hours_daily = value;
                 }
                 break;
             }
             case argType::WorkDays: {
                 if (value <= 0 || value > 7) {
                     error = true;
+                } else {
+                    args.work_days_weekly = value;
                 }
-                args.work_days_weekly = value;
                 break;
             }
             case argType::Products: {
                 if (value <= 0) {
                     error = true;
+                } else {
+                    args.num_products = value;
                 }
-                args.num_products = value;
                 break;
             }
             case argType::ProductsPerMachine: {
                 if (value <= 0) {
                     error = true;
+                } else {
+                    args.products_per_machine = value;
                 }
-                args.products_per_machine = value;
                 break;
             }
             case argType::Producers: {
                 if (value <= 0) {
                     error = true;
+                } else {
+                    args.num_producers = value;
                 }
-                args.num_producers = value;
                 break;
             }
             case argType::Distributors: {
                 if (value <= 0) {
                     error = true;
+                } else {
+                    args.num_distributors = value;
                 }
-                args.num_distributors = value;
                 break;
             }
             case argType::Abilities: {
                 if (value <= 0) {
                     error = true;
+                } else {
+                    args.num_abilities = value;
                 }
-                args.num_abilities = value;
                 break;
             }
             case argType::AbilityStdDev: {
-                if (dvalue < 0.0 || dvalue > 1.0) {
+                if (dvalue < 0.0) {
                     error = true;
+                } else {
+                    args.ability_stddev = dvalue;
                 }
-                args.ability_stddev = dvalue;
                 break;
             }
             case argType::SickChance: {
                 if (dvalue < 0.0 || dvalue > 1.0) {
                     error = true;
+                } else {
+                    args.sickness_chance = dvalue;
                 }
-                args.sickness_chance = dvalue;
                 break;
             }
             case argType::Seed: {
                 if (value < 0) {
                     error = true;
+                } else {
+                    args.seed = value;
+                    args.fixed_seed = true;
                 }
-                args.seed = value;
-                args.fixed_seed = true;
                 break;
             }
         }
