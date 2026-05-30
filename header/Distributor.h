@@ -7,7 +7,6 @@
 
 #include "Firm.h"
 
-constexpr double PRODUCTION_THRESHOLD = 1.5;
 struct Product;
 class Distributor;
 class Person;
