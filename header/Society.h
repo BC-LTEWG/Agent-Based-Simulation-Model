@@ -24,6 +24,7 @@ class Society : public Agent {
         void on_time_step() override;
 
         std::vector<Ability *>& get_abilities();
+        std::vector<Ability *>& get_distribution_abilities();
         std::vector<Good *>& get_goods();
         std::vector<ConsumerGood *>& get_consumer_goods();
         std::vector<Machine *>& get_machines();
@@ -50,7 +51,6 @@ class Society : public Agent {
 
         unsigned int id = 0;
         Person * birth_person();
-        void set_abilities();
         void set_initial_products();
         void add_consumer_goods();
         void set_product_prices_production_consumption();
@@ -59,7 +59,6 @@ class Society : public Agent {
                 Eigen::VectorXd&
                 );
         void adjust_io_matrix(Eigen::MatrixXd&, double max_eigenvalue);
-        void set_initial_account();
         void update_work_hours_daily();
         void log_io_matrix(Eigen::MatrixXd&, size_t);
         void log_labor_vector(Eigen::VectorXd&, size_t);
@@ -78,6 +77,7 @@ class Society : public Agent {
         std::unordered_map<Product *, std::vector<Distributor *>>
             product_to_distributors;
         std::vector<Ability *> abilities;
+        std::vector<Ability *> distribution_abilities;
         unsigned int current_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
 		unsigned int current_work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
         std::unordered_set<Person *> unemployed_people;
