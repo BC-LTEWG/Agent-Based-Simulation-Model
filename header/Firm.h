@@ -66,7 +66,7 @@ class Firm : public Agent {
     virtual Logger::Client get_client_type() = 0;
     virtual void on_time_step() override;
     double get_avg_productivity();
-    double get_inventory_level(Product * product);
+    virtual double get_inventory_level(Product * product);
     void add_supplier(Producer * producer);
     void receive_shipment(Order * order);
     void receive_shipment(Plan * plan);

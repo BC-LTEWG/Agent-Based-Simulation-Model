@@ -28,8 +28,10 @@ Distributor::Distributor(
             * Sim::get_num_people() 
             / Sim::get_num_distributors();
         input_inventory[good] =
-            demands[good] * FIRM_STOCKPILE_DURATION;
+            input_inventory[consumer_good] =
+            demands[good] * FIRM_STOCKPILE_DURATION / 2;
         log_inventory_level(good, input_inventory[good]);
+        consumer_goods_without_plans.insert(consumer_good);
     }
     log_catalog();
 }
@@ -40,16 +42,20 @@ Logger::Client Distributor::get_client_type() {
 
 void Distributor::on_time_step() {
     Firm::on_time_step();
+    std::unordered_set<ConsumerGood *> consumer_goods_without_plans_copy =
+        consumer_goods_without_plans;
+    for (ConsumerGood * consumer_good : consumer_goods_without_plans_copy) {
+        renew_distribution_plan(consumer_good);
+    }
 }
 
 int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person) {
-    if (!catalog.count(consumer_good)) {
+    Good * good = consumer_good->corresponding_good;
+    int available = std::min(static_cast<int>(
+                get_inventory_level(consumer_good)), quantity);
+    if (!available) {
         return 0;
     }
-    add_demand_signal(consumer_good->corresponding_good, quantity);
-    check_and_reorder_input(consumer_good->corresponding_good);
-    int available = std::min(static_cast<int>(
-                get_inventory_level(consumer_good->corresponding_good)), quantity);
     if (available < quantity) {
         log_shortfall(consumer_good->id, quantity - available);
     }
@@ -57,8 +63,18 @@ int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Pers
     if (!person->charge(cost)) {
          return 0;
     } 
-    remove_input_from_inventory(consumer_good->corresponding_good, quantity);
+    add_demand_signal(good, available);
+    check_and_reorder_input(good);
+    remove_input_from_inventory(consumer_good, available);
     return available;
+}
+
+void Distributor::renew_distribution_plan(ConsumerGood * consumer_good) {
+    Good * good = consumer_good->corresponding_good;
+    if (get_inventory_level(good)) {
+        input_inventory[consumer_good] += get_inventory_level(good);
+        input_inventory[good] = 0;
+    }
 }
 
 double Distributor::get_pending_inventory_level(Product * product) {

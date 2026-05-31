@@ -3,6 +3,7 @@
 #include <unordered_set>
 #include <numeric>
 
+#include "ConsumerGood.h"
 #include "Distributor.h"
 #include "Good.h"
 #include "Logger.h"
@@ -27,15 +28,15 @@ Producer::Producer(
         machines.push_back(machine);
     }
     for (Product * product : catalog) {
+        Good * good = static_cast<Good *>(product);
         for (std::pair<Good * const, double>& input :
                 product->inputs_per_unit) {
             double demand = 
                 input.second 
-                * society->get_initial_production()[product] 
+                * society->get_initial_production()[product]
                 * Sim::get_num_people() 
                 * Sim::get_num_products() 
-                / Sim::get_num_producers()
-                / 2;
+                / Sim::get_num_producers();
             demands[input.first] += demand;
             input_inventory[input.first] += demand * FIRM_STOCKPILE_DURATION;
         }

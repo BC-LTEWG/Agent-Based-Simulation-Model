@@ -23,6 +23,8 @@ class Distributor : public Firm {
     int try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person);
     
   private:
+    std::unordered_set<ConsumerGood *> consumer_goods_without_plans;
+    void renew_distribution_plan(ConsumerGood * consumer_good);
     double get_pending_inventory_level(Product * product) override;
     void log_shortfall(unsigned int product_id, int shortfall);
 };
