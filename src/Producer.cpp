@@ -29,14 +29,15 @@ Producer::Producer(
     for (Product * product : catalog) {
         for (std::pair<Good * const, double>& input :
                 product->inputs_per_unit) {
-            demands[input.first] = 
+            double demand = 
                 input.second 
                 * society->get_initial_production()[product] 
-                * Sim::get_num_people()
+                * Sim::get_num_people() 
                 * Sim::get_num_products() 
-                / Sim::get_num_producers();
-            input_inventory[input.first] +=
-                demands[input.first] * FIRM_STOCKPILE_DURATION;
+                / Sim::get_num_producers()
+                / 2;
+            demands[input.first] += demand;
+            input_inventory[input.first] += demand * FIRM_STOCKPILE_DURATION;
         }
     }
     for (std::pair<Product * const, double>& stockpile : input_inventory) {

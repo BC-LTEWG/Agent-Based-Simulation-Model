@@ -320,11 +320,11 @@ void Firm::assign_workers(
         draft_plan->workers.push_back(unemployed_person);
         workers_left--;
     }
-    for (Producer * producer : society->get_producers()) {
+    for (Firm * firm : society->get_firms()) {
         if (workers_left == 0) return;
         log_transfer_request();
-        if (producer == this) continue;
-        std::vector<Person *> transfers = producer->propose_transfer(workers_left);
+        if (firm == this) continue;
+        std::vector<Person *> transfers = firm->propose_transfer(workers_left);
         for (Person * transfer : transfers) {
             draft_plan->workers.push_back(transfer);
         }

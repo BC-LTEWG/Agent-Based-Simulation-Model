@@ -283,6 +283,10 @@ void Society::set_underlying_living_labor_per_unit(Product * product, double ll)
     underlying_living_labor_per_unit[product] = ll;
 }
 
+std::vector<Firm *>& Society::get_firms() {
+    return firms;
+}
+
 std::vector<Distributor *> &Society::get_distributors() {
     return distributors;
 }
