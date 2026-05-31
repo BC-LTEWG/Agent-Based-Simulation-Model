@@ -61,6 +61,14 @@ int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Pers
     return available;
 }
 
+double Distributor::get_pending_inventory_level(Product * product) {
+    Good * good = static_cast<Good *>(product);
+    ConsumerGood * consumer_good = good->corresponding_consumer_good;
+    return Firm::get_pending_inventory_level(good)
+        + Firm::get_pending_inventory_level(consumer_good);
+}
+
+
 void Distributor::log_shortfall(unsigned int product_id, int shortfall) {
     Logger::log(
             Logger::DISTRIBUTOR,

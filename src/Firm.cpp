@@ -167,16 +167,13 @@ double Firm::get_reorder_threshold(Product * product) {
 
 double Firm::get_pending_inventory_level(Product * product) {
     double pending_inventory = get_inventory_level(product);
+    if (!product_to_outbound_orders.count(product)) {
+        return pending_inventory;
+    }
     for (Order * order : product_to_outbound_orders[product]) {
         pending_inventory += order->quantity;
     }
     return pending_inventory;
-}
-
-void Firm::check_and_reorder_inputs() {
-    for (std::pair<Product *, double> stockpile : input_inventory) {
-        check_and_reorder_input(stockpile.first);
-    }
 }
 
 void Firm::check_and_reorder_input(Product * product) {
@@ -197,6 +194,7 @@ void Firm::check_and_reorder_input(Product * product) {
 }
 
 void Firm::start_plan(Plan * plan) {
+    plans_in_progress.push_back(plan);
 	for (std::pair<Good * const, double>& input :
             plan->order->product->inputs_per_unit) {
         double required_input = input.second * plan->order->quantity;
@@ -247,9 +245,6 @@ void Firm::end_plan(Plan * plan) {
 void Firm::move_plans_forward_one_step() {
     std::vector<Plan *> plans_still_in_progress;
     for (Plan * plan : plans_in_progress) {
-        if (plan->order->status == Order::ORDER_REQUESTED) {
-			start_plan(plan);
-		}
         if (plan->order->status == Order::ORDER_IN_PROGRESS) {
             if (is_within_work_schedule()) {
                 move_plan_forward_one_step(plan);
@@ -298,10 +293,7 @@ int Firm::predict_workers_needed(Plan * plan) {
             );
 }
 
-void Firm::assign_workers(
-        Plan * draft_plan,
-        std::vector<Ability *>& required_abilities
-        ) {
+void Firm::assign_workers(Plan * draft_plan) {
     std::vector<Person *> sorted_standby_workers(standby_workers.begin(),
             standby_workers.end());
     std::sort(sorted_standby_workers.begin(), sorted_standby_workers.end(), 
@@ -356,9 +348,7 @@ double Firm::calculate_raw_material_cost_for_order(Order * order) {
     return raw_material_cost;
 }
 
-void Firm::initialize_plan_budget(
-        Plan * draft_plan
-        ) {
+void Firm::initialize_plan_budget(Plan * draft_plan) {
     double raw_material_cost = calculate_raw_material_cost_for_order(draft_plan->order);
     draft_plan->raw_materials =
         draft_plan->raw_materials_remaining = raw_material_cost;
@@ -378,10 +368,7 @@ double Firm::calculate_machinery_cost_for_plan(Plan * draft_plan) {
         (static_cast<double>(draft_plan->labor_hours) / draft_plan->workers.size());
 }
 
-void Firm::assign_plan_dependent_fields(
-        Plan * draft_plan,
-        std::vector<Ability *>& required_abilities
-        ) {
+void Firm::assign_plan_dependent_fields(Plan * draft_plan) {
     draft_plan->predicted_turnaround_time =
         predict_turnaround_time(draft_plan, draft_plan->workers);
     draft_plan->labor_hours = 
@@ -391,26 +378,17 @@ void Firm::assign_plan_dependent_fields(
     draft_plan->machinery_cost = calculate_machinery_cost_for_plan(draft_plan);
 }
 
-Plan * Firm::draft_plan_with_required_abilities(
-        Order * order,
-        std::vector<Ability *>& required_abilities
-        ) {
+Plan * Firm::draft_plan_for_order(Order * order) {
     Plan * draft_plan = new Plan{};
     draft_plan->order = order;
     draft_plan->firm = this;
     draft_plan->local_work_hours_daily = society->get_current_work_hours_daily();
 
-    assign_workers(
-        draft_plan,
-        required_abilities
-    );
+    assign_workers(draft_plan);
     if (draft_plan->workers.size() == 0) {
         return nullptr;
     }
-    assign_plan_dependent_fields(
-        draft_plan,
-        required_abilities
-    );
+    assign_plan_dependent_fields(draft_plan);
     return draft_plan;
 }
 

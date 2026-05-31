@@ -84,8 +84,7 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
             std::max(1.0, order->requested_turnaround_time
             * return_order_quantity / order->quantity)
             );
-	Plan * draft_plan = draft_plan_with_required_abilities(return_order,
-            order->product->required_abilities);
+	Plan * draft_plan = draft_plan_for_order(return_order);
     if (!draft_plan) {
         return_order->status = Order::ORDER_REJECTED;
         return return_order;
@@ -112,9 +111,8 @@ void Producer::pursue_order(Firm * customer) {
         move_worker_off_standby(worker);
     }
 
-	// move draft_plan to plans_in_progress
 	customer_to_draft_plan[customer] = nullptr;
-	plans_in_progress.push_back(draft_plan);
+    start_plan(draft_plan);
     log_pursued_plan(draft_plan);
     society->log_total_employment();
     // accounting
