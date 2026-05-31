@@ -33,7 +33,7 @@ Producer::Producer(
                 input.second * 
                 society->get_initial_production()[product] * 
                 (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN) *
-                Sim::get_num_people() * Sim::get_num_products() / Sim::get_num_producers();
+                Sim::get_num_people() * Sim::get_num_goods() / Sim::get_num_producers();
         }
     }
     for (std::pair<Product * const, double>& stockpile : input_inventory) {

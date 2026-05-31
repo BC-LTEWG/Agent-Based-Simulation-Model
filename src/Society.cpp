@@ -38,7 +38,7 @@ Society::Society() :
 void Society::initialize() {
     set_abilities();
     set_initial_products();
-    unsigned int num_products = Sim::get_num_products();
+    unsigned int num_products = products.size();
     for (unsigned int i = 0; i < Sim::get_num_producers(); i++) {
         Product * product = products[i % num_products];
         Producer * producer = new Producer(this, {product});
@@ -86,16 +86,16 @@ void Society::set_abilities() {
 }
 
 void Society::set_initial_products() {
-    unsigned int starting_num_products = Sim::get_num_products();
+    unsigned int starting_num_goods = Sim::get_num_goods();
     const unsigned int starting_num_machines =
-        starting_num_products / Sim::get_products_per_machine();
+        starting_num_goods / Sim::get_goods_per_machine();
     // make sure to push back each product immediately after construction
-    for (unsigned int i = 0; i < starting_num_products; ++i) {
+    for (unsigned int i = 0; i < starting_num_goods; ++i) {
         Good * new_good = new Good();
         goods.push_back(new_good);
         products.push_back(new_good);
     }
-    for (unsigned int i = 0; i < starting_num_products; ++i) {
+    for (unsigned int i = 0; i < starting_num_goods; ++i) {
         ConsumerGood * new_consumer_good = new ConsumerGood(goods[i]); 
         consumer_goods.push_back(new_consumer_good);
         products.push_back(new_consumer_good);

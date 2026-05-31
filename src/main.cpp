@@ -13,7 +13,7 @@ void print_usage() {
     std::cout << "\t-w N: Set the work week to N days." << std::endl;
     std::cout << "\t-o N: Set the initial number of products to N." << std::endl;
     std::cout << "\t-m N: Set the initial number of products per machine to N." << std::endl;
-    std::cout << "\t-r N: Set the initial number of producers to N." << std::endl;
+    std::cout << "\t-g N: Set the initial number of producers to N." << std::endl;
     std::cout << "\t-d N: Set the initial number of distributors to N." << std::endl;
     std::cout << "\t-a N: Set the number of modeled abilities (work skills) to N." << std::endl;
     std::cout << "\t-v N: Set the standard deviation of abilities to N." << std::endl;
@@ -27,8 +27,8 @@ enum class argType {
     People,
     WorkHours,
     WorkDays,
-    Products,
-    ProductsPerMachine,
+    Goods,
+    GoodsPerMachine,
     Producers,
     Distributors,
     Abilities,
@@ -45,8 +45,8 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
         {"-p", argType::People}, {"--people", argType::People},
         {"-h", argType::WorkHours}, {"--work-hours", argType::WorkHours},
         {"-w", argType::WorkDays}, {"--work-days", argType::WorkDays},
-        {"-o", argType::Products}, {"--products", argType::Products},
-        {"-m", argType::ProductsPerMachine}, {"--products-per-machine", argType::ProductsPerMachine},
+        {"-g", argType::Goods}, {"--goods", argType::Goods},
+        {"-m", argType::GoodsPerMachine}, {"--products-per-machine", argType::GoodsPerMachine},
         {"-r", argType::Producers}, {"--producers", argType::Producers},
         {"-d", argType::Distributors}, {"--distributors", argType::Distributors},
         {"-a", argType::Abilities}, {"--abilities", argType::Abilities},
@@ -105,19 +105,19 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::Products: {
+            case argType::Goods: {
                 if (value <= 0) {
                     error = true;
                 } else {
-                    args.num_products = value;
+                    args.num_goods = value;
                 }
                 break;
             }
-            case argType::ProductsPerMachine: {
+            case argType::GoodsPerMachine: {
                 if (value <= 0) {
                     error = true;
                 } else {
-                    args.products_per_machine = value;
+                    args.goods_per_machine = value;
                 }
                 break;
             }
