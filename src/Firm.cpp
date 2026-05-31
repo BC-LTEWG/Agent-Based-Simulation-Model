@@ -78,6 +78,7 @@ void Firm::receive_shipment(Plan * plan) {
 
 void Firm::receive_payment(Plan * plan, double transaction_amount) {
     plan->prd += transaction_amount;
+    pooled_input_value += transaction_amount;
 }
 
 bool Firm::remove_input_from_inventory(Product * product, double quantity) {
@@ -194,7 +195,10 @@ void Firm::check_and_reorder_input(Product * product) {
 }
 
 void Firm::start_plan(Plan * plan) {
-    plans_in_progress.push_back(plan);
+    for (Person * worker : plan->workers) {
+        move_worker_off_standby(worker);
+    }
+    plans_in_progress.insert(plan);
 	for (std::pair<Good * const, double>& input :
             plan->order->product->inputs_per_unit) {
         double required_input = input.second * plan->order->quantity;
@@ -236,6 +240,7 @@ void Firm::end_plan(Plan * plan) {
     recorded_living_labor_per_unit[plan->order->product] = 
         (plan->labor_hours - plan->labor_hours_remaining) 
         / (plan->order->quantity - plan->quantity_remaining); 
+    pooled_input_value += plan->order->quantity * plan->order->product->price_per_unit;
     PriceController::get_instance()->update_price(plan);
     for (Person * worker : plan->workers) {
         standby_workers.insert(worker);
@@ -243,7 +248,7 @@ void Firm::end_plan(Plan * plan) {
 }
 
 void Firm::move_plans_forward_one_step() {
-    std::vector<Plan *> plans_still_in_progress;
+    std::unordered_set<Plan *> plans_still_in_progress;
     for (Plan * plan : plans_in_progress) {
         if (plan->order->status == Order::ORDER_IN_PROGRESS) {
             if (is_within_work_schedule()) {
@@ -256,7 +261,7 @@ void Firm::move_plans_forward_one_step() {
     }
     for (Plan * plan : plans_in_progress) {
         if (plan->order->status != Order::ORDER_FINISHED) {
-            plans_still_in_progress.push_back(plan);
+            plans_still_in_progress.insert(plan);
         }
     }
     plans_in_progress = plans_still_in_progress;
@@ -379,7 +384,7 @@ void Firm::assign_plan_dependent_fields(Plan * draft_plan) {
 }
 
 Plan * Firm::draft_plan_for_order(Order * order) {
-    Plan * draft_plan = new Plan{};
+    Plan * draft_plan = new Plan;
     draft_plan->order = order;
     draft_plan->firm = this;
     draft_plan->local_work_hours_daily = society->get_current_work_hours_daily();

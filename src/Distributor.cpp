@@ -23,13 +23,11 @@ Distributor::Distributor(
     for (Product * product : catalog) {
         ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
         Good * good = consumer_good->corresponding_good;
-        demands[good] = 
+        input_inventory[consumer_good] = 
             consumer_good->mean_consumption_frequency 
             * Sim::get_num_people() 
-            / Sim::get_num_distributors();
-        input_inventory[good] =
-            input_inventory[consumer_good] =
-            demands[good] * FIRM_STOCKPILE_DURATION / 2;
+            / Sim::get_num_distributors()
+            * (FIRM_STOCKPILE_DURATION + DEMAND_AVERAGING_WINDOW);
         log_inventory_level(good, input_inventory[good]);
         consumer_goods_without_plans.insert(consumer_good);
     }
@@ -64,24 +62,51 @@ int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Pers
          return 0;
     } 
     add_demand_signal(good, available);
-    check_and_reorder_input(good);
     remove_input_from_inventory(consumer_good, available);
+    check_and_reorder_input(good);
     return available;
+}
+
+void Distributor::end_plan(Plan * plan) {
+    Firm::end_plan(plan);
+    ConsumerGood * consumer_good = static_cast<ConsumerGood *>(plan->order->product);
+    consumer_goods_without_plans.insert(consumer_good);
+    renew_distribution_plan(consumer_good);
 }
 
 void Distributor::renew_distribution_plan(ConsumerGood * consumer_good) {
     Good * good = consumer_good->corresponding_good;
-    if (get_inventory_level(good)) {
-        input_inventory[consumer_good] += get_inventory_level(good);
-        input_inventory[good] = 0;
+    double reorder_threshold = get_reorder_threshold(good);
+    int distribution_quantity = std::min(
+            get_inventory_level(good),
+            reorder_threshold * FIRM_REORDER_MAX_PROP
+            );
+    if (!distribution_quantity) {
+        return;
+    }
+    double distribution_time = 
+        static_cast<double>(distribution_quantity)
+        / demands[good];
+    Order * order = new Order(
+            consumer_good,
+            distribution_quantity,
+            this,
+            distribution_time
+            );
+    if (Plan * plan = draft_plan_for_order(order)) {
+        product_to_outbound_orders[consumer_good].insert(order);
+        consumer_goods_without_plans.erase(consumer_good);
+        start_plan(plan);
     }
 }
 
 double Distributor::get_pending_inventory_level(Product * product) {
-    Good * good = static_cast<Good *>(product);
-    ConsumerGood * consumer_good = good->corresponding_consumer_good;
-    return Firm::get_pending_inventory_level(good)
-        + Firm::get_pending_inventory_level(consumer_good);
+    if (Good * good = dynamic_cast<Good *>(product)) {
+        ConsumerGood * consumer_good = good->corresponding_consumer_good;
+        return Firm::get_pending_inventory_level(good)
+            + Firm::get_pending_inventory_level(consumer_good);
+    }
+    return Firm::get_pending_inventory_level(product);
 }
 
 

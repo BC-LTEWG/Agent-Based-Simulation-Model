@@ -28,17 +28,15 @@ Producer::Producer(
         machines.push_back(machine);
     }
     for (Product * product : catalog) {
-        Good * good = static_cast<Good *>(product);
         for (std::pair<Good * const, double>& input :
                 product->inputs_per_unit) {
-            double demand = 
+            input_inventory[input.first] = 
                 input.second 
-                * society->get_initial_production()[product]
+                * Society::get_instance()->get_initial_production()[product]
                 * Sim::get_num_people() 
                 * Sim::get_num_products() 
-                / Sim::get_num_producers();
-            demands[input.first] += demand;
-            input_inventory[input.first] += demand * FIRM_STOCKPILE_DURATION;
+                / Sim::get_num_producers()
+                * (FIRM_STOCKPILE_DURATION + DEMAND_AVERAGING_WINDOW);
         }
     }
     for (std::pair<Product * const, double>& stockpile : input_inventory) {
@@ -102,23 +100,18 @@ void Producer::drop_order(Firm * customer) {
 }
 
 void Producer::pursue_order(Firm * customer) {
-	Plan * draft_plan = customer_to_draft_plan[customer];
-	if (!draft_plan) {
+	Plan * plan = customer_to_draft_plan[customer];
+	if (!plan) {
         std::cerr << "Error: pursuing order from firm with no approved draft plan" << std::endl;
+        return;
 	}
-    Order * order = draft_plan->order;
+    Order * order = plan->order;
     add_order_input_demand_signals(order);
-    for (Person * worker : draft_plan->workers) {
-        move_worker_off_standby(worker);
-    }
 
 	customer_to_draft_plan[customer] = nullptr;
-    start_plan(draft_plan);
-    log_pursued_plan(draft_plan);
+    start_plan(plan);
+    log_pursued_plan(plan);
     society->log_total_employment();
-    // accounting
-    plans_in_progress.back()->prd +=
-        order->product->price_per_unit * order->quantity;
 }
 
 void Producer::log_draft_plan(const Plan * draft_plan) {

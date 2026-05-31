@@ -92,7 +92,7 @@ class Firm : public Agent {
     std::unordered_map<Product *, double> demands;
     std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
     std::unordered_map<Product *, double> recorded_living_labor_per_unit;
-    std::vector<Plan *> plans_in_progress;
+    std::unordered_set<Plan *> plans_in_progress;
 
     Producer * send_order(Order * order);
     bool remove_input_from_inventory(Product * product, double quantity);
@@ -101,7 +101,7 @@ class Firm : public Agent {
     void check_and_reorder_input(Product * product);
 	void start_plan(Plan * plan);
 	void move_plan_forward_one_step(Plan * plan);
-	void end_plan(Plan * plan);
+	virtual void end_plan(Plan * plan);
 	void move_plans_forward_one_step();
     double calculate_quantity_produced_from_worker_suitability(Plan * plan);
     bool is_within_work_schedule() const;
