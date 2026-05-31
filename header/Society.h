@@ -38,6 +38,7 @@ class Society : public Agent {
         int get_initial_account();
         std::unordered_map<Product *, double>& get_initial_production();
         std::vector<Producer *>& get_producers();
+        std::vector<Producer *>& get_suppliers(Product * product);
         double get_busyness();
         double get_total_employment();
 
@@ -73,6 +74,8 @@ class Society : public Agent {
         std::unordered_map<Product *, double> underlying_living_labor_per_unit;
         std::vector<Firm *> firms;
         std::vector<Producer *> producers;
+        std::unordered_map<Product *, std::vector<Producer *>>
+            product_to_suppliers;
         std::vector<Distributor *> distributors;
         std::unordered_map<Product *, std::vector<Distributor *>>
             product_to_distributors;

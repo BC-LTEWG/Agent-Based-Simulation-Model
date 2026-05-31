@@ -38,21 +38,24 @@ Society::Society() :
 void Society::initialize() {
     set_abilities();
     set_initial_products();
+    unsigned int num_products = Sim::get_num_products();
     for (unsigned int i = 0; i < Sim::get_num_producers(); i++) {
-        Producer * producer = new Producer(this, {goods[i % Sim::get_num_products()]});
+        Product * product = products[i % num_products];
+        Producer * producer = new Producer(this, {product});
         producers.push_back(producer);
         firms.push_back(producer);
+        if (
+                product->product_type == Product::ProductType::TYPE_GOOD ||
+                product->product_type == Product::ProductType::TYPE_MACHINE
+           ) {
+            product_to_suppliers[product].push_back(producer);
+        }
     }
     std::unordered_set<Product *> distributor_catalog(consumer_goods.begin(), consumer_goods.end());
     for (unsigned int i = 0; i < Sim::get_num_distributors(); i++) {
         Distributor * distributor = new Distributor(this, distributor_catalog);
         distributors.push_back(distributor);
         firms.push_back(distributor);
-    }
-    for (Firm * firm : firms) {
-        for (Producer * producer : producers) {
-            firm->add_supplier(producer);
-        }
     }
     set_initial_account();
     for (unsigned int i = 0; i < Sim::get_num_people(); i++) {
@@ -161,6 +164,10 @@ std::vector<Ability *>& Society::get_abilities() {
 
 std::vector<Producer *> &Society::get_producers() {
     return producers;
+}
+
+std::vector<Producer *>& Society::get_suppliers(Product * product) {
+    return product_to_suppliers[product];
 }
 
 double Society::get_busyness() {

@@ -61,10 +61,6 @@ double Firm::get_inventory_level(Product * product) {
     return input_inventory.count(product) ? input_inventory[product] : 0;
 }
 
-void Firm::add_supplier(Producer * producer) {
-    suppliers.push_back(producer);
-}
-
 void Firm::receive_shipment(Plan * plan) {
     Order * order = plan->order;
     input_inventory[order->product] += order->quantity;
@@ -129,7 +125,8 @@ Producer * Firm::send_order(Order * order) {
     double order_rate = 0.0;
     Producer * chosen_producer = nullptr;
     Order * chosen_return_order = nullptr;
-
+    std::vector<Producer *>& suppliers =
+        Society::get_instance()->get_suppliers(order->product);
     for (Producer * producer : suppliers) {
         if (!producer->can_produce(order->product)) {
             continue;

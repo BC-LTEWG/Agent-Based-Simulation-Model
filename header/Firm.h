@@ -72,7 +72,6 @@ class Firm : public Agent {
     virtual void on_time_step() override;
     double get_avg_productivity();
     virtual double get_inventory_level(Product * product);
-    void add_supplier(Producer * producer);
     void receive_shipment(Order * order);
     void receive_shipment(Plan * plan);
     void receive_payment(Plan * plan, double transaction_amount);
@@ -90,7 +89,6 @@ class Firm : public Agent {
     std::unordered_set<Person *> workers,
         standby_workers;
 	
-    std::vector<Producer *> suppliers;
     std::unordered_map<Product *, double> input_inventory;
     std::unordered_set<Product *> catalog;
     
