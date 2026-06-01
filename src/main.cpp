@@ -11,9 +11,9 @@ void print_usage() {
     std::cout << "\t-p N: Simulate a society with N people." << std::endl;
     std::cout << "\t-h N: Set the workday to N hours." << std::endl;
     std::cout << "\t-w N: Set the work week to N days." << std::endl;
-    std::cout << "\t-o N: Set the initial number of products to N." << std::endl;
-    std::cout << "\t-m N: Set the initial number of products per machine to N." << std::endl;
-    std::cout << "\t-g N: Set the initial number of producers to N." << std::endl;
+    std::cout << "\t-g N: Set the initial number of goods to N." << std::endl;
+    std::cout << "\t-m N: Set the initial number of goods per machine to N." << std::endl;
+    std::cout << "\t-r N: Set the initial number of producers to N." << std::endl;
     std::cout << "\t-d N: Set the initial number of distributors to N." << std::endl;
     std::cout << "\t-a N: Set the number of modeled abilities (work skills) to N." << std::endl;
     std::cout << "\t-v N: Set the standard deviation of abilities to N." << std::endl;
