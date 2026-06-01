@@ -18,8 +18,12 @@ Distributor::Distributor(
         Society * society,
         const std::unordered_set<Product *>& initial_catalog
         ) :
-    Firm(society, initial_catalog)
-{}
+    Firm(society)
+{
+    for (Product * product : initial_catalog) {
+        add_to_catalog(product);
+    }
+}
 
 Logger::Client Distributor::get_client_type() {
     return Logger::DISTRIBUTOR;

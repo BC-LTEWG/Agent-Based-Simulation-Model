@@ -16,8 +16,12 @@ Producer::Producer(
         Society * society,
         const std::unordered_set<Product *>& initial_catalog
         ) :
-    Firm{society, initial_catalog}
-{}
+    Firm{society}
+{
+    for (Product * product : initial_catalog) {
+        add_to_catalog(product);
+    }
+}
 
 Logger::Client Producer::get_client_type() {
     return Logger::PRODUCER;

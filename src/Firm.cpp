@@ -31,17 +31,11 @@ Order::Order(
       status(ORDER_REQUESTED)
 {}
 
-Firm::Firm(
-       Society * society,
-       const std::unordered_set<Product *>& initial_catalog
-       ) :
+Firm::Firm(Society * society) :
     society{society}
 {
     static unsigned int unique_id = 0;
     id = unique_id++;
-    for (Product * product : initial_catalog) {
-        add_to_catalog(product);
-    }
     for (Product * product : society->get_products()) {
         recorded_living_labor_per_unit[product] = product->living_labor_per_unit;
     }
@@ -57,10 +51,6 @@ void Firm::on_time_step() {
     if (plans_in_progress.size()) {
         log_plans();
     }
-}
-
-void Firm::add_to_catalog(Product * product) {
-    catalog.insert(product);
 }
 
 double Firm::get_inventory_level(Product * product) {
