@@ -12,7 +12,12 @@
 #include "Sim.h"
 #include "Society.h"
 
-Producer::Producer(Society * society) : Firm(society) {}
+Producer::Producer(
+        Society * society,
+        const std::unordered_set<Product *>& initial_catalog
+        ) :
+    Firm{society, initial_catalog}
+{}
 
 Logger::Client Producer::get_client_type() {
     return Logger::PRODUCER;
@@ -23,7 +28,7 @@ void Producer::on_time_step() {
 }
 
 void Producer::add_to_catalog(Product * product) {
-    Firm::add_to_catalog(product);
+    catalog.insert(product);
     for (Machine * machine : product->machines_needed) {
         machines.insert(machine);
     }

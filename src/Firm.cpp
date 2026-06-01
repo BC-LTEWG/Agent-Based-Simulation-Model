@@ -35,10 +35,13 @@ Firm::Firm(
        Society * society,
        const std::unordered_set<Product *>& initial_catalog
        ) :
-    society{society}, catalog{initial_catalog}
+    society{society}
 {
     static unsigned int unique_id = 0;
     id = unique_id++;
+    for (Product * product : initial_catalog) {
+        add_to_catalog(product);
+    }
     for (Product * product : society->get_products()) {
         recorded_living_labor_per_unit[product] = product->living_labor_per_unit;
     }

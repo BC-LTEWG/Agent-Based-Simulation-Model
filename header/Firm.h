@@ -63,7 +63,10 @@ struct DemandSignal {
 
 class Firm : public Agent {
   public:
-    Firm(Society * society, const std::unordered_set<Product *>& initial_catalog = {});
+    Firm(
+            Society * society,
+            const std::unordered_set<Product *>& initial_catalog
+            );
     unsigned int get_id() override;
     virtual Logger::Client get_client_type() = 0;
     virtual void on_time_step() override;
