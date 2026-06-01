@@ -38,7 +38,7 @@ void Producer::add_to_catalog(Product * product) {
     for (std::pair<Product * const, double>& stockpile : input_inventory) {
         log_inventory_level(stockpile.first, stockpile.second);
     }
-    log_catalog();
+    log_catalog_addition(product);
 }
 
 bool Producer::can_produce(Product * product) {
