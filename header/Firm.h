@@ -83,7 +83,7 @@ class Firm : public Agent {
     Society * society;
     unsigned int id;
     double pooled_input_value = 0.0;
-    std::vector<Machine *> machines;
+    std::unordered_set<Machine *> machines;
     std::unordered_set<Person *> workers,
         standby_workers;
 	
