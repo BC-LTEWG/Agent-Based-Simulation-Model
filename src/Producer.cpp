@@ -12,11 +12,17 @@
 #include "Sim.h"
 #include "Society.h"
 
-Producer::Producer(
-        Society * society,
-        const std::unordered_set<Product *>& initial_catalog
-        ) :
-    Firm(society, initial_catalog) {
+Producer::Producer(Society * society) : Firm(society) {}
+
+Logger::Client Producer::get_client_type() {
+    return Logger::PRODUCER;
+}
+
+void Producer::on_time_step() {
+    Firm::on_time_step();
+}
+
+void Producer::add_to_catalog(Product * product) {
     std::unordered_set<Machine *> initial_machines;
     for (Product * product : catalog) {
         for (Machine * machine : product->machines_needed) {
@@ -40,14 +46,6 @@ Producer::Producer(
         log_inventory_level(stockpile.first, stockpile.second);
     }
     log_catalog();
-}
-
-Logger::Client Producer::get_client_type() {
-    return Logger::PRODUCER;
-}
-
-void Producer::on_time_step() {
-    Firm::on_time_step();
 }
 
 bool Producer::can_produce(Product * product) {

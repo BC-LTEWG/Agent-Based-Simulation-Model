@@ -32,11 +32,10 @@ Order::Order(
 {}
 
 Firm::Firm(
-        Society * society,
-        const std::unordered_set<Product *>& initial_catalog
-        ) :
-    society{society},
-    catalog(initial_catalog)
+       Society * society,
+       const std::unordered_set<Product *>& initial_catalog
+       ) :
+    society{society}, catalog{initial_catalog}
 {
     static unsigned int unique_id = 0;
     id = unique_id++;
@@ -55,6 +54,10 @@ void Firm::on_time_step() {
     if (plans_in_progress.size()) {
         log_plans();
     }
+}
+
+void Firm::add_to_catalog(Product * product) {
+    catalog.insert(product);
 }
 
 double Firm::get_inventory_level(Product * product) {
@@ -620,9 +623,5 @@ void Firm::log_catalog() {
         }
     }
     Logger::log(get_client_type(), id, "catalog", LogPairS("product_ids", oss.str()));
-    /*
-    for (Product * product : catalog) {
-        Logger::log(get_client_type(), id, "catalog", LogPair("product_id", product->id));
-    }
-    */
 }
+

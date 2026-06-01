@@ -38,16 +38,28 @@ Society::Society() :
 void Society::initialize() {
     set_abilities();
     set_initial_products();
-    unsigned int num_products = products.size();
-    for (unsigned int i = 0; i < Sim::get_num_producers(); i++) {
-        Product * product = products[i % num_products];
-        Producer * producer = new Producer(this, {product});
+    unsigned int num_producers = Sim::get_num_producers();
+    for (unsigned int i = 0; i < num_producers; ++i) {
+        Producer * producer = new Producer(this);
         producers.push_back(producer);
         firms.push_back(producer);
-        if (
-                product->product_type == Product::ProductType::TYPE_GOOD ||
-                product->product_type == Product::ProductType::TYPE_MACHINE
-           ) {
+    }
+    std::vector<Product *> upstream_products(goods.begin(), goods.end());
+    upstream_products.reserve(goods.size() + machines.size());
+    upstream_products.insert(upstream_products.end(), machines.begin(), machines.end());
+    unsigned int num_upstream_products = upstream_products.size();
+    if (num_producers >= num_upstream_products) {
+        for (unsigned int i = 0; i < num_producers; ++i) {
+            Producer * producer = producers[i];
+            Product * product = upstream_products[i % num_upstream_products];
+            producer->add_to_catalog(product);
+            product_to_suppliers[product].push_back(producer);
+        }
+    } else {
+        for (unsigned int i = 0; i < num_upstream_products; ++i) {
+            Producer * producer = producers[i % num_producers];
+            Product * product = upstream_products[i];
+            producer->add_to_catalog(product);
             product_to_suppliers[product].push_back(producer);
         }
     }
