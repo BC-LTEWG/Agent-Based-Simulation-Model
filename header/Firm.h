@@ -159,4 +159,5 @@ class Firm : public Agent {
     void log_demand(const Product * Product, double demand);
     void log_pending_inventory(const Product * product, double pending_inventory);
     void log_catalog();
+    void log_catalog_addition(Product * product);
 };

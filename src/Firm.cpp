@@ -625,3 +625,7 @@ void Firm::log_catalog() {
     Logger::log(get_client_type(), id, "catalog", LogPairS("product_ids", oss.str()));
 }
 
+void Firm::log_catalog_addition(Product * product) {
+    Logger::log(get_client_type(), id, "catalog_addition", LogPair("product_id", product->id));
+}
+
