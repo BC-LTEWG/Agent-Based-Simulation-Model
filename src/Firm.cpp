@@ -31,12 +31,8 @@ Order::Order(
       status(ORDER_REQUESTED)
 {}
 
-Firm::Firm(
-        Society * society,
-        const std::unordered_set<Product *>& initial_catalog
-        ) :
-    society{society},
-    catalog(initial_catalog)
+Firm::Firm(Society * society) :
+    society{society}
 {
     static unsigned int unique_id = 0;
     id = unique_id++;
@@ -59,10 +55,6 @@ void Firm::on_time_step() {
 
 double Firm::get_inventory_level(Product * product) {
     return input_inventory.count(product) ? input_inventory[product] : 0;
-}
-
-void Firm::add_supplier(Producer * producer) {
-    suppliers.push_back(producer);
 }
 
 void Firm::receive_shipment(Plan * plan) {
@@ -129,7 +121,8 @@ Producer * Firm::send_order(Order * order) {
     double order_rate = 0.0;
     Producer * chosen_producer = nullptr;
     Order * chosen_return_order = nullptr;
-
+    std::vector<Producer *>& suppliers =
+        Society::get_instance()->get_suppliers(order->product);
     for (Producer * producer : suppliers) {
         if (!producer->can_produce(order->product)) {
             continue;
@@ -623,9 +616,9 @@ void Firm::log_catalog() {
         }
     }
     Logger::log(get_client_type(), id, "catalog", LogPairS("product_ids", oss.str()));
-    /*
-    for (Product * product : catalog) {
-        Logger::log(get_client_type(), id, "catalog", LogPair("product_id", product->id));
-    }
-    */
 }
+
+void Firm::log_catalog_addition(Product * product) {
+    Logger::log(get_client_type(), id, "catalog_addition", LogPair("product_id", product->id));
+}
+

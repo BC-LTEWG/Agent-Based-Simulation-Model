@@ -29,12 +29,12 @@ unsigned int Sim::get_work_days_weekly() {
     return get_instance().args.work_days_weekly;
 }
 
-unsigned int Sim::get_num_products() {
-    return get_instance().args.num_products;
+unsigned int Sim::get_num_goods() {
+    return get_instance().args.num_goods;
 }
 
-unsigned int Sim::get_products_per_machine() {
-    return get_instance().args.products_per_machine;
+unsigned int Sim::get_goods_per_machine() {
+    return get_instance().args.goods_per_machine;
 }
 
 unsigned int Sim::get_num_producers() {

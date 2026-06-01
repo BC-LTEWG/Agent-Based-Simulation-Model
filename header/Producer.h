@@ -17,11 +17,12 @@ class Person;
 class Producer : public Firm {
   public:
     Producer(
-        Society * society,
-        const std::unordered_set<Product *>& initial_catalog
-    );
+            Society * society,
+            const std::unordered_set<Product *>& initial_catalog = {}
+            );
     Logger::Client get_client_type() override;
     void on_time_step() override;
+    void add_to_catalog(Product * product) override;
     bool can_produce(Product * product);
 	Order * draft_plan_and_return_order(const Order * order);
 	void drop_order(Firm * customer);
