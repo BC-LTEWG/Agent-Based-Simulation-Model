@@ -22,37 +22,37 @@ void print_usage() {
     std::cout << "\t-j: Write JSON log traces to stdout." << std::endl;
 }
 
-enum class argType {
-    TimeSteps,
-    People,
-    WorkHours,
-    WorkDays,
-    Goods,
-    GoodsPerMachine,
-    Producers,
-    Distributors,
-    Abilities,
-    AbilityStdDev,
-    SickChance,
-    Seed
+enum class ArgType {
+    kTimeSteps,
+    kPeople,
+    kWorkHours,
+    kWorkDays,
+    kGoods,
+    kGoodsPerMachine,
+    kProducers,
+    kDistributors,
+    kAbilities,
+    kAbilityStdDev,
+    kSickChance,
+    kSeed
 };
 
 void set_params(int argc, const char ** argv, SimArgs& args) {
     bool error = false;
 
-    static const std::unordered_map<std::string, argType> valid_args = {
-        {"-n", argType::TimeSteps}, {"--time-steps", argType::TimeSteps},
-        {"-p", argType::People}, {"--people", argType::People},
-        {"-h", argType::WorkHours}, {"--work-hours", argType::WorkHours},
-        {"-w", argType::WorkDays}, {"--work-days", argType::WorkDays},
-        {"-g", argType::Goods}, {"--goods", argType::Goods},
-        {"-m", argType::GoodsPerMachine}, {"--products-per-machine", argType::GoodsPerMachine},
-        {"-r", argType::Producers}, {"--producers", argType::Producers},
-        {"-d", argType::Distributors}, {"--distributors", argType::Distributors},
-        {"-a", argType::Abilities}, {"--abilities", argType::Abilities},
-        {"-v", argType::AbilityStdDev}, {"--ability-stddev", argType::AbilityStdDev},
-        {"-s", argType::SickChance}, {"--sick-chance", argType::SickChance},
-        {"-e", argType::Seed}, {"--seed", argType::Seed},
+    static const std::unordered_map<std::string, ArgType> valid_args = {
+        {"-n", ArgType::kTimeSteps}, {"--time-steps", ArgType::kTimeSteps},
+        {"-p", ArgType::kPeople}, {"--people", ArgType::kPeople},
+        {"-h", ArgType::kWorkHours}, {"--work-hours", ArgType::kWorkHours},
+        {"-w", ArgType::kWorkDays}, {"--work-days", ArgType::kWorkDays},
+        {"-g", ArgType::kGoods}, {"--goods", ArgType::kGoods},
+        {"-m", ArgType::kGoodsPerMachine}, {"--products-per-machine", ArgType::kGoodsPerMachine},
+        {"-r", ArgType::kProducers}, {"--producers", ArgType::kProducers},
+        {"-d", ArgType::kDistributors}, {"--distributors", ArgType::kDistributors},
+        {"-a", ArgType::kAbilities}, {"--abilities", ArgType::kAbilities},
+        {"-v", ArgType::kAbilityStdDev}, {"--ability-stddev", ArgType::kAbilityStdDev},
+        {"-s", ArgType::kSickChance}, {"--sick-chance", ArgType::kSickChance},
+        {"-e", ArgType::kSeed}, {"--seed", ArgType::kSeed},
     };
 
 
@@ -70,10 +70,10 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
             error = true;
             break;
         }
-        long value = strtol(argv[++i], NULL, 10);
-        double dvalue = strtod(argv[i], NULL);
+        long value = strtol(argv[++i], nullptr, 10);
+        double dvalue = strtod(argv[i], nullptr);
         switch (valid_args.at(arg)) {
-            case argType::TimeSteps: {
+            case ArgType::kTimeSteps: {
                 if (value <= 0) {
                     error = true;
                 } else {
@@ -81,7 +81,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::People: {
+            case ArgType::kPeople: {
                 if (value <= 0) {
                     error = true;
                 } else {
@@ -89,7 +89,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::WorkHours: {
+            case ArgType::kWorkHours: {
                 if (value <= 0 || value > 24) {
                     error = true;
                 } else {
@@ -97,7 +97,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::WorkDays: {
+            case ArgType::kWorkDays: {
                 if (value <= 0 || value > 7) {
                     error = true;
                 } else {
@@ -105,7 +105,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::Goods: {
+            case ArgType::kGoods: {
                 if (value <= 0) {
                     error = true;
                 } else {
@@ -113,7 +113,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::GoodsPerMachine: {
+            case ArgType::kGoodsPerMachine: {
                 if (value <= 0) {
                     error = true;
                 } else {
@@ -121,7 +121,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::Producers: {
+            case ArgType::kProducers: {
                 if (value <= 0) {
                     error = true;
                 } else {
@@ -129,7 +129,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::Distributors: {
+            case ArgType::kDistributors: {
                 if (value <= 0) {
                     error = true;
                 } else {
@@ -137,7 +137,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::Abilities: {
+            case ArgType::kAbilities: {
                 if (value <= 0) {
                     error = true;
                 } else {
@@ -145,7 +145,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::AbilityStdDev: {
+            case ArgType::kAbilityStdDev: {
                 if (dvalue < 0.0) {
                     error = true;
                 } else {
@@ -153,7 +153,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::SickChance: {
+            case ArgType::kSickChance: {
                 if (dvalue < 0.0 || dvalue > 1.0) {
                     error = true;
                 } else {
@@ -161,7 +161,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::Seed: {
+            case ArgType::kSeed: {
                 if (value < 0) {
                     error = true;
                 } else {
