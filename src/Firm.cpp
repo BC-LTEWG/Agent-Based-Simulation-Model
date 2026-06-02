@@ -31,12 +31,10 @@ Order::Order(
       status(ORDER_REQUESTED)
 {}
 
-Firm::Firm(Society * society) :
-    society{society}
-{
+Firm::Firm() {
     static unsigned int unique_id = 0;
     id = unique_id++;
-    for (Product * product : society->get_products()) {
+    for (Product * product : Society::get_instance()->get_products()) {
         recorded_living_labor_per_unit[product] = product->living_labor_per_unit;
     }
 }
@@ -46,7 +44,7 @@ unsigned int Firm::get_id() {
 }
 
 void Firm::on_time_step() {
-    apply_demand_window();
+    update_demands();
 	move_plans_forward_one_step();
     if (plans_in_progress.size()) {
         log_plans();
@@ -70,6 +68,7 @@ void Firm::receive_shipment(Plan * plan) {
 
 void Firm::receive_payment(Plan * plan, double transaction_amount) {
     plan->prd += transaction_amount;
+    pooled_input_value += transaction_amount;
 }
 
 bool Firm::remove_input_from_inventory(Product * product, double quantity) {
@@ -96,7 +95,7 @@ double Firm::get_pooled_input_value() {
 
 std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
     double firm_busyness = get_busyness();
-    double societal_busyness = society->get_busyness();
+    double societal_busyness = Society::get_instance()->get_busyness();
     int max_workers_to_transfer = (int) (workers.size() * (1.0 - firm_busyness / 
             (societal_busyness - TRANSFER_BUSYNESS_THRESHOLD))); 
     max_workers_to_transfer = std::max(max_workers_to_transfer, workers_wanted);
@@ -155,21 +154,18 @@ Producer * Firm::send_order(Order * order) {
 }
 
 double Firm::get_reorder_threshold(Product * product) {
-    return get_demand(product) * FIRM_STOCKPILE_DURATION;
+    return demands[product] * FIRM_STOCKPILE_DURATION;
 }
 
 double Firm::get_pending_inventory_level(Product * product) {
     double pending_inventory = get_inventory_level(product);
+    if (!product_to_outbound_orders.count(product)) {
+        return pending_inventory;
+    }
     for (Order * order : product_to_outbound_orders[product]) {
         pending_inventory += order->quantity;
     }
     return pending_inventory;
-}
-
-void Firm::check_and_reorder_inputs() {
-    for (std::pair<Product *, double> stockpile : input_inventory) {
-        check_and_reorder_input(stockpile.first);
-    }
 }
 
 void Firm::check_and_reorder_input(Product * product) {
@@ -190,6 +186,10 @@ void Firm::check_and_reorder_input(Product * product) {
 }
 
 void Firm::start_plan(Plan * plan) {
+    for (Person * worker : plan->workers) {
+        move_worker_off_standby(worker);
+    }
+    plans_in_progress.insert(plan);
 	for (std::pair<Good * const, double>& input :
             plan->order->product->inputs_per_unit) {
         double required_input = input.second * plan->order->quantity;
@@ -231,6 +231,7 @@ void Firm::end_plan(Plan * plan) {
     recorded_living_labor_per_unit[plan->order->product] = 
         (plan->labor_hours - plan->labor_hours_remaining) 
         / (plan->order->quantity - plan->quantity_remaining); 
+    pooled_input_value += plan->order->quantity * plan->order->product->price_per_unit;
     PriceController::get_instance()->update_price(plan);
     for (Person * worker : plan->workers) {
         standby_workers.insert(worker);
@@ -238,11 +239,8 @@ void Firm::end_plan(Plan * plan) {
 }
 
 void Firm::move_plans_forward_one_step() {
-    std::vector<Plan *> plans_still_in_progress;
+    std::unordered_set<Plan *> plans_still_in_progress;
     for (Plan * plan : plans_in_progress) {
-        if (plan->order->status == Order::ORDER_REQUESTED) {
-			start_plan(plan);
-		}
         if (plan->order->status == Order::ORDER_IN_PROGRESS) {
             if (is_within_work_schedule()) {
                 move_plan_forward_one_step(plan);
@@ -254,7 +252,7 @@ void Firm::move_plans_forward_one_step() {
     }
     for (Plan * plan : plans_in_progress) {
         if (plan->order->status != Order::ORDER_FINISHED) {
-            plans_still_in_progress.push_back(plan);
+            plans_still_in_progress.insert(plan);
         }
     }
     plans_in_progress = plans_still_in_progress;
@@ -291,10 +289,7 @@ int Firm::predict_workers_needed(Plan * plan) {
             );
 }
 
-void Firm::assign_workers(
-        Plan * draft_plan,
-        std::vector<Ability *>& required_abilities
-        ) {
+void Firm::assign_workers(Plan * draft_plan) {
     std::vector<Person *> sorted_standby_workers(standby_workers.begin(),
             standby_workers.end());
     std::sort(sorted_standby_workers.begin(), sorted_standby_workers.end(), 
@@ -308,16 +303,16 @@ void Firm::assign_workers(
         draft_plan->workers.push_back(worker);
         workers_left--;
     }
-    for (Person * unemployed_person : society->get_unemployed_people()) {
+    for (Person * unemployed_person : Society::get_instance()->get_unemployed_people()) {
         if (workers_left == 0) return;
         draft_plan->workers.push_back(unemployed_person);
         workers_left--;
     }
-    for (Producer * producer : society->get_producers()) {
+    for (Firm * firm : Society::get_instance()->get_firms()) {
         if (workers_left == 0) return;
         log_transfer_request();
-        if (producer == this) continue;
-        std::vector<Person *> transfers = producer->propose_transfer(workers_left);
+        if (firm == this) continue;
+        std::vector<Person *> transfers = firm->propose_transfer(workers_left);
         for (Person * transfer : transfers) {
             draft_plan->workers.push_back(transfer);
         }
@@ -349,9 +344,7 @@ double Firm::calculate_raw_material_cost_for_order(Order * order) {
     return raw_material_cost;
 }
 
-void Firm::initialize_plan_budget(
-        Plan * draft_plan
-        ) {
+void Firm::initialize_plan_budget(Plan * draft_plan) {
     double raw_material_cost = calculate_raw_material_cost_for_order(draft_plan->order);
     draft_plan->raw_materials =
         draft_plan->raw_materials_remaining = raw_material_cost;
@@ -371,10 +364,7 @@ double Firm::calculate_machinery_cost_for_plan(Plan * draft_plan) {
         (static_cast<double>(draft_plan->labor_hours) / draft_plan->workers.size());
 }
 
-void Firm::assign_plan_dependent_fields(
-        Plan * draft_plan,
-        std::vector<Ability *>& required_abilities
-        ) {
+void Firm::assign_plan_dependent_fields(Plan * draft_plan) {
     draft_plan->predicted_turnaround_time =
         predict_turnaround_time(draft_plan, draft_plan->workers);
     draft_plan->labor_hours = 
@@ -384,60 +374,35 @@ void Firm::assign_plan_dependent_fields(
     draft_plan->machinery_cost = calculate_machinery_cost_for_plan(draft_plan);
 }
 
-Plan * Firm::draft_plan_with_required_abilities(
-        Order * order,
-        std::vector<Ability *>& required_abilities
-        ) {
-    Plan * draft_plan = new Plan{};
+Plan * Firm::draft_plan_for_order(Order * order) {
+    Plan * draft_plan = new Plan;
     draft_plan->order = order;
     draft_plan->firm = this;
-    draft_plan->local_work_hours_daily = society->get_current_work_hours_daily();
+    draft_plan->local_work_hours_daily = 
+        Society::get_instance()->get_current_work_hours_daily();
 
-    assign_workers(
-        draft_plan,
-        required_abilities
-    );
+    assign_workers(draft_plan);
     if (draft_plan->workers.size() == 0) {
         return nullptr;
     }
-    assign_plan_dependent_fields(
-        draft_plan,
-        required_abilities
-    );
+    assign_plan_dependent_fields(draft_plan);
     return draft_plan;
 }
 
 void Firm::add_demand_signal(Product * product, double quantity) {
-    demand_signals[product].push({quantity, Sim::get_current_time_step()});
-    total_demands[product] += quantity;
+    demands[product] += quantity / DEMAND_AVERAGING_WINDOW;
 }
 
-void Firm::apply_demand_window() {
-    for (std::pair<Product * const, std::queue<DemandSignal>>& product : demand_signals) {
-        std::queue<DemandSignal>& signals = product.second;
-        while (!signals.empty() && 
-                signals.front().timestep <= 
-                Sim::get_current_time_step() - FIRM_DEMAND_WINDOW_MAX) {
-            total_demands[product.first] -= 
-                signals.front().quantity;
-            signals.pop();
-        }
+void Firm::update_demands() {
+    for (std::pair<Product * const, double>& demand : demands) {
+        demand.second *=
+            (DEMAND_AVERAGING_WINDOW - 1.0) / DEMAND_AVERAGING_WINDOW;
     }
-}
-
-double Firm::get_demand(Product * product) {
-    int window_start = Sim::get_current_time_step();
-    if (!demand_signals[product].empty()) {
-        window_start = demand_signals[product].front().timestep;
-    }
-    int window_length = std::max(FIRM_DEMAND_WINDOW_MIN, 
-        Sim::get_current_time_step() - window_start);
-    return total_demands[product] / window_length;
 }
 
 void Firm::move_worker_off_standby(Person * worker) {
     if (worker->get_firm() == nullptr) {
-        society->get_unemployed_people().erase(worker);
+        Society::get_instance()->get_unemployed_people().erase(worker);
         log_initial_employment(worker->get_id(), id);
     } else if (worker->get_firm() == this) {
         standby_workers.erase(worker);

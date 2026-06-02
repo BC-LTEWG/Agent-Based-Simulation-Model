@@ -3,6 +3,7 @@
 #include <unordered_set>
 #include <numeric>
 
+#include "ConsumerGood.h"
 #include "Distributor.h"
 #include "Good.h"
 #include "Logger.h"
@@ -13,10 +14,9 @@
 #include "Society.h"
 
 Producer::Producer(
-        Society * society,
         const std::unordered_set<Product *>& initial_catalog
         ) :
-    Firm{society}
+    Firm()
 {
     for (Product * product : initial_catalog) {
         add_to_catalog(product);
@@ -38,11 +38,17 @@ void Producer::add_to_catalog(Product * product) {
     }
     for (std::pair<Good * const, double>& input :
             product->inputs_per_unit) {
-        input_inventory[input.first] +=
-            input.second * 
-            society->get_initial_production()[product] * 
-            (FIRM_STOCKPILE_DURATION + FIRM_DEMAND_WINDOW_MIN) *
-            Sim::get_num_people() * Sim::get_num_goods() / Sim::get_num_producers();
+        double output_demand = Society::get_instance()->get_initial_production()[product];
+        if (Good * good = dynamic_cast<Good *>(product)) {
+            output_demand = good->corresponding_consumer_good->mean_consumption_frequency;
+        }
+        input_inventory[input.first] = 
+            input.second 
+            * output_demand
+            * Sim::get_num_people() 
+            * Sim::get_num_goods() 
+            / Sim::get_num_producers()
+            * (FIRM_STOCKPILE_DURATION + DEMAND_AVERAGING_WINDOW);
     }
     for (std::pair<Product * const, double>& stockpile : input_inventory) {
         log_inventory_level(stockpile.first, stockpile.second);
@@ -80,8 +86,7 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
             std::max(1.0, order->requested_turnaround_time
             * return_order_quantity / order->quantity)
             );
-	Plan * draft_plan = draft_plan_with_required_abilities(return_order,
-            order->product->required_abilities);
+	Plan * draft_plan = draft_plan_for_order(return_order);
     if (!draft_plan) {
         return_order->status = Order::ORDER_REJECTED;
         return return_order;
@@ -98,24 +103,18 @@ void Producer::drop_order(Firm * customer) {
 }
 
 void Producer::pursue_order(Firm * customer) {
-	Plan * draft_plan = customer_to_draft_plan[customer];
-	if (!draft_plan) {
+	Plan * plan = customer_to_draft_plan[customer];
+	if (!plan) {
         std::cerr << "Error: pursuing order from firm with no approved draft plan" << std::endl;
+        return;
 	}
-    Order * order = draft_plan->order;
+    Order * order = plan->order;
     add_order_input_demand_signals(order);
-    for (Person * worker : draft_plan->workers) {
-        move_worker_off_standby(worker);
-    }
 
-	// move draft_plan to plans_in_progress
 	customer_to_draft_plan[customer] = nullptr;
-	plans_in_progress.push_back(draft_plan);
-    log_pursued_plan(draft_plan);
-    society->log_total_employment();
-    // accounting
-    plans_in_progress.back()->prd +=
-        order->product->price_per_unit * order->quantity;
+    start_plan(plan);
+    log_pursued_plan(plan);
+    Society::get_instance()->log_total_employment();
 }
 
 void Producer::log_draft_plan(const Plan * draft_plan) {

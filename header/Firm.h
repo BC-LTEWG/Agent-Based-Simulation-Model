@@ -56,14 +56,9 @@ struct Order {
     );
 };
 
-struct DemandSignal {
-    double quantity;
-    int timestep;
-};
-
 class Firm : public Agent {
   public:
-    Firm(Society * society);
+    Firm();
     unsigned int get_id() override;
     virtual Logger::Client get_client_type() = 0;
     virtual void on_time_step() override;
@@ -80,7 +75,6 @@ class Firm : public Agent {
 
 
   protected:
-    Society * society;
     unsigned int id;
     double pooled_input_value = 0.0;
     std::unordered_set<Machine *> machines;
@@ -90,48 +84,34 @@ class Firm : public Agent {
     std::unordered_map<Product *, double> input_inventory;
     std::unordered_set<Product *> catalog;
     
-    std::unordered_map<Product *, std::queue<DemandSignal>> demand_signals;
-    std::unordered_map<Product *, double> total_demands;
+    std::unordered_map<Product *, double> demands;
     std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
     std::unordered_map<Product *, double> recorded_living_labor_per_unit;
-    std::vector<Plan *> plans_in_progress;
+    std::unordered_set<Plan *> plans_in_progress;
 
     Producer * send_order(Order * order);
     bool remove_input_from_inventory(Product * product, double quantity);
     double get_reorder_threshold(Product * product);
-    double get_pending_inventory_level(Product * product);
-    void check_and_reorder_inputs();
+    virtual double get_pending_inventory_level(Product * product);
     void check_and_reorder_input(Product * product);
 	void start_plan(Plan * plan);
 	void move_plan_forward_one_step(Plan * plan);
-	void end_plan(Plan * plan);
+	virtual void end_plan(Plan * plan);
 	void move_plans_forward_one_step();
     double calculate_quantity_produced_from_worker_suitability(Plan * plan);
     bool is_within_work_schedule() const;
 
 	int predict_workers_needed(Plan * plan);
-    void assign_workers(
-        Plan * draft_plan,
-        std::vector<Ability *>& required_abilities
-    );
+    void assign_workers(Plan * draft_plan);
 	double predict_turnaround_time(Plan * plan, std::vector<Person*>& workers); 
 	double predict_labor_hours(Order * order, std::vector<Person*>& workers);
     double calculate_raw_material_cost_for_order(Order * order);
-    void initialize_plan_budget(
-        Plan * draft_plan
-    );
+    void initialize_plan_budget(Plan * draft_plan);
     double calculate_machinery_cost_for_plan(Plan * draft_plan);
-	void assign_plan_dependent_fields(
-        Plan * draft_plan,
-        std::vector<Ability *>& required_abilities
-    );
+	void assign_plan_dependent_fields(Plan * draft_plan);
     void add_demand_signal(Product * product, double quantity);
-    Plan * draft_plan_with_required_abilities(
-        Order * order,
-        std::vector<Ability *>& required_abilities
-    ); 
-    void apply_demand_window();
-    double get_demand(Product * product);
+    Plan * draft_plan_for_order(Order * order); 
+    void update_demands();
     void move_worker_off_standby(Person * worker);
 
     void log_plans();
