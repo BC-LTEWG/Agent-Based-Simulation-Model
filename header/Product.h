@@ -6,25 +6,22 @@
 
 #include "Person.h"
 
+struct Good;
 struct Machine;
 
 struct Product {
     enum ProductType { TYPE_GOOD, TYPE_MACHINE, TYPE_CONSUMER_GOOD, TYPE_UNKNOWN };
-    Product(const std::string& name);
-    void set_inputs(std::vector<Product *>& products);
-    void set_machines(std::vector<Machine*> machines);
-    void log_mean_consumption_frequency();
+    Product();
+    virtual void set_inputs();
+    virtual void set_machines();
+
     int id;
     std::string product_name;
     ProductType product_type;
     double price_per_unit;
-    int order_size;
-    int mean_consumption_period;
     std::vector<Machine *> machines_needed;
-    std::unordered_map<Product *, double> inputs_per_unit;
- 	double living_labor_per_unit; 
-    double societal_living_labor_per_unit;
-	std::vector<Person::Ability> required_abilities;
-	double mean_consumption_frequency;
+    std::unordered_map<Good *, double> inputs_per_unit;
+    double living_labor_per_unit;
+	std::vector<Ability *> required_abilities;
 };
 

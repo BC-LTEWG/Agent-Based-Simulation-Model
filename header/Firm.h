@@ -11,12 +11,13 @@
 #include "Logger.h"
 #include "Person.h"
 
-class Firm;
+struct Ability;
 struct Machine;
 struct Order;
+struct Product;
+class Firm;
 class Producer;
 class Society;
-struct Product;
 
 struct Plan {
 	// independent/input fields
@@ -62,20 +63,18 @@ struct DemandSignal {
 
 class Firm : public Agent {
   public:
-    Firm(
-        Society * society,
-        const std::unordered_set<Product *>& initial_catalog
-    );
+    Firm(Society * society);
     unsigned int get_id() override;
     virtual Logger::Client get_client_type() = 0;
     virtual void on_time_step() override;
+    virtual void add_to_catalog(Product * product) = 0;
     double get_avg_productivity();
     virtual double get_inventory_level(Product * product);
-    void add_supplier(Producer * producer);
     void receive_shipment(Order * order);
     void receive_shipment(Plan * plan);
     void receive_payment(Plan * plan, double transaction_amount);
     double get_busyness();
+    double get_pooled_input_value();
     std::vector<Person *> propose_transfer(int workers_wanted);
     void finalize_transfer(Person * worker);
 
@@ -83,12 +82,11 @@ class Firm : public Agent {
   protected:
     Society * society;
     unsigned int id;
-    double pooled_input_value_account = 0.0;
-    std::vector<Machine *> machines;
+    double pooled_input_value = 0.0;
+    std::unordered_set<Machine *> machines;
     std::unordered_set<Person *> workers,
         standby_workers;
 	
-    std::vector<Producer *> suppliers;
     std::unordered_map<Product *, double> input_inventory;
     std::unordered_set<Product *> catalog;
     
@@ -104,11 +102,17 @@ class Firm : public Agent {
     double get_pending_inventory_level(Product * product);
     void check_and_reorder_inputs();
     void check_and_reorder_input(Product * product);
+	void start_plan(Plan * plan);
+	void move_plan_forward_one_step(Plan * plan);
+	void end_plan(Plan * plan);
+	void move_plans_forward_one_step();
+    double calculate_quantity_produced_from_worker_suitability(Plan * plan);
+    bool is_within_work_schedule() const;
 
 	int predict_workers_needed(Plan * plan);
     void assign_workers(
         Plan * draft_plan,
-        std::vector<Person::Ability>& required_abilities
+        std::vector<Ability *>& required_abilities
     );
 	double predict_turnaround_time(Plan * plan, std::vector<Person*>& workers); 
 	double predict_labor_hours(Order * order, std::vector<Person*>& workers);
@@ -117,14 +121,22 @@ class Firm : public Agent {
         Plan * draft_plan
     );
     double calculate_machinery_cost_for_plan(Plan * draft_plan);
-	void assign_plan_dependent_fields(Plan * draft_plan, std::vector<Person::Ability>& required_abilities);
+	void assign_plan_dependent_fields(
+        Plan * draft_plan,
+        std::vector<Ability *>& required_abilities
+    );
     void add_demand_signal(Product * product, double quantity);
-    Plan * draft_plan_with_required_abilities(Order * order, std::vector<Person::Ability>& required_abilities); 
+    Plan * draft_plan_with_required_abilities(
+        Order * order,
+        std::vector<Ability *>& required_abilities
+    ); 
     void apply_demand_window();
     double get_demand(Product * product);
-    virtual std::unordered_set<Product *> get_products_to_reorder() = 0;
     void move_worker_off_standby(Person * worker);
 
+    void log_plans();
+    void log_pursued_plan(const Plan * draft_plan);
+    void log_ended_plan(const Plan * plan);
     void log_shipment_received(const Product * product, const double quantity);
     void log_inventory_level(const Product * product, const double quantity);
     void log_inventory_reduction(const Product * product, const double quantity);
@@ -147,5 +159,5 @@ class Firm : public Agent {
     void log_demand(const Product * Product, double demand);
     void log_pending_inventory(const Product * product, double pending_inventory);
     void log_catalog();
-    double safe_handle_zero(double value, const std::string& context, double fallback);
+    void log_catalog_addition(Product * product);
 };

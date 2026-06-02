@@ -40,7 +40,7 @@ void PriceController::update_price(Plan * plan) {
     if (workers <= 0) {
         throw std::runtime_error("Plan cannot be completed without workers: " + product->product_name); 
     }
-    double price = product->societal_living_labor_per_unit = hours / units;
+    double price = product->living_labor_per_unit = hours / units;
     double machine_use_hours = hours / workers;
     double machine_hours_per_unit = machine_use_hours / units;
     for (Machine * machine : product->machines_needed) {
@@ -49,10 +49,6 @@ void PriceController::update_price(Plan * plan) {
         price += machine_cost_per_hour * machine_hours_per_unit;
     }
     product->price_per_unit = price;
-    ConsumerGood * consumer_good = Society::get_instance()->get_consumer_good(product);
-    if (consumer_good) {
-        consumer_good->price_per_unit = price + DISTRIBUTION_LABOR_PER_UNIT;
-    }
     Logger::log(
             Logger::SOCIETY,
             0,

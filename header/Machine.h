@@ -6,7 +6,6 @@
 #include "Product.h"
 
 struct Machine : public Product {
-    Machine(int id, const std::string& name, int lifetime);
-    const int lifetime;
-    int hours_remaining = 0;
+    Machine();
+    int lifetime;
 };
