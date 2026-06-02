@@ -34,6 +34,12 @@ void PriceController::update_price(Plan * plan) {
         hours += plan->raw_materials - plan->raw_materials_remaining;
         workers += plan->workers.size();
     }
+    if (units <= 0) {
+        throw std::runtime_error("Units cannot be 0 or less for product: " + product->product_name); 
+    }
+    if (workers <= 0) {
+        throw std::runtime_error("Plan cannot be completed without workers: " + product->product_name); 
+    }
     double price = product->living_labor_per_unit = hours / units;
     double machine_use_hours = hours / workers;
     double machine_hours_per_unit = machine_use_hours / units;
