@@ -17,6 +17,7 @@ ConsumerGood::ConsumerGood(Good * good) :
     mean_consumption_frequency = consumption_freq_dist(Sim::get_random_generator());
     corresponding_good = good;
     good->corresponding_consumer_good = this;
+    required_abilities = Society::get_instance()->get_distribution_abilities();
 }
 
 void ConsumerGood::set_inputs() {

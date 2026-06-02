@@ -20,6 +20,33 @@
 #include "Sim.h"
 #include "Society.h"
 
+static void set_abilities(
+        std::vector<Ability *>& abilities,
+        std::vector<Ability *>& distribution_abilities
+        ) {
+    for (unsigned int i = 0; i < Sim::get_num_abilities(); i++) {
+        abilities.push_back(new Ability());
+    }
+    distribution_abilities = abilities;
+    std::shuffle(distribution_abilities.begin(), distribution_abilities.end(),
+            Sim::get_random_generator());
+    std::uniform_int_distribution<> ability_count_dist(1, PRODUCT_ABILITY_COUNT_MAX);
+    distribution_abilities.resize(ability_count_dist(Sim::get_random_generator()));
+}
+
+static void set_initial_account(
+        double& initial_account,
+        const std::vector<ConsumerGood *>& consumer_goods
+        ) {
+    initial_account = 0.0;
+    for (ConsumerGood * consumer_good : consumer_goods) {
+        initial_account += consumer_good->price_per_unit *
+                           consumer_good->mean_consumption_frequency;
+    }
+    initial_account *= INITIAL_ACCOUNT_DURATION;
+}
+
+
 Society * Society::get_instance() {
     static bool initialized = false;
     static Society * instance = new Society;
@@ -36,11 +63,11 @@ Society::Society() :
 {}
 
 void Society::initialize() {
-    set_abilities();
+    set_abilities(abilities, distribution_abilities);
     set_initial_products();
     unsigned int num_producers = Sim::get_num_producers();
     for (unsigned int i = 0; i < num_producers; ++i) {
-        Producer * producer = new Producer(this);
+        Producer * producer = new Producer();
         producers.push_back(producer);
         firms.push_back(producer);
     }
@@ -65,11 +92,11 @@ void Society::initialize() {
     }
     std::unordered_set<Product *> distributor_catalog(consumer_goods.begin(), consumer_goods.end());
     for (unsigned int i = 0; i < Sim::get_num_distributors(); i++) {
-        Distributor * distributor = new Distributor(this, distributor_catalog);
+        Distributor * distributor = new Distributor(distributor_catalog);
         distributors.push_back(distributor);
         firms.push_back(distributor);
     }
-    set_initial_account();
+    set_initial_account(initial_account, consumer_goods);
     for (unsigned int i = 0; i < Sim::get_num_people(); i++) {
         birth_person();
     }
@@ -88,12 +115,6 @@ void Society::on_time_step() {
     }
     for (Firm * firm : firms) {
         firm->on_time_step();
-    }
-}
-
-void Society::set_abilities() {
-    for (unsigned int i = 0; i < Sim::get_num_abilities(); i++) {
-        abilities.push_back(new Ability());
     }
 }
 
@@ -172,6 +193,10 @@ double get_max_eigenvalue(Eigen::MatrixXd &io_matrix) {
 
 std::vector<Ability *>& Society::get_abilities() {
     return abilities;
+}
+
+std::vector<Ability *>& Society::get_distribution_abilities() {
+    return distribution_abilities;
 }
 
 std::vector<Producer *> &Society::get_producers() {
@@ -302,6 +327,10 @@ void Society::set_underlying_living_labor_per_unit(Product * product, double ll)
     underlying_living_labor_per_unit[product] = ll;
 }
 
+std::vector<Firm *>& Society::get_firms() {
+    return firms;
+}
+
 std::vector<Distributor *> &Society::get_distributors() {
     return distributors;
 }
@@ -316,15 +345,6 @@ unsigned int Society::get_current_work_hours_daily() {
 
 unsigned int Society::get_current_work_days_weekly() {
 	return current_work_days_weekly;
-}
-
-void Society::set_initial_account() {
-    initial_account = 0.0;
-    for (ConsumerGood * consumer_good : consumer_goods) {
-        initial_account += consumer_good->price_per_unit *
-                           consumer_good->mean_consumption_frequency;
-    }
-    initial_account *= INITIAL_ACCOUNT_DURATION;
 }
 
 int Society::get_initial_account() {
