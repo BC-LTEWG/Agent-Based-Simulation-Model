@@ -19,6 +19,9 @@ void print_usage() {
     std::cout << "\t-v N: Set the standard deviation of abilities to N." << std::endl;
     std::cout << "\t-e N: Set the random seed to N." << std::endl;
     std::cout << "\t-s N: Set the annual chance of an agent getting sick." << std::endl;
+    std::cout << "\t--init_prices S: How initial prices are set. Options are 'labor_values' and 'equilibrium_prices'." << std::endl;
+    std::cout << "\t--production_difficulty N: Set the spectral radius of the I/O requirements matrix. Higher values make surplus generation more difficult." << std::endl;
+    std::cout << "\t--consumption_demand N: Set the proportion of value consumed by society relative to the maximum value producable by that society." << std::endl;
     std::cout << "\t-j: Write JSON log traces to stdout." << std::endl;
 }
 
@@ -34,7 +37,11 @@ enum class ArgType {
     kAbilities,
     kAbilityStdDev,
     kSickChance,
-    kSeed
+    kSeed,
+    kProductionDifficulty,
+    kConsumptionDemand,
+    kConsumptionMult,
+    InitPrices
 };
 
 void set_params(int argc, const char ** argv, SimArgs& args) {
@@ -53,6 +60,9 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
         {"-v", ArgType::kAbilityStdDev}, {"--ability-stddev", ArgType::kAbilityStdDev},
         {"-s", ArgType::kSickChance}, {"--sick-chance", ArgType::kSickChance},
         {"-e", ArgType::kSeed}, {"--seed", ArgType::kSeed},
+        {"--production_difficulty", ArgType::kProductionDifficulty},
+        {"--consumption_demand", ArgType::kConsumptionDemand},
+        {"--init_prices", ArgType::InitPrices}
     };
 
 
@@ -67,9 +77,16 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
             break;
         }
         if (!valid_args.count(arg)) {
+
             error = true;
             break;
         }
+
+        if (valid_args.at(arg) == ArgType::InitPrices) {
+            args.init_price_mode = argv[++i];
+            continue;
+        }
+
         long value = strtol(argv[++i], nullptr, 10);
         double dvalue = strtod(argv[i], nullptr);
         switch (valid_args.at(arg)) {
@@ -161,6 +178,22 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
+            case ArgType::kProductionDifficulty: {
+                if (dvalue < 0.0 || dvalue >= 1.0) {
+                    error = true;
+                } else {
+                    args.degree_of_productivity = dvalue;
+                }
+                break;
+            }
+            case ArgType::kConsumptionDemand: {
+                if (dvalue < 0.0 || dvalue >= 1.0) {
+                    error = true;
+                } else {
+                    args.consumption_epsilon = dvalue;
+                }
+                break;
+            }
             case ArgType::kSeed: {
                 if (value < 0) {
                     error = true;
@@ -169,6 +202,10 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                     args.fixed_seed = true;
                 }
                 break;
+            }
+            case ArgType::InitPrices: {
+                args.init_price_mode = argv[++i];
+                continue;
             }
         }
     }

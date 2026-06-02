@@ -6,6 +6,7 @@
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
+#include <string>
 
 #include "Constants.h"
 #include "ConsumerGood.h"
@@ -182,9 +183,10 @@ double get_max_eigenvalue(Eigen::MatrixXd &io_matrix) {
     Eigen::EigenSolver<Eigen::MatrixXd> eigen_solver(io_matrix, false);
     Eigen::VectorXcd eigenvalues = eigen_solver.eigenvalues();
     double max_eigenvalue = 0.0;
+    double tol = 1e-10;
     for (size_t i = 0; i < static_cast<unsigned long>(eigenvalues.size()); ++i) {
         if (eigenvalues(i).real() > max_eigenvalue &&
-            !eigenvalues(i).imag()) {
+            std::abs(eigenvalues(i).imag()) < tol) {
             max_eigenvalue = eigenvalues(i).real();
         }
     }
@@ -235,8 +237,41 @@ void Society::log_total_employment() {
 void Society::adjust_io_matrix(
     Eigen::MatrixXd& io_matrix,
     double max_eigenvalue) {
-    io_matrix /= (max_eigenvalue + PRODUCT_INPUT_EPSILON);
+    (void) max_eigenvalue;
+
     const size_t dim = io_matrix.rows();
+    const size_t new_dim = dim - consumer_goods.size();
+
+    std::vector<size_t> kept_indices;
+    kept_indices.reserve(new_dim);
+
+    for (size_t i = 0; i < products.size(); ++i) {
+        if (products[i]->product_type != Product::TYPE_CONSUMER_GOOD) {
+            kept_indices.push_back(products[i]->id);
+        }
+    }
+
+    Eigen::MatrixXd productive_matrix(new_dim, new_dim);
+
+    for (size_t i = 0; i < new_dim; ++i) {
+        for (size_t j = 0; j < new_dim; ++j) {
+            productive_matrix(i, j) =
+                io_matrix(kept_indices[i], kept_indices[j]);
+        }
+    }
+
+    double productive_max_eigenvalue = get_max_eigenvalue(productive_matrix);
+
+    double epsilon = Sim::get_productivity();
+    double scalar = ((1 - epsilon) * productive_max_eigenvalue) / epsilon;
+    double divisor = productive_max_eigenvalue + scalar;
+
+    for (size_t i = 0; i < new_dim; ++i) {
+        for (size_t j = 0; j < new_dim; ++j) {
+            io_matrix(kept_indices[i], kept_indices[j]) /= divisor;
+        }
+    }
+
     for (std::size_t j = 0; j < dim; ++j) {
         for (std::pair<Good * const, double>& input : products[j]->inputs_per_unit) {
             input.second = io_matrix(input.first->id, j);
@@ -257,12 +292,12 @@ static void normalize_consumption_frequencies(
         ) {
     double value_consumed_per_hour = 0.0;
     for (ConsumerGood * consumer_good : consumer_goods) {
-        value_consumed_per_hour += consumer_good->price_per_unit *
+        value_consumed_per_hour += consumer_good->labor_value *
             consumer_good->mean_consumption_frequency;
     }
     double worked_proportion_of_week =
         static_cast<double>(Sim::get_work_hours_daily()) * Sim::get_work_days_weekly() / WEEK;
-    double consumption_scalar = PRODUCT_CONSUMPTION_MULT
+    double consumption_scalar = Sim::get_product_consumption_mult()
         * worked_proportion_of_week
         / value_consumed_per_hour;
     for (ConsumerGood * consumer_good : consumer_goods) {
@@ -276,11 +311,9 @@ void Society::set_product_prices_production_consumption() {
     Eigen::VectorXd l(dim);
     populate_io_matrix_and_labor_vector(A, l);
     double max_eigenvalue = get_max_eigenvalue(A);
-    if (max_eigenvalue >= 1.0) {
-        adjust_io_matrix(A, max_eigenvalue);
-    }
+    adjust_io_matrix(A, max_eigenvalue);
     log_io_matrix(A, dim);
-    log_labor_vector(l, dim);
+    log_vector(l, "l", dim);
     Eigen::MatrixXd leontief_inverse = get_leontief_inverse(A);
     Eigen::VectorXd values = leontief_inverse.transpose() * l;
     for (std::size_t i = 0; i < dim; ++i) {
@@ -289,9 +322,10 @@ void Society::set_product_prices_production_consumption() {
             message << "Value of item " << i << " <= 0.";
             throw std::domain_error(message.str());
         }
-        products[i]->price_per_unit = values(i);
+        products[i]->labor_value = values(i);
     }
     normalize_consumption_frequencies(consumer_goods);
+    set_initial_prices(A, l, consumer_goods, dim);
     Eigen::VectorXd demands(dim);
     for (ConsumerGood * consumer_good : consumer_goods) {
         demands[consumer_good->id] = consumer_good->mean_consumption_frequency;
@@ -302,6 +336,237 @@ void Society::set_product_prices_production_consumption() {
     }
 }
 
+static bool try_active_constraint_combination(
+    const Eigen::MatrixXd& V,
+    const Eigen::RowVectorXd& normalization_row,
+    std::vector<Eigen::Index>& active_constraints,
+    Eigen::Index start,
+    Eigen::Index remaining,
+    double tol,
+    Eigen::VectorXd& result
+    ) {
+
+    const Eigen::Index n = V.rows();
+    const Eigen::Index k = V.cols();
+
+    if (remaining == 0) {
+        Eigen::MatrixXd U(k, k);
+        Eigen::VectorXd rhs = Eigen::VectorXd::Zero(k);
+
+        U.row(0) = normalization_row;
+        rhs(0) = 1.0;
+
+        for (Eigen::Index row = 1; row < k; ++row) {
+            U.row(row) = V.row(active_constraints[row - 1]);
+        }
+
+        Eigen::FullPivLU<Eigen::MatrixXd> lu(U);
+
+        if (!lu.isInvertible()) {
+            return false;
+        }
+
+        Eigen::VectorXd c = lu.solve(rhs);
+        Eigen::VectorXd p = V * c;
+
+        if (p.minCoeff() < -tol) {
+            return false;
+        }
+
+        for (Eigen::Index i = 0; i < n; ++i) {
+            if (p(i) < 0.0) {
+                p(i) = 0.0;
+            }
+        }
+
+        double norm = p.norm();
+
+        if (norm <= tol) {
+            return false;
+        }
+
+        p /= norm;
+        result = p;
+
+        return true;
+    }
+    for (Eigen::Index i = start; i <= n - remaining; ++i) {
+        active_constraints.push_back(i);
+
+        bool found = try_active_constraint_combination(
+            V,
+            normalization_row,
+            active_constraints,
+            i + 1,
+            remaining - 1,
+            tol,
+            result
+            );
+
+        if (found) {
+            return true;
+        }
+
+        active_constraints.pop_back();
+    }
+
+    return false;
+}
+
+Eigen::VectorXd get_epr_prices(Eigen::MatrixXd& M, double spectral_radius) {
+    Eigen::EigenSolver<Eigen::MatrixXd> eigen_solver(
+        M.transpose()
+    );
+
+    double tol = 1e-8;
+    Eigen::VectorXcd eigenvalues = eigen_solver.eigenvalues();
+    Eigen::MatrixXcd eigenvectors = eigen_solver.eigenvectors();
+
+    std::vector<Eigen::VectorXd> likely_perron_evecs;
+
+    for (Eigen::Index i = 0; i < eigenvalues.size(); ++i) {
+        if (std::abs(eigenvalues(i).real() - spectral_radius) < tol) {
+            likely_perron_evecs.push_back(eigenvectors.col(i).real());
+        }
+    }
+
+    Eigen::MatrixXd V(M.rows(), likely_perron_evecs.size());
+
+    for (std::size_t j = 0; j < likely_perron_evecs.size(); ++j) {
+        V.col(j) = likely_perron_evecs[j];
+    }
+
+    Eigen::Index n = V.rows();
+    Eigen::Index k = V.cols();
+
+    if (k == 1) {
+        Eigen::VectorXd p = V.col(0);
+
+        if (p.minCoeff() < -tol) {
+            p *= -1.0;
+        }
+        if (p.minCoeff() < -tol) {
+            throw std::runtime_error("Perron root is not non-negative!");
+        }
+
+        for (Eigen::Index i = 0; i < n; ++i) {
+            if (p(i) < 0.0) {
+                p(i) = 0.0;
+            }
+        }
+
+        p /= p.norm();
+        return p;
+    }
+    Eigen::RowVectorXd normalization_row =
+        Eigen::RowVectorXd::Ones(n) * V;
+
+    std::vector<Eigen::Index> active_constraints;
+    Eigen::VectorXd result;
+
+    bool found = try_active_constraint_combination(
+            V,
+            normalization_row,
+            active_constraints,
+            0,
+            k - 1,
+            tol,
+            result
+            );
+
+    if (!found) {
+        throw std::runtime_error(
+            "Could not find a nonnegative vector in the Perron eigenspace."
+        );
+    }
+
+    return result;
+}
+
+void Society::set_initial_prices(
+        const Eigen::MatrixXd& A,
+        const Eigen::VectorXd& l,
+        const std::vector<ConsumerGood *>& consumer_goods,
+        std::size_t dim 
+        ) {
+    std::string price_mode = Sim::get_initial_price_mode();
+    bool use_labor_values = false;
+
+    if (price_mode == "equilibrium_prices") {
+        try {
+            Eigen::VectorXd b = Eigen::VectorXd::Zero(dim);
+
+            for (ConsumerGood * consumer_good : consumer_goods) {
+                b(consumer_good->id) = consumer_good->mean_consumption_frequency;
+            }
+
+            Eigen::MatrixXd augmented_matrix = A+l*b.transpose();
+            double spectral_radius = get_max_eigenvalue(augmented_matrix);
+
+            int reductions = 0;
+            constexpr int MAX_CONSUMPTION_REDUCTIONS = 10000;
+
+            while (spectral_radius >= 1.0) {
+                b *= CONSUMP_REDUCTION_FACTOR;
+
+                augmented_matrix = A+l*b.transpose();
+                spectral_radius = get_max_eigenvalue(augmented_matrix);
+                
+                ++reductions;
+
+                if (reductions > MAX_CONSUMPTION_REDUCTIONS) {
+                    std::stringstream message;
+                    message << "Unable to derive a suitable capitalist vector of equilibrium prices.";
+                    throw std::domain_error(message.str());
+                }
+            }
+
+            log_vector(b, "b", b.size());
+            Eigen::VectorXd prices = get_epr_prices(
+                augmented_matrix,
+                spectral_radius
+            );
+
+            for (std::size_t i = 0; i < dim; ++i) {
+                if (prices(i) <= 0.0) {
+                    std::stringstream message;
+                    message << "Price of item " << i << " <= 0.";
+                    throw std::domain_error(message.str());
+                }
+                products[i]->price_per_unit = prices(i);
+            }
+
+            return;
+        }
+        catch (const std::exception& e) {
+            Logger::log(
+                Logger::SOCIETY,
+                id,
+                "initial_price_fallback",
+                LogPairS("requested_mode", price_mode),
+                LogPairS("reason", e.what())
+            );
+            use_labor_values = true;
+        }
+    }
+    else {
+        use_labor_values = true;
+        if (price_mode != "labor_values") {
+            Logger::log(
+                Logger::SOCIETY,
+                id,
+                "initial_price_fallback",
+                LogPairS("requested_mode", price_mode),
+                LogPairS("reason", "Unknown price mode specified")
+            );
+        }
+    }
+    if (use_labor_values) {
+        for (std::size_t i = 0; i < dim; ++i) {
+            products[i]->price_per_unit = products[i]->labor_value;
+        }
+    }
+}
 
 std::vector<Product *>& Society::get_products() {
     return products;
@@ -395,14 +660,14 @@ void Society::log_io_matrix(Eigen::MatrixXd& A, size_t dim) {
     }
 }
 
-void Society::log_labor_vector(Eigen::VectorXd& l, size_t dim) {
+void Society::log_vector(Eigen::VectorXd& v, std::string name, size_t dim) {
     for (size_t i = 0; i < dim; ++i) {
         Logger::log(
                 Logger::SOCIETY,
                 id,
-                "l",
+                name,
                 LogPair("prod_id", i),
-                LogPair("value", l(i))
+                LogPair("value", v(i))
                 );
     }
 }
