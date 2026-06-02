@@ -58,16 +58,13 @@ struct Order {
 
 class Firm : public Agent {
   public:
-    Firm(
-        Society * society,
-        const std::unordered_set<Product *>& initial_catalog
-    );
+    Firm();
     unsigned int get_id() override;
     virtual Logger::Client get_client_type() = 0;
     virtual void on_time_step() override;
+    virtual void add_to_catalog(Product * product) = 0;
     double get_avg_productivity();
     virtual double get_inventory_level(Product * product);
-    void add_supplier(Producer * producer);
     void receive_shipment(Order * order);
     void receive_shipment(Plan * plan);
     void receive_payment(Plan * plan, double transaction_amount);
@@ -78,14 +75,12 @@ class Firm : public Agent {
 
 
   protected:
-    Society * society;
     unsigned int id;
     double pooled_input_value = 0.0;
-    std::vector<Machine *> machines;
+    std::unordered_set<Machine *> machines;
     std::unordered_set<Person *> workers,
         standby_workers;
 	
-    std::vector<Producer *> suppliers;
     std::unordered_map<Product *, double> input_inventory;
     std::unordered_set<Product *> catalog;
     
@@ -144,4 +139,5 @@ class Firm : public Agent {
     void log_demand(const Product * Product, double demand);
     void log_pending_inventory(const Product * product, double pending_inventory);
     void log_catalog();
+    void log_catalog_addition(Product * product);
 };

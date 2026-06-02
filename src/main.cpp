@@ -11,8 +11,8 @@ void print_usage() {
     std::cout << "\t-p N: Simulate a society with N people." << std::endl;
     std::cout << "\t-h N: Set the workday to N hours." << std::endl;
     std::cout << "\t-w N: Set the work week to N days." << std::endl;
-    std::cout << "\t-o N: Set the initial number of products to N." << std::endl;
-    std::cout << "\t-m N: Set the initial number of products per machine to N." << std::endl;
+    std::cout << "\t-g N: Set the initial number of goods to N." << std::endl;
+    std::cout << "\t-m N: Set the initial number of goods per machine to N." << std::endl;
     std::cout << "\t-r N: Set the initial number of producers to N." << std::endl;
     std::cout << "\t-d N: Set the initial number of distributors to N." << std::endl;
     std::cout << "\t-a N: Set the number of modeled abilities (work skills) to N." << std::endl;
@@ -27,8 +27,8 @@ enum class argType {
     People,
     WorkHours,
     WorkDays,
-    Products,
-    ProductsPerMachine,
+    Goods,
+    GoodsPerMachine,
     Producers,
     Distributors,
     Abilities,
@@ -45,8 +45,8 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
         {"-p", argType::People}, {"--people", argType::People},
         {"-h", argType::WorkHours}, {"--work-hours", argType::WorkHours},
         {"-w", argType::WorkDays}, {"--work-days", argType::WorkDays},
-        {"-o", argType::Products}, {"--products", argType::Products},
-        {"-m", argType::ProductsPerMachine}, {"--products-per-machine", argType::ProductsPerMachine},
+        {"-g", argType::Goods}, {"--goods", argType::Goods},
+        {"-m", argType::GoodsPerMachine}, {"--products-per-machine", argType::GoodsPerMachine},
         {"-r", argType::Producers}, {"--producers", argType::Producers},
         {"-d", argType::Distributors}, {"--distributors", argType::Distributors},
         {"-a", argType::Abilities}, {"--abilities", argType::Abilities},
@@ -76,86 +76,98 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
             case argType::TimeSteps: {
                 if (value <= 0) {
                     error = true;
+                } else {
+                    args.time_steps = value;
                 }
-                args.time_steps = value;
                 break;
             }
             case argType::People: {
-                args.num_people = value;
                 if (value <= 0) {
                     error = true;
+                } else {
+                    args.num_people = value;
                 }
                 break;
             }
             case argType::WorkHours: {
-                args.work_hours_daily = value;
                 if (value <= 0 || value > 24) {
                     error = true;
+                } else {
+                    args.work_hours_daily = value;
                 }
                 break;
             }
             case argType::WorkDays: {
                 if (value <= 0 || value > 7) {
                     error = true;
+                } else {
+                    args.work_days_weekly = value;
                 }
-                args.work_days_weekly = value;
                 break;
             }
-            case argType::Products: {
+            case argType::Goods: {
                 if (value <= 0) {
                     error = true;
+                } else {
+                    args.num_goods = value;
                 }
-                args.num_products = value;
                 break;
             }
-            case argType::ProductsPerMachine: {
+            case argType::GoodsPerMachine: {
                 if (value <= 0) {
                     error = true;
+                } else {
+                    args.goods_per_machine = value;
                 }
-                args.products_per_machine = value;
                 break;
             }
             case argType::Producers: {
                 if (value <= 0) {
                     error = true;
+                } else {
+                    args.num_producers = value;
                 }
-                args.num_producers = value;
                 break;
             }
             case argType::Distributors: {
                 if (value <= 0) {
                     error = true;
+                } else {
+                    args.num_distributors = value;
                 }
-                args.num_distributors = value;
                 break;
             }
             case argType::Abilities: {
                 if (value <= 0) {
                     error = true;
+                } else {
+                    args.num_abilities = value;
                 }
-                args.num_abilities = value;
                 break;
             }
             case argType::AbilityStdDev: {
-                if (dvalue < 0.0 || dvalue > 1.0) {
+                if (dvalue < 0.0) {
                     error = true;
+                } else {
+                    args.ability_stddev = dvalue;
                 }
-                args.ability_stddev = dvalue;
                 break;
             }
             case argType::SickChance: {
                 if (dvalue < 0.0 || dvalue > 1.0) {
                     error = true;
+                } else {
+                    args.sickness_chance = dvalue;
                 }
-                args.sickness_chance = dvalue;
                 break;
             }
             case argType::Seed: {
                 if (value < 0) {
                     error = true;
+                } else {
+                    args.seed = value;
+                    args.fixed_seed = true;
                 }
-                args.seed = value;
-                args.fixed_seed = true;
                 break;
             }
         }

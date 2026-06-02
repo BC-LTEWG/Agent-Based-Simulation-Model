@@ -31,16 +31,10 @@ Order::Order(
       status(ORDER_REQUESTED)
 {}
 
-Firm::Firm(
-        Society * society,
-        const std::unordered_set<Product *>& initial_catalog
-        ) :
-    society{society},
-    catalog(initial_catalog)
-{
+Firm::Firm() {
     static unsigned int unique_id = 0;
     id = unique_id++;
-    for (Product * product : society->get_products()) {
+    for (Product * product : Society::get_instance()->get_products()) {
         recorded_living_labor_per_unit[product] = product->living_labor_per_unit;
     }
 }
@@ -59,10 +53,6 @@ void Firm::on_time_step() {
 
 double Firm::get_inventory_level(Product * product) {
     return input_inventory.count(product) ? input_inventory[product] : 0;
-}
-
-void Firm::add_supplier(Producer * producer) {
-    suppliers.push_back(producer);
 }
 
 void Firm::receive_shipment(Plan * plan) {
@@ -105,7 +95,7 @@ double Firm::get_pooled_input_value() {
 
 std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
     double firm_busyness = get_busyness();
-    double societal_busyness = society->get_busyness();
+    double societal_busyness = Society::get_instance()->get_busyness();
     int max_workers_to_transfer = (int) (workers.size() * (1.0 - firm_busyness / 
             (societal_busyness - TRANSFER_BUSYNESS_THRESHOLD))); 
     max_workers_to_transfer = std::max(max_workers_to_transfer, workers_wanted);
@@ -130,7 +120,8 @@ Producer * Firm::send_order(Order * order) {
     double order_rate = 0.0;
     Producer * chosen_producer = nullptr;
     Order * chosen_return_order = nullptr;
-
+    std::vector<Producer *>& suppliers =
+        Society::get_instance()->get_suppliers(order->product);
     for (Producer * producer : suppliers) {
         if (!producer->can_produce(order->product)) {
             continue;
@@ -312,12 +303,12 @@ void Firm::assign_workers(Plan * draft_plan) {
         draft_plan->workers.push_back(worker);
         workers_left--;
     }
-    for (Person * unemployed_person : society->get_unemployed_people()) {
+    for (Person * unemployed_person : Society::get_instance()->get_unemployed_people()) {
         if (workers_left == 0) return;
         draft_plan->workers.push_back(unemployed_person);
         workers_left--;
     }
-    for (Firm * firm : society->get_firms()) {
+    for (Firm * firm : Society::get_instance()->get_firms()) {
         if (workers_left == 0) return;
         log_transfer_request();
         if (firm == this) continue;
@@ -387,7 +378,8 @@ Plan * Firm::draft_plan_for_order(Order * order) {
     Plan * draft_plan = new Plan;
     draft_plan->order = order;
     draft_plan->firm = this;
-    draft_plan->local_work_hours_daily = society->get_current_work_hours_daily();
+    draft_plan->local_work_hours_daily = 
+        Society::get_instance()->get_current_work_hours_daily();
 
     assign_workers(draft_plan);
     if (draft_plan->workers.size() == 0) {
@@ -410,7 +402,7 @@ void Firm::update_demands() {
 
 void Firm::move_worker_off_standby(Person * worker) {
     if (worker->get_firm() == nullptr) {
-        society->get_unemployed_people().erase(worker);
+        Society::get_instance()->get_unemployed_people().erase(worker);
         log_initial_employment(worker->get_id(), id);
     } else if (worker->get_firm() == this) {
         standby_workers.erase(worker);
@@ -589,9 +581,9 @@ void Firm::log_catalog() {
         }
     }
     Logger::log(get_client_type(), id, "catalog", LogPairS("product_ids", oss.str()));
-    /*
-    for (Product * product : catalog) {
-        Logger::log(get_client_type(), id, "catalog", LogPair("product_id", product->id));
-    }
-    */
 }
+
+void Firm::log_catalog_addition(Product * product) {
+    Logger::log(get_client_type(), id, "catalog_addition", LogPair("product_id", product->id));
+}
+

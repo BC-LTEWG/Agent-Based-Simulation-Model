@@ -15,23 +15,13 @@
 #include "Society.h"
 
 Distributor::Distributor(
-        Society * society,
         const std::unordered_set<Product *>& initial_catalog
         ) :
-    Firm(society, initial_catalog)
+    Firm()
 {
-    for (Product * product : catalog) {
-        ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
-        Good * good = consumer_good->corresponding_good;
-        input_inventory[consumer_good] = 
-            consumer_good->mean_consumption_frequency 
-            * Sim::get_num_people() 
-            / Sim::get_num_distributors()
-            * (FIRM_STOCKPILE_DURATION + DEMAND_AVERAGING_WINDOW);
-        log_inventory_level(good, input_inventory[good]);
-        consumer_goods_without_plans.insert(consumer_good);
+    for (Product * product : initial_catalog) {
+        add_to_catalog(product);
     }
-    log_catalog();
 }
 
 Logger::Client Distributor::get_client_type() {
@@ -45,6 +35,20 @@ void Distributor::on_time_step() {
     for (ConsumerGood * consumer_good : consumer_goods_without_plans_copy) {
         renew_distribution_plan(consumer_good);
     }
+}
+
+void Distributor::add_to_catalog(Product * product) {
+    catalog.insert(product);
+    ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
+    Good * good = consumer_good->corresponding_good;
+    input_inventory[consumer_good] = 
+        consumer_good->mean_consumption_frequency 
+        * Sim::get_num_people() 
+        / Sim::get_num_distributors()
+        * (FIRM_STOCKPILE_DURATION + DEMAND_AVERAGING_WINDOW);
+    consumer_goods_without_plans.insert(consumer_good);
+    log_inventory_level(good, input_inventory[good]);
+    log_catalog_addition(product);
 }
 
 int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person) {

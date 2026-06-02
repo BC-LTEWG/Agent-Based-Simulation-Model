@@ -14,35 +14,13 @@
 #include "Society.h"
 
 Producer::Producer(
-        Society * society,
         const std::unordered_set<Product *>& initial_catalog
         ) :
-    Firm(society, initial_catalog) {
-    std::unordered_set<Machine *> initial_machines;
-    for (Product * product : catalog) {
-        for (Machine * machine : product->machines_needed) {
-            initial_machines.insert(machine);
-        }
+    Firm()
+{
+    for (Product * product : initial_catalog) {
+        add_to_catalog(product);
     }
-    for (Machine * machine : initial_machines) {
-        machines.push_back(machine);
-    }
-    for (Product * product : catalog) {
-        for (std::pair<Good * const, double>& input :
-                product->inputs_per_unit) {
-            input_inventory[input.first] = 
-                input.second 
-                * Society::get_instance()->get_initial_production()[product]
-                * Sim::get_num_people() 
-                * Sim::get_num_products() 
-                / Sim::get_num_producers()
-                * (FIRM_STOCKPILE_DURATION + DEMAND_AVERAGING_WINDOW);
-        }
-    }
-    for (std::pair<Product * const, double>& stockpile : input_inventory) {
-        log_inventory_level(stockpile.first, stockpile.second);
-    }
-    log_catalog();
 }
 
 Logger::Client Producer::get_client_type() {
@@ -51,6 +29,31 @@ Logger::Client Producer::get_client_type() {
 
 void Producer::on_time_step() {
     Firm::on_time_step();
+}
+
+void Producer::add_to_catalog(Product * product) {
+    catalog.insert(product);
+    for (Machine * machine : product->machines_needed) {
+        machines.insert(machine);
+    }
+    for (std::pair<Good * const, double>& input :
+            product->inputs_per_unit) {
+        double output_demand = Society::get_instance()->get_initial_production()[product];
+        if (Good * good = dynamic_cast<Good *>(product)) {
+            output_demand = good->corresponding_consumer_good->mean_consumption_frequency;
+        }
+        input_inventory[input.first] = 
+            input.second 
+            * output_demand
+            * Sim::get_num_people() 
+            * Sim::get_num_goods() 
+            / Sim::get_num_producers()
+            * (FIRM_STOCKPILE_DURATION + DEMAND_AVERAGING_WINDOW);
+    }
+    for (std::pair<Product * const, double>& stockpile : input_inventory) {
+        log_inventory_level(stockpile.first, stockpile.second);
+    }
+    log_catalog_addition(product);
 }
 
 bool Producer::can_produce(Product * product) {
@@ -111,7 +114,7 @@ void Producer::pursue_order(Firm * customer) {
 	customer_to_draft_plan[customer] = nullptr;
     start_plan(plan);
     log_pursued_plan(plan);
-    society->log_total_employment();
+    Society::get_instance()->log_total_employment();
 }
 
 void Producer::log_draft_plan(const Plan * draft_plan) {
