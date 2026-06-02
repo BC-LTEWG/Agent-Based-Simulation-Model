@@ -94,12 +94,12 @@ double Firm::get_busyness() {
 std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
     double firm_busyness = get_busyness();
     double societal_busyness = society->get_busyness();
-    double gap = societal_busyness - TRANSFER_BUSYNESS_THRESHOLD;
-    if (gap <= 0 || firm_busyness >= gap) {
+    double adjusted_societal_busyness = societal_busyness - TRANSFER_BUSYNESS_THRESHOLD;
+    if (adjusted_societal_busyness <= 0 || firm_busyness >= adjusted_societal_busyness) {
         log_busyness(firm_busyness, societal_busyness, 0);
         return {};
     }
-    int max_workers_to_transfer = (int) (workers.size() * (1.0 - firm_busyness / gap)); 
+    int max_workers_to_transfer = (int) (workers.size() * (1.0 - firm_busyness / adjusted_societal_busyness)); 
     max_workers_to_transfer = std::max(max_workers_to_transfer, workers_wanted);
     log_busyness(firm_busyness, societal_busyness, max_workers_to_transfer);
     std::vector<Person *> transfers;
@@ -155,17 +155,16 @@ double Firm::get_reorder_threshold(Product * product) {
 
 double Firm::get_pending_inventory_level(Product * product) {
     double pending_inventory = 0.0;
-    if(input_inventory.count(product)) {
+    if (input_inventory.count(product)) {
         pending_inventory = input_inventory[product];
     }
-    if(product_to_outbound_orders.count(product)) {
+    if (product_to_outbound_orders.count(product)) {
         for (Order * order : product_to_outbound_orders[product]) {
             pending_inventory += order->quantity;
         }
     }
     return pending_inventory;
 }
-
 
 void Firm::check_and_reorder_inputs() {
     for (std::pair<Product *, double> stockpile : input_inventory) {
@@ -236,7 +235,6 @@ void Firm::assign_workers(
 }
 
 double Firm::predict_turnaround_time(Plan * plan, std::vector<Person *>& workers) {
-
     double count = safe_handle_zero(static_cast<double>(workers.size()), "predict_turnaround_time workers", 0.0);
     if (count == 0) {
         return 0;
@@ -353,11 +351,14 @@ double Firm::get_demand(Product * product) {
     }
     int window_length = std::max(FIRM_DEMAND_WINDOW_MIN, 
         Sim::get_current_time_step() - window_start);
-    double total_d = 0;
-    if(total_demands.count(product)) {
+    if(window_length < 1) {
+        throw std::runtime_error("Window length cannot be less than 1: " + product->product_name);
+    }
+    double total_d = 0.0;
+    if (total_demands.count(product)) {
         total_d = total_demands[product];
     }
-    return total_d / safe_handle_zero(static_cast<double>(window_length), "get_demand window", 1.0);
+    return total_d / static_cast<double>(window_length);
 }
 
 void Firm::move_worker_off_standby(Person * worker) {
