@@ -42,7 +42,7 @@ void Producer::add_to_catalog(Product * product) {
         if (Good * good = dynamic_cast<Good *>(product)) {
             output_demand = good->corresponding_consumer_good->mean_consumption_frequency;
         }
-        input_inventory[input.first] = 
+        input_inventory[input.first] += 
             input.second 
             * output_demand
             * Sim::get_num_people() 

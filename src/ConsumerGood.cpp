@@ -9,7 +9,7 @@ ConsumerGood::ConsumerGood(Good * good) :
     Product()
 {
     product_type = Product::ProductType::TYPE_CONSUMER_GOOD;
-    living_labor_per_unit *= DISTRIBUTION_LABOR_PER_UNIT;
+    living_labor_per_unit *= DISTRIBUTION_COST_MULT;
     Society::get_instance()->
         set_underlying_living_labor_per_unit(this, living_labor_per_unit);
     static std::uniform_real_distribution<>
