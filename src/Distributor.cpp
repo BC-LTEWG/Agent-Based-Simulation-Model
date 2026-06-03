@@ -105,7 +105,8 @@ void Distributor::renew_distribution_plan(ConsumerGood * consumer_good) {
 }
 
 double Distributor::get_pending_inventory_level(Product * product) {
-    if (Good * good = dynamic_cast<Good *>(product)) {
+    if (product->product_type == Product::TYPE_GOOD) {
+        Good * good = static_cast<Good *>(product);
         ConsumerGood * consumer_good = good->corresponding_consumer_good;
         return Firm::get_pending_inventory_level(good)
             + Firm::get_pending_inventory_level(consumer_good);

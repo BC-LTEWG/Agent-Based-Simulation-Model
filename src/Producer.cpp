@@ -39,7 +39,8 @@ void Producer::add_to_catalog(Product * product) {
     for (std::pair<Good * const, double>& input :
             product->inputs_per_unit) {
         double output_demand = Society::get_instance()->get_initial_production()[product];
-        if (Good * good = dynamic_cast<Good *>(product)) {
+        if (product->product_type == Product::TYPE_GOOD) {
+            Good * good = static_cast<Good *>(product);
             output_demand = good->corresponding_consumer_good->mean_consumption_frequency;
         }
         input_inventory[input.first] += 
