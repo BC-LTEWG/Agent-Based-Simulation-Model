@@ -60,6 +60,10 @@ double Person::get_busyness() {
     return busyness;
 }
 
+double Person::get_account() {
+    return account;
+}
+
 void Person::train(std::unordered_map<Ability *, double>& target_abilities) {
     // can introduce < 100% effectiveness on training later
     for (const std::pair<Ability * const, double>& ability : target_abilities) {
@@ -112,7 +116,12 @@ void Person::purchase_good(ConsumerGood * consumer_good, int quantity) {
 
 void Person::consume() {
     for (ConsumerGood * consumer_good : society->get_consumer_goods()) {
-        to_consume[consumer_good] += consumer_good->mean_consumption_frequency;
+        double consumption_from_wealth = 
+            (account / society->get_average_account() - 1)
+            * CONSUMPTION_FROM_WEALTH_MULT;
+        double consumption = consumer_good->mean_consumption_frequency 
+            * (1.0 + consumption_from_wealth);
+        to_consume[consumer_good] += consumption;
         int consumed = static_cast<int>(to_consume[consumer_good]);
         if (consumed) {
             inventory[consumer_good] -= consumed;

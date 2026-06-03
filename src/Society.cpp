@@ -110,6 +110,14 @@ unsigned int Society::get_id() {
 }
 
 void Society::on_time_step() {
+    busyness = 0.0;
+    average_account = 0.0;
+    for (Person * person : people) {
+        busyness += person->get_busyness();
+        average_account += person->get_account();
+    }
+    busyness /= people.size();
+    average_account /= people.size();
     for (Person * person : people) {
         person->on_time_step();
     }
@@ -208,11 +216,11 @@ std::vector<Producer *>& Society::get_suppliers(Product * product) {
 }
 
 double Society::get_busyness() {
-    double busyness = 0.0;
-    for (Person * person : people) {
-        busyness += person->get_busyness();
-    }
-    return busyness / people.size();
+    return busyness;
+}
+
+double Society::get_average_account() {
+    return average_account;
 }
 
 double Society::get_total_employment() {
@@ -351,14 +359,8 @@ int Society::get_initial_account() {
     return initial_account;
 }
 
-std::unordered_map<Product *, double> &Society::get_initial_production() {
+std::unordered_map<Product *, double>& Society::get_initial_production() {
     return initial_production;
-}
-
-void Society::update_work_hours_daily() {
-    current_work_hours_daily = std::ceil(get_busyness() * INEFFICIENCY_OF_WORK * 
-            WEEK / Sim::get_work_days_weekly());
-    current_work_hours_daily = std::min(DAY, current_work_hours_daily);
 }
 
 Person * Society::birth_person() {

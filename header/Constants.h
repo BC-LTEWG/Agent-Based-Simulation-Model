@@ -12,9 +12,6 @@ const unsigned int YEAR = DAY * 365;
 const unsigned int INITIAL_WORK_HOURS_DAILY = 8;
 const unsigned int INITIAL_WORK_DAYS_WEEKLY = 5;
 const double INITIAL_ACCOUNT_DURATION = YEAR;
-const int WORK_HOURS_UPDATE_START = YEAR;
-const int WORK_HOURS_UPDATE_PERIOD = MONTH;
-const double INEFFICIENCY_OF_WORK = 1.5;
 
 const unsigned int STARTING_NUM_PEOPLE = 1000;
 const unsigned int STARTING_NUM_GOODS = 100;
@@ -57,6 +54,7 @@ const double PERSON_STOCKPILE_DURATION = WEEK;
 const double PERSON_DEFICIT_THRESHOLD = WEEK / 2.0;
 const unsigned int NUM_ABILITIES = 5;
 const double ABILITY_STDDEV = 0.05;
+const double CONSUMPTION_FROM_WEALTH_MULT = 0.5;
 
 const double UNHEALTHY_PRODUCTIVITY = 0.5;
 const double ANNUAL_SICKNESS_CHANCE = 0.1;

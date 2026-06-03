@@ -42,6 +42,7 @@ class Society : public Agent {
         std::vector<Producer *>& get_producers();
         std::vector<Producer *>& get_suppliers(Product * product);
         double get_busyness();
+        double get_average_account();
         double get_total_employment();
 
         void log_total_employment();
@@ -85,5 +86,7 @@ class Society : public Agent {
 		unsigned int current_work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
         std::unordered_set<Person *> unemployed_people;
         double initial_account;
+        double average_account;
+        double busyness;
         std::unordered_map<Product *, double> initial_production;
 };

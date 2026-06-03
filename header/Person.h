@@ -26,6 +26,7 @@ class Person : public Agent {
   
 	std::unordered_map<Ability *, double>& get_abilities();
     double get_busyness();
+    double get_account();
 	void train(std::unordered_map<Ability *, double>& target_abilities);
     HealthStatus get_health_status();
     float productivity();
