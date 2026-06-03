@@ -40,7 +40,6 @@ enum class ArgType {
     kSeed,
     kProductionDifficulty,
     kConsumptionDemand,
-    kConsumptionMult,
     InitPrices
 };
 
@@ -182,7 +181,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 if (dvalue < 0.0 || dvalue >= 1.0) {
                     error = true;
                 } else {
-                    args.degree_of_productivity = dvalue;
+                    args.difficulty_of_production = dvalue;
                 }
                 break;
             }
@@ -190,7 +189,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 if (dvalue < 0.0 || dvalue >= 1.0) {
                     error = true;
                 } else {
-                    args.consumption_epsilon = dvalue;
+                    args.consumption_demand_level = dvalue;
                 }
                 break;
             }

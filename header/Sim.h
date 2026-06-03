@@ -18,8 +18,8 @@ struct SimArgs {
     double sickness_chance = ANNUAL_SICKNESS_CHANCE;
     unsigned int num_abilities = NUM_ABILITIES;
     double ability_stddev = ABILITY_STDDEV;
-    double degree_of_productivity = DEGREE_OF_PRODUCTIVITY;
-    double consumption_epsilon = PRODUCT_CONSUMPTION_MULT;
+    double difficulty_of_production = DEFAULT_PRODUCTION_DIFFICULTY;
+    double consumption_demand_level = DEFAULT_CONSUMPTION_DEMAND;
     std::string init_price_mode = "labor_values";
     bool json = false;
     unsigned int seed = 0;

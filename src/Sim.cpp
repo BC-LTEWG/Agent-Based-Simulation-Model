@@ -58,11 +58,11 @@ double Sim::get_annual_sickness_chance() {
 }
 
 double Sim::get_productivity() {
-    return get_instance().args.degree_of_productivity;
+    return get_instance().args.difficulty_of_production;
 }
 
 double Sim::get_product_consumption_mult() {
-    return get_instance().args.consumption_epsilon;
+    return get_instance().args.consumption_demand_level;
 }
 
 std::string Sim::get_initial_price_mode() {
