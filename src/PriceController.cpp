@@ -8,12 +8,26 @@
 #include "Product.h"
 #include "Sim.h"
 
+PriceController::PriceController() {}
+
 PriceController * PriceController::get_instance() {
     static PriceController * instance = new PriceController;
     return instance;
 }
 
-PriceController::PriceController() {}
+void PriceController::on_time_step() {
+    double decay = 1.0 - 1.0 / FIC_AVERAGING_WINDOW;
+    paid_consumer_goods_value *= decay;
+    all_consumer_goods_value *= decay;
+    fic = 1.0;
+    if (all_consumer_goods_value) {
+        fic = paid_consumer_goods_value / all_consumer_goods_value;
+    }
+}
+
+unsigned int PriceController::get_id() {
+    return 0;
+}
 
 void PriceController::update_price(Plan * plan) {
     Product * product = plan->order->product;
@@ -50,5 +64,20 @@ void PriceController::update_price(Plan * plan) {
             LogPair("product_id", product->id),
             LogPair("price", price)
             );
+}
+
+void PriceController::report_distribution(ConsumerGood * consumer_good, int quantity) {
+    double added_value = 
+        consumer_good->price_per_unit
+        * quantity
+        / FIC_AVERAGING_WINDOW;
+    all_consumer_goods_value += added_value;
+    if (consumer_good->paid) {
+        paid_consumer_goods_value += added_value;
+    }
+}
+
+double PriceController::get_fic() {
+    return fic;
 }
 

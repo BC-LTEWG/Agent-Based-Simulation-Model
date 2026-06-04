@@ -10,6 +10,7 @@
 #include "Firm.h"
 #include "Logger.h"
 #include "Person.h"
+#include "PriceController.h"
 #include "Product.h"
 #include "Sim.h"
 #include "Society.h"
@@ -74,8 +75,8 @@ void Person::train(std::unordered_map<Ability *, double>& target_abilities) {
 
 void Person::register_hours_worked(double hours_worked) {
     log_hours_worked(hours_worked);
-    account += hours_worked;
     busyness_this_time_step += hours_worked;
+    account += PriceController::get_instance()->get_fic() * hours_worked;
 }
 
 bool Person::charge(double cost) {
@@ -116,9 +117,12 @@ void Person::purchase_good(ConsumerGood * consumer_good, int quantity) {
 
 void Person::consume() {
     for (ConsumerGood * consumer_good : society->get_consumer_goods()) {
-        double consumption_from_wealth = 
-            (account / society->get_average_account() - 1)
-            * CONSUMPTION_FROM_WEALTH_MULT;
+        double consumption_from_wealth = 0.0;
+        if (consumer_good->paid) {
+            consumption_from_wealth = 
+                (account / society->get_average_account() - 1)
+                * CONSUMPTION_FROM_WEALTH_MULT;
+        }
         double consumption = consumer_good->mean_consumption_frequency 
             * (1.0 + consumption_from_wealth);
         to_consume[consumer_good] += consumption;
@@ -157,12 +161,18 @@ void Person::shop() {
             (int) (PERSON_STOCKPILE_DURATION * consumer_good->mean_consumption_frequency) - 
             inventory[consumer_good]
         );
+        if (!consumer_good->paid) {
+            continue;
+        }
         total_price += purchase_quantities[consumer_good] * 
             consumer_good->price_per_unit;
     }
     double price_scalar = std::min(account / total_price, 1.0);
     for (std::pair<ConsumerGood *, int> consumer_good : purchase_quantities) {
-        int quantity = (int) (price_scalar * consumer_good.second);
+        int quantity = consumer_good.second;
+        if (consumer_good.first->paid) {
+            quantity = (int) (price_scalar * consumer_good.second);
+        }
         if (quantity > 0) {
             purchase_good(consumer_good.first, quantity);
         }

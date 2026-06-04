@@ -15,6 +15,7 @@
 #include "Logger.h"
 #include "Machine.h"
 #include "Person.h"
+#include "PriceController.h"
 #include "Product.h"
 #include "Producer.h"
 #include "Sim.h"
@@ -118,11 +119,19 @@ void Society::on_time_step() {
     }
     busyness /= people.size();
     average_account /= people.size();
+
     for (Person * person : people) {
         person->on_time_step();
     }
     for (Firm * firm : firms) {
         firm->on_time_step();
+    }
+    PriceController::get_instance()->on_time_step();
+
+    // public sector expansion
+    if (Sim::get_current_time_step() % PUBLIC_SECTOR_EXPANSION_PERIOD == 0
+            && Sim::get_current_time_step() / PUBLIC_SECTOR_EXPANSION_PERIOD < Sim::get_num_goods()) {
+        consumer_goods[Sim::get_current_time_step() / PUBLIC_SECTOR_EXPANSION_PERIOD]->paid = false;
     }
 }
 

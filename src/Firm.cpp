@@ -396,7 +396,7 @@ void Firm::add_demand_signal(Product * product, double quantity) {
 void Firm::update_demands() {
     for (std::pair<Product * const, double>& demand : demands) {
         demand.second *=
-            (DEMAND_AVERAGING_WINDOW - 1.0) / DEMAND_AVERAGING_WINDOW;
+            1.0 - 1.0 / DEMAND_AVERAGING_WINDOW;
     }
 }
 

@@ -9,6 +9,7 @@
 #include "Logger.h"
 #include "Machine.h"
 #include "Person.h"
+#include "PriceController.h"
 #include "Producer.h"
 #include "Product.h"
 #include "Sim.h"
@@ -61,12 +62,16 @@ int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Pers
     if (available < quantity) {
         log_shortfall(consumer_good->id, quantity - available);
     }
-    double cost = available * consumer_good->price_per_unit;
+    double cost = 0.0;
+    if (consumer_good->paid) {
+        cost = available * consumer_good->price_per_unit;
+    }
     if (!person->charge(cost)) {
          return 0;
     } 
     add_demand_signal(good, available);
     remove_input_from_inventory(consumer_good, available);
+    PriceController::get_instance()->report_distribution(consumer_good, available);
     check_and_reorder_input(good);
     return available;
 }

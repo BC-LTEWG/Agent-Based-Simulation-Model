@@ -60,6 +60,9 @@ const double UNHEALTHY_PRODUCTIVITY = 0.5;
 const double ANNUAL_SICKNESS_CHANCE = 0.1;
 const int AVG_DAYS_TO_RECOVERY = 5;
 
+const int PUBLIC_SECTOR_EXPANSION_PERIOD = 6 * MONTH;
+const int FIC_AVERAGING_WINDOW = 0.5 * MONTH; 
+
 const char * const LOGGING_DIR = "data";
 const char * const LOG_FILE = "data/lte.db";
 
