@@ -2,6 +2,7 @@
 #include <string>
 #include <cstdlib>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "Sim.h"
 
@@ -43,6 +44,11 @@ enum class ArgType {
     InitPrices
 };
 
+static const std::unordered_set<std::string> valid_init_price_modes = {
+    "labor_values",
+    "equilibrium_prices"
+};
+
 void set_params(int argc, const char ** argv, SimArgs& args) {
     bool error = false;
 
@@ -76,7 +82,6 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
             break;
         }
         if (!valid_args.count(arg)) {
-
             error = true;
             break;
         }
@@ -204,6 +209,9 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
             }
             case ArgType::InitPrices: {
                 args.init_price_mode = argv[++i];
+                if (!valid_init_price_modes.count(args.init_price_mode)) {
+                    std::cerr << "Warning! Unknown initial price mode " << args.init_price_mode << ". Defaulting to labor_values" << std::endl;
+                }
                 continue;
             }
         }

@@ -38,8 +38,7 @@ const double PRODUCT_INPUT_PER_UNIT_MAX = 1.0;
 const double DEFAULT_PRODUCTION_DIFFICULTY = 0.25;
 const int PRODUCT_NUM_MACHINES_MIN = 0;
 const int MAX_PROPORTION_OF_MACHINES_PER_PRODUCT = 5;
-const double PRODUCT_LABOR_PER_UNIT_MIN = 0.05;
-const double PRODUCT_LABOR_PER_UNIT_MAX = 0.1; 
+const double PRODUCT_LABOR_PER_UNIT_MIN = 0.05; const double PRODUCT_LABOR_PER_UNIT_MAX = 0.1; 
 const double DISTRIBUTION_COST_MULT = 0.05;
 const double DEFAULT_CONSUMPTION_DEMAND = 0.6;
 const int PRICE_AVERAGING_WINDOW = MONTH;
@@ -62,6 +61,9 @@ const double CONSUMP_REDUCTION_FACTOR = 0.97;
 const double UNHEALTHY_PRODUCTIVITY = 0.5;
 const double ANNUAL_SICKNESS_CHANCE = 0.1;
 const int AVG_DAYS_TO_RECOVERY = 5;
+
+const double PRICE_B_PERTURBATION_EPSILON = 0.0001;
+const double DESIRED_INITIAL_PROFITABILITY = 0.5;
 
 const char * const LOGGING_DIR = "data";
 const char * const LOG_FILE = "data/lte.db";

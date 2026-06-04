@@ -21,6 +21,14 @@
 #include "Sim.h"
 #include "Society.h"
 
+namespace {
+    class MultidimensionalPerronEigenspace : public std::runtime_error {
+    public:
+        MultidimensionalPerronEigenspace()
+            : std::runtime_error("Multidimensional Perron eigenspace detected.") {}
+    };
+}
+
 static void set_abilities(
         std::vector<Ability *>& abilities,
         std::vector<Ability *>& distribution_abilities
@@ -123,7 +131,6 @@ void Society::set_initial_products() {
     unsigned int starting_num_goods = Sim::get_num_goods();
     const unsigned int starting_num_machines =
         starting_num_goods / Sim::get_goods_per_machine();
-    // make sure to push back each product immediately after construction
     for (unsigned int i = 0; i < starting_num_goods; ++i) {
         Good * new_good = new Good();
         goods.push_back(new_good);
@@ -332,84 +339,7 @@ void Society::set_product_prices_production_consumption() {
     }
 }
 
-static bool try_active_constraint_combination(
-    const Eigen::MatrixXd& V,
-    const Eigen::RowVectorXd& normalization_row,
-    std::vector<Eigen::Index>& active_constraints,
-    Eigen::Index start,
-    Eigen::Index remaining,
-    double tol,
-    Eigen::VectorXd& result
-    ) {
-
-    const Eigen::Index n = V.rows();
-    const Eigen::Index k = V.cols();
-
-    if (remaining == 0) {
-        Eigen::MatrixXd U(k, k);
-        Eigen::VectorXd rhs = Eigen::VectorXd::Zero(k);
-
-        U.row(0) = normalization_row;
-        rhs(0) = 1.0;
-
-        for (Eigen::Index row = 1; row < k; ++row) {
-            U.row(row) = V.row(active_constraints[row - 1]);
-        }
-
-        Eigen::FullPivLU<Eigen::MatrixXd> lu(U);
-
-        if (!lu.isInvertible()) {
-            return false;
-        }
-
-        Eigen::VectorXd c = lu.solve(rhs);
-        Eigen::VectorXd p = V * c;
-
-        if (p.minCoeff() < -tol) {
-            return false;
-        }
-
-        for (Eigen::Index i = 0; i < n; ++i) {
-            if (p(i) < 0.0) {
-                p(i) = 0.0;
-            }
-        }
-
-        double norm = p.norm();
-
-        if (norm <= tol) {
-            return false;
-        }
-
-        p /= norm;
-        result = p;
-
-        return true;
-    }
-    for (Eigen::Index i = start; i <= n - remaining; ++i) {
-        active_constraints.push_back(i);
-
-        bool found = try_active_constraint_combination(
-            V,
-            normalization_row,
-            active_constraints,
-            i + 1,
-            remaining - 1,
-            tol,
-            result
-            );
-
-        if (found) {
-            return true;
-        }
-
-        active_constraints.pop_back();
-    }
-
-    return false;
-}
-
-Eigen::VectorXd get_epr_prices(Eigen::MatrixXd& M, double spectral_radius) {
+static Eigen::VectorXd get_epr_prices(const Eigen::MatrixXd& M, double spectral_radius) {
     Eigen::EigenSolver<Eigen::MatrixXd> eigen_solver(
         M.transpose()
     );
@@ -453,30 +383,50 @@ Eigen::VectorXd get_epr_prices(Eigen::MatrixXd& M, double spectral_radius) {
 
         p /= p.norm();
         return p;
+    } 
+    throw MultidimensionalPerronEigenspace();
+}
+
+static Eigen::VectorXd retry_with_perturbation(
+    const Eigen::MatrixXd& A,
+    const Eigen::VectorXd& l,
+    Eigen::VectorXd& b) {
+    std::vector<int> positive_indices;
+    for (int i = 0; i < b.size(); ++i) {
+        if (b(i) > 0.0) {
+            positive_indices.push_back(i);
+        }
     }
-    Eigen::RowVectorXd normalization_row =
-        Eigen::RowVectorXd::Ones(n) * V;
+    if (positive_indices.empty()) {
+        throw std::domain_error("Can't perturb b: no positive entries. Giving up.");
+    }
 
-    std::vector<Eigen::Index> active_constraints;
-    Eigen::VectorXd result;
+    std::uniform_int_distribution<> index_dist(
+        0,
+        static_cast<int>(positive_indices.size()) - 1
+    );
 
-    bool found = try_active_constraint_combination(
-            V,
-            normalization_row,
-            active_constraints,
-            0,
-            k - 1,
-            tol,
-            result
-            );
+    int chosen_position = index_dist(Sim::get_random_generator());
+    int i = positive_indices[chosen_position];
 
-    if (!found) {
+    b(i) *= 1.0 + PRICE_B_PERTURBATION_EPSILON;
+    Eigen::MatrixXd new_augmented_matrix = A+l*b.transpose();
+    double new_spectral_radius = get_max_eigenvalue(new_augmented_matrix);
+    if (new_spectral_radius >= 1.0) {
+        throw std::domain_error("Perturbation destroyed productivity of augmented matrix. Giving up.");
+    }
+    try {
+        Eigen::VectorXd price_candidate = get_epr_prices(
+            new_augmented_matrix,
+            new_spectral_radius
+        );
+        return price_candidate;
+    }
+    catch (const MultidimensionalPerronEigenspace& e) {
         throw std::runtime_error(
-            "Could not find a nonnegative vector in the Perron eigenspace."
+            "Perturbing b did not reduce dimension of eigenspace to 1. Giving up."
         );
     }
-
-    return result;
 }
 
 void Society::set_initial_prices(
@@ -489,6 +439,7 @@ void Society::set_initial_prices(
     bool use_labor_values = false;
 
     if (price_mode == "equilibrium_prices") {
+        Eigen::VectorXd price_candidate;
         try {
             Eigen::VectorXd b = Eigen::VectorXd::Zero(dim);
 
@@ -502,7 +453,7 @@ void Society::set_initial_prices(
             int reductions = 0;
             constexpr int MAX_CONSUMPTION_REDUCTIONS = 10000;
 
-            while (spectral_radius >= 1.0) {
+            while (spectral_radius >= DESIRED_INITIAL_PROFITABILITY) {
                 b *= CONSUMP_REDUCTION_FACTOR;
 
                 augmented_matrix = A+l*b.transpose();
@@ -518,20 +469,23 @@ void Society::set_initial_prices(
             }
 
             log_vector(b, "b", b.size());
-            Eigen::VectorXd prices = get_epr_prices(
-                augmented_matrix,
-                spectral_radius
-            );
-
+            try {
+                price_candidate = get_epr_prices(
+                    augmented_matrix,
+                    spectral_radius
+                );
+            }
+            catch (const MultidimensionalPerronEigenspace& e) {
+                price_candidate = retry_with_perturbation(A, l, b);
+            }
             for (std::size_t i = 0; i < dim; ++i) {
-                if (prices(i) <= 0.0) {
+                if (price_candidate(i) <= 0.0) {
                     std::stringstream message;
                     message << "Price of item " << i << " <= 0.";
                     throw std::domain_error(message.str());
                 }
-                products[i]->price_per_unit = prices(i);
+                products[i]->price_per_unit = price_candidate(i);
             }
-
             return;
         }
         catch (const std::exception& e) {
@@ -563,6 +517,8 @@ void Society::set_initial_prices(
         }
     }
 }
+
+
 
 std::vector<Product *>& Society::get_products() {
     return products;
