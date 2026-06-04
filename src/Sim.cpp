@@ -57,7 +57,7 @@ double Sim::get_annual_sickness_chance() {
     return get_instance().args.sickness_chance;
 }
 
-double Sim::get_productivity() {
+double Sim::get_difficulty_of_production() {
     return get_instance().args.difficulty_of_production;
 }
 

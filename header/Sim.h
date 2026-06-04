@@ -41,7 +41,7 @@ class Sim {
         static double get_ability_stddev();
         static double get_annual_sickness_chance();
         static double get_person_ability_stddev();
-        static double get_productivity();
+        static double get_difficulty_of_production();
         static double get_product_consumption_mult();
         static std::string get_initial_price_mode();
         static bool does_json();

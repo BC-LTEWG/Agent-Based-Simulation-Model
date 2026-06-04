@@ -260,11 +260,7 @@ void Society::adjust_io_matrix(
         }
     }
 
-    double productive_max_eigenvalue = get_max_eigenvalue(productive_matrix);
-
-    double epsilon = Sim::get_productivity();
-    double scalar = ((1 - epsilon) * productive_max_eigenvalue) / epsilon;
-    double divisor = productive_max_eigenvalue + scalar;
+    double divisor = get_max_eigenvalue(productive_matrix) / Sim::get_difficulty_of_production();
 
     for (size_t i = 0; i < new_dim; ++i) {
         for (size_t j = 0; j < new_dim; ++j) {
@@ -307,8 +303,8 @@ static void normalize_consumption_frequencies(
 
 void Society::set_product_prices_production_consumption() {
     const size_t dim = products.size();
-    Eigen::MatrixXd A(dim, dim);
-    Eigen::VectorXd l(dim);
+    Eigen::MatrixXd A = Eigen::MatrixXd::Zero(dim, dim);
+    Eigen::VectorXd l = Eigen::VectorXd::Zero(dim);
     populate_io_matrix_and_labor_vector(A, l);
     double max_eigenvalue = get_max_eigenvalue(A);
     adjust_io_matrix(A, max_eigenvalue);
@@ -326,7 +322,7 @@ void Society::set_product_prices_production_consumption() {
     }
     normalize_consumption_frequencies(consumer_goods);
     set_initial_prices(A, l, consumer_goods, dim);
-    Eigen::VectorXd demands(dim);
+    Eigen::VectorXd demands = Eigen::VectorXd::Zero(dim);
     for (ConsumerGood * consumer_good : consumer_goods) {
         demands[consumer_good->id] = consumer_good->mean_consumption_frequency;
     }
