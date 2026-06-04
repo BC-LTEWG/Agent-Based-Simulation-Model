@@ -468,7 +468,6 @@ void Society::set_initial_prices(
                 }
             }
 
-            log_vector(b, "b", b.size());
             try {
                 price_candidate = get_epr_prices(
                     augmented_matrix,
@@ -486,6 +485,7 @@ void Society::set_initial_prices(
                 }
                 products[i]->price_per_unit = price_candidate(i);
             }
+            log_vector(b, "b", b.size());
             return;
         }
         catch (const std::exception& e) {
