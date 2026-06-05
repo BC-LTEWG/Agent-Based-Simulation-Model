@@ -3,6 +3,7 @@
 #include <Eigen/Dense>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 #include "Agent.h"
 #include "Constants.h"
@@ -59,13 +60,17 @@ class Society : public Agent {
                 Eigen::MatrixXd&,
                 Eigen::VectorXd&
                 );
-        void adjust_io_matrix(Eigen::MatrixXd&, double max_eigenvalue);
+        void set_initial_prices(
+                const Eigen::MatrixXd&,
+                const Eigen::VectorXd&,
+                const std::vector<ConsumerGood *>&,
+                std::size_t
+                );
+        void adjust_io_matrix(Eigen::MatrixXd&);
         void update_work_hours_daily();
         void log_io_matrix(Eigen::MatrixXd&, size_t);
-        void log_labor_vector(Eigen::VectorXd&, size_t);
+        void log_vector(Eigen::VectorXd&, std::string, size_t);
         void log_consumption_frequencies();
-
-
         std::vector<Person *> people;
         std::vector<Good *> goods;
         std::vector<ConsumerGood *> consumer_goods;

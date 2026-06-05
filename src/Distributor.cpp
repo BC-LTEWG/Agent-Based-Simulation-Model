@@ -47,7 +47,7 @@ void Distributor::add_to_catalog(Product * product) {
         / Sim::get_num_distributors()
         * (FIRM_STOCKPILE_DURATION + DEMAND_AVERAGING_WINDOW);
     consumer_goods_without_plans.insert(consumer_good);
-    log_inventory_level(good, input_inventory[good]);
+    log_inventory_level(consumer_good, input_inventory[consumer_good]);
     log_catalog_addition(product);
 }
 

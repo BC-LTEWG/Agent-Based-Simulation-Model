@@ -19,6 +19,7 @@ struct Product {
     std::string product_name;
     ProductType product_type;
     double price_per_unit;
+    double labor_value;
     std::vector<Machine *> machines_needed;
     std::unordered_map<Good *, double> inputs_per_unit;
     double living_labor_per_unit;

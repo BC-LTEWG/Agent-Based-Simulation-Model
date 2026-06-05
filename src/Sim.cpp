@@ -57,6 +57,18 @@ double Sim::get_annual_sickness_chance() {
     return get_instance().args.sickness_chance;
 }
 
+double Sim::get_difficulty_of_production() {
+    return get_instance().args.difficulty_of_production;
+}
+
+double Sim::get_product_consumption_mult() {
+    return get_instance().args.consumption_demand_level;
+}
+
+std::string Sim::get_initial_price_mode() {
+    return get_instance().args.init_price_mode;
+}
+
 bool Sim::does_json() {
     return get_instance().args.json;
 }
