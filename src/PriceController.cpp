@@ -2,6 +2,7 @@
 #include "ConsumerGood.h"
 #include "Distributor.h"
 #include "Firm.h"
+#include "Good.h"
 #include "Logger.h"
 #include "Machine.h"
 #include "PriceController.h"
@@ -31,7 +32,6 @@ void PriceController::update_price(Plan * plan) {
         Plan * plan = entry.first;
         units += plan->order->quantity - plan->quantity_remaining;
         hours += plan->labor_hours - plan->labor_hours_remaining;
-        hours += plan->raw_materials - plan->raw_materials_remaining;
         workers += plan->workers.size();
     }
     if (units <= 0) {
@@ -43,6 +43,10 @@ void PriceController::update_price(Plan * plan) {
     double price = product->living_labor_per_unit = hours / units;
     double machine_use_hours = hours / workers;
     double machine_hours_per_unit = machine_use_hours / units;
+    for (std::pair<Good * const, double>& input_pair : product->inputs_per_unit) {
+        double input_cost_per_unit = input_pair.second;
+        price += input_pair.first->price_per_unit * input_cost_per_unit;
+    }
     for (Machine * machine : product->machines_needed) {
         double machine_cost_per_hour =
             machine->price_per_unit / machine->lifetime;
