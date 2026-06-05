@@ -44,8 +44,8 @@ void PriceController::update_price(Plan * plan) {
     double machine_use_hours = hours / workers;
     double machine_hours_per_unit = machine_use_hours / units;
     for (std::pair<Good * const, double>& input_pair : product->inputs_per_unit) {
-        double input_cost_per_unit = input_pair.second;
-        price += input_pair.first->price_per_unit * input_cost_per_unit;
+        double input_quantity_per_unit = input_pair.second;
+        price += input_pair.first->price_per_unit * input_quantity_per_unit;
     }
     for (Machine * machine : product->machines_needed) {
         double machine_cost_per_hour =
