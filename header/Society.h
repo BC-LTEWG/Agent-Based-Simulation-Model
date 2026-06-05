@@ -66,7 +66,7 @@ class Society : public Agent {
                 const std::vector<ConsumerGood *>&,
                 std::size_t
                 );
-        void adjust_io_matrix(Eigen::MatrixXd&, double max_eigenvalue);
+        void adjust_io_matrix(Eigen::MatrixXd&);
         void update_work_hours_daily();
         void log_io_matrix(Eigen::MatrixXd&, size_t);
         void log_vector(Eigen::VectorXd&, std::string, size_t);

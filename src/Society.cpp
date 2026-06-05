@@ -241,10 +241,7 @@ void Society::log_total_employment() {
             );
 }
 
-void Society::adjust_io_matrix(
-    Eigen::MatrixXd& io_matrix,
-    double max_eigenvalue) {
-    (void) max_eigenvalue;
+void Society::adjust_io_matrix(Eigen::MatrixXd& io_matrix) {
 
     const size_t dim = io_matrix.rows();
     const size_t new_dim = dim - consumer_goods.size();
@@ -313,8 +310,7 @@ void Society::set_product_prices_production_consumption() {
     Eigen::MatrixXd A = Eigen::MatrixXd::Zero(dim, dim);
     Eigen::VectorXd l = Eigen::VectorXd::Zero(dim);
     populate_io_matrix_and_labor_vector(A, l);
-    double max_eigenvalue = get_max_eigenvalue(A);
-    adjust_io_matrix(A, max_eigenvalue);
+    adjust_io_matrix(A);
     log_io_matrix(A, dim);
     log_vector(l, "l", dim);
     Eigen::MatrixXd leontief_inverse = get_leontief_inverse(A);
@@ -415,18 +411,11 @@ static Eigen::VectorXd retry_with_perturbation(
     if (new_spectral_radius >= 1.0) {
         throw std::domain_error("Perturbation destroyed productivity of augmented matrix. Giving up.");
     }
-    try {
-        Eigen::VectorXd price_candidate = get_epr_prices(
-            new_augmented_matrix,
-            new_spectral_radius
-        );
-        return price_candidate;
-    }
-    catch (const MultidimensionalPerronEigenspace& e) {
-        throw std::runtime_error(
-            "Perturbing b did not reduce dimension of eigenspace to 1. Giving up."
-        );
-    }
+    Eigen::VectorXd price_candidate = get_epr_prices(
+        new_augmented_matrix,
+        new_spectral_radius
+    );
+    return price_candidate;
 }
 
 void Society::set_initial_prices(
@@ -452,8 +441,13 @@ void Society::set_initial_prices(
 
             int reductions = 0;
             constexpr int MAX_CONSUMPTION_REDUCTIONS = 10000;
+            constexpr double SPECTRAL_RADIUS_TOL = 1e-10;
 
-            while (spectral_radius >= DESIRED_INITIAL_PROFITABILITY) {
+            double d = Sim::get_difficulty_of_production();
+            double r = std::min(spectral_radius, 1.0);
+            double p = std::clamp(DESIRED_INITIAL_PROFITABILITY, 0.0, 1.0);
+            double target = (d-r)*p + r;
+            while (spectral_radius > target + SPECTRAL_RADIUS_TOL) {
                 b *= CONSUMP_REDUCTION_FACTOR;
 
                 augmented_matrix = A+l*b.transpose();
@@ -467,26 +461,43 @@ void Society::set_initial_prices(
                     throw std::domain_error(message.str());
                 }
             }
-
+            std::size_t max_retries = dim;
+            bool success = false;
             try {
-                price_candidate = get_epr_prices(
-                    augmented_matrix,
-                    spectral_radius
-                );
+                price_candidate = get_epr_prices(augmented_matrix, spectral_radius);
+                success = true;
             }
             catch (const MultidimensionalPerronEigenspace& e) {
-                price_candidate = retry_with_perturbation(A, l, b);
-            }
-            for (std::size_t i = 0; i < dim; ++i) {
-                if (price_candidate(i) <= 0.0) {
-                    std::stringstream message;
-                    message << "Price of item " << i << " <= 0.";
-                    throw std::domain_error(message.str());
+                for (std::size_t attempt = 0; attempt < max_retries; ++attempt) {
+                    try {
+                        price_candidate = retry_with_perturbation(A, l, b);
+                        success = true;
+                        break;
+                    }
+                    catch (const MultidimensionalPerronEigenspace& e) {}
                 }
-                products[i]->price_per_unit = price_candidate(i);
             }
-            log_vector(b, "b", b.size());
-            return;
+            if (success == true) {
+                for (std::size_t i = 0; i < dim; ++i) {
+                    if (price_candidate(i) <= 0.0) {
+                        std::stringstream message;
+                        message << "Price of item " << i << " <= 0.";
+                        throw std::domain_error(message.str());
+                    }
+                    products[i]->price_per_unit = price_candidate(i);
+                }
+                log_vector(b, "b", b.size());
+                return;
+            } else {
+                Logger::log(
+                    Logger::SOCIETY,
+                    id,
+                    "initial_price_fallback",
+                    LogPairS("requested_mode", price_mode),
+                    LogPairS("reason", "Multidimensional eigenspace would not budge.")
+                );
+                use_labor_values = true;
+            }
         }
         catch (const std::exception& e) {
             Logger::log(
