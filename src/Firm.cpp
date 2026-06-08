@@ -76,6 +76,8 @@ bool Firm::remove_input_from_inventory(Product * product, double quantity) {
         return false;
     }
     input_inventory[product] -= quantity;
+    add_demand_signal(product, quantity);
+    check_and_reorder_input(product);
     log_inventory_reduction(product, quantity);
     log_inventory_level(product, input_inventory[product]);
     return true;
@@ -124,9 +126,6 @@ Producer * Firm::send_order(Order * order) {
     std::vector<Producer *>& suppliers =
         Society::get_instance()->get_suppliers(order->product);
     for (Producer * producer : suppliers) {
-        if (!producer->can_produce(order->product)) {
-            continue;
-        }
         Order * return_order = producer->draft_plan_and_return_order(order);
         if (return_order->status == Order::ORDER_REJECTED) {
             continue;
@@ -174,7 +173,9 @@ void Firm::check_and_reorder_input(Product * product) {
     log_demand(product, threshold);
     int pending_inventory = get_pending_inventory_level(product);
     log_pending_inventory(product, pending_inventory);
-    if (pending_inventory >= threshold || !threshold) return;
+    if (pending_inventory >= threshold || !threshold) {
+        return;
+    }
     Order * order = new Order(
             product,
             threshold * FIRM_REORDER_MAX_PROP,
@@ -195,7 +196,6 @@ void Firm::start_plan(Plan * plan) {
             plan->order->product->inputs_per_unit) {
         double required_input = input.second * plan->order->quantity;
         remove_input_from_inventory(input.first, required_input);
-        check_and_reorder_input(input.first);
 	}
     pooled_input_value += plan->raw_materials;
     plan->raw_materials_remaining = 0;

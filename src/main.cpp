@@ -85,12 +85,13 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
             error = true;
             break;
         }
-
         if (valid_args.at(arg) == ArgType::InitPrices) {
             args.init_price_mode = argv[++i];
+            if (!valid_init_price_modes.count(args.init_price_mode)) {
+                std::cerr << "Warning! Unknown initial price mode " << args.init_price_mode << ". Defaulting to labor_values" << std::endl;
+            }
             continue;
         }
-
         long value = strtol(argv[++i], nullptr, 10);
         double dvalue = strtod(argv[i], nullptr);
         switch (valid_args.at(arg)) {
@@ -206,13 +207,6 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                     args.fixed_seed = true;
                 }
                 break;
-            }
-            case ArgType::InitPrices: {
-                args.init_price_mode = argv[++i];
-                if (!valid_init_price_modes.count(args.init_price_mode)) {
-                    std::cerr << "Warning! Unknown initial price mode " << args.init_price_mode << ". Defaulting to labor_values" << std::endl;
-                }
-                continue;
             }
         }
     }

@@ -72,12 +72,6 @@ for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
     return max_order_quantity;
 }
 
-void Producer::add_order_input_demand_signals(const Order * order) {
-    for (std::pair<Good * const, double>& input : order->product->inputs_per_unit) {
-        add_demand_signal(input.first, input.second * order->quantity);
-    }
-}
-
 Order * Producer::draft_plan_and_return_order(const Order * order) {
     int return_order_quantity = std::min(order->quantity, get_max_order_quantity(order->product));
     Order * return_order = new Order(
@@ -110,8 +104,6 @@ void Producer::pursue_order(Firm * customer) {
         return;
 	}
     Order * order = plan->order;
-    add_order_input_demand_signals(order);
-
 	customer_to_draft_plan[customer] = nullptr;
     start_plan(plan);
     log_pursued_plan(plan);
