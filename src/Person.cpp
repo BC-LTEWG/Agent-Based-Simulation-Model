@@ -117,14 +117,7 @@ void Person::purchase_good(ConsumerGood * consumer_good, int quantity) {
 
 void Person::consume() {
     for (ConsumerGood * consumer_good : society->get_consumer_goods()) {
-        double consumption_from_wealth = 0.0;
-        if (consumer_good->paid) {
-            consumption_from_wealth = 
-                (account / society->get_average_account() - 1)
-                * CONSUMPTION_FROM_WEALTH_MULT;
-        }
-        double consumption = consumer_good->mean_consumption_frequency 
-            * (1.0 + consumption_from_wealth);
+        double consumption = consumer_good->mean_consumption_frequency;
         to_consume[consumer_good] += consumption;
         int consumed = static_cast<int>(to_consume[consumer_good]);
         if (consumed) {
