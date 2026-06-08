@@ -49,7 +49,7 @@ Houes-Money\ Interface\ Improved/main
 .venv
 myenv
 .vscode
-compile_commands.json
+*.json
 
 # debug information files
 *.dwo

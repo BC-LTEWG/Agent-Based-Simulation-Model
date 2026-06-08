@@ -72,7 +72,7 @@ void Firm::receive_payment(Plan * plan, double transaction_amount) {
 }
 
 bool Firm::remove_input_from_inventory(Product * product, double quantity) {
-    if (input_inventory[product] < quantity) {
+    if (!input_inventory.count(product) || input_inventory[product] < quantity) {
         return false;
     }
     input_inventory[product] -= quantity;
@@ -96,13 +96,14 @@ double Firm::get_pooled_input_value() {
 std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
     double firm_busyness = get_busyness();
     double societal_busyness = Society::get_instance()->get_busyness();
-    int max_workers_to_transfer = (int) (workers.size() * (1.0 - firm_busyness / 
-            (societal_busyness - TRANSFER_BUSYNESS_THRESHOLD))); 
-    max_workers_to_transfer = std::max(max_workers_to_transfer, workers_wanted);
-    log_busyness(firm_busyness, societal_busyness, max_workers_to_transfer);
-    if (firm_busyness >= societal_busyness - TRANSFER_BUSYNESS_THRESHOLD) {
+    double adjusted_societal_busyness = societal_busyness - TRANSFER_BUSYNESS_THRESHOLD;
+    if (adjusted_societal_busyness <= 0 || firm_busyness >= adjusted_societal_busyness) {
+        log_busyness(firm_busyness, societal_busyness, 0);
         return {};
     }
+    int max_workers_to_transfer = (int) (workers.size() * (1.0 - firm_busyness / adjusted_societal_busyness)); 
+    max_workers_to_transfer = std::max(max_workers_to_transfer, workers_wanted);
+    log_busyness(firm_busyness, societal_busyness, max_workers_to_transfer);
     std::vector<Person *> transfers;
     for (Person * worker : standby_workers) {
         if (static_cast<int>(transfers.size()) == max_workers_to_transfer) break;
@@ -321,6 +322,9 @@ void Firm::assign_workers(Plan * draft_plan) {
 }
 
 double Firm::predict_turnaround_time(Plan * plan, std::vector<Person *>& workers) {
+    if (workers.empty()) {
+        throw std::runtime_error("Cannot predict turnaround time with 0 workers: " + plan->order->product->product_name);
+    }
     return plan->order->quantity *
            recorded_living_labor_per_unit[plan->order->product] *
            WEEK /
@@ -330,6 +334,9 @@ double Firm::predict_turnaround_time(Plan * plan, std::vector<Person *>& workers
 }
 
 double Firm::predict_labor_hours(Order * order, std::vector<Person *>& workers) {
+    if (workers.empty()) {
+        throw std::runtime_error("Cannot predict labor hours with 0 workers: " + order->product->product_name);
+    }
     return order->quantity *
            recorded_living_labor_per_unit[order->product] / 
            workers.size();
@@ -360,6 +367,9 @@ double Firm::calculate_machinery_cost_for_plan(Plan * draft_plan) {
     for (Machine * machine : machines) {
         machinery_cost_per_hour += machine->price_per_unit / machine->lifetime;
     }
+    if (draft_plan->workers.empty()) {
+        throw std::runtime_error("Cannot calculate machinery cost with 0 workers: " + draft_plan->order->product->product_name);
+    }
     return machinery_cost_per_hour *
         (static_cast<double>(draft_plan->labor_hours) / draft_plan->workers.size());
 }
@@ -380,9 +390,8 @@ Plan * Firm::draft_plan_for_order(Order * order) {
     draft_plan->firm = this;
     draft_plan->local_work_hours_daily = 
         Society::get_instance()->get_current_work_hours_daily();
-
     assign_workers(draft_plan);
-    if (draft_plan->workers.size() == 0) {
+    if (draft_plan->workers.empty()) {
         return nullptr;
     }
     assign_plan_dependent_fields(draft_plan);

@@ -2,6 +2,7 @@
 #include <string>
 #include <cstdlib>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "Sim.h"
 
@@ -19,40 +20,54 @@ void print_usage() {
     std::cout << "\t-v N: Set the standard deviation of abilities to N." << std::endl;
     std::cout << "\t-e N: Set the random seed to N." << std::endl;
     std::cout << "\t-s N: Set the annual chance of an agent getting sick." << std::endl;
+    std::cout << "\t--init_prices S: How initial prices are set. Options are 'labor_values' and 'equilibrium_prices'." << std::endl;
+    std::cout << "\t--production_difficulty N: Set the spectral radius of the I/O requirements matrix. Higher values make surplus generation more difficult." << std::endl;
+    std::cout << "\t--consumption_demand N: Set the proportion of value consumed by society relative to the maximum value producable by that society." << std::endl;
     std::cout << "\t-j: Write JSON log traces to stdout." << std::endl;
 }
 
-enum class argType {
-    TimeSteps,
-    People,
-    WorkHours,
-    WorkDays,
-    Goods,
-    GoodsPerMachine,
-    Producers,
-    Distributors,
-    Abilities,
-    AbilityStdDev,
-    SickChance,
-    Seed
+enum class ArgType {
+    kTimeSteps,
+    kPeople,
+    kWorkHours,
+    kWorkDays,
+    kGoods,
+    kGoodsPerMachine,
+    kProducers,
+    kDistributors,
+    kAbilities,
+    kAbilityStdDev,
+    kSickChance,
+    kSeed,
+    kProductionDifficulty,
+    kConsumptionDemand,
+    InitPrices
+};
+
+static const std::unordered_set<std::string> valid_init_price_modes = {
+    "labor_values",
+    "equilibrium_prices"
 };
 
 void set_params(int argc, const char ** argv, SimArgs& args) {
     bool error = false;
 
-    static const std::unordered_map<std::string, argType> valid_args = {
-        {"-n", argType::TimeSteps}, {"--time-steps", argType::TimeSteps},
-        {"-p", argType::People}, {"--people", argType::People},
-        {"-h", argType::WorkHours}, {"--work-hours", argType::WorkHours},
-        {"-w", argType::WorkDays}, {"--work-days", argType::WorkDays},
-        {"-g", argType::Goods}, {"--goods", argType::Goods},
-        {"-m", argType::GoodsPerMachine}, {"--products-per-machine", argType::GoodsPerMachine},
-        {"-r", argType::Producers}, {"--producers", argType::Producers},
-        {"-d", argType::Distributors}, {"--distributors", argType::Distributors},
-        {"-a", argType::Abilities}, {"--abilities", argType::Abilities},
-        {"-v", argType::AbilityStdDev}, {"--ability-stddev", argType::AbilityStdDev},
-        {"-s", argType::SickChance}, {"--sick-chance", argType::SickChance},
-        {"-e", argType::Seed}, {"--seed", argType::Seed},
+    static const std::unordered_map<std::string, ArgType> valid_args = {
+        {"-n", ArgType::kTimeSteps}, {"--time-steps", ArgType::kTimeSteps},
+        {"-p", ArgType::kPeople}, {"--people", ArgType::kPeople},
+        {"-h", ArgType::kWorkHours}, {"--work-hours", ArgType::kWorkHours},
+        {"-w", ArgType::kWorkDays}, {"--work-days", ArgType::kWorkDays},
+        {"-g", ArgType::kGoods}, {"--goods", ArgType::kGoods},
+        {"-m", ArgType::kGoodsPerMachine}, {"--products-per-machine", ArgType::kGoodsPerMachine},
+        {"-r", ArgType::kProducers}, {"--producers", ArgType::kProducers},
+        {"-d", ArgType::kDistributors}, {"--distributors", ArgType::kDistributors},
+        {"-a", ArgType::kAbilities}, {"--abilities", ArgType::kAbilities},
+        {"-v", ArgType::kAbilityStdDev}, {"--ability-stddev", ArgType::kAbilityStdDev},
+        {"-s", ArgType::kSickChance}, {"--sick-chance", ArgType::kSickChance},
+        {"-e", ArgType::kSeed}, {"--seed", ArgType::kSeed},
+        {"--production_difficulty", ArgType::kProductionDifficulty},
+        {"--consumption_demand", ArgType::kConsumptionDemand},
+        {"--init_prices", ArgType::InitPrices}
     };
 
 
@@ -70,10 +85,16 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
             error = true;
             break;
         }
-        long value = strtol(argv[++i], NULL, 10);
-        double dvalue = strtod(argv[i], NULL);
+
+        if (valid_args.at(arg) == ArgType::InitPrices) {
+            args.init_price_mode = argv[++i];
+            continue;
+        }
+
+        long value = strtol(argv[++i], nullptr, 10);
+        double dvalue = strtod(argv[i], nullptr);
         switch (valid_args.at(arg)) {
-            case argType::TimeSteps: {
+            case ArgType::kTimeSteps: {
                 if (value <= 0) {
                     error = true;
                 } else {
@@ -81,7 +102,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::People: {
+            case ArgType::kPeople: {
                 if (value <= 0) {
                     error = true;
                 } else {
@@ -89,7 +110,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::WorkHours: {
+            case ArgType::kWorkHours: {
                 if (value <= 0 || value > 24) {
                     error = true;
                 } else {
@@ -97,7 +118,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::WorkDays: {
+            case ArgType::kWorkDays: {
                 if (value <= 0 || value > 7) {
                     error = true;
                 } else {
@@ -105,7 +126,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::Goods: {
+            case ArgType::kGoods: {
                 if (value <= 0) {
                     error = true;
                 } else {
@@ -113,7 +134,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::GoodsPerMachine: {
+            case ArgType::kGoodsPerMachine: {
                 if (value <= 0) {
                     error = true;
                 } else {
@@ -121,7 +142,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::Producers: {
+            case ArgType::kProducers: {
                 if (value <= 0) {
                     error = true;
                 } else {
@@ -129,7 +150,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::Distributors: {
+            case ArgType::kDistributors: {
                 if (value <= 0) {
                     error = true;
                 } else {
@@ -137,7 +158,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::Abilities: {
+            case ArgType::kAbilities: {
                 if (value <= 0) {
                     error = true;
                 } else {
@@ -145,7 +166,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::AbilityStdDev: {
+            case ArgType::kAbilityStdDev: {
                 if (dvalue < 0.0) {
                     error = true;
                 } else {
@@ -153,7 +174,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::SickChance: {
+            case ArgType::kSickChance: {
                 if (dvalue < 0.0 || dvalue > 1.0) {
                     error = true;
                 } else {
@@ -161,7 +182,23 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case argType::Seed: {
+            case ArgType::kProductionDifficulty: {
+                if (dvalue < 0.0 || dvalue >= 1.0) {
+                    error = true;
+                } else {
+                    args.difficulty_of_production = dvalue;
+                }
+                break;
+            }
+            case ArgType::kConsumptionDemand: {
+                if (dvalue < 0.0 || dvalue >= 1.0) {
+                    error = true;
+                } else {
+                    args.consumption_demand_level = dvalue;
+                }
+                break;
+            }
+            case ArgType::kSeed: {
                 if (value < 0) {
                     error = true;
                 } else {
@@ -169,6 +206,13 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                     args.fixed_seed = true;
                 }
                 break;
+            }
+            case ArgType::InitPrices: {
+                args.init_price_mode = argv[++i];
+                if (!valid_init_price_modes.count(args.init_price_mode)) {
+                    std::cerr << "Warning! Unknown initial price mode " << args.init_price_mode << ". Defaulting to labor_values" << std::endl;
+                }
+                continue;
             }
         }
     }
