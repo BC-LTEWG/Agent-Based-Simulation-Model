@@ -232,7 +232,7 @@ void Firm::end_plan(Plan * plan) {
     recorded_living_labor_per_unit[plan->order->product] = 
         (plan->labor_hours - plan->labor_hours_remaining) 
         / (plan->order->quantity - plan->quantity_remaining); 
-    pooled_input_value += plan->order->quantity * plan->order->product->price_per_unit;
+    // pooled_input_value += plan->order->quantity * plan->order->product->price_per_unit;
     PriceController::get_instance()->update_price(plan);
     for (Person * worker : plan->workers) {
         standby_workers.insert(worker);

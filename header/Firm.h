@@ -78,6 +78,7 @@ class Firm : public Agent {
     unsigned int id;
     double pooled_input_value = 0.0;
     std::unordered_set<Machine *> machines;
+    std::unordered_map<Machine *, double> machine_lifetime_remaining;
     std::unordered_set<Person *> workers,
         standby_workers;
 	
