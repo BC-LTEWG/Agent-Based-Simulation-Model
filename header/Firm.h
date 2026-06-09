@@ -29,13 +29,10 @@ struct Plan {
 	// dependent/output fields	
 	double predicted_turnaround_time;
     double machinery_cost;
-    double labor_hours;
     double raw_materials;
-    double total_hours;
+    double labor_hours;
     double prd;
     double labor_hours_remaining;
-    double raw_materials_remaining;
-    double total_hours_remaining;
     double quantity_remaining;
 	int outgoing_units_consumed;
 };
@@ -79,6 +76,7 @@ class Firm : public Agent {
     double pooled_input_value = 0.0;
     std::unordered_set<Machine *> machines;
     std::unordered_map<Machine *, double> machine_lifetime_remaining;
+    std::unordered_map<Machine *, bool> machine_on_order;
     std::unordered_set<Person *> workers,
         standby_workers;
 	
@@ -94,6 +92,7 @@ class Firm : public Agent {
     bool remove_input_from_inventory(Product * product, double quantity);
     double get_reorder_threshold(Product * product);
     virtual double get_pending_inventory_level(Product * product);
+    void check_and_reorder_machine(Machine * machine);
     void check_and_reorder_input(Product * product);
 	void start_plan(Plan * plan);
 	void move_plan_forward_one_step(Plan * plan);
@@ -103,13 +102,13 @@ class Firm : public Agent {
     bool is_within_work_schedule() const;
 
 	int predict_workers_needed(Plan * plan);
-    void assign_workers(Plan * draft_plan);
-	double predict_turnaround_time(Plan * plan, std::vector<Person*>& workers); 
-	double predict_labor_hours(Order * order, std::vector<Person*>& workers);
-    double calculate_raw_material_cost_for_order(Order * order);
-    void initialize_plan_budget(Plan * draft_plan);
-    double calculate_machinery_cost_for_plan(Plan * draft_plan);
-	void assign_plan_dependent_fields(Plan * draft_plan);
+    void assign_workers(Plan * plan);
+	double predict_turnaround_time(Plan * plan); 
+	double predict_labor_hours(Plan * plan);
+    double calculate_machinery_cost_for_plan(Plan * plan);
+    double calculate_raw_material_cost_for_plan(Plan * plan);
+    void initialize_plan_budget(Plan * plan);
+	void assign_plan_dependent_fields(Plan * plan);
     void add_demand_signal(Product * product, double quantity);
     Plan * draft_plan_for_order(Order * order); 
     void update_demands();

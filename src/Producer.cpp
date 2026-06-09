@@ -37,6 +37,7 @@ void Producer::add_to_catalog(Product * product) {
     for (Machine * machine : product->machines_needed) {
         machines.insert(machine);
         machine_lifetime_remaining[machine] = machine->lifetime;
+        machine_on_order[machine] = false;
     }
     for (std::pair<Good * const, double>& input :
             product->inputs_per_unit) {
@@ -101,6 +102,11 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
 
 void Producer::drop_order(Firm * customer) {
     log_dropped_order(customer_to_draft_plan[customer]->order);
+    /*
+    Plan * dropped_plan = customer_to_draft_plan[customer];
+    delete dropped_plan->order;
+    delete dropped_plan;
+    */
     customer_to_draft_plan[customer] = nullptr;
 }
 
