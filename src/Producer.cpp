@@ -35,6 +35,9 @@ void Producer::on_time_step() {
 void Producer::add_to_catalog(Product * product) {
     catalog.insert(product);
     for (Machine * machine : product->machines_needed) {
+        if (machines.count(machine)) {
+            continue;
+        }
         machines.insert(machine);
         machine_lifetime_remaining[machine] = machine->lifetime;
         machine_on_order[machine] = false;
