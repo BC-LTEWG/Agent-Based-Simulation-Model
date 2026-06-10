@@ -33,8 +33,8 @@ struct Plan {
     double labor_budget;
     double total_hours;
     double debt;
-    double machinery_budget_remaining;
-    double raw_materials_budget_remaining;
+    double machinery_budget_used = 0.0;
+    double raw_materials_budget_used = 0.0;
     double labor_budget_remaining;
     double total_hours_remaining;
     double quantity_remaining;

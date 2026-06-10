@@ -170,10 +170,15 @@ double Firm::get_pending_inventory_level(Product * product) {
 
 void Firm::check_and_reorder_input(Product * product) {
     double threshold = get_reorder_threshold(product);
+    if (product->product_type == Product::ProductType::TYPE_MACHINE) {
+        threshold = std::max(std::ceil(threshold), 1.0);
+    }
     log_demand(product, threshold);
     int pending_inventory = get_pending_inventory_level(product);
     log_pending_inventory(product, pending_inventory);
-    if (pending_inventory >= threshold || !threshold) return;
+    if (pending_inventory >= threshold || !threshold) {
+        return;
+    }
     Order * order = new Order(
             product,
             threshold * FIRM_REORDER_MAX_PROP,
@@ -190,14 +195,20 @@ void Firm::start_plan(Plan * plan) {
         move_worker_off_standby(worker);
     }
     plans_in_progress.insert(plan);
-	for (std::pair<Good * const, double>& input :
-            plan->order->product->inputs_per_unit) {
+    Product * product = plan->order->product;
+	for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
         double required_input = input.second * plan->order->quantity;
         remove_input_from_inventory(input.first, required_input);
         check_and_reorder_input(input.first);
 	}
-    pooled_input_account += plan->raw_materials_budget;
-    plan->raw_materials_budget_remaining = 0;
+    double expected_plan_duration = plan->labor_budget / plan->workers.size();
+    for (Machine * machine : plan->order->product->machines_needed) {
+        input_inventory[machine] -= expected_plan_duration;
+        check_and_reorder_input(machine);
+    }
+    pooled_input_account += plan->machinery_budget + plan->raw_materials_budget;
+    plan->machinery_budget = plan->raw_materials_budget = 0.0;
+    plan->labor_budget_remaining = plan->labor_budget;
     plan->order->status = Order::ORDER_IN_PROGRESS;
 }
 
@@ -209,7 +220,7 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
     }
 
     double raw_materials_used =
-        plan->raw_materials_budget_remaining *
+        plan->raw_materials_budget_used *
         quantity_produced /
         plan->order->quantity;
 	//pay workers
@@ -218,9 +229,9 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
 		worker->register_hours_worked(labor_hours_per_worker);
 	}
     plan->labor_budget_remaining -= labor_hours_per_worker * plan->workers.size();
-    plan->raw_materials_budget_remaining -= raw_materials_used;
+    plan->raw_materials_budget_used -= raw_materials_used;
     plan->total_hours_remaining =
-        plan->labor_budget_remaining + plan->raw_materials_budget_remaining;
+        plan->labor_budget_remaining + plan->raw_materials_budget_used;
     plan->quantity_remaining -= quantity_produced;
 }
 
@@ -352,7 +363,7 @@ double Firm::calculate_raw_material_cost_for_order(Order * order) {
 void Firm::initialize_plan_budget(Plan * draft_plan) {
     double raw_material_cost = calculate_raw_material_cost_for_order(draft_plan->order);
     draft_plan->raw_materials_budget =
-        draft_plan->raw_materials_budget_remaining = raw_material_cost;
+        draft_plan->raw_materials_budget_used = raw_material_cost;
     draft_plan->total_hours =
         draft_plan->total_hours_remaining =
         draft_plan->labor_budget + draft_plan->raw_materials_budget;
