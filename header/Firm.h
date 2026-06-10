@@ -28,13 +28,13 @@ struct Plan {
 
 	// dependent/output fields	
 	double predicted_turnaround_time;
-    double machinery_cost;
-    double raw_materials;
-    double labor_hours;
-    double prd;
-    double machinery_cost_remaining;
-    double raw_materials_cost_remaining;
-    double labor_hours_remaining;
+    double machinery_budget;
+    double raw_materials_budget;
+    double labor_budget;
+    double debt;
+    double machinery_budget_remaining;
+    double raw_materials_budget_remaining;
+    double labor_budget_remaining;
     double quantity_remaining;
 	int outgoing_units_consumed;
 };
@@ -68,14 +68,14 @@ class Firm : public Agent {
     void receive_shipment(Plan * plan);
     void receive_payment(Plan * plan, double transaction_amount);
     double get_busyness();
-    double get_pooled_input_value();
+    double get_pooled_input_account();
     std::vector<Person *> propose_transfer(int workers_wanted);
     void finalize_transfer(Person * worker);
 
 
   protected:
     unsigned int id;
-    double pooled_input_value = 0.0;
+    double pooled_input_account = 0.0;
     std::unordered_set<Machine *> machines;
     std::unordered_map<Machine *, double> machine_lifetime_remaining;
     std::unordered_map<Machine *, bool> machine_on_order;
@@ -107,7 +107,7 @@ class Firm : public Agent {
     void assign_workers(Plan * plan);
 	double predict_turnaround_time(Plan * plan); 
 	double predict_labor_hours(Plan * plan);
-    double predict_machinery_cost_for_plan(Plan * plan);
+    double predict_machinery_budget_for_plan(Plan * plan);
     double calculate_raw_material_cost_for_plan(Plan * plan);
     void initialize_plan_budget(Plan * plan);
 	void assign_plan_dependent_fields(Plan * plan);
