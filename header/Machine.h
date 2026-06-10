@@ -7,5 +7,5 @@
 
 struct Machine : public Product {
     Machine();
-    int lifetime;
+    double lifetime;
 };

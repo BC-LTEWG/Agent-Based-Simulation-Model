@@ -7,6 +7,7 @@
 #include "Distributor.h"
 #include "Good.h"
 #include "Logger.h"
+#include "Machine.h"
 #include "Person.h"
 #include "Producer.h"
 #include "Product.h"
@@ -35,6 +36,7 @@ void Producer::add_to_catalog(Product * product) {
     catalog.insert(product);
     for (Machine * machine : product->machines_needed) {
         machines.insert(machine);
+        input_inventory[machine] = machine->lifetime;
     }
     for (std::pair<Good * const, double>& input :
             product->inputs_per_unit) {

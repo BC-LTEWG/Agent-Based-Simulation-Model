@@ -40,7 +40,6 @@ void Distributor::on_time_step() {
 void Distributor::add_to_catalog(Product * product) {
     catalog.insert(product);
     ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
-    Good * good = consumer_good->corresponding_good;
     input_inventory[consumer_good] = 
         consumer_good->mean_consumption_frequency 
         * Sim::get_num_people() 
