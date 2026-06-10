@@ -235,6 +235,10 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
     }
     double ideal_quantity_produced = calculate_quantity_produced_from_worker_suitability(plan);
     double quantity_produced = std::min(ideal_quantity_produced, plan->quantity_remaining);
+    double raw_materials_cost_used =
+        plan->raw_materials_cost_remaining *
+        quantity_produced /
+        plan->order->quantity;
     if (quantity_produced <= 0.0) {
         return;
     }
@@ -245,7 +249,7 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
 		worker->register_hours_worked(labor_hours_per_worker);
 	}
     plan->machinery_cost_remaining -= 1.0;
-    plan->raw_materials_cost_remaining -= 1.0;
+    plan->raw_materials_cost_remaining -= raw_materials_cost_used;
     plan->labor_hours_remaining -= labor_hours_per_worker * plan->workers.size();
     plan->quantity_remaining -= quantity_produced;
 }
