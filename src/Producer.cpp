@@ -105,11 +105,9 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
 
 void Producer::drop_order(Firm * customer) {
     log_dropped_order(customer_to_draft_plan[customer]->order);
-    /*
     Plan * dropped_plan = customer_to_draft_plan[customer];
     delete dropped_plan->order;
     delete dropped_plan;
-    */
     customer_to_draft_plan[customer] = nullptr;
 }
 

@@ -74,7 +74,6 @@ void Firm::receive_shipment(Plan * plan) {
 
 void Firm::receive_payment(Plan * plan, double transaction_amount) {
     plan->prd += transaction_amount;
-    // pooled_input_value += transaction_amount;
 }
 
 bool Firm::remove_input_from_inventory(Product * product, double quantity) {
@@ -245,6 +244,8 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
 	for (Person * worker : plan->workers) {
 		worker->register_hours_worked(labor_hours_per_worker);
 	}
+    plan->machinery_cost_remaining -= 1.0;
+    plan->raw_materials_cost_remaining -= 1.0;
     plan->labor_hours_remaining -= labor_hours_per_worker * plan->workers.size();
     plan->quantity_remaining -= quantity_produced;
 }
@@ -252,6 +253,8 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
 void Firm::end_plan(Plan * plan) {
     log_ended_plan(plan);
     plan->order->status = Order::ORDER_FINISHED;
+    pooled_input_value +=
+        plan->machinery_cost_remaining + plan->raw_materials_cost_remaining;
     plan->order->customer->receive_shipment(plan);
     recorded_living_labor_per_unit[plan->order->product] = 
         (plan->labor_hours - plan->labor_hours_remaining) 
@@ -368,7 +371,7 @@ double Firm::predict_labor_hours(Plan * plan) {
            plan->workers.size();
 }
 
-double Firm::calculate_machinery_cost_for_plan(Plan * draft_plan) {
+double Firm::predict_machinery_cost_for_plan(Plan * draft_plan) {
     double machinery_cost_per_hour = 0.0;
     for (Machine * machine : draft_plan->order->product->machines_needed) {
         machinery_cost_per_hour += machine->price_per_unit / machine->lifetime;
@@ -398,7 +401,7 @@ double Firm::calculate_raw_material_cost_for_plan(Plan * plan) {
 void Firm::initialize_plan_budget(Plan * draft_plan) {
     draft_plan->labor_hours = predict_labor_hours(draft_plan); 
     draft_plan->machinery_cost =
-        calculate_machinery_cost_for_plan(draft_plan);
+        predict_machinery_cost_for_plan(draft_plan);
     draft_plan->raw_materials =
         calculate_raw_material_cost_for_plan(draft_plan);
     double total_cost =
@@ -407,13 +410,16 @@ void Firm::initialize_plan_budget(Plan * draft_plan) {
         draft_plan->labor_hours;
     draft_plan->quantity_remaining = draft_plan->order->quantity;
     draft_plan->prd = -total_cost;
+    draft_plan->machinery_cost_remaining =
+        draft_plan->machinery_cost;
+    draft_plan->raw_materials_cost_remaining =
+        draft_plan->raw_materials;
 }
 
 void Firm::assign_plan_dependent_fields(Plan * draft_plan) {
     draft_plan->predicted_turnaround_time =
         predict_turnaround_time(draft_plan);
     initialize_plan_budget(draft_plan);
-    draft_plan->machinery_cost = calculate_machinery_cost_for_plan(draft_plan);
 }
 
 Plan * Firm::draft_plan_for_order(Order * order) {

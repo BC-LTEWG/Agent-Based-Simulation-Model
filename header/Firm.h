@@ -32,6 +32,8 @@ struct Plan {
     double raw_materials;
     double labor_hours;
     double prd;
+    double machinery_cost_remaining;
+    double raw_materials_cost_remaining;
     double labor_hours_remaining;
     double quantity_remaining;
 	int outgoing_units_consumed;
@@ -105,7 +107,7 @@ class Firm : public Agent {
     void assign_workers(Plan * plan);
 	double predict_turnaround_time(Plan * plan); 
 	double predict_labor_hours(Plan * plan);
-    double calculate_machinery_cost_for_plan(Plan * plan);
+    double predict_machinery_cost_for_plan(Plan * plan);
     double calculate_raw_material_cost_for_plan(Plan * plan);
     void initialize_plan_budget(Plan * plan);
 	void assign_plan_dependent_fields(Plan * plan);
