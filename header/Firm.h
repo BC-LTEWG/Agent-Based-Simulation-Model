@@ -20,23 +20,19 @@ class Producer;
 class Society;
 
 struct Plan {
-	// independent/input fields
 	Order * order;
     Firm * firm;
 	std::vector<Person *> workers;
     unsigned int local_work_hours_daily;
-
-	// dependent/output fields	
 	double predicted_turnaround_time;
+    double expected_quantity_produced_per_time_step;
     double machinery_budget;
     double raw_materials_budget;
     double labor_budget;
-    double total_hours;
     double debt;
-    double machinery_budget_used = 0.0;
-    double raw_materials_budget_used = 0.0;
-    double labor_budget_remaining;
-    double total_hours_remaining;
+    double machinery_value_used = 0.0;
+    double raw_materials_value_used = 0.0;
+    double labor_value_used = 0.0;
     double quantity_remaining;
 	int outgoing_units_consumed;
 };
@@ -104,14 +100,13 @@ class Firm : public Agent {
 
 	int predict_workers_needed(Plan * plan);
     void assign_workers(Plan * draft_plan);
-	double predict_turnaround_time(Plan * plan, std::vector<Person*>& workers); 
-	double predict_labor_hours(Order * order, std::vector<Person*>& workers);
-    double calculate_raw_material_cost_for_order(Order * order);
+	double predict_turnaround_time(Plan * plan); 
+    double predict_machinery_cost(Plan * draft_plan);
+    double calculate_raw_materials_cost(Plan * plan);
+	double predict_labor_cost(Plan * plan);
     void initialize_plan_budget(Plan * draft_plan);
-    double calculate_machinery_budget_for_plan(Plan * draft_plan);
-	void assign_plan_dependent_fields(Plan * draft_plan);
-    void add_demand_signal(Product * product, double quantity);
     Plan * draft_plan_for_order(Order * order); 
+    void add_demand_signal(Product * product, double quantity);
     void update_demands();
     void move_worker_off_standby(Person * worker);
 

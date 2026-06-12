@@ -31,26 +31,28 @@ void PriceController::update_price(Plan * plan) {
     for (std::pair<Plan *, int> entry : plan_history[product]) {
         Plan * plan = entry.first;
         units += plan->order->quantity - plan->quantity_remaining;
-        hours += plan->labor_budget - plan->labor_budget_remaining;
+        hours += plan->labor_value_used;
         workers += plan->workers.size();
     }
     if (units <= 0) {
-        throw std::runtime_error("Units cannot be 0 or less for product: " + product->product_name); 
+        throw std::runtime_error("Units cannot be 0 or less for product: Product " +
+                std::to_string(product->id)); 
     }
     if (workers <= 0) {
-        throw std::runtime_error("Plan cannot be completed without workers: " + product->product_name); 
+        throw std::runtime_error("Plan cannot be completed without workers: Product " +
+                std::to_string(product->id)); 
     }
     double price = product->living_labor_per_unit = hours / units;
     double machine_use_hours = hours / workers;
     double machine_hours_per_unit = machine_use_hours / units;
-    for (std::pair<Good * const, double>& input_pair : product->inputs_per_unit) {
-        double input_quantity_per_unit = input_pair.second;
-        price += input_pair.first->price_per_unit * input_quantity_per_unit;
-    }
     for (Machine * machine : product->machines_needed) {
         double machine_cost_per_hour =
             machine->price_per_unit / machine->lifetime;
         price += machine_cost_per_hour * machine_hours_per_unit;
+    }
+    for (std::pair<Good * const, double>& input_pair : product->inputs_per_unit) {
+        double input_quantity_per_unit = input_pair.second;
+        price += input_pair.first->price_per_unit * input_quantity_per_unit;
     }
     product->price_per_unit = price;
     Logger::log(

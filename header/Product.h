@@ -16,7 +16,6 @@ struct Product {
     virtual void set_machines();
 
     int id;
-    std::string product_name;
     ProductType product_type;
     double price_per_unit;
     double labor_value;
