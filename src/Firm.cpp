@@ -240,6 +240,8 @@ void Firm::end_plan(Plan * plan) {
         plan->labor_value_used /
         (plan->order->quantity - plan->quantity_remaining); 
     PriceController::get_instance()->update_price(plan);
+    pooled_input_account += (plan->machinery_budget - plan->machinery_value_used);
+    pooled_input_account += (plan->raw_materials_budget - plan->raw_materials_value_used);
     for (Person * worker : plan->workers) {
         standby_workers.insert(worker);
     }
