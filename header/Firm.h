@@ -20,21 +20,19 @@ class Producer;
 class Society;
 
 struct Plan {
-	Order * order;
-    Firm * firm;
+	Order * order = nullptr;
+    Firm * firm = nullptr;
 	std::vector<Person *> workers;
-    unsigned int local_work_hours_daily;
-	double predicted_turnaround_time;
-    double expected_quantity_produced_per_time_step;
-    double machinery_budget;
-    double raw_materials_budget;
-    double labor_budget;
-    double debt;
+    unsigned int local_work_hours_daily = 0;
+	double predicted_turnaround_time = 0.0;
+    double machinery_budget = 0.0;
+    double raw_materials_budget = 0.0;
+    double labor_budget = 0.0;
+    double debt = 0.0;
     double machinery_value_used = 0.0;
     double raw_materials_value_used = 0.0;
     double labor_value_used = 0.0;
-    double quantity_remaining;
-	int outgoing_units_consumed;
+    double quantity_remaining = 0.0;
 };
 
 struct Order {
