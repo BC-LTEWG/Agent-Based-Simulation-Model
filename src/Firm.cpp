@@ -341,17 +341,18 @@ double Firm::predict_turnaround_time(Plan * plan) {
            plan->workers.size();
 }
 
-double Firm::predict_machinery_cost(Plan * draft_plan) {
+double Firm::predict_machinery_cost(Plan * plan) {
+    if (!plan->labor_budget) {
+        throw std::runtime_error("Cannot calculate machinery "
+                "cost without a labor budget : Product " +
+                std::to_string(plan->order->product->id));
+    }
     double machinery_cost_per_hour = 0.0;
     for (Machine * machine : machines) {
         machinery_cost_per_hour += machine->price_per_unit / machine->lifetime;
     }
-    if (draft_plan->workers.empty()) {
-        throw std::runtime_error("Cannot calculate machinery cost with 0 workers: Product " +
-                std::to_string(draft_plan->order->product->id));
-    }
-    return machinery_cost_per_hour *
-        (static_cast<double>(draft_plan->labor_budget) / draft_plan->workers.size());
+    double expected_plan_duration = plan->labor_budget / plan->workers.size();
+    return machinery_cost_per_hour * expected_plan_duration;
 }
 
 double Firm::calculate_raw_materials_cost(Plan * plan) {
@@ -370,14 +371,13 @@ double Firm::predict_labor_cost(Plan * plan) {
                 std::to_string(plan->order->product->id));
     }
     return plan->order->quantity *
-           recorded_living_labor_per_unit[plan->order->product] / 
-           plan->workers.size();
+           recorded_living_labor_per_unit[plan->order->product];
 }
 
 void Firm::initialize_plan_budget(Plan * draft_plan) {
+    draft_plan->labor_budget = predict_labor_cost(draft_plan); 
     draft_plan->machinery_budget = predict_machinery_cost(draft_plan);
     draft_plan->raw_materials_budget = calculate_raw_materials_cost(draft_plan);
-    draft_plan->labor_budget = predict_labor_cost(draft_plan); 
     double total_budget =
         draft_plan->machinery_budget +
         draft_plan->raw_materials_budget +
