@@ -22,7 +22,9 @@ void PriceController::update_price(Plan * plan) {
     int end_time = now - PRICE_AVERAGING_WINDOW;
     if (plan_history.count(product) && 
             plan_history[product].begin()->second <= end_time) {
+        Plan * old_plan = plan_history[product].begin()->first;
         plan_history[product].erase(plan_history[product].begin());
+        delete old_plan;
     }
     plan_history[product].push_back(std::make_pair(plan, now));
     int units = 0.0;

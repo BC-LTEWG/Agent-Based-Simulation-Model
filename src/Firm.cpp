@@ -170,14 +170,15 @@ double Firm::get_pending_inventory_level(Product * product) {
 
 void Firm::check_and_reorder_input(Product * product) {
     double threshold = get_reorder_threshold(product);
-    if (product->product_type == Product::ProductType::TYPE_MACHINE) {
-        threshold = std::max(std::ceil(threshold), 1.0);
-    }
     log_demand(product, threshold);
     int pending_inventory = get_pending_inventory_level(product);
     log_pending_inventory(product, pending_inventory);
     if (pending_inventory >= threshold || !threshold) {
         return;
+    }
+    double reorder_quantity = threshold * FIRM_REORDER_MAX_PROP;
+    if (product->product_type == Product::ProductType::TYPE_MACHINE) {
+        reorder_quantity = std::max(std::ceil(reorder_quantity), 1.0);
     }
     Order * order = new Order(
             product,
