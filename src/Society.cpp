@@ -138,10 +138,6 @@ void Society::on_time_step() {
     PriceController::get_instance()->on_time_step();
 
     // public sector expansion
-    if (Sim::get_current_time_step() % PUBLIC_SECTOR_EXPANSION_PERIOD == 0
-            && Sim::get_current_time_step() / PUBLIC_SECTOR_EXPANSION_PERIOD < Sim::get_num_goods()) {
-        consumer_goods[Sim::get_current_time_step() / PUBLIC_SECTOR_EXPANSION_PERIOD]->paid = false;
-    }
 }
 
 void Society::set_initial_products() {
@@ -601,7 +597,7 @@ std::unordered_map<Product *, double>& Society::get_initial_production() {
 }
 
 Person * Society::birth_person() {
-    Person * person = new Person(this);
+    Person * person = new Person;
     people.push_back(person);
     unemployed_people.insert(person);
     return person;
@@ -609,6 +605,28 @@ Person * Society::birth_person() {
 
 void Society::retire_person(Person *person) {
     // unimplemented until hiring/reallocation is done
+}
+
+void Society::pay_into_public_fund(double amount) {
+    public_fund += amount;
+    log_public_fund();
+}
+
+void Society::charge_from_public_fund(double amount) {
+    public_fund -= amount;
+    log_public_fund();
+}
+
+void Society::check_expand_public_sector() {
+    if (Sim::get_current_time_step() % PUBLIC_SECTOR_EXPANSION_PERIOD == 0) {
+        int index = Sim::get_current_time_step() / PUBLIC_SECTOR_EXPANSION_PERIOD - 1;
+        if (index < 0 || index >= static_cast<int>(consumer_goods.size())) {
+            return;
+        }
+        ConsumerGood * consumer_good = consumer_goods[index];
+        consumer_good->public_sector = true;
+        log_public_sector_expansion(consumer_good);
+    }
 }
 
 void Society::log_io_matrix(Eigen::MatrixXd& A, size_t dim) {
@@ -656,4 +674,22 @@ void Society::log_consumption_frequencies() {
                 LogPair("value", consumer_good->mean_consumption_frequency)
                 );
     }
+}
+
+void Society::log_public_fund() {
+    Logger::log(
+            Logger::SOCIETY,
+            id,
+            "public_fund",
+            LogPair("value", public_fund)
+            );
+}
+
+void Society::log_public_sector_expansion(ConsumerGood * consumer_good) {
+    Logger::log(
+            Logger::SOCIETY,
+            id,
+            "public_sector_expansion",
+            LogPair("product_id", consumer_good->id)
+            );
 }

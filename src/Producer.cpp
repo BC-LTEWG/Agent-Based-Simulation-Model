@@ -103,7 +103,6 @@ void Producer::pursue_order(Firm * customer) {
         std::cerr << "Error: pursuing order from firm with no approved draft plan" << std::endl;
         return;
 	}
-    Order * order = plan->order;
 	customer_to_draft_plan[customer] = nullptr;
     start_plan(plan);
     log_pursued_plan(plan);

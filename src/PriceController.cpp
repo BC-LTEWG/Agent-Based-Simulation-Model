@@ -17,13 +17,6 @@ PriceController * PriceController::get_instance() {
 }
 
 void PriceController::on_time_step() {
-    double decay = 1.0 - 1.0 / FIC_AVERAGING_WINDOW;
-    paid_consumer_goods_value *= decay;
-    all_consumer_goods_value *= decay;
-    fic = 1.0;
-    if (all_consumer_goods_value) {
-        fic = paid_consumer_goods_value / all_consumer_goods_value;
-    }
 }
 
 unsigned int PriceController::get_id() {
@@ -75,13 +68,58 @@ void PriceController::report_distribution(ConsumerGood * consumer_good, int quan
         consumer_good->price_per_unit
         * quantity
         / FIC_AVERAGING_WINDOW;
-    all_consumer_goods_value += added_value;
-    if (consumer_good->paid) {
-        paid_consumer_goods_value += added_value;
-    }
+    total_consumer_good_distribution_value[consumer_good] += added_value;
 }
 
 double PriceController::get_fic() {
     return fic;
+}
+
+void PriceController::update_fic() {
+    double public_sector_distribution_value = 0.0;
+    double all_distribution_value = 0.0;
+    for (std::pair<ConsumerGood * const, double>& consumer_good : total_consumer_good_distribution_value) {
+        double decay = consumer_good.second / FIC_AVERAGING_WINDOW;
+        consumer_good.second -= decay;
+        all_distribution_value += consumer_good.second; 
+        if (consumer_good.first->public_sector) {
+            public_sector_distribution_value += consumer_good.second;
+        }
+    }
+    log_public_sector_distribution_value(public_sector_distribution_value);
+    log_all_distribution_value(all_distribution_value);
+    if (all_distribution_value) {
+        fic = 1.0 - public_sector_distribution_value / all_distribution_value;
+    } else {
+        fic = 1.0;
+    }
+    log_fic();
+}
+
+void PriceController::log_public_sector_distribution_value(double value) {
+    Logger::log(
+            Logger::SOCIETY,
+            get_id(),
+            "public_sector_distribution_value",
+            LogPair("value", value)
+            );
+}
+
+void PriceController::log_all_distribution_value(double value) {
+    Logger::log(
+            Logger::SOCIETY,
+            get_id(),
+            "all_distribution_value",
+            LogPair("value", value)
+            );
+}
+
+void PriceController::log_fic() {
+    Logger::log(
+            Logger::SOCIETY,
+            get_id(),
+            "fic",
+            LogPair("value", fic)
+            );
 }
 

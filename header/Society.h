@@ -45,6 +45,8 @@ class Society : public Agent {
         double get_busyness();
         double get_average_account();
         double get_total_employment();
+        void pay_into_public_fund(double amount);
+        void charge_from_public_fund(double amount);
 
         void log_total_employment();
 
@@ -68,10 +70,14 @@ class Society : public Agent {
                 std::size_t
                 );
         void adjust_io_matrix(Eigen::MatrixXd&);
-        void update_work_hours_daily();
+        void check_expand_public_sector();
         void log_io_matrix(Eigen::MatrixXd&, size_t);
         void log_vector(Eigen::VectorXd&, std::string, size_t);
         void log_consumption_frequencies();
+        void log_public_fund();
+        void log_public_sector_expansion(ConsumerGood * consumer_good);
+
+        double public_fund = 0.0;
         std::vector<Person *> people;
         std::vector<Good *> goods;
         std::vector<ConsumerGood *> consumer_goods;

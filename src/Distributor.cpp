@@ -58,12 +58,12 @@ int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Pers
         log_shortfall(consumer_good->id, quantity - available);
     }
     double cost = 0.0;
-    if (consumer_good->paid) {
-        cost = available * consumer_good->price_per_unit;
+    cost = available * consumer_good->price_per_unit;
+    if (consumer_good->public_sector) {
+        Society::get_instance()->charge_from_public_fund(cost);
+    } else if (!person->charge(cost)) {
+        return 0;
     }
-    if (!person->charge(cost)) {
-         return 0;
-    } 
     remove_input_from_inventory(consumer_good, available);
     PriceController::get_instance()->report_distribution(consumer_good, available);
     return available;
