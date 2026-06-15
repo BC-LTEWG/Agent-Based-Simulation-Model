@@ -42,7 +42,7 @@ void Distributor::add_to_catalog(Product * product) {
         consumer_good->mean_consumption_frequency 
         * Sim::get_num_people() 
         / Sim::get_num_distributors()
-        * (FIRM_STOCKPILE_DURATION + DEMAND_AVERAGING_WINDOW);
+        * (FIRM_STOCKPILE_DURATION + DEMAND_ADAPTATION_DURATION * DEMAND_AVERAGING_WINDOW);
     log_inventory_level(good, input_inventory[good]);
     log_inventory_level(consumer_good, input_inventory[consumer_good]);
     log_catalog_addition(product);
@@ -57,8 +57,7 @@ int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Pers
     if (available < quantity) {
         log_shortfall(consumer_good->id, quantity - available);
     }
-    double cost = 0.0;
-    cost = available * consumer_good->price_per_unit;
+    double cost = available * consumer_good->price_per_unit;
     if (consumer_good->public_sector) {
         Society::get_instance()->charge_from_public_fund(cost);
     } else if (!person->charge(cost)) {
@@ -93,6 +92,8 @@ void Distributor::check_and_reorder_input(Product * product) {
     double distribution_time = 
         static_cast<double>(distribution_quantity)
         / demands[consumer_good];
+    double expected_consumer_demand_ratio = 
+        demands[consumer_good] / (consumer_good->mean_consumption_frequency * Sim::get_num_people() / Sim::get_num_distributors());
     Order * order = new Order(
             consumer_good,
             distribution_quantity,

@@ -49,7 +49,7 @@ void Producer::add_to_catalog(Product * product) {
             * Sim::get_num_people() 
             * Sim::get_num_goods() 
             / Sim::get_num_producers()
-            * (FIRM_STOCKPILE_DURATION + DEMAND_AVERAGING_WINDOW);
+            * (FIRM_STOCKPILE_DURATION + DEMAND_ADAPTATION_DURATION * DEMAND_AVERAGING_WINDOW);
     }
     for (std::pair<Product * const, double>& stockpile : input_inventory) {
         log_inventory_level(stockpile.first, stockpile.second);
