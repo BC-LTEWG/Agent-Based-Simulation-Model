@@ -323,7 +323,7 @@ void Firm::assign_workers(Plan * draft_plan) {
 
 double Firm::predict_turnaround_time(Plan * plan, std::vector<Person *>& workers) {
     if (workers.empty()) {
-        throw std::runtime_error("Cannot predict turnaround time with 0 workers: " + plan->order->product->product_name);
+        throw std::runtime_error("Cannot predict turnaround time with 0 workers: " + std::to_string(plan->order->product->id));
     }
     return plan->order->quantity *
            recorded_living_labor_per_unit[plan->order->product] *
