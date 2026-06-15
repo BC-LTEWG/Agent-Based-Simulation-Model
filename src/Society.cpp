@@ -138,6 +138,7 @@ void Society::on_time_step() {
     PriceController::get_instance()->on_time_step();
 
     // public sector expansion
+    check_expand_public_sector();
 }
 
 void Society::set_initial_products() {

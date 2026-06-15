@@ -42,9 +42,11 @@ void Distributor::add_to_catalog(Product * product) {
         consumer_good->mean_consumption_frequency 
         * Sim::get_num_people() 
         / Sim::get_num_distributors();
-    input_inventory[good] = 
-        input_inventory[consumer_good] = 
-        demands[consumer_good] * FIRM_STOCKPILE_DURATION;
+    static std::normal_distribution<double> demand_mult(1.0, DEMAND_PREDICTION_VARIANCE);
+    demands[good] *= demand_mult(Sim::get_random_device());
+    demands[consumer_good] *= demand_mult(Sim::get_random_device());
+    input_inventory[good] = demands[good] * FIRM_STOCKPILE_DURATION;
+    input_inventory[consumer_good] = demands[consumer_good] * FIRM_STOCKPILE_DURATION;
     log_inventory_level(good, input_inventory[good]);
     log_inventory_level(consumer_good, input_inventory[consumer_good]);
     log_catalog_addition(product);
