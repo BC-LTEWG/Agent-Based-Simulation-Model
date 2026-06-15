@@ -39,17 +39,13 @@ void Producer::add_to_catalog(Product * product) {
     for (std::pair<Good * const, double>& input :
             product->inputs_per_unit) {
         double output_demand = Society::get_instance()->get_initial_production()[product];
-        if (product->product_type == Product::TYPE_GOOD) {
-            Good * good = static_cast<Good *>(product);
-            output_demand = good->corresponding_consumer_good->mean_consumption_frequency;
-        }
-        input_inventory[input.first] += 
-            input.second 
-            * output_demand
+        double input_demand = input.second * output_demand
             * Sim::get_num_people() 
             * Sim::get_num_goods() 
-            / Sim::get_num_producers()
-            * (FIRM_STOCKPILE_DURATION + DEMAND_ADAPTATION_DURATION * DEMAND_AVERAGING_WINDOW);
+            / Sim::get_num_producers();
+        demands[input.first] += input_demand;
+        input_inventory[input.first] += 
+            input_demand * FIRM_STOCKPILE_DURATION;
     }
     for (std::pair<Product * const, double>& stockpile : input_inventory) {
         log_inventory_level(stockpile.first, stockpile.second);

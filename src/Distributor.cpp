@@ -37,12 +37,14 @@ void Distributor::add_to_catalog(Product * product) {
     catalog.insert(product);
     ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
     Good * good = consumer_good->corresponding_good;
-    input_inventory[good] = 
-    input_inventory[consumer_good] = 
+    demands[good] = 
+        demands[consumer_good] = 
         consumer_good->mean_consumption_frequency 
         * Sim::get_num_people() 
-        / Sim::get_num_distributors()
-        * (FIRM_STOCKPILE_DURATION + DEMAND_ADAPTATION_DURATION * DEMAND_AVERAGING_WINDOW);
+        / Sim::get_num_distributors();
+    input_inventory[good] = 
+        input_inventory[consumer_good] = 
+        demands[consumer_good] * FIRM_STOCKPILE_DURATION;
     log_inventory_level(good, input_inventory[good]);
     log_inventory_level(consumer_good, input_inventory[consumer_good]);
     log_catalog_addition(product);
@@ -92,8 +94,6 @@ void Distributor::check_and_reorder_input(Product * product) {
     double distribution_time = 
         static_cast<double>(distribution_quantity)
         / demands[consumer_good];
-    double expected_consumer_demand_ratio = 
-        demands[consumer_good] / (consumer_good->mean_consumption_frequency * Sim::get_num_people() / Sim::get_num_distributors());
     Order * order = new Order(
             consumer_good,
             distribution_quantity,

@@ -17,6 +17,7 @@ PriceController * PriceController::get_instance() {
 }
 
 void PriceController::on_time_step() {
+    update_fic();
 }
 
 unsigned int PriceController::get_id() {
