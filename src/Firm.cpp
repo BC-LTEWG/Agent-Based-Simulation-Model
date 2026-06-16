@@ -75,6 +75,7 @@ bool Firm::remove_input_from_inventory(Product * product, double quantity) {
         return false;
     }
     input_inventory[product] -= quantity;
+    add_demand_signal(product, quantity);
     log_inventory_reduction(product, quantity);
     log_inventory_level(product, input_inventory[product]);
     return true;
@@ -173,13 +174,7 @@ void Firm::check_and_reorder_input(Product * product) {
     log_demand(product, threshold);
     int pending_inventory = get_pending_inventory_level(product);
     log_pending_inventory(product, pending_inventory);
-    if (pending_inventory >= threshold || !threshold) {
-        return;
-    }
-    double reorder_quantity = threshold * FIRM_REORDER_MAX_PROP;
-    if (product->product_type == Product::ProductType::TYPE_MACHINE) {
-        reorder_quantity = std::max(std::ceil(reorder_quantity), 1.0);
-    }
+    if (pending_inventory >= threshold || !threshold) return;
     Order * order = new Order(
             product,
             threshold * FIRM_REORDER_MAX_PROP,
@@ -204,11 +199,11 @@ void Firm::start_plan(Plan * plan) {
 	}
     double expected_plan_duration = plan->labor_budget / plan->workers.size();
     for (Machine * machine : plan->order->product->machines_needed) {
-        input_inventory[machine] -= expected_plan_duration;
+        double machine_use = expected_plan_duration / machine->lifetime;
+        remove_input_from_inventory(machine, machine_use);
         check_and_reorder_input(machine);
     }
     pooled_input_account += plan->machinery_budget + plan->raw_materials_budget;
-    plan->machinery_budget = plan->raw_materials_budget = 0.0;
     plan->order->status = Order::ORDER_IN_PROGRESS;
 }
 
@@ -221,11 +216,6 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
         return;
     }
     double labor_per_worker = quantity_produced / expected_quantity_produced;
-    plan->machinery_value_used +=
-        plan->order->product->machines_needed.size() * labor_per_worker;
-    plan->raw_materials_value_used +=
-        (plan->raw_materials_budget / plan->order->quantity) *
-        quantity_produced;
 	for (Person * worker : plan->workers) {
 		worker->register_hours_worked(labor_per_worker);
 	}
@@ -241,8 +231,6 @@ void Firm::end_plan(Plan * plan) {
         plan->labor_value_used /
         (plan->order->quantity - plan->quantity_remaining); 
     PriceController::get_instance()->update_price(plan);
-    pooled_input_account += (plan->machinery_budget - plan->machinery_value_used);
-    pooled_input_account += (plan->raw_materials_budget - plan->raw_materials_value_used);
     for (Person * worker : plan->workers) {
         standby_workers.insert(worker);
     }

@@ -36,8 +36,8 @@ void Producer::add_to_catalog(Product * product) {
     catalog.insert(product);
     for (Machine * machine : product->machines_needed) {
         machines.insert(machine);
-        input_inventory[machine] = machine->lifetime;
-        add_demand_signal(machine, 1);
+        input_inventory[machine] = 1.0;
+        add_demand_signal(machine, 1.0);
     }
     for (std::pair<Good * const, double>& input :
             product->inputs_per_unit) {
