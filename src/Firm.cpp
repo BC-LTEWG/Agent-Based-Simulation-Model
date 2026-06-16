@@ -72,12 +72,14 @@ void Firm::receive_payment(Plan * plan, double transaction_amount) {
 
 bool Firm::remove_input_from_inventory(Product * product, double quantity) {
     if (!input_inventory.count(product) || input_inventory[product] < quantity) {
+        check_and_reorder_input(product);
         return false;
     }
     input_inventory[product] -= quantity;
     add_demand_signal(product, quantity);
     log_inventory_reduction(product, quantity);
     log_inventory_level(product, input_inventory[product]);
+    check_and_reorder_input(product);
     return true;
 }
 
@@ -195,13 +197,11 @@ void Firm::start_plan(Plan * plan) {
 	for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
         double required_input = input.second * plan->order->quantity;
         remove_input_from_inventory(input.first, required_input);
-        check_and_reorder_input(input.first);
 	}
     double expected_plan_duration = plan->labor_budget / plan->workers.size();
     for (Machine * machine : plan->order->product->machines_needed) {
-        double machine_use = expected_plan_duration / machine->lifetime;
-        remove_input_from_inventory(machine, machine_use);
-        check_and_reorder_input(machine);
+        double expected_machine_use = expected_plan_duration / machine->lifetime;
+        remove_input_from_inventory(machine, expected_machine_use);
     }
     pooled_input_account += plan->machinery_budget + plan->raw_materials_budget;
     plan->order->status = Order::ORDER_IN_PROGRESS;
@@ -216,6 +216,11 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
         return;
     }
     double labor_per_worker = quantity_produced / expected_quantity_produced;
+    plan->machinery_value_used +=
+        plan->order->product->machines_needed.size() * labor_per_worker;
+    plan->raw_materials_value_used +=
+        (plan->raw_materials_budget / plan->order->quantity) *
+        quantity_produced;
 	for (Person * worker : plan->workers) {
 		worker->register_hours_worked(labor_per_worker);
 	}
@@ -226,6 +231,9 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
 void Firm::end_plan(Plan * plan) {
     log_ended_plan(plan);
     plan->order->status = Order::ORDER_FINISHED;
+    double cost_overage = (plan->machinery_value_used - plan->machinery_budget) +
+        (plan->raw_materials_value_used - plan->raw_materials_budget);
+    plan->debt -= cost_overage;
     plan->order->customer->receive_shipment(plan);
     recorded_living_labor_per_unit[plan->order->product] =
         plan->labor_value_used /
