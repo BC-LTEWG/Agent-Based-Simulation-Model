@@ -75,6 +75,8 @@ class Society : public Agent {
         void log_vector(Eigen::VectorXd&, std::string, size_t);
         void log_consumption_frequencies();
         void log_public_fund();
+        void log_public_revenue(double);
+        void log_public_expenditure(double);
         void log_public_sector_expansion(ConsumerGood * consumer_good);
 
         double public_fund = 0.0;

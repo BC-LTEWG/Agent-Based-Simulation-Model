@@ -69,7 +69,7 @@ void PriceController::report_distribution(ConsumerGood * consumer_good, int quan
         consumer_good->price_per_unit
         * quantity
         / FIC_AVERAGING_WINDOW;
-    total_consumer_good_distribution_value[consumer_good] += added_value;
+    consumer_good_to_net_value[consumer_good] += added_value;
 }
 
 double PriceController::get_fic() {
@@ -77,40 +77,40 @@ double PriceController::get_fic() {
 }
 
 void PriceController::update_fic() {
-    double public_sector_distribution_value = 0.0;
-    double all_distribution_value = 0.0;
-    for (std::pair<ConsumerGood * const, double>& consumer_good : total_consumer_good_distribution_value) {
+    double public_sector_net_value = 0.0;
+    double societal_net_value = 0.0;
+    for (std::pair<ConsumerGood * const, double>& consumer_good : consumer_good_to_net_value) {
         double decay = consumer_good.second / FIC_AVERAGING_WINDOW;
         consumer_good.second -= decay;
-        all_distribution_value += consumer_good.second; 
+        societal_net_value += consumer_good.second; 
         if (consumer_good.first->public_sector) {
-            public_sector_distribution_value += consumer_good.second;
+            public_sector_net_value += consumer_good.second;
         }
     }
-    log_public_sector_distribution_value(public_sector_distribution_value);
-    log_all_distribution_value(all_distribution_value);
-    if (all_distribution_value) {
-        fic = 1.0 - public_sector_distribution_value / all_distribution_value;
+    log_public_sector_net_value(public_sector_net_value);
+    log_societal_net_value(societal_net_value);
+    if (societal_net_value > 0.0) {
+        fic = 1.0 - public_sector_net_value / societal_net_value;
     } else {
         fic = 1.0;
     }
     log_fic();
 }
 
-void PriceController::log_public_sector_distribution_value(double value) {
+void PriceController::log_public_sector_net_value(double value) {
     Logger::log(
             Logger::SOCIETY,
             get_id(),
-            "public_sector_distribution_value",
+            "public_sector_net_value",
             LogPair("value", value)
             );
 }
 
-void PriceController::log_all_distribution_value(double value) {
+void PriceController::log_societal_net_value(double value) {
     Logger::log(
             Logger::SOCIETY,
             get_id(),
-            "all_distribution_value",
+            "societal_net_value",
             LogPair("value", value)
             );
 }

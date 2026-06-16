@@ -610,11 +610,13 @@ void Society::retire_person(Person *person) {
 
 void Society::pay_into_public_fund(double amount) {
     public_fund += amount;
+    log_public_revenue(amount);
     log_public_fund();
 }
 
 void Society::charge_from_public_fund(double amount) {
     public_fund -= amount;
+    log_public_expenditure(amount);
     log_public_fund();
 }
 
@@ -683,6 +685,24 @@ void Society::log_public_fund() {
             id,
             "public_fund",
             LogPair("value", public_fund)
+            );
+}
+
+void Society::log_public_revenue(double revenue) {
+    Logger::log(
+            Logger::SOCIETY,
+            id,
+            "public_revenue",
+            LogPair("value", revenue)
+            );
+}
+
+void Society::log_public_expenditure(double expenditure) {
+    Logger::log(
+            Logger::SOCIETY,
+            id,
+            "public_expenditure",
+            LogPair("value", expenditure)
             );
 }
 

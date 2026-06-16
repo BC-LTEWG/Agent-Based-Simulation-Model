@@ -20,10 +20,10 @@ class PriceController : public Agent {
         PriceController();
         double fic = 1.0;
         std::unordered_map<Product *, std::vector<std::pair<Plan *, int>>> plan_history;
-        std::unordered_map<ConsumerGood *, double> total_consumer_good_distribution_value;
+        std::unordered_map<ConsumerGood *, double> consumer_good_to_net_value;
         void update_fic();
-        void log_public_sector_distribution_value(double);
-        void log_all_distribution_value(double);
+        void log_public_sector_net_value(double);
+        void log_societal_net_value(double);
         void log_fic();
 };
 
