@@ -65,12 +65,22 @@ bool Producer::can_produce(Product * product) {
 
 int Producer::get_max_order_quantity(Product * product) {
     int max_order_quantity = INT_MAX;
-for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
+    for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
         int input_max_order_quantity = static_cast<int>(
                 input_inventory[input.first] / input.second
                 );
         max_order_quantity = std::min(max_order_quantity, input_max_order_quantity);
     }
+    double team_hours_per_unit =
+        product->living_labor_per_unit / standby_workers.size();
+    for (Machine * machine : product->machines_needed) {
+        double aggregate_machine_hours_available =
+            input_inventory[machine] * machine->lifetime;
+        int machine_max_order_quantity =
+            static_cast<int>(aggregate_machine_hours_available / team_hours_per_unit);
+        max_order_quantity =
+            std::min(max_order_quantity, machine_max_order_quantity);
+    } 
     return max_order_quantity;
 }
 

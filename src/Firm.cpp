@@ -231,9 +231,8 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
 void Firm::end_plan(Plan * plan) {
     log_ended_plan(plan);
     plan->order->status = Order::ORDER_FINISHED;
-    double cost_overage = (plan->machinery_value_used - plan->machinery_budget) +
-        (plan->raw_materials_value_used - plan->raw_materials_budget);
-    plan->debt -= cost_overage;
+    plan->debt = -(plan->machinery_value_used + plan->raw_materials_value_used +
+            plan->labor_value_used);
     plan->order->customer->receive_shipment(plan);
     recorded_living_labor_per_unit[plan->order->product] =
         plan->labor_value_used /
@@ -375,11 +374,6 @@ void Firm::initialize_plan_budget(Plan * draft_plan) {
     draft_plan->labor_budget = predict_labor_cost(draft_plan); 
     draft_plan->machinery_budget = predict_machinery_cost(draft_plan);
     draft_plan->raw_materials_budget = calculate_raw_materials_cost(draft_plan);
-    double total_budget =
-        draft_plan->machinery_budget +
-        draft_plan->raw_materials_budget +
-        draft_plan->labor_budget;
-    draft_plan->debt = -total_budget;
 }
 
 Plan * Firm::draft_plan_for_order(Order * order) {
