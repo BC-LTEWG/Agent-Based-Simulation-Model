@@ -136,8 +136,6 @@ void Society::on_time_step() {
         firm->on_time_step();
     }
     PriceController::get_instance()->on_time_step();
-
-    // public sector expansion
     check_expand_public_sector();
 }
 
@@ -621,8 +619,11 @@ void Society::charge_from_public_fund(double amount) {
 }
 
 void Society::check_expand_public_sector() {
-    if (Sim::get_current_time_step() % PUBLIC_SECTOR_EXPANSION_PERIOD == 0) {
-        int index = Sim::get_current_time_step() / PUBLIC_SECTOR_EXPANSION_PERIOD - 1;
+    if (Sim::get_public_sector_expansion_period() <= 0) {
+        return;
+    }
+    if (Sim::get_current_time_step() % Sim::get_public_sector_expansion_period() == 0) {
+        int index = Sim::get_current_time_step() / Sim::get_public_sector_expansion_period() - 1;
         if (index < 0 || index >= static_cast<int>(consumer_goods.size())) {
             return;
         }
