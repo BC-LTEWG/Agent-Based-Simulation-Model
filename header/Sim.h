@@ -20,6 +20,7 @@ struct SimArgs {
     double ability_stddev = ABILITY_STDDEV;
     double difficulty_of_production = DEFAULT_PRODUCTION_DIFFICULTY;
     double consumption_demand_level = DEFAULT_CONSUMPTION_DEMAND;
+    int public_sector_expansion_period = PUBLIC_SECTOR_EXPANSION_PERIOD;
     std::string init_price_mode = "labor_values";
     bool json = false;
     unsigned int seed = 0;
@@ -40,9 +41,9 @@ class Sim {
         static unsigned int get_num_abilities();
         static double get_ability_stddev();
         static double get_annual_sickness_chance();
-        static double get_person_ability_stddev();
         static double get_difficulty_of_production();
         static double get_product_consumption_mult();
+        static int get_public_sector_expansion_period();
         static std::string get_initial_price_mode();
         static bool does_json();
         static int get_current_time_step();

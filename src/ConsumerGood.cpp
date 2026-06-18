@@ -13,7 +13,7 @@ ConsumerGood::ConsumerGood(Good * good) :
     Society::get_instance()->
         set_underlying_living_labor_per_unit(this, living_labor_per_unit);
     static std::uniform_real_distribution<>
-        consumption_freq_dist(0.0, 1.0);
+        consumption_freq_dist(1.0, PRODUCT_CONSUMPTION_VARIANCE);
     mean_consumption_frequency = consumption_freq_dist(Sim::get_random_generator());
     corresponding_good = good;
     good->corresponding_consumer_good = this;

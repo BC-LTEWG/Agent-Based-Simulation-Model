@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "Constants.h"
 #include "Sim.h"
 
 void print_usage() {
@@ -23,6 +24,7 @@ void print_usage() {
     std::cout << "\t--init_prices S: How initial prices are set. Options are 'labor_values' and 'equilibrium_prices'." << std::endl;
     std::cout << "\t--production_difficulty N: Set the spectral radius of the I/O requirements matrix. Higher values make surplus generation more difficult." << std::endl;
     std::cout << "\t--consumption_demand N: Set the proportion of value consumed by society relative to the maximum value producable by that society." << std::endl;
+    std::cout << "\t--public_sector_expansion_period N: Period (in months) of moving goods to be funded by the public sector, transitioning to communism. N = 0 results in no public sector expansion." << std::endl;
     std::cout << "\t-j: Write JSON log traces to stdout." << std::endl;
 }
 
@@ -41,6 +43,7 @@ enum class ArgType {
     kSeed,
     kProductionDifficulty,
     kConsumptionDemand,
+    kPublicSectorExpansionPeriod,
     InitPrices
 };
 
@@ -67,6 +70,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
         {"-e", ArgType::kSeed}, {"--seed", ArgType::kSeed},
         {"--production_difficulty", ArgType::kProductionDifficulty},
         {"--consumption_demand", ArgType::kConsumptionDemand},
+        {"--public_sector_expansion_period", ArgType::kPublicSectorExpansionPeriod},
         {"--init_prices", ArgType::InitPrices}
     };
 
@@ -85,12 +89,13 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
             error = true;
             break;
         }
-
         if (valid_args.at(arg) == ArgType::InitPrices) {
             args.init_price_mode = argv[++i];
+            if (!valid_init_price_modes.count(args.init_price_mode)) {
+                std::cerr << "Warning! Unknown initial price mode " << args.init_price_mode << ". Defaulting to labor_values" << std::endl;
+            }
             continue;
         }
-
         long value = strtol(argv[++i], nullptr, 10);
         double dvalue = strtod(argv[i], nullptr);
         switch (valid_args.at(arg)) {
@@ -198,6 +203,14 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
+            case ArgType::kPublicSectorExpansionPeriod: {
+                if (value < 0) {
+                    error = true;
+                } else {
+                    args.public_sector_expansion_period = value * MONTH;
+                }
+                break;
+            }
             case ArgType::kSeed: {
                 if (value < 0) {
                     error = true;
@@ -206,13 +219,6 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                     args.fixed_seed = true;
                 }
                 break;
-            }
-            case ArgType::InitPrices: {
-                args.init_price_mode = argv[++i];
-                if (!valid_init_price_modes.count(args.init_price_mode)) {
-                    std::cerr << "Warning! Unknown initial price mode " << args.init_price_mode << ". Defaulting to labor_values" << std::endl;
-                }
-                continue;
             }
         }
     }

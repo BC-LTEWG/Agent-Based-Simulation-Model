@@ -39,16 +39,16 @@ void Producer::add_to_catalog(Product * product) {
     for (std::pair<Good * const, double>& input :
             product->inputs_per_unit) {
         double output_demand = Society::get_instance()->get_initial_production()[product];
-        if (Good * good = dynamic_cast<Good *>(product)) {
-            output_demand = good->corresponding_consumer_good->mean_consumption_frequency;
-        }
-        input_inventory[input.first] += 
-            input.second 
-            * output_demand
+        double input_demand = input.second * output_demand
             * Sim::get_num_people() 
             * Sim::get_num_goods() 
-            / Sim::get_num_producers()
-            * (FIRM_STOCKPILE_DURATION + DEMAND_AVERAGING_WINDOW);
+            / Sim::get_num_producers();
+        demands[input.first] += input_demand;
+    }
+    static std::normal_distribution<double> demand_mult(1.0, DEMAND_PREDICTION_VARIANCE);
+    for (std::pair<Product * const, double>& demand : demands) {
+        demand.second *= demand_mult(Sim::get_random_device());
+        input_inventory[demand.first] = demand.second * FIRM_STOCKPILE_DURATION;
     }
     for (std::pair<Product * const, double>& stockpile : input_inventory) {
         log_inventory_level(stockpile.first, stockpile.second);
@@ -69,12 +69,6 @@ for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
         max_order_quantity = std::min(max_order_quantity, input_max_order_quantity);
     }
     return max_order_quantity;
-}
-
-void Producer::add_order_input_demand_signals(const Order * order) {
-    for (std::pair<Good * const, double>& input : order->product->inputs_per_unit) {
-        add_demand_signal(input.first, input.second * order->quantity);
-    }
 }
 
 Order * Producer::draft_plan_and_return_order(const Order * order) {
@@ -108,9 +102,6 @@ void Producer::pursue_order(Firm * customer) {
         std::cerr << "Error: pursuing order from firm with no approved draft plan" << std::endl;
         return;
 	}
-    Order * order = plan->order;
-    add_order_input_demand_signals(order);
-
 	customer_to_draft_plan[customer] = nullptr;
     start_plan(plan);
     log_pursued_plan(plan);
