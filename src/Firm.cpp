@@ -225,6 +225,9 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
 	}
     plan->labor_value_used += labor_per_worker * plan->workers.size();
     plan->quantity_remaining -= quantity_produced;
+    if (plan->machinery_value_used >= plan->machinery_budget) {
+        end_plan(plan);
+    }
 }
 
 void Firm::end_plan(Plan * plan) {
@@ -232,13 +235,6 @@ void Firm::end_plan(Plan * plan) {
     plan->order->status = Order::ORDER_FINISHED;
     plan->debt = -(plan->machinery_value_used + plan->raw_materials_value_used +
             plan->labor_value_used);
-    double labor_use_adjustment = plan->labor_value_used - plan->labor_budget;
-    double plan_duration_adjustment = labor_use_adjustment / workers.size();
-    for (Machine * machine : plan->order->product->machines_needed) {
-        double machine_use_adjustment =
-            plan_duration_adjustment / machine->lifetime;
-        remove_input_from_inventory(machine, machine_use_adjustment);
-    }
     plan->order->customer->receive_shipment(plan);
     recorded_living_labor_per_unit[plan->order->product] =
         plan->labor_value_used /
