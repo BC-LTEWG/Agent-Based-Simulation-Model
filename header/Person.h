@@ -20,12 +20,13 @@ class Person : public Agent {
   public:
     enum HealthStatus { HEALTHY, UNHEALTHY };
 	
-    Person(Society * society);
+    Person();
     unsigned int get_id() override;
 	void on_time_step() override;
   
 	std::unordered_map<Ability *, double>& get_abilities();
     double get_busyness();
+    double get_account();
 	void train(std::unordered_map<Ability *, double>& target_abilities);
     HealthStatus get_health_status();
     float productivity();
@@ -37,7 +38,6 @@ class Person : public Agent {
     Firm * get_firm();
   
   private:
-    Society * society;
     unsigned int id;
     std::unordered_map<Ability *, double> abilities;
     int age;

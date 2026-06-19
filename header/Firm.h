@@ -87,11 +87,11 @@ class Firm : public Agent {
     Producer * send_order(Order * order);
     bool remove_input_from_inventory(Product * product, double quantity);
     double get_reorder_threshold(Product * product);
-    virtual double get_pending_inventory_level(Product * product);
-    void check_and_reorder_input(Product * product);
+    double get_pending_inventory_level(Product * product);
+    virtual void check_and_reorder_input(Product * product);
 	void start_plan(Plan * plan);
 	void move_plan_forward_one_step(Plan * plan);
-	virtual void end_plan(Plan * plan);
+	void end_plan(Plan * plan);
 	void move_plans_forward_one_step();
     double calculate_quantity_produced_from_worker_suitability(Plan * plan);
     bool is_within_work_schedule() const;

@@ -16,6 +16,7 @@
 #include "Logger.h"
 #include "Machine.h"
 #include "Person.h"
+#include "PriceController.h"
 #include "Product.h"
 #include "Producer.h"
 #include "Sim.h"
@@ -119,12 +120,23 @@ unsigned int Society::get_id() {
 }
 
 void Society::on_time_step() {
+    busyness = 0.0;
+    average_account = 0.0;
+    for (Person * person : people) {
+        busyness += person->get_busyness();
+        average_account += person->get_account();
+    }
+    busyness /= people.size();
+    average_account /= people.size();
+
     for (Person * person : people) {
         person->on_time_step();
     }
     for (Firm * firm : firms) {
         firm->on_time_step();
     }
+    PriceController::get_instance()->on_time_step();
+    check_expand_public_sector();
 }
 
 void Society::set_initial_products() {
@@ -217,11 +229,11 @@ std::vector<Producer *>& Society::get_suppliers(Product * product) {
 }
 
 double Society::get_busyness() {
-    double busyness = 0.0;
-    for (Person * person : people) {
-        busyness += person->get_busyness();
-    }
-    return busyness / people.size();
+    return busyness;
+}
+
+double Society::get_average_account() {
+    return average_account;
 }
 
 double Society::get_total_employment() {
@@ -579,18 +591,12 @@ int Society::get_initial_account() {
     return initial_account;
 }
 
-std::unordered_map<Product *, double> &Society::get_initial_production() {
+std::unordered_map<Product *, double>& Society::get_initial_production() {
     return initial_production;
 }
 
-void Society::update_work_hours_daily() {
-    current_work_hours_daily = std::ceil(get_busyness() * INEFFICIENCY_OF_WORK * 
-            WEEK / Sim::get_work_days_weekly());
-    current_work_hours_daily = std::min(DAY, current_work_hours_daily);
-}
-
 Person * Society::birth_person() {
-    Person * person = new Person(this);
+    Person * person = new Person;
     people.push_back(person);
     unemployed_people.insert(person);
     return person;
@@ -598,6 +604,33 @@ Person * Society::birth_person() {
 
 void Society::retire_person(Person *person) {
     // unimplemented until hiring/reallocation is done
+}
+
+void Society::pay_into_public_fund(double amount) {
+    public_fund += amount;
+    log_public_revenue(amount);
+    log_public_fund();
+}
+
+void Society::charge_from_public_fund(double amount) {
+    public_fund -= amount;
+    log_public_expenditure(amount);
+    log_public_fund();
+}
+
+void Society::check_expand_public_sector() {
+    if (Sim::get_public_sector_expansion_period() <= 0) {
+        return;
+    }
+    if (Sim::get_current_time_step() % Sim::get_public_sector_expansion_period() == 0) {
+        int index = Sim::get_current_time_step() / Sim::get_public_sector_expansion_period() - 1;
+        if (index < 0 || index >= static_cast<int>(consumer_goods.size())) {
+            return;
+        }
+        ConsumerGood * consumer_good = consumer_goods[index];
+        consumer_good->public_sector = true;
+        log_public_sector_expansion(consumer_good);
+    }
 }
 
 void Society::log_io_matrix(Eigen::MatrixXd& A, size_t dim) {
@@ -645,4 +678,40 @@ void Society::log_consumption_frequencies() {
                 LogPair("value", consumer_good->mean_consumption_frequency)
                 );
     }
+}
+
+void Society::log_public_fund() {
+    Logger::log(
+            Logger::SOCIETY,
+            id,
+            "public_fund",
+            LogPair("value", public_fund)
+            );
+}
+
+void Society::log_public_revenue(double revenue) {
+    Logger::log(
+            Logger::SOCIETY,
+            id,
+            "public_revenue",
+            LogPair("value", revenue)
+            );
+}
+
+void Society::log_public_expenditure(double expenditure) {
+    Logger::log(
+            Logger::SOCIETY,
+            id,
+            "public_expenditure",
+            LogPair("value", expenditure)
+            );
+}
+
+void Society::log_public_sector_expansion(ConsumerGood * consumer_good) {
+    Logger::log(
+            Logger::SOCIETY,
+            id,
+            "public_sector_expansion",
+            LogPair("product_id", consumer_good->id)
+            );
 }

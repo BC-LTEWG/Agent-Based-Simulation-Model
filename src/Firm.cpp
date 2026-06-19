@@ -126,9 +126,6 @@ Producer * Firm::send_order(Order * order) {
     std::vector<Producer *>& suppliers =
         Society::get_instance()->get_suppliers(order->product);
     for (Producer * producer : suppliers) {
-        if (!producer->can_produce(order->product)) {
-            continue;
-        }
         Order * return_order = producer->draft_plan_and_return_order(order);
         if (return_order->status == Order::ORDER_REJECTED) {
             continue;
@@ -176,7 +173,9 @@ void Firm::check_and_reorder_input(Product * product) {
     log_demand(product, threshold);
     int pending_inventory = get_pending_inventory_level(product);
     log_pending_inventory(product, pending_inventory);
-    if (pending_inventory >= threshold || !threshold) return;
+    if (pending_inventory >= threshold || !threshold) {
+        return;
+    }
     Order * order = new Order(
             product,
             threshold * FIRM_REORDER_MAX_PROP,
@@ -335,6 +334,8 @@ void Firm::assign_workers(Plan * draft_plan) {
 double Firm::predict_turnaround_time(Plan * plan) {
     if (plan->workers.empty()) {
         return std::numeric_limits<double>::infinity();
+        throw std::runtime_error("Cannot predict turnaround time with 0 workers: Product " +
+                std::to_string(plan->order->product->id));
     }
     return plan->order->quantity *
            recorded_living_labor_per_unit[plan->order->product] *
@@ -406,8 +407,8 @@ void Firm::add_demand_signal(Product * product, double quantity) {
 
 void Firm::update_demands() {
     for (std::pair<Product * const, double>& demand : demands) {
-        demand.second *=
-            (DEMAND_AVERAGING_WINDOW - 1.0) / DEMAND_AVERAGING_WINDOW;
+        double decay = demand.second / DEMAND_AVERAGING_WINDOW;
+        demand.second -= decay;
     }
 }
 

@@ -10,6 +10,7 @@
 #include "Firm.h"
 #include "Logger.h"
 #include "Person.h"
+#include "PriceController.h"
 #include "Product.h"
 #include "Sim.h"
 #include "Society.h"
@@ -19,8 +20,7 @@ Ability::Ability() {
     id = unique_id++;
 }
 
-Person::Person(Society * society):
-    society{society},
+Person::Person():
     age(INITIAL_AGE),
     health_status(HEALTHY)
 {
@@ -29,22 +29,22 @@ Person::Person(Society * society):
 
     std::lognormal_distribution<>
         ability_dist(0.0, Sim::get_ability_stddev());
-    for (Ability * ability : society->get_abilities()) {
+    for (Ability * ability : Society::get_instance()->get_abilities()) {
         abilities[ability] = ability_dist(Sim::get_random_generator());
     }
     log_abilities();
-    ranked_distributors = society->get_distributors();
+    ranked_distributors = Society::get_instance()->get_distributors();
     std::shuffle(
             ranked_distributors.begin(),
             ranked_distributors.end(),
             Sim::get_random_generator()
             );
-    for (ConsumerGood * consumer_good : society->get_consumer_goods()) {
+    for (ConsumerGood * consumer_good : Society::get_instance()->get_consumer_goods()) {
         inventory[consumer_good] = 
             static_cast<int>(PERSON_STOCKPILE_DURATION * consumer_good->mean_consumption_frequency);
     }
     log_inventory();
-    account = society->get_initial_account();
+    account = Society::get_instance()->get_initial_account();
     log_account();
 }
 
@@ -60,6 +60,10 @@ double Person::get_busyness() {
     return busyness;
 }
 
+double Person::get_account() {
+    return account;
+}
+
 void Person::train(std::unordered_map<Ability *, double>& target_abilities) {
     // can introduce < 100% effectiveness on training later
     for (const std::pair<Ability * const, double>& ability : target_abilities) {
@@ -70,8 +74,11 @@ void Person::train(std::unordered_map<Ability *, double>& target_abilities) {
 
 void Person::register_hours_worked(double hours_worked) {
     log_hours_worked(hours_worked);
-    account += hours_worked;
     busyness_this_time_step += hours_worked;
+    double individual_portion = PriceController::get_instance()->get_fic() * hours_worked;
+    double public_portion = hours_worked - individual_portion;
+    account += individual_portion;
+    Society::get_instance()->pay_into_public_fund(public_portion); 
 }
 
 bool Person::charge(double cost) {
@@ -111,8 +118,9 @@ void Person::purchase_good(ConsumerGood * consumer_good, int quantity) {
 }
 
 void Person::consume() {
-    for (ConsumerGood * consumer_good : society->get_consumer_goods()) {
-        to_consume[consumer_good] += consumer_good->mean_consumption_frequency;
+    for (ConsumerGood * consumer_good : Society::get_instance()->get_consumer_goods()) {
+        double consumption = consumer_good->mean_consumption_frequency;
+        to_consume[consumer_good] += consumption;
         int consumed = static_cast<int>(to_consume[consumer_good]);
         if (consumed) {
             inventory[consumer_good] -= consumed;
@@ -127,7 +135,7 @@ bool Person::will_shop() {
         return false;
     }
     double total_deficit = 0.0;
-    for (ConsumerGood * consumer_good : society->get_consumer_goods()) {
+    for (ConsumerGood * consumer_good : Society::get_instance()->get_consumer_goods()) {
         total_deficit += std::max(0.0, 
             PERSON_STOCKPILE_DURATION - 
             inventory[consumer_good] / consumer_good->mean_consumption_frequency
@@ -143,17 +151,23 @@ bool Person::will_shop() {
 void Person::shop() {
     double total_price = 0.0;
     static std::unordered_map<ConsumerGood *, int> purchase_quantities;
-    for (ConsumerGood * consumer_good : society->get_consumer_goods()) {
+    for (ConsumerGood * consumer_good : Society::get_instance()->get_consumer_goods()) {
         purchase_quantities[consumer_good] = std::max(0, 
             (int) (PERSON_STOCKPILE_DURATION * consumer_good->mean_consumption_frequency) - 
             inventory[consumer_good]
         );
+        if (consumer_good->public_sector) {
+            continue;
+        }
         total_price += purchase_quantities[consumer_good] * 
             consumer_good->price_per_unit;
     }
     double price_scalar = std::min(account / total_price, 1.0);
     for (std::pair<ConsumerGood *, int> consumer_good : purchase_quantities) {
-        int quantity = (int) (price_scalar * consumer_good.second);
+        int quantity = consumer_good.second;
+        if (!consumer_good.first->public_sector) {
+            quantity = (int) (price_scalar * consumer_good.second);
+        }
         if (quantity > 0) {
             purchase_good(consumer_good.first, quantity);
         }
@@ -167,7 +181,7 @@ bool Person::will_retire() {
 }
 
 void Person::retire() {
-    society->retire_person(this);
+    Society::get_instance()->retire_person(this);
 }
 
 void Person::update_health_status() {
@@ -197,8 +211,9 @@ void Person::update_health_status() {
 }
 
 void Person::update_busyness() {
-    double duration_prop = 1.0 / BUSYNESS_AVERAGING_WINDOW;
-    busyness = busyness * (1 - duration_prop) + busyness_this_time_step * duration_prop;
+    double growth = busyness_this_time_step / BUSYNESS_AVERAGING_WINDOW;
+    double decay = busyness / BUSYNESS_AVERAGING_WINDOW;
+    busyness += growth - decay;
     busyness_this_time_step = 0.0;
 }
 

@@ -12,5 +12,6 @@ struct ConsumerGood : public Product {
 
     Good * corresponding_good = nullptr;
 	double mean_consumption_frequency;
+    bool public_sector = false;
 };
 
