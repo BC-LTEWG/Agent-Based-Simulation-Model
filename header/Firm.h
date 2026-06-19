@@ -29,6 +29,7 @@ struct Plan {
     double raw_materials_budget = 0.0;
     double labor_budget = 0.0;
     double debt = 0.0;
+    std::unordered_map<Product *, double> input_inventory;
     double machinery_value_used = 0.0;
     double raw_materials_value_used = 0.0;
     double labor_value_used = 0.0;

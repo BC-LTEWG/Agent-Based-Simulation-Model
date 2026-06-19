@@ -194,13 +194,16 @@ void Firm::start_plan(Plan * plan) {
     plans_in_progress.insert(plan);
     Product * product = plan->order->product;
 	for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
-        double required_input = input.second * plan->order->quantity;
-        remove_input_from_inventory(input.first, required_input);
+        Product * input_product = input.first;
+        double required_amount = input.second * plan->order->quantity;
+        remove_input_from_inventory(input_product, required_amount);
+        plan->input_inventory[input_product] = required_amount;
 	}
     double expected_plan_duration = plan->labor_budget / plan->workers.size();
     for (Machine * machine : plan->order->product->machines_needed) {
         double expected_machine_use = expected_plan_duration / machine->lifetime;
         remove_input_from_inventory(machine, expected_machine_use);
+        plan->input_inventory[machine] = expected_machine_use;
     }
     pooled_input_account += plan->machinery_budget + plan->raw_materials_budget;
     plan->order->status = Order::ORDER_IN_PROGRESS;
@@ -225,8 +228,20 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
 	}
     plan->labor_value_used += labor_per_worker * plan->workers.size();
     plan->quantity_remaining -= quantity_produced;
-    if (plan->machinery_value_used >= plan->machinery_budget) {
-        end_plan(plan);
+    Product * product = plan->order->product;
+	for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
+        Product * input_product = input.first;
+        double amount_used = input.second * quantity_produced;
+        plan->input_inventory[input_product] -= amount_used;
+	}
+    for (Machine * machine : product->machines_needed) {
+        plan->input_inventory[machine] -= 1.0 / machine->lifetime;
+    }
+    for (std::pair<Product *, double> input : plan->input_inventory) {
+        if (plan->input_inventory[input.first] <= 0.0) {
+            end_plan(plan);
+            return;
+        }
     }
 }
 
@@ -236,6 +251,12 @@ void Firm::end_plan(Plan * plan) {
     plan->debt = -(plan->machinery_value_used + plan->raw_materials_value_used +
             plan->labor_value_used);
     plan->order->customer->receive_shipment(plan);
+    for (std::pair<Product *, double> input : plan->input_inventory) {
+        if (plan->input_inventory[input.first] > 0.0) {
+            input_inventory[input.first] += input.second;
+            plan->input_inventory[input.first] = 0.0;
+        }
+    }
     recorded_living_labor_per_unit[plan->order->product] =
         plan->labor_value_used /
         (plan->order->quantity - plan->quantity_remaining); 
