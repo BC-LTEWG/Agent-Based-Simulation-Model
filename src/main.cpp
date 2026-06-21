@@ -86,8 +86,6 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
             args.json = true;
             continue;
         }
-        if (valid_args.at(arg) == ArgType::kInitPrices) {
-        }
         if (i + 1 >= argc) {
             error = true;
             break;

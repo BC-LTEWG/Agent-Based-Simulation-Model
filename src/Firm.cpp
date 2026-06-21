@@ -237,6 +237,10 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
     for (Machine * machine : product->machines_needed) {
         plan->input_inventory[machine] -= 1.0 / machine->lifetime;
     }
+    if (plan->quantity_remaining <= 0.0) {
+        end_plan(plan);
+        return;
+    }
     for (std::pair<Product *, double> input : plan->input_inventory) {
         if (plan->input_inventory[input.first] <= 0.0) {
             end_plan(plan);
@@ -272,9 +276,6 @@ void Firm::move_plans_forward_one_step() {
         if (plan->order->status == Order::ORDER_IN_PROGRESS) {
             if (is_within_work_schedule()) {
                 move_plan_forward_one_step(plan);
-            }
-            if (plan->quantity_remaining <= 0.0) {
-                end_plan(plan);
             }
         }
     }
