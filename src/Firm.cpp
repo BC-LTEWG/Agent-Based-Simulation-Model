@@ -212,9 +212,20 @@ void Firm::start_plan(Plan * plan) {
 void Firm::move_plan_forward_one_step(Plan * plan) {
     double expected_quantity_produced =
         calculate_quantity_produced_from_worker_suitability(plan);
-    double quantity_produced =
-        std::min(expected_quantity_produced, plan->quantity_remaining);
-    if (quantity_produced <= 0.0) {
+    double quantity_produced = expected_quantity_produced;
+    Product * product = plan->order->product;
+	for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
+        quantity_produced =
+            std::min(quantity_produced,
+                    plan->input_inventory[input.first] / input.second);
+    }
+    for (Machine * machine : product->machines_needed) {
+        quantity_produced =
+            std::min(quantity_produced,
+                    plan->input_inventory[machine] / machine->lifetime);
+    }
+    if (quantity_produced <= 0.0 || plan->quantity_remaining <= 0.0) {
+        end_plan(plan);
         return;
     }
     double labor_per_worker = quantity_produced / expected_quantity_produced;
@@ -228,7 +239,6 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
 	}
     plan->labor_value_used += labor_per_worker * plan->workers.size();
     plan->quantity_remaining -= quantity_produced;
-    Product * product = plan->order->product;
 	for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
         Product * input_product = input.first;
         double amount_used = input.second * quantity_produced;
@@ -236,16 +246,6 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
 	}
     for (Machine * machine : product->machines_needed) {
         plan->input_inventory[machine] -= 1.0 / machine->lifetime;
-    }
-    if (plan->quantity_remaining <= 0.0) {
-        end_plan(plan);
-        return;
-    }
-    for (std::pair<Product *, double> input : plan->input_inventory) {
-        if (plan->input_inventory[input.first] <= 0.0) {
-            end_plan(plan);
-            return;
-        }
     }
 }
 
