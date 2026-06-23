@@ -40,16 +40,7 @@ enum class ArgType {
     kAbilities,
     kAbilityStdDev,
     kSickChance,
-    kSeed,
-    kProductionDifficulty,
-    kConsumptionDemand,
-    kPublicSectorExpansionPeriod,
-    InitPrices
-};
-
-static const std::unordered_set<std::string> valid_init_price_modes = {
-    "labor_values",
-    "equilibrium_prices"
+    kSeed
 };
 
 void set_params(int argc, const char ** argv, SimArgs& args) {
@@ -68,10 +59,6 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
         {"-v", ArgType::kAbilityStdDev}, {"--ability-stddev", ArgType::kAbilityStdDev},
         {"-s", ArgType::kSickChance}, {"--sick-chance", ArgType::kSickChance},
         {"-e", ArgType::kSeed}, {"--seed", ArgType::kSeed},
-        {"--production_difficulty", ArgType::kProductionDifficulty},
-        {"--consumption_demand", ArgType::kConsumptionDemand},
-        {"--public_sector_expansion_period", ArgType::kPublicSectorExpansionPeriod},
-        {"--init_prices", ArgType::InitPrices}
     };
 
 
@@ -88,13 +75,6 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
         if (!valid_args.count(arg)) {
             error = true;
             break;
-        }
-        if (valid_args.at(arg) == ArgType::InitPrices) {
-            args.init_price_mode = argv[++i];
-            if (!valid_init_price_modes.count(args.init_price_mode)) {
-                std::cerr << "Warning! Unknown initial price mode " << args.init_price_mode << ". Defaulting to labor_values" << std::endl;
-            }
-            continue;
         }
         long value = strtol(argv[++i], nullptr, 10);
         double dvalue = strtod(argv[i], nullptr);
@@ -184,30 +164,6 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                     error = true;
                 } else {
                     args.sickness_chance = dvalue;
-                }
-                break;
-            }
-            case ArgType::kProductionDifficulty: {
-                if (dvalue < 0.0 || dvalue >= 1.0) {
-                    error = true;
-                } else {
-                    args.difficulty_of_production = dvalue;
-                }
-                break;
-            }
-            case ArgType::kConsumptionDemand: {
-                if (dvalue < 0.0 || dvalue >= 1.0) {
-                    error = true;
-                } else {
-                    args.consumption_demand_level = dvalue;
-                }
-                break;
-            }
-            case ArgType::kPublicSectorExpansionPeriod: {
-                if (value < 0) {
-                    error = true;
-                } else {
-                    args.public_sector_expansion_period = value * MONTH;
                 }
                 break;
             }
