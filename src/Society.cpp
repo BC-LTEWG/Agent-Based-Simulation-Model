@@ -30,7 +30,7 @@ namespace {
     };
 }
 
-static void set_abilities(
+void Society::set_abilities(
         std::vector<Ability *>& abilities,
         std::vector<Ability *>& distribution_abilities
         ) {
@@ -44,7 +44,7 @@ static void set_abilities(
     distribution_abilities.resize(ability_count_dist(Sim::get_random_generator()));
 }
 
-static void set_initial_account(
+void Society::set_initial_account(
         double& initial_account,
         const std::vector<ConsumerGood *>& consumer_goods
         ) {
