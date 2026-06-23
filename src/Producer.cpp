@@ -7,6 +7,7 @@
 #include "Distributor.h"
 #include "Good.h"
 #include "Logger.h"
+#include "Machine.h"
 #include "Person.h"
 #include "Producer.h"
 #include "Product.h"
@@ -35,7 +36,7 @@ void Producer::add_to_catalog(Product * product) {
     catalog.insert(product);
     for (Machine * machine : product->machines_needed) {
         if (!input_inventory.count(machine)) {
-            input_inventory[machine] = 1.0;
+            demands[machine] = 1.0;
         }
     }
     for (std::pair<Good * const, double>& input :
