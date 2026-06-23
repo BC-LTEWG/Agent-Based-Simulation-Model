@@ -45,7 +45,7 @@ unsigned int Firm::get_id() {
 
 void Firm::on_time_step() {
     update_demands();
-	move_plans_forward_one_step();
+   move_plans_forward_one_step();
     if (plans_in_progress.size()) {
         log_plans();
     }
@@ -192,20 +192,21 @@ void Firm::start_plan(Plan * plan) {
         move_worker_off_standby(worker);
     }
     plans_in_progress.insert(plan);
-	for (std::pair<Good * const, double>& input :
+   for (std::pair<Good * const, double>& input :
             plan->order->product->inputs_per_unit) {
         double required_input = input.second * plan->order->quantity;
         remove_input_from_inventory(input.first, required_input);
-	}
+   }
     pooled_input_value += plan->raw_materials;
     plan->raw_materials_remaining = 0;
     plan->order->status = Order::ORDER_IN_PROGRESS;
 }
 
 void Firm::move_plan_forward_one_step(Plan * plan) {
-    double ideal_quantity_produced = calculate_quantity_produced_from_worker_suitability(plan);
-    double quantity_produced = std::min(ideal_quantity_produced, plan->quantity_remaining);
+    double expected_quantity_produced = calculate_quantity_produced_from_worker_suitability(plan);
+    double quantity_produced = std::min(expected_quantity_produced, plan->quantity_remaining);
     if (quantity_produced <= 0.0) {
+        end_plan(plan);
         return;
     }
 
@@ -213,11 +214,11 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
         plan->raw_materials_remaining *
         quantity_produced /
         plan->order->quantity;
-	//pay workers
-    double labor_hours_per_worker = quantity_produced / ideal_quantity_produced;
-	for (Person * worker : plan->workers) {
-		worker->register_hours_worked(labor_hours_per_worker);
-	}
+   //pay workers
+    double labor_hours_per_worker = quantity_produced / expected_quantity_produced;
+   for (Person * worker : plan->workers) {
+      worker->register_hours_worked(labor_hours_per_worker);
+   }
     plan->labor_hours_remaining -= labor_hours_per_worker * plan->workers.size();
     plan->raw_materials_remaining -= raw_materials_used;
     plan->total_hours_remaining =
@@ -245,9 +246,6 @@ void Firm::move_plans_forward_one_step() {
         if (plan->order->status == Order::ORDER_IN_PROGRESS) {
             if (is_within_work_schedule()) {
                 move_plan_forward_one_step(plan);
-            }
-            if (plan->quantity_remaining <= 0.0) {
-                end_plan(plan);
             }
         }
     }
