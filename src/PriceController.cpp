@@ -5,6 +5,8 @@
 #include "Good.h"
 #include "Logger.h"
 #include "Machine.h"
+#include "Order.h"
+#include "Plan.h"
 #include "PriceController.h"
 #include "Product.h"
 #include "Sim.h"

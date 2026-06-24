@@ -8,6 +8,7 @@
 #include "Good.h"
 #include "Logger.h"
 #include "Machine.h"
+#include "Order.h"
 #include "Person.h"
 #include "PriceController.h"
 #include "Producer.h"

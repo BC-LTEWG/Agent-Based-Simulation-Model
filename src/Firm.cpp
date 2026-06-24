@@ -11,25 +11,14 @@
 #include "Good.h"
 #include "Logger.h"
 #include "Machine.h"
+#include "Order.h"
 #include "Person.h"
+#include "Plan.h"
 #include "PriceController.h"
 #include "Producer.h"
 #include "Product.h"
 #include "Sim.h"
 #include "Society.h"
-
-Order::Order(
-        Product * product,
-        int quantity,
-        Firm * customer,
-        double requested_turnaround_time
-        )
-    : product(product),
-      quantity(quantity),
-      customer(customer),
-      requested_turnaround_time(requested_turnaround_time),
-      status(ORDER_REQUESTED)
-{}
 
 Firm::Firm() {
     static unsigned int unique_id = 0;
