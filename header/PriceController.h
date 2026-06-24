@@ -1,7 +1,7 @@
 #pragma once
 
 #include <unordered_map>
-#include <vector>
+#include <list>
 
 #include "Agent.h"
 
@@ -19,7 +19,7 @@ class PriceController : public Agent {
     private:
         PriceController();
         double fic = 1.0;
-        std::unordered_map<Product *, std::vector<std::pair<Plan *, int>>> plan_history;
+        std::unordered_map<Product *, std::list<std::pair<Plan *, int>>> plan_history;
         std::unordered_map<ConsumerGood *, double> consumer_good_to_net_value;
         void update_fic();
         void log_public_sector_net_value(double);
