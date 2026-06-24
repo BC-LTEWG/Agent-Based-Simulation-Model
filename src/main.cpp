@@ -26,6 +26,7 @@ void print_usage() {
     std::cout << "\t--consumption_demand N: Set the proportion of value consumed by society relative to the maximum value producable by that society." << std::endl;
     std::cout << "\t--public_sector_expansion_period N: Period (in months) of moving goods to be funded by the public sector, transitioning to communism. N = 0 results in no public sector expansion." << std::endl;
     std::cout << "\t-j: Write JSON log traces to stdout." << std::endl;
+    std::cout << "\t-u: Print this usage message." << std::endl;
 }
 
 enum class ArgType {
@@ -44,7 +45,7 @@ enum class ArgType {
     kProductionDifficulty,
     kConsumptionDemand,
     kPublicSectorExpansionPeriod,
-    InitPrices
+    kInitPrices
 };
 
 static const std::unordered_set<std::string> valid_init_price_modes = {
@@ -71,12 +72,16 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
         {"--production_difficulty", ArgType::kProductionDifficulty},
         {"--consumption_demand", ArgType::kConsumptionDemand},
         {"--public_sector_expansion_period", ArgType::kPublicSectorExpansionPeriod},
-        {"--init_prices", ArgType::InitPrices}
+        {"--init_prices", ArgType::kInitPrices}
     };
 
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
+        if (arg == "-u" || arg == "--usage") {
+            print_usage();
+            exit(EXIT_SUCCESS);
+        }
         if (arg == "-j" || arg == "--json") { //"j" needs no additional value
             args.json = true;
             continue;
@@ -88,13 +93,6 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
         if (!valid_args.count(arg)) {
             error = true;
             break;
-        }
-        if (valid_args.at(arg) == ArgType::InitPrices) {
-            args.init_price_mode = argv[++i];
-            if (!valid_init_price_modes.count(args.init_price_mode)) {
-                std::cerr << "Warning! Unknown initial price mode " << args.init_price_mode << ". Defaulting to labor_values" << std::endl;
-            }
-            continue;
         }
         long value = strtol(argv[++i], nullptr, 10);
         double dvalue = strtod(argv[i], nullptr);
@@ -220,11 +218,23 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
+            case ArgType::kInitPrices: {
+                if (valid_init_price_modes.count(argv[i])) {
+                    args.init_price_mode = argv[i];
+
+                } else {
+                    std::cerr << "Warning! Unknown initial price mode " <<
+                        argv[i] << ". Defaulting to labor_values" <<
+                        std::endl;
+                    args.init_price_mode = "labor_values";
+                }
+                break;
+            }
         }
     }
     if (error) {
         print_usage();
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 }
 
