@@ -68,8 +68,8 @@ Society * Society::get_instance() {
 }
 
 Society::Society() :
-    current_work_hours_daily{Sim::get_work_hours_daily()},
-    current_work_days_weekly{Sim::get_work_days_weekly()}
+    current_work_hours_daily{Sim::get_initial_work_hours_daily()},
+    current_work_days_weekly{Sim::get_initial_work_days_weekly()}
 {}
 
 void Society::initialize() {
@@ -137,6 +137,8 @@ void Society::on_time_step() {
     }
     PriceController::get_instance()->on_time_step();
     check_expand_public_sector();
+    check_sample_busyness_data();
+    check_update_work_hours();
 }
 
 void Society::set_initial_products() {
@@ -308,7 +310,7 @@ static void normalize_consumption_frequencies(
             consumer_good->mean_consumption_frequency;
     }
     double worked_proportion_of_week =
-        static_cast<double>(Sim::get_work_hours_daily()) * Sim::get_work_days_weekly() / WEEK;
+        static_cast<double>(Society::get_instance()->get_current_work_hours_daily()) * Society::get_instance()->get_current_work_days_weekly() / WEEK;
     double consumption_scalar = Sim::get_product_consumption_mult()
         * worked_proportion_of_week
         / value_consumed_per_hour;
@@ -633,6 +635,112 @@ void Society::check_expand_public_sector() {
     }
 }
 
+void Society::check_sample_busyness_data() {
+    if (Sim::get_current_time_step() % BUSYNESS_AVERAGING_WINDOW == 0
+        && Sim::get_current_time_step() > 0) {
+        for (Person * person : people) {
+            busyness_data.push_back(person->get_busyness());
+        }
+    }
+}
+
+static double normal_pdf(
+    double z) {
+    double exponent = -0.5 * std::pow(z, 2);
+    return std::exp(exponent) / std::sqrt(2.0 * M_PI);
+}
+
+static double normal_cdf(double z) {
+    return 0.5 + 0.5 * std::erf(z / std::sqrt(2.0));
+}
+
+static double inv_normal_cdf(double p) {
+    if (p <= 0.0 || p >= 1.0) {
+        throw std::invalid_argument("Probability must be in the open interval (0, 1).");
+    }
+    double z_min = -10.0;
+    double z_max = 10.0;
+    while (z_max - z_min > 1e-6) {
+        double z_mid = 0.5 * (z_min + z_max);
+        double cdf_mid = normal_cdf(z_mid);
+        if (cdf_mid < p) {
+            z_min = z_mid;
+        } else {
+            z_max = z_mid;
+        }
+    }
+    return z_min;
+}
+
+static double uncensored_log_likelihood(
+    const std::vector<double>& data,
+    double upper_bound,
+    double delta,
+    double gamma) {
+    double log_likelihood = 0.0;
+    for (double x : data) {
+        if (x < upper_bound * MAXIMUM_BUSYNESS_CONSIDERATION_BUFFER) {
+            log_likelihood += std::log(gamma) + std::log(normal_pdf(gamma * x - delta));
+        } else {
+            log_likelihood += std::log(normal_cdf(delta - gamma * upper_bound));
+        }
+    }
+    return log_likelihood;
+}
+
+static std::pair<double, double> predict_uncensored_distribution(
+    const std::vector<double>& data,
+    double upper_bound) {
+    double mean = std::accumulate(data.begin(), data.end(), 0.0) / data.size();
+    double variance = 0.0;
+    for (double x : data) {
+        variance += (x - mean) * (x - mean);
+    }
+    variance /= data.size();
+    double stddev = std::sqrt(variance);
+    std::cout << "original mean: " << mean << ", stddev: " << stddev << std::endl;
+    return {mean, stddev};
+    double gamma = 1 / stddev;
+    double delta = mean * gamma;
+    double d_gamma = 0.005;
+    double d_delta = 0.005;
+    double dd_gamma = 0.0;
+    double dd_delta = 0.0;
+    double alpha = 0.005;
+    do {
+        double dd_delta = (uncensored_log_likelihood(data, upper_bound, delta + d_delta, gamma) 
+            - uncensored_log_likelihood(data, upper_bound, delta, gamma)) / d_delta;
+        double dd_gamma = (uncensored_log_likelihood(data, upper_bound, delta, gamma + d_gamma) 
+            - uncensored_log_likelihood(data, upper_bound, delta, gamma)) / d_gamma;
+        delta += alpha * dd_delta;
+        gamma += alpha * dd_gamma;
+        gamma = std::max(gamma, 1e-6);
+    } while (std::abs(dd_delta) > 1e-6 || std::abs(dd_gamma) > 1e-6);
+    double predicted_mean = delta / gamma;
+    double predicted_stddev = 1 / gamma;
+    return {predicted_mean, predicted_stddev};
+}
+
+void Society::check_update_work_hours() {
+    if (Sim::get_current_time_step() % WORK_HOURS_UPDATE_PERIOD == 0
+        && Sim::get_current_time_step() > 0) {
+        std::pair<double, double> predicted_distribution = predict_uncensored_distribution(
+            busyness_data,
+            static_cast<double>(current_work_hours_daily) * current_work_days_weekly / WEEK
+        );
+        std::cout << "z-score: " << inv_normal_cdf(WORK_HOURS_UPDATE_CONFIDENCE) << std::endl;
+        double confident_lower_bound = 
+            predicted_distribution.first + inv_normal_cdf(WORK_HOURS_UPDATE_CONFIDENCE) * predicted_distribution.second;
+        current_work_hours_daily = 
+            std::ceil(confident_lower_bound * WEEK / current_work_days_weekly);
+        current_work_hours_daily = std::min(current_work_hours_daily, DAY);
+        log_busyness_data();
+        log_predicted_uncensored_busyness_distribution(predicted_distribution);
+        log_work_hours_weekly();
+        busyness_data.clear();
+    }
+}
+
 void Society::log_io_matrix(Eigen::MatrixXd& A, size_t dim) {
     for (size_t i = 0; i < dim; ++i) {
         for (size_t j = 0; j < dim; ++j) {
@@ -713,5 +821,43 @@ void Society::log_public_sector_expansion(ConsumerGood * consumer_good) {
             id,
             "public_sector_expansion",
             LogPair("product_id", consumer_good->id)
+            );
+}
+
+void Society::log_busyness_data() {
+    for (double busyness_value : busyness_data) {
+        Logger::log(
+                Logger::SOCIETY,
+                id,
+                "busyness_data",
+                LogPair("dataset", Sim::get_current_time_step() / WORK_HOURS_UPDATE_PERIOD),
+                LogPair("value", busyness_value)
+                );
+    }
+}
+
+void Society::log_predicted_uncensored_busyness_distribution(std::pair<double, double> predicted_distribution) {
+    std::cout << "predicted uncensored busyness distribution: mean = "
+              << predicted_distribution.first
+              << ", stddev = "
+              << predicted_distribution.second
+              << std::endl;
+    Logger::log(
+            Logger::SOCIETY,
+            id,
+            "predicted_uncensored_busyness_distribution",
+            LogPair("mean", predicted_distribution.first),
+            LogPair("stddev", predicted_distribution.second)
+            );
+}
+
+void Society::log_work_hours_weekly() {
+    std::cout << "new work hours daily: " << current_work_hours_daily << std::endl;
+    Logger::log(
+            Logger::SOCIETY,
+            id,
+            "work_hours_weekly",
+            LogPair("work_hours_daily", current_work_hours_daily),
+            LogPair("work_days_weekly", current_work_days_weekly)
             );
 }

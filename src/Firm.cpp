@@ -284,7 +284,7 @@ int Firm::predict_workers_needed(Plan * plan) {
             plan->order->quantity *
             plan->order->product->living_labor_per_unit *
             WEEK /
-            Sim::get_work_days_weekly() / 
+            Society::get_instance()->get_current_work_days_weekly() / 
             plan->local_work_hours_daily /
             plan->order->requested_turnaround_time
             );
@@ -328,7 +328,7 @@ double Firm::predict_turnaround_time(Plan * plan, std::vector<Person *>& workers
     return plan->order->quantity *
            recorded_living_labor_per_unit[plan->order->product] *
            WEEK /
-           Sim::get_work_days_weekly() / 
+           Society::get_instance()->get_current_work_days_weekly() / 
            plan->local_work_hours_daily /
            workers.size();
 }

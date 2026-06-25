@@ -9,8 +9,8 @@
 struct SimArgs {
     unsigned int time_steps = NUM_SIM_RUNS;
     unsigned int num_people = STARTING_NUM_PEOPLE;
-    unsigned int work_hours_daily = INITIAL_WORK_HOURS_DAILY;
-    unsigned int work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
+    unsigned int initial_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
+    unsigned int initial_work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
     unsigned int num_goods = STARTING_NUM_GOODS;
     unsigned int goods_per_machine = STARTING_GOODS_PER_MACHINE;
     unsigned int num_producers = STARTING_NUM_PRODUCERS;
@@ -32,8 +32,8 @@ class Sim {
         static Sim& get_instance();
         static void run(SimArgs& args);
         static unsigned int get_num_people();
-        static unsigned int get_work_hours_daily();
-        static unsigned int get_work_days_weekly();
+        static unsigned int get_initial_work_hours_daily();
+        static unsigned int get_initial_work_days_weekly();
         static unsigned int get_num_goods();
         static unsigned int get_goods_per_machine();
         static unsigned int get_num_producers();

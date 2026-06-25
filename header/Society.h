@@ -71,6 +71,8 @@ class Society : public Agent {
                 );
         void adjust_io_matrix(Eigen::MatrixXd&);
         void check_expand_public_sector();
+        void check_sample_busyness_data();
+        void check_update_work_hours();
         void log_io_matrix(Eigen::MatrixXd&, size_t);
         void log_vector(Eigen::VectorXd&, std::string, size_t);
         void log_consumption_frequencies();
@@ -78,6 +80,9 @@ class Society : public Agent {
         void log_public_revenue(double);
         void log_public_expenditure(double);
         void log_public_sector_expansion(ConsumerGood * consumer_good);
+        void log_busyness_data();
+        void log_predicted_uncensored_busyness_distribution(std::pair<double, double>);
+        void log_work_hours_weekly();
 
         double public_fund = 0.0;
         std::vector<Person *> people;
@@ -102,4 +107,5 @@ class Society : public Agent {
         double average_account;
         double busyness;
         std::unordered_map<Product *, double> initial_production;
+        std::vector<double> busyness_data;
 };
