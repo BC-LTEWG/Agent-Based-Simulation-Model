@@ -21,6 +21,7 @@ ${APP} : ${BUILD_DIR}/Product.o \
 	${BUILD_DIR}/ConsumerGood.o \
 	${BUILD_DIR}/Good.o \
 	${BUILD_DIR}/Person.o \
+	${BUILD_DIR}/Order.o \
 	${BUILD_DIR}/Firm.o \
 	${BUILD_DIR}/Producer.o \
 	${BUILD_DIR}/Distributor.o \
@@ -45,6 +46,9 @@ ${BUILD_DIR}/Good.o : ${SRC_DIR}/Good.cpp ${HDR_DIR}/Good.h ${HDR_DIR}/Constants
 	g++ ${FLAGS} -c $< -o $@
 
 ${BUILD_DIR}/Person.o : ${SRC_DIR}/Person.cpp ${HDR_DIR}/Person.h ${HDR_DIR}/Constants.h
+	g++ ${FLAGS} -c $< -o $@
+
+${BUILD_DIR}/Order.o : ${SRC_DIR}/Order.cpp ${HDR_DIR}/Order.h
 	g++ ${FLAGS} -c $< -o $@
 
 ${BUILD_DIR}/Firm.o : ${SRC_DIR}/Firm.cpp ${HDR_DIR}/Firm.h ${HDR_DIR}/Constants.h
