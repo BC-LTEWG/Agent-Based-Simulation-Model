@@ -84,7 +84,7 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
             );
 	Plan * draft_plan = draft_plan_for_order(return_order);
     if (!draft_plan) {
-        return_order->status = Order::ORDER_REJECTED;
+        return_order->status = Order::kOrderRejected;
         return return_order;
     }
     return_order->requested_turnaround_time = draft_plan->predicted_turnaround_time;

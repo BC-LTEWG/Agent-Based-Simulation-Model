@@ -116,7 +116,7 @@ Producer * Firm::send_order(Order * order) {
         Society::get_instance()->get_suppliers(order->product);
     for (Producer * producer : suppliers) {
         Order * return_order = producer->draft_plan_and_return_order(order);
-        if (return_order->status == Order::ORDER_REJECTED) {
+        if (return_order->status == Order::kOrderRejected) {
             continue;
         }
         double return_order_rate =
@@ -187,7 +187,7 @@ void Firm::start_plan(Plan * plan) {
         remove_input_from_inventory(input.first, required_input);
 	}
     pooled_input_value += plan->raw_materials_budget;
-    plan->order->status = Order::ORDER_IN_PROGRESS;
+    plan->order->status = Order::kOrderInProgress;
 }
 
 void Firm::move_plan_forward_one_step(Plan * plan) {
@@ -207,7 +207,7 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
 
 void Firm::end_plan(Plan * plan) {
     log_ended_plan(plan);
-    plan->order->status = Order::ORDER_FINISHED;
+    plan->order->status = Order::kOrderFinished;
     plan->order->customer->receive_shipment(plan);
     recorded_living_labor_per_unit[plan->order->product] = 
         plan->labor_hours_used /
@@ -222,7 +222,7 @@ void Firm::end_plan(Plan * plan) {
 void Firm::move_plans_forward_one_step() {
     std::unordered_set<Plan *> plans_still_in_progress;
     for (Plan * plan : plans_in_progress) {
-        if (plan->order->status == Order::ORDER_IN_PROGRESS) {
+        if (plan->order->status == Order::kOrderInProgress) {
             if (is_within_work_schedule()) {
                 move_plan_forward_one_step(plan);
             }
@@ -232,7 +232,7 @@ void Firm::move_plans_forward_one_step() {
         }
     }
     for (Plan * plan : plans_in_progress) {
-        if (plan->order->status != Order::ORDER_FINISHED) {
+        if (plan->order->status != Order::kOrderFinished) {
             plans_still_in_progress.insert(plan);
         }
     }

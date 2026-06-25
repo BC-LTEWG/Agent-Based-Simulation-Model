@@ -12,7 +12,7 @@ Order::Order(
       quantity(quantity),
       customer(customer),
       requested_turnaround_time(requested_turnaround_time),
-      status(ORDER_REQUESTED)
+      status(OrderStatus::kOrderRequested)
 {}
 
 
