@@ -262,7 +262,7 @@ bool Firm::is_within_work_schedule() const {
 int Firm::predict_workers_needed(Plan * plan) {
     return std::ceil(
             plan->order->quantity *
-            plan->order->product->living_labor_per_unit *
+            recorded_living_labor_per_unit[plan->order->product] *
             WEEK /
             Sim::get_work_days_weekly() / 
             plan->local_work_hours_daily /
