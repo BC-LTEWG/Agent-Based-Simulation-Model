@@ -56,8 +56,7 @@ void Product::set_machines() {
     if (!machines.size()) {
         return;
     }
-    const unsigned int global_num_machines =
-        Sim::get_num_goods() / Sim::get_goods_per_machine();
+    const unsigned int global_num_machines = Sim::get_num_machines();
     const int num_machines_max =
         global_num_machines / MAX_PROPORTION_OF_MACHINES_PER_PRODUCT;
     static std::uniform_int_distribution<>

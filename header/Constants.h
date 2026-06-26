@@ -15,7 +15,7 @@ const double INITIAL_ACCOUNT_DURATION = YEAR;
 
 const unsigned int STARTING_NUM_PEOPLE = 1000;
 const unsigned int STARTING_NUM_GOODS = 100;
-const unsigned int STARTING_GOODS_PER_MACHINE = 5;
+const unsigned int STARTING_NUM_MACHINES = 20;
 const unsigned int STARTING_NUM_PRODUCERS = STARTING_NUM_GOODS;
 const unsigned int STARTING_NUM_DISTRIBUTORS = STARTING_NUM_GOODS;
 
