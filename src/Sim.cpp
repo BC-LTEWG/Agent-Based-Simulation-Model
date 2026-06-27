@@ -77,10 +77,6 @@ int Sim::get_current_time_step() {
 	return get_instance().current_time_step;
 }
 
-std::random_device& Sim::get_random_device() {
-    return get_instance().rd;
-}
-
 std::mt19937& Sim::get_random_generator() {
     return get_instance().gen;
 }
@@ -97,7 +93,7 @@ void Sim::set_params(SimArgs& args) {
             Logger::SIMULATION,
             0,
             "random_seed",
-            LogPair("seed", seed)
+            LogPair("value", seed)
             );
 }
 

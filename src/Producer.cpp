@@ -49,7 +49,7 @@ void Producer::add_to_catalog(Product * product) {
     }
     static std::normal_distribution<double> demand_mult(1.0, DEMAND_PREDICTION_VARIANCE);
     for (std::pair<Product * const, double>& demand : demands) {
-        demand.second *= demand_mult(Sim::get_random_device());
+        demand.second *= demand_mult(Sim::get_random_generator());
         input_inventory[demand.first] = demand.second * FIRM_STOCKPILE_DURATION;
     }
     for (std::pair<Product * const, double>& stockpile : input_inventory) {
