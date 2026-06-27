@@ -16,6 +16,8 @@ void print_usage() {
     std::cout << "\t-g N: Set the initial number of goods to N." << std::endl;
     std::cout << "\t-m N: Set the initial number of machines to N." <<
         std::endl;
+    std::cout << "\t-i N: Set the maximum number of inputs per product to N."
+        << std::endl;
     std::cout << "\t-r N: Set the initial number of producers to N." <<
         std::endl;
     std::cout << "\t-d N: Set the initial number of distributors to N." <<
@@ -49,6 +51,7 @@ enum class ArgType {
     kWorkDays,
     kGoods,
     kMachines,
+    kMaxInputs,
     kProducers,
     kDistributors,
     kAbilities,
@@ -75,16 +78,21 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
         {"-h", ArgType::kWorkHours}, {"--work-hours", ArgType::kWorkHours},
         {"-w", ArgType::kWorkDays}, {"--work-days", ArgType::kWorkDays},
         {"-g", ArgType::kGoods}, {"--goods", ArgType::kGoods},
-        {"-m", ArgType::kMachines}, {"--products-per-machine", ArgType::kMachines},
+        {"-m", ArgType::kMachines}, {"--machines",ArgType::kMachines},
+        {"-i", ArgType::kMaxInputs}, {"--products-per-machine",
+                                            ArgType::kMaxInputs},
         {"-r", ArgType::kProducers}, {"--producers", ArgType::kProducers},
-        {"-d", ArgType::kDistributors}, {"--distributors", ArgType::kDistributors},
+        {"-d", ArgType::kDistributors}, {"--distributors",
+                                            ArgType::kDistributors},
         {"-a", ArgType::kAbilities}, {"--abilities", ArgType::kAbilities},
-        {"-v", ArgType::kAbilityStdDev}, {"--ability-stddev", ArgType::kAbilityStdDev},
+        {"-v", ArgType::kAbilityStdDev}, {"--ability-stddev",
+                                             ArgType::kAbilityStdDev},
         {"-s", ArgType::kSickChance}, {"--sick-chance", ArgType::kSickChance},
         {"-e", ArgType::kSeed}, {"--seed", ArgType::kSeed},
         {"--production_difficulty", ArgType::kProductionDifficulty},
         {"--consumption_demand", ArgType::kConsumptionDemand},
-        {"--public_sector_expansion_period", ArgType::kPublicSectorExpansionPeriod},
+        {"--public_sector_expansion_period",
+            ArgType::kPublicSectorExpansionPeriod},
         {"--init_prices", ArgType::kInitPrices}
     };
 
@@ -151,10 +159,18 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 break;
             }
             case ArgType::kMachines: {
-                if (value <= 0) {
+                if (value < 0) {
                     error = true;
                 } else {
                     args.num_machines = value;
+                }
+                break;
+            }
+            case ArgType::kMaxInputs: {
+                if (value < 0) {
+                    error = true;
+                } else {
+                    args.max_num_inputs = value;
                 }
                 break;
             }

@@ -13,6 +13,7 @@ struct SimArgs {
     unsigned int work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
     unsigned int num_goods = STARTING_NUM_GOODS;
     unsigned int num_machines = STARTING_NUM_MACHINES;
+    unsigned int max_num_inputs = PRODUCT_NUM_INPUTS_MAX;
     unsigned int num_producers = STARTING_NUM_PRODUCERS;
     unsigned int num_distributors = STARTING_NUM_DISTRIBUTORS;
     double sickness_chance = ANNUAL_SICKNESS_CHANCE;
@@ -36,6 +37,7 @@ class Sim {
         static unsigned int get_work_days_weekly();
         static unsigned int get_num_goods();
         static unsigned int get_num_machines();
+        static unsigned int get_max_num_inputs();
         static unsigned int get_num_producers();
         static unsigned int get_num_distributors();
         static unsigned int get_num_abilities();
