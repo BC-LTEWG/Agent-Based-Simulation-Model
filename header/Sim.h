@@ -55,6 +55,7 @@ class Sim {
         void run();
         SimArgs args;
         std::random_device rd;
+        unsigned int seed = 0;
         std::mt19937 gen;
         int current_time_step;
         Society * society;

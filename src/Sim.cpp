@@ -13,10 +13,6 @@ void Sim::run(SimArgs& args) {
     sim.run();
 }
 
-Sim::Sim() :
-    gen{rd()}
-{}
-
 unsigned int Sim::get_num_people() {
     return get_instance().args.num_people;
 }
@@ -77,12 +73,8 @@ bool Sim::does_json() {
     return get_instance().args.json;
 }
 
-void Sim::set_params(SimArgs& args) {
-    this->args = args;
-    
-    if(this->args.fixed_seed) {
-        this->gen.seed(this->args.seed);
-    }
+int Sim::get_current_time_step() {
+	return get_instance().current_time_step;
 }
 
 std::random_device& Sim::get_random_device() {
@@ -93,9 +85,23 @@ std::mt19937& Sim::get_random_generator() {
     return get_instance().gen;
 }
 
-int Sim::get_current_time_step() {
-	return get_instance().current_time_step;
+void Sim::set_params(SimArgs& args) {
+    this->args = args;
+    if(this->args.fixed_seed) {
+        seed = args.seed;
+    } else {
+        seed = rd();
+    }
+    gen.seed(seed);
+    Logger::log(
+            Logger::SIMULATION,
+            0,
+            "random_seed",
+            LogPair("seed", seed)
+            );
 }
+
+Sim::Sim() {}
 
 void Sim::run() {
     society = Society::get_instance();
