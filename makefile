@@ -29,7 +29,6 @@ ${APP} : ${BUILD_DIR}/Product.o \
 	${BUILD_DIR}/Society.o \
 	${BUILD_DIR}/Logger.o \
 	${BUILD_DIR}/Sim.o \
-	${BUILD_DIR}/sqlite3.o \
 	${SRC_DIR}/main.cpp
 	g++ ${FLAGS} $^ -o $@
 
@@ -71,9 +70,6 @@ ${BUILD_DIR}/Logger.o : ${SRC_DIR}/Logger.cpp ${HDR_DIR}/Logger.h ${HDR_DIR}/Con
 
 ${BUILD_DIR}/Sim.o : ${SRC_DIR}/Sim.cpp ${HDR_DIR}/Sim.h ${HDR_DIR}/Constants.h
 	g++ ${FLAGS} -c $< -o $@
-
-${BUILD_DIR}/sqlite3.o : ${SRC_DIR}/sqlite3.c ${HDR_DIR}/sqlite3.h
-	gcc -Wall -std=c99 -I${HDR_DIR} -c $< -o $@
 
 TEST_DEPS_RAW = $(wildcard ${SRC_DIR}/*.cpp)
 TEST_DEPS = $(filter-out ${SRC_DIR}/main.cpp, ${TEST_DEPS_RAW})
