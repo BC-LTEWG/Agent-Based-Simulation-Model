@@ -14,17 +14,32 @@ void print_usage() {
     std::cout << "\t-h N: Set the workday to N hours." << std::endl;
     std::cout << "\t-w N: Set the work week to N days." << std::endl;
     std::cout << "\t-g N: Set the initial number of goods to N." << std::endl;
-    std::cout << "\t-m N: Set the initial number of goods per machine to N." << std::endl;
-    std::cout << "\t-r N: Set the initial number of producers to N." << std::endl;
-    std::cout << "\t-d N: Set the initial number of distributors to N." << std::endl;
-    std::cout << "\t-a N: Set the number of modeled abilities (work skills) to N." << std::endl;
-    std::cout << "\t-v N: Set the standard deviation of abilities to N." << std::endl;
+    std::cout << "\t-m N: Set the initial number of machines to N." <<
+        std::endl;
+    std::cout << "\t-i N: Set the maximum number of inputs per product to N."
+        << std::endl;
+    std::cout << "\t-r N: Set the initial number of producers to N." <<
+        std::endl;
+    std::cout << "\t-d N: Set the initial number of distributors to N." <<
+        std::endl;
+    std::cout << "\t-a N: Set the number of modeled abilities (work skills) "
+        "to N." << std::endl;
+    std::cout << "\t-v N: Set the standard deviation of abilities to N." <<
+        std::endl;
     std::cout << "\t-e N: Set the random seed to N." << std::endl;
-    std::cout << "\t-s N: Set the annual chance of an agent getting sick." << std::endl;
-    std::cout << "\t--init_prices S: How initial prices are set. Options are 'labor_values' and 'equilibrium_prices'." << std::endl;
-    std::cout << "\t--production_difficulty N: Set the spectral radius of the I/O requirements matrix. Higher values make surplus generation more difficult." << std::endl;
-    std::cout << "\t--consumption_demand N: Set the proportion of value consumed by society relative to the maximum value producable by that society." << std::endl;
-    std::cout << "\t--public_sector_expansion_period N: Period (in months) of moving goods to be funded by the public sector, transitioning to communism. N = 0 results in no public sector expansion." << std::endl;
+    std::cout << "\t-s N: Set the annual chance of an agent getting sick." <<
+        std::endl;
+    std::cout << "\t--init_prices S: How initial prices are set. Options are "
+        "'labor_values' and 'equilibrium_prices'." << std::endl;
+    std::cout << "\t--production_difficulty N: Set the spectral radius of "
+        "the I/O requirements matrix. Higher values make surplus generation "
+        "more difficult." << std::endl;
+    std::cout << "\t--consumption_demand N: Set the proportion of value "
+        "consumed by society relative to the maximum value producable by "
+        "that society." << std::endl;
+    std::cout << "\t--public_sector_expansion_period N: Period (in months) "
+        "of moving goods to be funded by the public sector, transitioning to "
+        "communism. N = 0 results in no public sector expansion." << std::endl;
     std::cout << "\t-j: Write JSON log traces to stdout." << std::endl;
     std::cout << "\t-u: Print this usage message." << std::endl;
 }
@@ -35,7 +50,8 @@ enum class ArgType {
     kWorkHours,
     kWorkDays,
     kGoods,
-    kGoodsPerMachine,
+    kMachines,
+    kMaxInputs,
     kProducers,
     kDistributors,
     kAbilities,
@@ -62,16 +78,21 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
         {"-h", ArgType::kWorkHours}, {"--work-hours", ArgType::kWorkHours},
         {"-w", ArgType::kWorkDays}, {"--work-days", ArgType::kWorkDays},
         {"-g", ArgType::kGoods}, {"--goods", ArgType::kGoods},
-        {"-m", ArgType::kGoodsPerMachine}, {"--products-per-machine", ArgType::kGoodsPerMachine},
+        {"-m", ArgType::kMachines}, {"--machines",ArgType::kMachines},
+        {"-i", ArgType::kMaxInputs}, {"--products-per-machine",
+                                            ArgType::kMaxInputs},
         {"-r", ArgType::kProducers}, {"--producers", ArgType::kProducers},
-        {"-d", ArgType::kDistributors}, {"--distributors", ArgType::kDistributors},
+        {"-d", ArgType::kDistributors}, {"--distributors",
+                                            ArgType::kDistributors},
         {"-a", ArgType::kAbilities}, {"--abilities", ArgType::kAbilities},
-        {"-v", ArgType::kAbilityStdDev}, {"--ability-stddev", ArgType::kAbilityStdDev},
+        {"-v", ArgType::kAbilityStdDev}, {"--ability-stddev",
+                                             ArgType::kAbilityStdDev},
         {"-s", ArgType::kSickChance}, {"--sick-chance", ArgType::kSickChance},
         {"-e", ArgType::kSeed}, {"--seed", ArgType::kSeed},
         {"--production_difficulty", ArgType::kProductionDifficulty},
         {"--consumption_demand", ArgType::kConsumptionDemand},
-        {"--public_sector_expansion_period", ArgType::kPublicSectorExpansionPeriod},
+        {"--public_sector_expansion_period",
+            ArgType::kPublicSectorExpansionPeriod},
         {"--init_prices", ArgType::kInitPrices}
     };
 
@@ -137,11 +158,19 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
-            case ArgType::kGoodsPerMachine: {
-                if (value <= 0) {
+            case ArgType::kMachines: {
+                if (value < 0) {
                     error = true;
                 } else {
-                    args.goods_per_machine = value;
+                    args.num_machines = value;
+                }
+                break;
+            }
+            case ArgType::kMaxInputs: {
+                if (value < 0) {
+                    error = true;
+                } else {
+                    args.max_num_inputs = value;
                 }
                 break;
             }

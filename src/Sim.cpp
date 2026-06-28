@@ -33,8 +33,12 @@ unsigned int Sim::get_num_goods() {
     return get_instance().args.num_goods;
 }
 
-unsigned int Sim::get_goods_per_machine() {
-    return get_instance().args.goods_per_machine;
+unsigned int Sim::get_num_machines() {
+    return get_instance().args.num_machines;
+}
+
+unsigned int Sim::get_max_num_inputs() {
+    return get_instance().args.max_num_inputs;
 }
 
 unsigned int Sim::get_num_producers() {
