@@ -49,7 +49,6 @@ class Sim {
         static std::string get_initial_price_mode();
         static bool does_json();
         static int get_current_time_step();
-        static std::random_device& get_random_device();
         static std::mt19937& get_random_generator();
         void set_params(SimArgs& args);
     private:
@@ -57,6 +56,7 @@ class Sim {
         void run();
         SimArgs args;
         std::random_device rd;
+        unsigned int seed = 0;
         std::mt19937 gen;
         int current_time_step;
         Society * society;
