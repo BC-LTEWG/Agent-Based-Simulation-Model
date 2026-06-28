@@ -65,8 +65,7 @@ bool Firm::remove_input_from_inventory(Product * product, double quantity) {
         return false;
     }
     input_inventory[product] -= quantity;
-    add_demand_signal(product, quantity);
-    check_and_reorder_input(product);
+    // add_demand_signal(product, quantity);
     log_inventory_reduction(product, quantity);
     log_inventory_level(product, input_inventory[product]);
     return true;
@@ -162,7 +161,7 @@ void Firm::check_and_reorder_input(Product * product) {
     log_demand(product, threshold);
     int pending_inventory = get_pending_inventory_level(product);
     log_pending_inventory(product, pending_inventory);
-    if (pending_inventory >= threshold || !threshold) {
+    if (pending_inventory > threshold) {
         return;
     }
     Order * order = new Order(
@@ -180,12 +179,18 @@ void Firm::start_plan(Plan * plan) {
     for (Person * worker : plan->workers) {
         move_worker_off_standby(worker);
     }
+
     plans_in_progress.insert(plan);
-	for (std::pair<Good * const, double>& input :
+
+    for (std::pair<Good * const, double>& input :
             plan->order->product->inputs_per_unit) {
         double required_input = input.second * plan->order->quantity;
+
+        add_demand_signal(input.first, required_input);
+        check_and_reorder_input(input.first);
         remove_input_from_inventory(input.first, required_input);
-	}
+    }
+
     pooled_input_value += plan->raw_materials_budget;
     plan->order->status = Order::kOrderInProgress;
 }

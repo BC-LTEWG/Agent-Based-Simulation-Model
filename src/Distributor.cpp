@@ -32,6 +32,8 @@ Logger::Client Distributor::get_client_type() {
 
 void Distributor::on_time_step() {
     Firm::on_time_step();
+    // check_and_reorder_input(consumer_good);
+    // check_and_reorder_input(consumer_good->corresponding_good);
 }
 
 void Distributor::add_to_catalog(Product * product) {
@@ -56,6 +58,7 @@ void Distributor::add_to_catalog(Product * product) {
 int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person) {
     int available = std::min(static_cast<int>(
                 get_inventory_level(consumer_good)), quantity);
+    add_demand_signal(consumer_good, quantity);
     if (!available) {
         return 0;
     }
@@ -92,6 +95,8 @@ void Distributor::check_and_reorder_input(Product * product) {
             threshold * FIRM_REORDER_MAX_PROP
             );
     if (!distribution_quantity) {
+        check_and_reorder_input(good);   // this dispatches to Firm::check_and_reorder_input
+        log_reorder_failure(consumer_good, threshold * FIRM_REORDER_MAX_PROP);
         return;
     }
     double distribution_time = 
@@ -105,6 +110,7 @@ void Distributor::check_and_reorder_input(Product * product) {
             );
     if (Plan * plan = draft_plan_for_order(order)) {
         product_to_outbound_orders[consumer_good].insert(order);
+        log_pursued_plan(plan);
         start_plan(plan);
     } else {
         log_reorder_failure(product, order->quantity);
