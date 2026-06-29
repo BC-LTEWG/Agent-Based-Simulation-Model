@@ -10,7 +10,12 @@ struct Good;
 struct Machine;
 
 struct Product {
-    enum ProductType { TYPE_GOOD, TYPE_MACHINE, TYPE_CONSUMER_GOOD, TYPE_UNKNOWN };
+    enum ProductType {
+        kTypeGood,
+        kTypeMachine,
+        kTypeConsumerGood,
+        kTypeUnknown
+    };
     Product();
     virtual void set_inputs();
     virtual void set_machines();
@@ -23,6 +28,6 @@ struct Product {
     std::vector<Machine *> machines_needed;
     std::unordered_map<Good *, double> inputs_per_unit;
     double living_labor_per_unit;
-	std::vector<Ability *> required_abilities;
+    std::vector<Ability *> required_abilities;
 };
 

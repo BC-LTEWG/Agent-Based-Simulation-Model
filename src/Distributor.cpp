@@ -74,7 +74,7 @@ int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Pers
 }
 
 void Distributor::check_and_reorder_input(Product * product) {
-    if (product->product_type != Product::TYPE_CONSUMER_GOOD) {
+    if (product->product_type != Product::kTypeConsumerGood) {
         Firm::check_and_reorder_input(product);
         return;
     }

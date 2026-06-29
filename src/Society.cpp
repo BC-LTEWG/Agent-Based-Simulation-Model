@@ -261,7 +261,7 @@ void Society::adjust_io_matrix(Eigen::MatrixXd& io_matrix) {
     kept_indices.reserve(new_dim);
 
     for (size_t i = 0; i < products.size(); ++i) {
-        if (products[i]->product_type != Product::TYPE_CONSUMER_GOOD) {
+        if (products[i]->product_type != Product::kTypeConsumerGood) {
             kept_indices.push_back(products[i]->id);
         }
     }
