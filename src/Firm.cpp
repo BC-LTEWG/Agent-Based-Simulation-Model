@@ -280,17 +280,17 @@ void Firm::assign_workers(Plan * draft_plan) {
 
     int workers_left = predict_workers_needed(draft_plan);
     for (Person * worker : sorted_standby_workers) {
-        if (workers_left == 0) return;
+        if (workers_left <= 0) return;
         draft_plan->workers.push_back(worker);
         workers_left--;
     }
     for (Person * unemployed_person : Society::get_instance()->get_unemployed_people()) {
-        if (workers_left == 0) return;
+        if (workers_left <= 0) return;
         draft_plan->workers.push_back(unemployed_person);
         workers_left--;
     }
     for (Firm * firm : Society::get_instance()->get_firms()) {
-        if (workers_left == 0) return;
+        if (workers_left <= 0) return;
         log_transfer_request();
         if (firm == this) continue;
         std::vector<Person *> transfers = firm->propose_transfer(workers_left);

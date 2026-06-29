@@ -678,7 +678,7 @@ static double uncensored_log_likelihood(
     double gamma) {
     double log_likelihood = 0.0;
     for (double x : data) {
-        if (x < upper_bound * MAXIMUM_BUSYNESS_CONSIDERATION_BUFFER) {
+        if (x < upper_bound) {
             log_likelihood += std::log(gamma) + std::log(normal_pdf(gamma * x - delta));
         } else {
             log_likelihood += std::log(normal_cdf(delta - gamma * upper_bound));
@@ -698,46 +698,52 @@ static std::pair<double, double> predict_uncensored_distribution(
     variance /= data.size();
     double stddev = std::sqrt(variance);
     std::cout << "original mean: " << mean << ", stddev: " << stddev << std::endl;
-    return {mean, stddev};
     double gamma = 1 / stddev;
     double delta = mean * gamma;
-    double d_gamma = 0.005;
-    double d_delta = 0.005;
     double dd_gamma = 0.0;
     double dd_delta = 0.0;
-    double alpha = 0.005;
+    double d_gamma = 0.001;
+    double d_delta = 0.001;
+    double learning_rate = 0.001;
+    double convergence_threshold = 0.01;
     do {
-        double dd_delta = (uncensored_log_likelihood(data, upper_bound, delta + d_delta, gamma) 
+        dd_delta = (uncensored_log_likelihood(data, upper_bound, delta + d_delta, gamma) 
             - uncensored_log_likelihood(data, upper_bound, delta, gamma)) / d_delta;
-        double dd_gamma = (uncensored_log_likelihood(data, upper_bound, delta, gamma + d_gamma) 
+        dd_gamma = (uncensored_log_likelihood(data, upper_bound, delta, gamma + d_gamma) 
             - uncensored_log_likelihood(data, upper_bound, delta, gamma)) / d_gamma;
-        delta += alpha * dd_delta;
-        gamma += alpha * dd_gamma;
+        delta += learning_rate * dd_delta;
+        gamma += learning_rate * dd_gamma;
         gamma = std::max(gamma, 1e-6);
-    } while (std::abs(dd_delta) > 1e-6 || std::abs(dd_gamma) > 1e-6);
+    } while (std::abs(dd_delta) > convergence_threshold || std::abs(dd_gamma) > convergence_threshold);
     double predicted_mean = delta / gamma;
     double predicted_stddev = 1 / gamma;
     return {predicted_mean, predicted_stddev};
 }
 
 void Society::check_update_work_hours() {
-    if (Sim::get_current_time_step() % WORK_HOURS_UPDATE_PERIOD == 0
-        && Sim::get_current_time_step() > 0) {
-        std::pair<double, double> predicted_distribution = predict_uncensored_distribution(
-            busyness_data,
-            static_cast<double>(current_work_hours_daily) * current_work_days_weekly / WEEK
-        );
-        std::cout << "z-score: " << inv_normal_cdf(WORK_HOURS_UPDATE_CONFIDENCE) << std::endl;
-        double confident_lower_bound = 
-            predicted_distribution.first + inv_normal_cdf(WORK_HOURS_UPDATE_CONFIDENCE) * predicted_distribution.second;
-        current_work_hours_daily = 
-            std::ceil(confident_lower_bound * WEEK / current_work_days_weekly);
-        current_work_hours_daily = std::min(current_work_hours_daily, DAY);
-        log_busyness_data();
-        log_predicted_uncensored_busyness_distribution(predicted_distribution);
-        log_work_hours_weekly();
-        busyness_data.clear();
+    if (Sim::get_current_time_step() % WORK_HOURS_UPDATE_PERIOD
+        || Sim::get_current_time_step() <= 0) {
+        return;
     }
+    double hard_upper_bound = 
+        static_cast<double>(current_work_hours_daily)
+        * current_work_days_weekly
+        / WEEK;
+    double effective_upper_bound = 
+        hard_upper_bound * (1.0 - EFFECTIVELY_CENSORED_BUSYNESS_BUFFER);
+    std::pair<double, double> predicted_distribution = predict_uncensored_distribution(
+        busyness_data,
+        effective_upper_bound
+    );
+    double confident_lower_bound = 
+        predicted_distribution.first + WORK_HOURS_UPDATE_ZSCORE * predicted_distribution.second;
+    current_work_hours_daily = 
+        std::ceil(confident_lower_bound * WEEK / current_work_days_weekly);
+    current_work_hours_daily = std::min(current_work_hours_daily, DAY);
+    log_busyness_data();
+    log_predicted_uncensored_busyness_distribution(predicted_distribution);
+    log_work_hours_weekly();
+    busyness_data.clear();
 }
 
 void Society::log_io_matrix(Eigen::MatrixXd& A, size_t dim) {
