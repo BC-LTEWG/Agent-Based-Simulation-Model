@@ -65,7 +65,7 @@ bool Producer::can_produce(Product * product) {
 
 int Producer::get_max_order_quantity(Product * product) {
     int max_order_quantity = INT_MAX;
-for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
+    for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
         int input_max_order_quantity = static_cast<int>(
                 input_inventory[input.first] / input.second
                 );
@@ -96,6 +96,9 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
 
 void Producer::drop_order(Firm * customer) {
     log_dropped_order(customer_to_draft_plan[customer]->order);
+    Plan * dropped_plan = customer_to_draft_plan[customer];
+    delete dropped_plan->order;
+    delete dropped_plan;
     customer_to_draft_plan[customer] = nullptr;
 }
 

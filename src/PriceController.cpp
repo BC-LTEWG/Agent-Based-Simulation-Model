@@ -34,7 +34,10 @@ void PriceController::update_price(Plan * plan) {
     int end_time = now - PRICE_AVERAGING_WINDOW;
     if (plan_history.count(product) && !plan_history[product].empty()) {
         while (plan_history[product].front().second <= end_time) {
+            Plan * old_plan = plan_history[product].front().first;
             plan_history[product].pop_front();
+            delete old_plan->order;
+            delete old_plan;
         }
     }
     plan_history[product].push_back(std::make_pair(plan, now));
