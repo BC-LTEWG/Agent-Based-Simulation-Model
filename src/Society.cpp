@@ -653,24 +653,6 @@ static double normal_cdf(double z) {
     return 0.5 + 0.5 * std::erf(z / std::sqrt(2.0));
 }
 
-static double inv_normal_cdf(double p) {
-    if (p <= 0.0 || p >= 1.0) {
-        throw std::invalid_argument("Probability must be in the open interval (0, 1).");
-    }
-    double z_min = -10.0;
-    double z_max = 10.0;
-    while (z_max - z_min > 1e-6) {
-        double z_mid = 0.5 * (z_min + z_max);
-        double cdf_mid = normal_cdf(z_mid);
-        if (cdf_mid < p) {
-            z_min = z_mid;
-        } else {
-            z_max = z_mid;
-        }
-    }
-    return z_min;
-}
-
 static double uncensored_log_likelihood(
     const std::vector<double>& data,
     double upper_bound,
@@ -687,6 +669,26 @@ static double uncensored_log_likelihood(
     return log_likelihood;
 }
 
+static void log_censored_busyness_distribution(double mean, double stddev) {
+    Logger::log(
+            Logger::SOCIETY,
+            0,
+            "censored_busyness_distribution",
+            LogPair("mean", mean),
+            LogPair("stddev", stddev)
+            );
+}
+
+static void log_predicted_uncensored_busyness_distribution(double mean, double stddev) {
+    Logger::log(
+            Logger::SOCIETY,
+            0,
+            "predicted_uncensored_busyness_distribution",
+            LogPair("mean", mean),
+            LogPair("stddev", stddev)
+            );
+}
+
 static std::pair<double, double> predict_uncensored_distribution(
     const std::vector<double>& data,
     double upper_bound) {
@@ -697,7 +699,7 @@ static std::pair<double, double> predict_uncensored_distribution(
     }
     variance /= data.size();
     double stddev = std::sqrt(variance);
-    std::cout << "original mean: " << mean << ", stddev: " << stddev << std::endl;
+    log_censored_busyness_distribution(mean, stddev);
     double gamma = 1 / stddev;
     double delta = mean * gamma;
     double dd_gamma = 0.0;
@@ -717,6 +719,7 @@ static std::pair<double, double> predict_uncensored_distribution(
     } while (std::abs(dd_delta) > convergence_threshold || std::abs(dd_gamma) > convergence_threshold);
     double predicted_mean = delta / gamma;
     double predicted_stddev = 1 / gamma;
+    log_predicted_uncensored_busyness_distribution(predicted_mean, predicted_stddev);
     return {predicted_mean, predicted_stddev};
 }
 
@@ -741,7 +744,6 @@ void Society::check_update_work_hours() {
         std::ceil(confident_lower_bound * WEEK / current_work_days_weekly);
     current_work_hours_daily = std::min(current_work_hours_daily, DAY);
     log_busyness_data();
-    log_predicted_uncensored_busyness_distribution(predicted_distribution);
     log_work_hours_weekly();
     busyness_data.clear();
 }
@@ -841,23 +843,7 @@ void Society::log_busyness_data() {
     }
 }
 
-void Society::log_predicted_uncensored_busyness_distribution(std::pair<double, double> predicted_distribution) {
-    std::cout << "predicted uncensored busyness distribution: mean = "
-              << predicted_distribution.first
-              << ", stddev = "
-              << predicted_distribution.second
-              << std::endl;
-    Logger::log(
-            Logger::SOCIETY,
-            id,
-            "predicted_uncensored_busyness_distribution",
-            LogPair("mean", predicted_distribution.first),
-            LogPair("stddev", predicted_distribution.second)
-            );
-}
-
 void Society::log_work_hours_weekly() {
-    std::cout << "new work hours daily: " << current_work_hours_daily << std::endl;
     Logger::log(
             Logger::SOCIETY,
             id,
