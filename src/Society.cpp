@@ -143,8 +143,7 @@ void Society::on_time_step() {
 
 void Society::set_initial_products() {
     unsigned int starting_num_goods = Sim::get_num_goods();
-    const unsigned int starting_num_machines =
-        starting_num_goods / Sim::get_goods_per_machine();
+    const unsigned int starting_num_machines = Sim::get_num_machines();
     for (unsigned int i = 0; i < starting_num_goods; ++i) {
         Good * new_good = new Good();
         goods.push_back(new_good);

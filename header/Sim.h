@@ -12,7 +12,8 @@ struct SimArgs {
     unsigned int initial_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
     unsigned int initial_work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
     unsigned int num_goods = STARTING_NUM_GOODS;
-    unsigned int goods_per_machine = STARTING_GOODS_PER_MACHINE;
+    unsigned int num_machines = STARTING_NUM_MACHINES;
+    unsigned int max_num_inputs = PRODUCT_NUM_INPUTS_MAX;
     unsigned int num_producers = STARTING_NUM_PRODUCERS;
     unsigned int num_distributors = STARTING_NUM_DISTRIBUTORS;
     double sickness_chance = ANNUAL_SICKNESS_CHANCE;
@@ -35,7 +36,8 @@ class Sim {
         static unsigned int get_initial_work_hours_daily();
         static unsigned int get_initial_work_days_weekly();
         static unsigned int get_num_goods();
-        static unsigned int get_goods_per_machine();
+        static unsigned int get_num_machines();
+        static unsigned int get_max_num_inputs();
         static unsigned int get_num_producers();
         static unsigned int get_num_distributors();
         static unsigned int get_num_abilities();
@@ -47,7 +49,6 @@ class Sim {
         static std::string get_initial_price_mode();
         static bool does_json();
         static int get_current_time_step();
-        static std::random_device& get_random_device();
         static std::mt19937& get_random_generator();
         void set_params(SimArgs& args);
     private:
@@ -55,6 +56,7 @@ class Sim {
         void run();
         SimArgs args;
         std::random_device rd;
+        unsigned int seed = 0;
         std::mt19937 gen;
         int current_time_step;
         Society * society;

@@ -11,25 +11,14 @@
 #include "Good.h"
 #include "Logger.h"
 #include "Machine.h"
+#include "Order.h"
 #include "Person.h"
+#include "Plan.h"
 #include "PriceController.h"
 #include "Producer.h"
 #include "Product.h"
 #include "Sim.h"
 #include "Society.h"
-
-Order::Order(
-        Product * product,
-        int quantity,
-        Firm * customer,
-        double requested_turnaround_time
-        )
-    : product(product),
-      quantity(quantity),
-      customer(customer),
-      requested_turnaround_time(requested_turnaround_time),
-      status(ORDER_REQUESTED)
-{}
 
 Firm::Firm() {
     static unsigned int unique_id = 0;
@@ -67,7 +56,7 @@ void Firm::receive_shipment(Plan * plan) {
 }
 
 void Firm::receive_payment(Plan * plan, double transaction_amount) {
-    plan->prd += transaction_amount;
+    plan->debt += transaction_amount;
     pooled_input_value += transaction_amount;
 }
 
@@ -127,7 +116,7 @@ Producer * Firm::send_order(Order * order) {
         Society::get_instance()->get_suppliers(order->product);
     for (Producer * producer : suppliers) {
         Order * return_order = producer->draft_plan_and_return_order(order);
-        if (return_order->status == Order::ORDER_REJECTED) {
+        if (return_order->status == Order::kOrderRejected) {
             continue;
         }
         double return_order_rate =
@@ -197,9 +186,8 @@ void Firm::start_plan(Plan * plan) {
         double required_input = input.second * plan->order->quantity;
         remove_input_from_inventory(input.first, required_input);
 	}
-    pooled_input_value += plan->raw_materials;
-    plan->raw_materials_remaining = 0;
-    plan->order->status = Order::ORDER_IN_PROGRESS;
+    pooled_input_value += plan->raw_materials_budget;
+    plan->order->status = Order::kOrderInProgress;
 }
 
 void Firm::move_plan_forward_one_step(Plan * plan) {
@@ -209,29 +197,21 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
         return;
     }
 
-    double raw_materials_used =
-        plan->raw_materials_remaining *
-        quantity_produced /
-        plan->order->quantity;
-	//pay workers
     double labor_hours_per_worker = quantity_produced / ideal_quantity_produced;
 	for (Person * worker : plan->workers) {
 		worker->register_hours_worked(labor_hours_per_worker);
 	}
-    plan->labor_hours_remaining -= labor_hours_per_worker * plan->workers.size();
-    plan->raw_materials_remaining -= raw_materials_used;
-    plan->total_hours_remaining =
-        plan->labor_hours_remaining + plan->raw_materials_remaining;
+    plan->labor_hours_used += labor_hours_per_worker * plan->workers.size();
     plan->quantity_remaining -= quantity_produced;
 }
 
 void Firm::end_plan(Plan * plan) {
     log_ended_plan(plan);
-    plan->order->status = Order::ORDER_FINISHED;
+    plan->order->status = Order::kOrderFinished;
     plan->order->customer->receive_shipment(plan);
     recorded_living_labor_per_unit[plan->order->product] = 
-        (plan->labor_hours - plan->labor_hours_remaining) 
-        / (plan->order->quantity - plan->quantity_remaining); 
+        plan->labor_hours_used /
+        (plan->order->quantity - plan->quantity_remaining); 
     pooled_input_value += plan->order->quantity * plan->order->product->price_per_unit;
     PriceController::get_instance()->update_price(plan);
     for (Person * worker : plan->workers) {
@@ -242,7 +222,7 @@ void Firm::end_plan(Plan * plan) {
 void Firm::move_plans_forward_one_step() {
     std::unordered_set<Plan *> plans_still_in_progress;
     for (Plan * plan : plans_in_progress) {
-        if (plan->order->status == Order::ORDER_IN_PROGRESS) {
+        if (plan->order->status == Order::kOrderInProgress) {
             if (is_within_work_schedule()) {
                 move_plan_forward_one_step(plan);
             }
@@ -252,7 +232,7 @@ void Firm::move_plans_forward_one_step() {
         }
     }
     for (Plan * plan : plans_in_progress) {
-        if (plan->order->status != Order::ORDER_FINISHED) {
+        if (plan->order->status != Order::kOrderFinished) {
             plans_still_in_progress.insert(plan);
         }
     }
@@ -282,7 +262,7 @@ bool Firm::is_within_work_schedule() const {
 int Firm::predict_workers_needed(Plan * plan) {
     return std::ceil(
             plan->order->quantity *
-            plan->order->product->living_labor_per_unit *
+            recorded_living_labor_per_unit[plan->order->product] *
             WEEK /
             Society::get_instance()->get_current_work_days_weekly() / 
             plan->local_work_hours_daily /
@@ -352,14 +332,16 @@ double Firm::calculate_raw_material_cost_for_order(Order * order) {
 }
 
 void Firm::initialize_plan_budget(Plan * draft_plan) {
-    double raw_material_cost = calculate_raw_material_cost_for_order(draft_plan->order);
-    draft_plan->raw_materials =
-        draft_plan->raw_materials_remaining = raw_material_cost;
-    draft_plan->total_hours =
-        draft_plan->total_hours_remaining =
-        draft_plan->labor_hours + draft_plan->raw_materials;
+    draft_plan->labor_budget = 
+        predict_labor_hours(draft_plan->order, draft_plan->workers); 
+    draft_plan->machinery_budget = calculate_machinery_cost_for_plan(draft_plan);
+    draft_plan->raw_materials_budget = calculate_raw_material_cost_for_order(draft_plan->order);
     draft_plan->quantity_remaining = draft_plan->order->quantity;
-    draft_plan->prd = -(draft_plan->total_hours);
+    draft_plan->debt = -(
+            draft_plan->machinery_budget +
+            draft_plan->raw_materials_budget +
+            draft_plan->labor_budget
+            );
 }
 
 double Firm::calculate_machinery_cost_for_plan(Plan * draft_plan) {
@@ -371,17 +353,13 @@ double Firm::calculate_machinery_cost_for_plan(Plan * draft_plan) {
         throw std::runtime_error("Cannot calculate machinery cost with 0 workers: " + draft_plan->order->product->product_name);
     }
     return machinery_cost_per_hour *
-        (static_cast<double>(draft_plan->labor_hours) / draft_plan->workers.size());
+        (static_cast<double>(draft_plan->labor_budget) / draft_plan->workers.size());
 }
 
 void Firm::assign_plan_dependent_fields(Plan * draft_plan) {
     draft_plan->predicted_turnaround_time =
         predict_turnaround_time(draft_plan, draft_plan->workers);
-    draft_plan->labor_hours = 
-        draft_plan->labor_hours_remaining =
-        predict_labor_hours(draft_plan->order, draft_plan->workers); 
     initialize_plan_budget(draft_plan);
-    draft_plan->machinery_cost = calculate_machinery_cost_for_plan(draft_plan);
 }
 
 Plan * Firm::draft_plan_for_order(Order * order) {

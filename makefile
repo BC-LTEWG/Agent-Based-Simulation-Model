@@ -21,6 +21,7 @@ ${APP} : ${BUILD_DIR}/Product.o \
 	${BUILD_DIR}/ConsumerGood.o \
 	${BUILD_DIR}/Good.o \
 	${BUILD_DIR}/Person.o \
+	${BUILD_DIR}/Order.o \
 	${BUILD_DIR}/Firm.o \
 	${BUILD_DIR}/Producer.o \
 	${BUILD_DIR}/Distributor.o \
@@ -28,7 +29,6 @@ ${APP} : ${BUILD_DIR}/Product.o \
 	${BUILD_DIR}/Society.o \
 	${BUILD_DIR}/Logger.o \
 	${BUILD_DIR}/Sim.o \
-	${BUILD_DIR}/sqlite3.o \
 	${SRC_DIR}/main.cpp
 	g++ ${FLAGS} $^ -o $@
 
@@ -45,6 +45,9 @@ ${BUILD_DIR}/Good.o : ${SRC_DIR}/Good.cpp ${HDR_DIR}/Good.h ${HDR_DIR}/Constants
 	g++ ${FLAGS} -c $< -o $@
 
 ${BUILD_DIR}/Person.o : ${SRC_DIR}/Person.cpp ${HDR_DIR}/Person.h ${HDR_DIR}/Constants.h
+	g++ ${FLAGS} -c $< -o $@
+
+${BUILD_DIR}/Order.o : ${SRC_DIR}/Order.cpp ${HDR_DIR}/Order.h
 	g++ ${FLAGS} -c $< -o $@
 
 ${BUILD_DIR}/Firm.o : ${SRC_DIR}/Firm.cpp ${HDR_DIR}/Firm.h ${HDR_DIR}/Constants.h
@@ -67,9 +70,6 @@ ${BUILD_DIR}/Logger.o : ${SRC_DIR}/Logger.cpp ${HDR_DIR}/Logger.h ${HDR_DIR}/Con
 
 ${BUILD_DIR}/Sim.o : ${SRC_DIR}/Sim.cpp ${HDR_DIR}/Sim.h ${HDR_DIR}/Constants.h
 	g++ ${FLAGS} -c $< -o $@
-
-${BUILD_DIR}/sqlite3.o : ${SRC_DIR}/sqlite3.c ${HDR_DIR}/sqlite3.h
-	gcc -Wall -std=c99 -I${HDR_DIR} -c $< -o $@
 
 TEST_DEPS_RAW = $(wildcard ${SRC_DIR}/*.cpp)
 TEST_DEPS = $(filter-out ${SRC_DIR}/main.cpp, ${TEST_DEPS_RAW})
