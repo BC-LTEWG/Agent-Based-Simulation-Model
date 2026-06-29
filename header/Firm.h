@@ -32,14 +32,14 @@ class Firm : public Agent {
     void receive_shipment(Plan * plan);
     void receive_payment(Plan * plan, double transaction_amount);
     double get_busyness();
-    double get_pooled_input_value();
+    double get_account();
     std::vector<Person *> propose_transfer(int workers_wanted);
     void finalize_transfer(Person * worker);
 
 
   protected:
     unsigned int id;
-    double pooled_input_value = 0.0;
+    double account = 0.0;
     std::unordered_set<Machine *> machines;
     std::unordered_set<Person *> workers,
         standby_workers;
@@ -64,13 +64,13 @@ class Firm : public Agent {
     double calculate_quantity_produced_from_worker_suitability(Plan * plan);
     bool is_within_work_schedule() const;
 
-	int predict_workers_needed(Plan * plan);
+	int predict_workers_needed(Plan * draft_plan);
     void assign_workers(Plan * draft_plan);
-	double predict_turnaround_time(Plan * plan, std::vector<Person*>& workers); 
-	double predict_labor_hours(Order * order, std::vector<Person*>& workers);
-    double calculate_raw_material_cost_for_order(Order * order);
+	double predict_turnaround_time(Plan * draft_plan); 
+	double predict_labor_hours(Plan * draft_plan);
+    double predict_machinery_cost(Plan * draft_plan);
+    double calculate_raw_material_cost(Plan * draft_plan);
     void initialize_plan_budget(Plan * draft_plan);
-    double calculate_machinery_cost_for_plan(Plan * draft_plan);
 	void assign_plan_dependent_fields(Plan * draft_plan);
     void add_demand_signal(Product * product, double quantity);
     Plan * draft_plan_for_order(Order * order); 
