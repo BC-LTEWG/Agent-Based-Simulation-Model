@@ -1,3 +1,5 @@
+#include <unordered_map>
+
 #include "Constants.h"
 #include "ConsumerGood.h"
 #include "Distributor.h"
@@ -38,25 +40,21 @@ void PriceController::update_price(Plan * plan) {
     plan_history[product].push_back(std::make_pair(plan, now));
     int units = 0.0;
     double hours = 0.0;
-    int workers = 0;
+    std::unordered_map<Product *, double> inputs_used;
     for (std::pair<Plan *, int> entry : plan_history[product]) {
         Plan * plan = entry.first;
         units += plan->order->quantity - plan->quantity_remaining;
         hours += plan->labor_hours_used;
-        workers += plan->workers.size();
+        for (std::pair<Product *, double> input : plan->outlays) {
+            inputs_used[input.first] += input.second;
+        }
     }
     double price = product->living_labor_per_unit = hours / units;
-    double machine_use_hours = hours / workers;
-    double machine_hours_per_unit = machine_use_hours / units;
-    for (std::pair<Good * const, double>& input_pair : product->inputs_per_unit) {
-        double input_quantity_per_unit = input_pair.second;
-        price += input_pair.first->price_per_unit * input_quantity_per_unit;
+    double inputs_cost = 0.0;
+    for (std::pair<Product *, double> input : inputs_used) {
+        inputs_cost += input.second * input.first->price_per_unit;
     }
-    for (Machine * machine : product->machines_needed) {
-        double machine_cost_per_hour =
-            machine->price_per_unit / machine->lifetime;
-        price += machine_cost_per_hour * machine_hours_per_unit;
-    }
+    price += inputs_cost / units;
     product->price_per_unit = price;
     Logger::log(
             Logger::SOCIETY,
