@@ -57,13 +57,11 @@ void Product::set_inputs() {
 }
 
 void Product::set_machines() {
-    std::vector<Machine *> machines = Society::get_instance()->get_machines();
+    std::vector<Machine *>& machines = Society::get_instance()->get_machines();
     if (!machines.size()) {
         return;
     }
-    const unsigned int global_num_machines = Sim::get_num_machines();
-    const int num_machines_max =
-        global_num_machines / MAX_PROPORTION_OF_MACHINES_PER_PRODUCT;
+    const unsigned int num_machines_max = Sim::get_num_machines(); 
     static std::uniform_int_distribution<>
         num_machines_dist(PRODUCT_NUM_MACHINES_MIN, num_machines_max);
     const std::size_t num_machines =

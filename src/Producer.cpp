@@ -7,6 +7,7 @@
 #include "Distributor.h"
 #include "Good.h"
 #include "Logger.h"
+#include "Machine.h"
 #include "Order.h"
 #include "Person.h"
 #include "Plan.h"
@@ -36,7 +37,7 @@ void Producer::on_time_step() {
 void Producer::add_to_catalog(Product * product) {
     catalog.insert(product);
     for (Machine * machine : product->machines_needed) {
-        machines.insert(machine);
+        demands[machine] = 1.0;
     }
     for (std::pair<Good * const, double>& input :
             product->inputs_per_unit) {
