@@ -26,6 +26,7 @@ class Logger {
             PERSON,
             PRODUCER,
             PRODUCT,
+            SIMULATION,
             SOCIETY,
             ERROR
         };
@@ -58,6 +59,7 @@ void Logger::log(
         "Person",
         "Producer",
         "Product",
+        "Simulation",
         "Society"
     };
     int time_step = Sim::get_current_time_step();

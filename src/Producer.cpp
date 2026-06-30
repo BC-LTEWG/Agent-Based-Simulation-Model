@@ -7,7 +7,9 @@
 #include "Distributor.h"
 #include "Good.h"
 #include "Logger.h"
+#include "Order.h"
 #include "Person.h"
+#include "Plan.h"
 #include "Producer.h"
 #include "Product.h"
 #include "Sim.h"
@@ -47,7 +49,7 @@ void Producer::add_to_catalog(Product * product) {
     }
     static std::normal_distribution<double> demand_mult(1.0, DEMAND_PREDICTION_VARIANCE);
     for (std::pair<Product * const, double>& demand : demands) {
-        demand.second *= demand_mult(Sim::get_random_device());
+        demand.second *= demand_mult(Sim::get_random_generator());
         input_inventory[demand.first] = demand.second * FIRM_STOCKPILE_DURATION;
     }
     for (std::pair<Product * const, double>& stockpile : input_inventory) {
@@ -82,7 +84,7 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
             );
 	Plan * draft_plan = draft_plan_for_order(return_order);
     if (!draft_plan) {
-        return_order->status = Order::ORDER_REJECTED;
+        return_order->status = Order::kOrderRejected;
         return return_order;
     }
     return_order->requested_turnaround_time = draft_plan->predicted_turnaround_time;
