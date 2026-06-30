@@ -1,0 +1,23 @@
+name: PR Test Check
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  run-tests:
+    name: Run C++ Doctests
+    runs-on: ubuntu-latest 
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build essentials
+        run: sudo apt-get update && sudo apt-get install -y build-essential
+
+      - name: Execute Doctest Script
+        run: |
+          cd test
+          chmod +x run_tests.sh
+          ./run_tests.sh
