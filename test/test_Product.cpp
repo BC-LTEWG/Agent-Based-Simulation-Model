@@ -1,4 +1,5 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+
 #define private public
 #define protected public
 
@@ -8,14 +9,13 @@
 #include "Society.h"
 #include "Sim.h"
 #include "Constants.h"
-
 #undef protected
 #undef private
 #include "doctest.h"
 
-TEST_CASE("Product.cpp Logic") {
+TEST_CASE("Product Logic Testing") {
 
-    Product* p = Society::get_instance()->get_products()[0]; //product example
+    Product* p = Society::get_instance()->get_products()[0]; //find product
 
     SUBCASE("Constructor has labor") {
         CHECK(p->living_labor_per_unit >= PRODUCT_LABOR_PER_UNIT_MIN); //check value exists

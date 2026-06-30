@@ -6,22 +6,19 @@
 #include "Person.h"
 #undef protected
 #undef private
+
 #include "Good.h"
 #include "ConsumerGood.h"
 #include "Sim.h"
-
 #include "doctest.h"
 
-TEST_CASE("Society Core Logic Tests") {
-
+TEST_CASE("Society Logic Testing") {
     Society* society = Society::get_instance();
     
-
     SUBCASE("set_abilities distributes and randomly sizes") {
         std::vector<Ability*> test_abilities;
         std::vector<Ability*> test_dist_abilities;
-
-        society->set_abilities(test_abilities, test_dist_abilities);
+        society->test_set_abilities(test_abilities, test_dist_abilities);
 
         CHECK(test_abilities.size() == Sim::get_num_abilities());
         CHECK(test_dist_abilities.size() > 0);
@@ -30,15 +27,13 @@ TEST_CASE("Society Core Logic Tests") {
 
     SUBCASE("set_initial_account calculates correct baseline money") {
         double test_account = 0.0;
-        
         Good* test_good = new Good(); 
         ConsumerGood* test_consumer = new ConsumerGood(test_good);
         test_consumer->price_per_unit = 10.0;
         test_consumer->mean_consumption_frequency = 2.0;
-        
-        std::vector<ConsumerGood*> test_goods = {test_consumer};
 
-        society->set_initial_account(test_account, test_goods);
+        std::vector<ConsumerGood*> test_goods = {test_consumer};
+        society->test_set_initial_account(test_account, test_goods);
 
         double expected_math = (10.0 * 2.0) * INITIAL_ACCOUNT_DURATION;
         CHECK(test_account == doctest::Approx(expected_math));
@@ -52,7 +47,6 @@ TEST_CASE("Society Core Logic Tests") {
 
     SUBCASE("get_id() returns 0") {
         CHECK(society->get_id() == 0);
-        
         society->id = 1;
         CHECK_THROWS_AS(society->get_id(), std::invalid_argument);
         society->id = 0; 
@@ -68,7 +62,6 @@ TEST_CASE("Society Core Logic Tests") {
 
         double expected_busyness = 0.0;
         double expected_account = 0.0;
-
         for (Person* p : society->people) {
             expected_busyness += p->get_busyness();
             expected_account += p->get_account();
@@ -88,10 +81,9 @@ TEST_CASE("Society Core Logic Tests") {
 
     SUBCASE("public_fund adds/subtracts") {
         double base = society->public_fund;
-        
         society->pay_into_public_fund(100.0);
         CHECK(society->public_fund == doctest::Approx(base + 100.0));
-        
+    
         society->charge_from_public_fund(50.0);
         CHECK(society->public_fund == doctest::Approx(base + 50.0));
     }
@@ -128,12 +120,10 @@ TEST_CASE("Society Core Logic Tests") {
 
     SUBCASE("populate_io_matrix_and_labor_vector structures") {
         size_t dim = society->get_products().size(); //size of economy
-        
         Eigen::MatrixXd test_matrix = Eigen::MatrixXd::Zero(dim, dim); //matrix
         Eigen::VectorXd test_vector = Eigen::VectorXd::Zero(dim);
 
         society->populate_io_matrix_and_labor_vector(test_matrix, test_vector); //call
-
         double total_labor = test_vector.sum();
         CHECK(total_labor > 0.0); //check actual input onto matrix
     }
@@ -146,7 +136,6 @@ TEST_CASE("Society Core Logic Tests") {
                        0.0, 4.0;
 
         double max_eigen = get_max_eigenvalue(test_matrix);
-
         CHECK(max_eigen == doctest::Approx(4.0)); //should return 4 here
     }
 
@@ -162,5 +151,6 @@ TEST_CASE("Society Core Logic Tests") {
         CHECK(L(1, 1) == doctest::Approx(2.0));
         
         CHECK(L(0, 1) == doctest::Approx(0.0)); //check 0 is still 0
+        CHECK(L(1, 0) == doctest::Approx(0.0));
     }
 }
