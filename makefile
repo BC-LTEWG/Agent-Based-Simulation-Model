@@ -95,5 +95,16 @@ graphs: trace plot-tool
 
 clean:
 	rm -rf $(wildcard ${BIN_DIR}/*) $(wildcard ${BUILD_DIR}/*) $(wildcard ${TEST_DIR}/*.test) \
-		$(wildcard ${DATA_DIR}/*)
+		$(wildcard ${DATA_DIR}/*) \
+		*.gcno *.gcda *.profraw *.profdata *.info out_coverage/ test/*.gcno test/*.gcda
 
+coverage: FLAGS += --coverage
+coverage: clean tests
+
+score: coverage
+	cd test && ./run_tests.sh
+	@echo "Calculating coverage percentage:"
+	@lcov --ignore-errors inconsistent,range,format,corrupt,empty --capture --directory . --output-file tmp.info --quiet 2>/dev/null
+	@lcov --ignore-errors inconsistent,range,format,corrupt,empty --extract tmp.info '*/src/*' --output-file tmp.filtered.info --quiet 2>/dev/null
+	@lcov --ignore-errors inconsistent,range,format,corrupt,empty --summary tmp.filtered.info 2>/dev/null
+	@rm -f tmp.info tmp.filtered.info
