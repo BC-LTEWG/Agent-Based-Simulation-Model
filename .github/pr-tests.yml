@@ -2,12 +2,13 @@ name: PR Test Check
 
 on:
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
   run-tests:
     name: Run C++ Doctests
-    runs-on: ubuntu-latest 
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
