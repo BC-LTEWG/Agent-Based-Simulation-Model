@@ -30,7 +30,7 @@ namespace {
     };
 }
 
-void Society::test_set_abilities(
+void Society::set_abilities(
         std::vector<Ability *>& abilities,
         std::vector<Ability *>& distribution_abilities
         ) {
@@ -44,7 +44,7 @@ void Society::test_set_abilities(
     distribution_abilities.resize(ability_count_dist(Sim::get_random_generator()));
 }
 
-void Society::test_set_initial_account(
+void Society::set_initial_account(
         double& initial_account,
         const std::vector<ConsumerGood *>& consumer_goods
         ) {
@@ -73,7 +73,7 @@ Society::Society() :
 {}
 
 void Society::initialize() {
-    test_set_abilities(abilities, distribution_abilities);
+    set_abilities(abilities, distribution_abilities);
     set_initial_products();
     unsigned int num_producers = Sim::get_num_producers();
     for (unsigned int i = 0; i < num_producers; ++i) {
@@ -106,7 +106,7 @@ void Society::initialize() {
         distributors.push_back(distributor);
         firms.push_back(distributor);
     }
-    test_set_initial_account(initial_account, consumer_goods);
+    set_initial_account(initial_account, consumer_goods);
     for (unsigned int i = 0; i < Sim::get_num_people(); i++) {
         birth_person();
     }

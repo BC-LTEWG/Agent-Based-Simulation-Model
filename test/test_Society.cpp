@@ -18,7 +18,7 @@ TEST_CASE("Society Logic Testing") {
     SUBCASE("set_abilities distributes and randomly sizes") {
         std::vector<Ability*> test_abilities;
         std::vector<Ability*> test_dist_abilities;
-        society->test_set_abilities(test_abilities, test_dist_abilities);
+        society->set_abilities(test_abilities, test_dist_abilities);
 
         CHECK(test_abilities.size() == Sim::get_num_abilities());
         CHECK(test_dist_abilities.size() > 0);
@@ -33,7 +33,7 @@ TEST_CASE("Society Logic Testing") {
         test_consumer->mean_consumption_frequency = 2.0;
 
         std::vector<ConsumerGood*> test_goods = {test_consumer};
-        society->test_set_initial_account(test_account, test_goods);
+        society->set_initial_account(test_account, test_goods);
 
         double expected_math = (10.0 * 2.0) * INITIAL_ACCOUNT_DURATION;
         CHECK(test_account == doctest::Approx(expected_math));
