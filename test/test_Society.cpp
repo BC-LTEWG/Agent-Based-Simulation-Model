@@ -101,11 +101,8 @@ TEST_CASE("Society Logic Testing") {
         size_t expected_total = total_goods + total_consumers + total_machines; //actual value
         CHECK(master_total == expected_total);
 
-        unsigned int goods_per_machine = Sim::get_goods_per_machine();
-        if (goods_per_machine > 0) {
-            unsigned int expected_machines = total_goods / goods_per_machine; //actual value
-            CHECK(total_machines == expected_machines);
-        }
+        unsigned int expected_machines = Sim::get_num_machines();
+        CHECK(total_machines == expected_machines);
     }
 
     SUBCASE("birth_person increments population") {
