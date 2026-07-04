@@ -78,12 +78,11 @@ bool Producer::can_produce(Product * product) {
     return catalog.count(product);
 }
 
-int Producer::get_max_order_quantity(Product * product) {
-    int max_order_quantity = INT_MAX;
+double Producer::get_max_order_quantity(Product * product) {
+    double max_order_quantity = std::numeric_limits<double>::infinity();
     for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
-        int input_max_order_quantity = static_cast<int>(
-                input_inventory[input.first] / input.second
-                );
+        double input_max_order_quantity = 
+            input_inventory[input.first] / input.second;
         max_order_quantity =
             std::min(max_order_quantity, input_max_order_quantity);
     }
@@ -91,11 +90,12 @@ int Producer::get_max_order_quantity(Product * product) {
 }
 
 Order * Producer::draft_plan_and_return_order(const Order * order) {
-    int return_order_quantity =
-        std::min(order->quantity, get_max_order_quantity(order->product));
+    double max_order_quantity = get_max_order_quantity(order->product);
     if (order->product->product_type == Product::ProductType::kTypeMachine) {
-        return_order_quantity = std::max(return_order_quantity, 1);
+        max_order_quantity = std::ceil(max_order_quantity);
     }
+    int return_order_quantity =
+        std::min(static_cast<double>(order->quantity), max_order_quantity);
     Order * return_order = new Order(
             order->product,
             return_order_quantity,

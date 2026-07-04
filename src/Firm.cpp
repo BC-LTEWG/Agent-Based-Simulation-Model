@@ -193,13 +193,17 @@ void Firm::start_plan(Plan * plan) {
     Product * product = plan->order->product;
     for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
         double required_input = input.second * plan->order->quantity;
-        remove_input_from_inventory(input.first, required_input);
+        if (!remove_input_from_inventory(input.first, required_input)) {
+            return;
+        }
         plan->inventory[input.first] = required_input;
     }
     double expected_plan_duration = plan->labor_budget / plan->workers.size();
     for (Machine * machine : product->machines_needed) {
         double expected_machine_use = expected_plan_duration / machine->lifetime;
-        remove_input_from_inventory(machine, expected_machine_use);
+        if (!remove_input_from_inventory(machine, expected_machine_use)) {
+            return;
+        }
         plan->inventory[machine] = expected_machine_use;
     }
     plan->outlays = plan->inventory;
@@ -303,7 +307,7 @@ bool Firm::is_within_work_schedule() const {
 }
 
 int Firm::predict_workers_needed(Plan * plan) {
-    double tmp = std::ceil(
+    return std::ceil(
             plan->order->quantity *
             recorded_living_labor_per_unit[plan->order->product] *
             WEEK /
@@ -311,7 +315,6 @@ int Firm::predict_workers_needed(Plan * plan) {
             plan->local_work_hours_daily /
             plan->order->requested_turnaround_time
             );
-    return tmp;
 }
 
 void Firm::assign_workers(Plan * draft_plan) {
