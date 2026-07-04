@@ -32,8 +32,9 @@ void PriceController::update_price(Plan * plan) {
     Product * product = plan->order->product;
     int now = Sim::get_current_time_step();
     int end_time = now - PRICE_AVERAGING_WINDOW;
-    if (plan_history.count(product) && !plan_history[product].empty()) {
-        while (plan_history[product].front().second <= end_time) {
+    if (plan_history.count(product)) {
+        while (!plan_history[product].empty() &&
+                plan_history[product].front().second <= end_time) {
             Plan * old_plan = plan_history[product].front().first;
             plan_history[product].pop_front();
             delete old_plan->order;

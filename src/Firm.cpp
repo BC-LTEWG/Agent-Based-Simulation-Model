@@ -169,9 +169,13 @@ void Firm::check_and_reorder_input(Product * product) {
     if (pending_inventory >= threshold || !threshold) {
         return;
     }
+    double order_quantity = threshold * FIRM_REORDER_MAX_PROP;
+    if (product->product_type == Product::ProductType::kTypeMachine) {
+        order_quantity = std::ceil(order_quantity);
+    }
     Order * order = new Order(
             product,
-            threshold * FIRM_REORDER_MAX_PROP,
+            order_quantity,
             this,
             FIRM_STOCKPILE_DURATION * pending_inventory *
             FIRM_REORDER_MAX_PROP / threshold
@@ -299,7 +303,7 @@ bool Firm::is_within_work_schedule() const {
 }
 
 int Firm::predict_workers_needed(Plan * plan) {
-    return std::ceil(
+    double tmp = std::ceil(
             plan->order->quantity *
             recorded_living_labor_per_unit[plan->order->product] *
             WEEK /
@@ -307,6 +311,7 @@ int Firm::predict_workers_needed(Plan * plan) {
             plan->local_work_hours_daily /
             plan->order->requested_turnaround_time
             );
+    return tmp;
 }
 
 void Firm::assign_workers(Plan * draft_plan) {
