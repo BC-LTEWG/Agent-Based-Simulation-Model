@@ -198,9 +198,9 @@ void Firm::start_plan(Plan * plan) {
     }
     double expected_plan_duration = plan->labor_budget / plan->workers.size();
     for (Machine * machine : product->machines_needed) {
-        double required_use = expected_plan_duration / machine->lifetime;
-        remove_input_from_inventory(machine, required_use);
-        plan->inventory[machine] = required_use;
+        double expected_machine_use = expected_plan_duration / machine->lifetime;
+        remove_input_from_inventory(machine, expected_machine_use);
+        plan->inventory[machine] = expected_machine_use;
     }
     plan->outlays = plan->inventory;
     account += plan->raw_materials_budget;
