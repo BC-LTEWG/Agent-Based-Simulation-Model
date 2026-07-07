@@ -54,6 +54,9 @@ void Distributor::add_to_catalog(Product * product) {
 }
 
 int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person) {
+    if (id == 7 && consumer_good->id == 6) {
+        std::cout << "\t" << get_inventory_level(consumer_good) << " " << Sim::get_current_time_step() << std::endl;
+    }
     int available = std::min(static_cast<int>(
                 get_inventory_level(consumer_good)), quantity);
     if (!available) {
@@ -104,9 +107,15 @@ void Distributor::check_and_reorder_input(Product * product) {
             distribution_time
             );
     if (Plan * plan = draft_plan_for_order(order)) {
+        if (id == 7 && consumer_good->id == 6) {
+            std::cout << "Reordering " << distribution_quantity << " " << Sim::get_current_time_step() << std::endl;
+        }
         product_to_outbound_orders[consumer_good].insert(order);
         start_plan(plan);
     } else {
+        if (id == 7 && consumer_good->id == 6) {
+            std::cout << "Failed to reorder " << distribution_quantity << " " << Sim::get_current_time_step() << std::endl;
+        }
         log_reorder_failure(product, order->quantity);
     }
 }
