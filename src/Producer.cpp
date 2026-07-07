@@ -32,6 +32,10 @@ Logger::Client Producer::get_client_type() {
 
 void Producer::on_time_step() {
     Firm::on_time_step();
+
+    for (std::pair<Product * const, double>& demand : demands) {
+        check_and_reorder_input(demand.first);
+    }
 }
 
 void Producer::add_to_catalog(Product * product) {
