@@ -106,6 +106,7 @@ void Distributor::check_and_reorder_input(Product * product) {
     if (Plan * plan = draft_plan_for_order(order)) {
         product_to_outbound_orders[consumer_good].insert(order);
         start_plan(plan);
+        log_pursued_plan(plan);
     } else {
         log_reorder_failure(product, order->quantity);
     }
