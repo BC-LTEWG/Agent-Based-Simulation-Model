@@ -106,8 +106,19 @@ float Person::productivity() {
 
 void Person::purchase_good(ConsumerGood * consumer_good, int quantity) {
     int purchased = 0;
+    bool failed_demand_recorded = false;
     for (Distributor * distributor : ranked_distributors) {
-        int available = distributor->try_sell_goods(consumer_good, quantity, this);
+        int available = distributor->try_sell_goods(
+            consumer_good,
+            quantity,
+            this,
+            !failed_demand_recorded
+        );
+
+        if (available == 0 && quantity > 0) {
+            failed_demand_recorded = true;
+        }
+
         quantity -= available;
         inventory[consumer_good] += available;
         purchased += available;

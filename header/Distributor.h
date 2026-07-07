@@ -20,7 +20,7 @@ class Distributor : public Firm {
     Logger::Client get_client_type() override;
     void on_time_step() override;
     void add_to_catalog(Product * product) override;
-    int try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person);
+    int try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person, bool record_failed_demand);
     
   private:
     void check_and_reorder_input(Product * product) override;

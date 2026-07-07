@@ -32,6 +32,10 @@ Logger::Client Distributor::get_client_type() {
 
 void Distributor::on_time_step() {
     Firm::on_time_step();
+    for (Product * product : catalog) {
+        ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
+        check_and_reorder_input(consumer_good);
+    }
 }
 
 void Distributor::add_to_catalog(Product * product) {
@@ -53,10 +57,13 @@ void Distributor::add_to_catalog(Product * product) {
     log_catalog_addition(product);
 }
 
-int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person) {
+int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person, bool record_failed_demand) {
     int available = std::min(static_cast<int>(
                 get_inventory_level(consumer_good)), quantity);
     if (!available) {
+        if (record_failed_demand) {
+            add_demand_signal(consumer_good, quantity);
+        }
         return 0;
     }
     if (available < quantity) {
@@ -66,6 +73,9 @@ int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Pers
     if (consumer_good->public_sector) {
         Society::get_instance()->charge_from_public_fund(cost);
     } else if (!person->charge(cost)) {
+        if (record_failed_demand) {
+            add_demand_signal(consumer_good, quantity);
+        }
         return 0;
     }
     remove_input_from_inventory(consumer_good, available);
@@ -106,6 +116,7 @@ void Distributor::check_and_reorder_input(Product * product) {
     if (Plan * plan = draft_plan_for_order(order)) {
         product_to_outbound_orders[consumer_good].insert(order);
         start_plan(plan);
+        log_pursued_plan(plan);
     } else {
         log_reorder_failure(product, order->quantity);
     }
