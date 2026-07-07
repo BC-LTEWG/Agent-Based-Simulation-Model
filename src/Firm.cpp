@@ -180,8 +180,8 @@ void Firm::check_and_reorder_input(Product * product) {
             product,
             order_quantity,
             this,
-            FIRM_STOCKPILE_DURATION * pending_inventory *
-            FIRM_REORDER_MAX_PROP / threshold
+            FIRM_STOCKPILE_DURATION * order_quantity *
+            product->price_per_unit * FIRM_REORDER_MAX_PROP / threshold
             );
     if (!send_order(order)) {
         log_reorder_failure(product, order->quantity);
