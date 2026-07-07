@@ -150,4 +150,39 @@ TEST_CASE("Society Logic Testing") {
         CHECK(L(0, 1) == doctest::Approx(0.0)); //check 0 is still 0
         CHECK(L(1, 0) == doctest::Approx(0.0));
     }
+
+    SUBCASE("Input Output matrix generates correctly (Ax < x)") {
+        Society* sim_society = Society::get_instance();
+        std::unordered_map<Product*, double>& production_target = sim_society->get_initial_production(); //what the economy is trying to build (x)
+
+        std::unordered_map<Product*, double> total_consumed; //total amount consumed (Ax)
+        for (Product* p : sim_society->get_products()) {
+            total_consumed[p] = 0.0;
+        }
+        for (const std::pair<Product* const, double>& order : production_target) {
+            Product* item = order.first; 
+            double quantity = order.second; //how much needs producing
+
+            for (const std::pair<Good* const, double>& recipe : item->inputs_per_unit) { //iterate recipe (A-matrix) for one item
+                Good* material = recipe.first;
+                double amount_per_item = recipe.second;
+
+                total_consumed[material] += (amount_per_item * quantity); //add to total_consumed tracker
+            }
+        }
+        for (const std::pair<Product* const, double>& inventory_item : production_target) {
+            Product* p = inventory_item.first;
+            double total_produced = inventory_item.second;
+
+            if (total_produced > 0.0) { //must show Ax < x (yield more than used)
+                double amount_consumed = total_consumed[p];
+                if(p->product_type == Product::TYPE_CONSUMER_GOOD) {
+                    CHECK(amount_consumed < total_produced); //goods have demand (must consume less than produced)
+                }
+                else {
+                    CHECK(amount_consumed <= doctest::Approx(total_produced)); //raw materials/machines have no demand (should equal)
+                }
+            }
+        }
+    }
 }
