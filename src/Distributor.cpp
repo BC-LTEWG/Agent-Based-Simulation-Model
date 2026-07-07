@@ -31,14 +31,6 @@ Logger::Client Distributor::get_client_type() {
     return Logger::DISTRIBUTOR;
 }
 
-// void Distributor::on_time_step() {
-//     Firm::on_time_step();
-//     for (Product * product : catalog) {
-//         ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
-//         check_and_reorder_input(consumer_good);
-//     }
-// }
-
 void Distributor::on_time_step() {
     Firm::on_time_step();
 
@@ -118,31 +110,17 @@ void Distributor::check_and_reorder_input(Product * product) {
     double threshold = get_reorder_threshold(consumer_good);
     log_demand(consumer_good, threshold);
 
-    double pending_consumer_inventory = 
+    double pending_consumer_goods_inventory = 
         get_pending_inventory_level(consumer_good);
-    log_pending_inventory(consumer_good, pending_consumer_inventory);
-    if (pending_consumer_inventory >= threshold || !threshold) {
+    log_pending_inventory(consumer_good, pending_consumer_goods_inventory);
+    if (pending_consumer_goods_inventory >= threshold || !threshold) {
         return;
     }
 
-    double desired_distribution_quantity = 
-        threshold * FIRM_REORDER_MAX_PROP;
-
-    double available_good = get_inventory_level(good);
-
-    // if (available_good < desired_distribution_quantity) {
-    //     demands[good] = std::max(
-    //         demands[good],
-    //         demands[consumer_good]
-    //     );
-
-    //     Firm::check_and_reorder_input(good);
-    // }
-
     int distribution_quantity = std::min(
-            available_good,
-            desired_distribution_quantity
-            );
+            get_inventory_level(good),
+            threshold * FIRM_REORDER_MAX_PROP
+        );
 
     if (!distribution_quantity) {
         return;
