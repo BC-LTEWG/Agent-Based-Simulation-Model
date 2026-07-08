@@ -37,7 +37,7 @@ class Firm : public Agent {
     void finalize_transfer(Person * worker);
 
 
-  protected:
+  // protected:
     unsigned int id;
     double account = 0.0;
     std::unordered_set<Machine *> machines;

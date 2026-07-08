@@ -54,9 +54,11 @@ void Distributor::add_to_catalog(Product * product) {
 }
 
 int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person) {
+    /*
     if (id == 7 && consumer_good->id == 6) {
         std::cout << "\t" << get_inventory_level(consumer_good) << " " << Sim::get_current_time_step() << std::endl;
     }
+    */
     int available = std::min(static_cast<int>(
                 get_inventory_level(consumer_good)), quantity);
     if (!available) {
@@ -106,16 +108,39 @@ void Distributor::check_and_reorder_input(Product * product) {
             this,
             distribution_time
             );
+    /*
+    if (id == 7 && consumer_good->id == 6) {
+        std::cout << "Trying to reorder " << distribution_quantity << " " << Sim::get_current_time_step() << std::endl;
+    }
+    */
     if (Plan * plan = draft_plan_for_order(order)) {
+        /*
+        std::cout << "Reordering: " << id << " " << consumer_good->id <<
+            " " << Sim::get_current_time_step() << std::endl;
+            */
+        /*
         if (id == 7 && consumer_good->id == 6) {
             std::cout << "Reordering " << distribution_quantity << " " << Sim::get_current_time_step() << std::endl;
         }
+        */
         product_to_outbound_orders[consumer_good].insert(order);
         start_plan(plan);
     } else {
+        std::cout << "Firm: " << id << " product: " << consumer_good->id <<
+            " t: " << Sim::get_current_time_step() << std::endl;
+        for (Firm * firm : Society::get_instance()->get_firms()) {
+            std::cout << "\t" << firm->id << " " << firm->workers.size() << " " << firm->plans_in_progress.size() <<
+                std::endl;
+        }
+        /*
+        std::cout << "Failed to reorder: " << id << " " << consumer_good->id <<
+            " " << Sim::get_current_time_step() << std::endl;
+            */
+        /*
         if (id == 7 && consumer_good->id == 6) {
             std::cout << "Failed to reorder " << distribution_quantity << " " << Sim::get_current_time_step() << std::endl;
         }
+        */
         log_reorder_failure(product, order->quantity);
     }
 }
