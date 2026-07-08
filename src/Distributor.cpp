@@ -32,6 +32,9 @@ Logger::Client Distributor::get_client_type() {
 
 void Distributor::on_time_step() {
     Firm::on_time_step();
+    for (Product * product : catalog) {
+        check_and_reorder_input(product);
+    }
 }
 
 void Distributor::add_to_catalog(Product * product) {
@@ -54,6 +57,7 @@ void Distributor::add_to_catalog(Product * product) {
 }
 
 int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person) {
+    add_demand_signal(consumer_good, quantity);
     int available = std::min(static_cast<int>(
                 get_inventory_level(consumer_good)), quantity);
     if (!available) {

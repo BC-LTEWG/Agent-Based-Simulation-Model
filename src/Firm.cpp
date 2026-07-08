@@ -94,10 +94,13 @@ std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
         log_busyness(firm_busyness, societal_busyness, 0);
         return {};
     }
-    int max_workers_to_transfer =
-        static_cast<int>((workers.size() *
-                    (1.0 - firm_busyness / adjusted_societal_busyness))); 
-    max_workers_to_transfer = std::max(max_workers_to_transfer, workers_wanted);
+    int available_workers_for_transfer = std::max(
+        static_cast<int>(
+            workers.size() * (1.0 - firm_busyness / adjusted_societal_busyness)
+        ),
+        0
+    ); 
+    int max_workers_to_transfer = std::min(available_workers_for_transfer, workers_wanted);
     log_busyness(firm_busyness, societal_busyness, max_workers_to_transfer);
     std::vector<Person *> transfers;
     for (Person * worker : standby_workers) {
@@ -177,8 +180,8 @@ void Firm::check_and_reorder_input(Product * product) {
             product,
             order_quantity,
             this,
-            FIRM_STOCKPILE_DURATION * pending_inventory *
-            FIRM_REORDER_MAX_PROP / threshold
+            FIRM_STOCKPILE_DURATION * order_quantity *
+            product->price_per_unit * FIRM_REORDER_MAX_PROP / threshold
             );
     if (!send_order(order)) {
         log_reorder_failure(product, order->quantity);
@@ -327,18 +330,24 @@ void Firm::assign_workers(Plan * draft_plan) {
 
     int workers_left = predict_workers_needed(draft_plan);
     for (Person * worker : sorted_standby_workers) {
-        if (workers_left == 0) return;
+        if (workers_left == 0) {
+            return;
+        }
         draft_plan->workers.push_back(worker);
         workers_left--;
     }
     for (Person * unemployed_person :
             Society::get_instance()->get_unemployed_people()) {
-        if (workers_left == 0) return;
+        if (workers_left == 0) {
+            return;
+        }
         draft_plan->workers.push_back(unemployed_person);
         workers_left--;
     }
     for (Firm * firm : Society::get_instance()->get_firms()) {
-        if (workers_left == 0) return;
+        if (workers_left == 0) {
+            return;
+        }
         log_transfer_request();
         if (firm == this) continue;
         std::vector<Person *> transfers = firm->propose_transfer(workers_left);
