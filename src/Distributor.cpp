@@ -38,6 +38,7 @@ void Distributor::on_time_step() {
         ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
         Good * good = consumer_good->corresponding_good;
 
+        /*
         double good_per_consumer_good = 1.0;
         if (consumer_good->inputs_per_unit.count(good)) {
             good_per_consumer_good = consumer_good->inputs_per_unit[good];
@@ -48,6 +49,7 @@ void Distributor::on_time_step() {
             demands[consumer_good] * good_per_consumer_good
         );
 
+        */
         Firm::check_and_reorder_input(good);
         check_and_reorder_input(consumer_good);
     }
@@ -73,6 +75,8 @@ void Distributor::add_to_catalog(Product * product) {
 }
 
 int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person, bool record_failed_demand) {
+    add_demand_signal(consumer_good, quantity);
+    add_demand_signal(consumer_good->corresponding_good, quantity);
     int available = std::min(static_cast<int>(
                 get_inventory_level(consumer_good)), quantity);
     if (!available) {

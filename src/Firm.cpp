@@ -34,6 +34,9 @@ unsigned int Firm::get_id() {
 
 void Firm::on_time_step() {
     update_demands();
+    for (std::pair<Product *, double> input : input_inventory) {
+        check_and_reorder_input(input.first);
+    }
     move_plans_forward_one_step();
     if (plans_in_progress.size()) {
         log_plans();
@@ -66,7 +69,7 @@ bool Firm::remove_input_from_inventory(Product * product, double quantity) {
     }
     input_inventory[product] -= quantity;
     add_demand_signal(product, quantity);
-    check_and_reorder_input(product);
+    // check_and_reorder_input(product);
     log_inventory_reduction(product, quantity);
     log_inventory_level(product, input_inventory[product]);
     return true;
