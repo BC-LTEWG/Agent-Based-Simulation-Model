@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 
+#include "Constants.h"
 #include "ConsumerGood.h"
 #include "Distributor.h"
 #include "Good.h"
@@ -81,32 +82,6 @@ int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Pers
     return available;
 }
 
-// int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person, bool record_failed_demand) {
-//     int available = std::min(static_cast<int>(
-//                 get_inventory_level(consumer_good)), quantity);
-//     if (!available) {
-//         if (record_failed_demand) {
-//             add_demand_signal(consumer_good, quantity);
-//         }
-//         return 0;
-//     }
-//     if (available < quantity) {
-//         log_shortfall(consumer_good->id, quantity - available);
-//     }
-//     double cost = available * consumer_good->price_per_unit;
-//     if (consumer_good->public_sector) {
-//         Society::get_instance()->charge_from_public_fund(cost);
-//     } else if (!person->charge(cost)) {
-//         if (record_failed_demand) {
-//             add_demand_signal(consumer_good, quantity);
-//         }
-//         return 0;
-//     }
-//     remove_input_from_inventory(consumer_good, available);
-//     PriceController::get_instance()->report_distribution(consumer_good, available);
-//     return available;
-// }
-
 void Distributor::check_and_reorder_input(Product * product) {
     if (product->product_type != Product::TYPE_CONSUMER_GOOD) {
         Firm::check_and_reorder_input(product);
@@ -115,24 +90,24 @@ void Distributor::check_and_reorder_input(Product * product) {
     ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
     Good * good = consumer_good->corresponding_good;
 
-    double threshold = get_reorder_threshold(consumer_good);
-    log_demand(consumer_good, threshold);
+    double reorder_threshold = demands[consumer_good] * FIRM_STOCKPILE_DURATION;
+    log_demand(consumer_good, reorder_threshold);
 
     double pending_inventory = get_pending_inventory_level(consumer_good);
     log_pending_inventory(consumer_good, pending_inventory);
-    if (pending_inventory >= threshold || !threshold) {
+    if (pending_inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
     int distribution_quantity = std::min(
             get_inventory_level(good),
-            threshold * FIRM_REORDER_MAX_PROP
+            reorder_threshold * FIRM_REORDER_MAX_PROP
             );
     if (!distribution_quantity) {
         return;
     }
     double distribution_time = 
-        static_cast<double>(distribution_quantity)
-        / demands[consumer_good];
+        static_cast<double>(distribution_quantity) * consumer_good->price_per_unit 
+            / demands[consumer_good];
     Order * order = new Order(
             consumer_good,
             distribution_quantity,

@@ -182,14 +182,15 @@ double Firm::get_pending_inventory_level(Product * product) {
 }
 
 void Firm::check_and_reorder_input(Product * product) {
-    double threshold = get_reorder_threshold(product);
-    log_demand(product, threshold);
+    double demand = demands[product];
+    double reorder_threshold = demand * FIRM_STOCKPILE_DURATION;
+    log_demand(product, reorder_threshold);
     int pending_inventory = get_pending_inventory_level(product);
     log_pending_inventory(product, pending_inventory);
-    if (pending_inventory >= threshold || !threshold) {
+    if (pending_inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
-    double order_quantity = threshold * FIRM_REORDER_MAX_PROP;
+    double order_quantity = reorder_threshold * FIRM_REORDER_MAX_PROP;
     if (product->product_type == Product::ProductType::TYPE_MACHINE) {
         order_quantity = std::ceil(order_quantity);
     }
@@ -197,8 +198,7 @@ void Firm::check_and_reorder_input(Product * product) {
             product,
             order_quantity,
             this,
-            FIRM_STOCKPILE_DURATION * order_quantity *
-            product->price_per_unit / threshold
+            order_quantity * product->price_per_unit / demand
             );
     if (!send_order(order)) {
         log_reorder_failure(product, order->quantity);
@@ -227,10 +227,6 @@ void Firm::rollback_plan_inputs(
 void Firm::start_plan(Plan * plan) {
     Product * product = plan->order->product;
 
-    for (Person * worker : plan->workers) {
-        move_worker_off_standby(worker);
-    }
-
     std::vector<std::pair<Product *, double>> deducted_inputs;
 
 	for (std::pair<Good * const, double>& input :
@@ -241,6 +237,10 @@ void Firm::start_plan(Plan * plan) {
             return;
         }
 	}
+
+    for (Person * worker : plan->workers) {
+        move_worker_off_standby(worker);
+    }
 
     for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
         check_and_reorder_input(input.first);
