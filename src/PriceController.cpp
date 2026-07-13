@@ -53,6 +53,12 @@ void PriceController::update_price(Plan * plan) {
             inputs_used[input.first] += input.second;
         }
     }
+    if (units <= 0) {
+        throw std::runtime_error("Units cannot be 0 or less for product: " + product->product_name); 
+    }
+    if (workers <= 0) {
+        throw std::runtime_error("Plan cannot be completed without workers: " + product->product_name); 
+    }
     double price = product->living_labor_per_unit = hours / units;
     double inputs_cost = 0.0;
     for (std::pair<Product *, double> input : inputs_used) {

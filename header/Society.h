@@ -79,6 +79,8 @@ class Society : public Agent {
         void log_public_revenue(double);
         void log_public_expenditure(double);
         void log_public_sector_expansion(ConsumerGood * consumer_good);
+        void set_abilities(std::vector<Ability *>& abilities, std::vector<Ability *>& distribution_abilities);
+        void set_initial_account(double& initial_account, const std::vector<ConsumerGood *>& consumer_goods);
 
         double public_fund = 0.0;
         std::vector<Person *> people;
