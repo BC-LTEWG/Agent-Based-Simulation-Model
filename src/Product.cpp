@@ -10,8 +10,6 @@
 #include "Product.h"
 #include "Sim.h"
 
-struct Machine;
-
 Product::Product() {
     static unsigned int unique_id = 0;
     id = unique_id++;

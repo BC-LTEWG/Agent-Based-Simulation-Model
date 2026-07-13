@@ -25,6 +25,7 @@ class Firm : public Agent {
     unsigned int get_id() override;
     virtual Logger::Client get_client_type() = 0;
     virtual void on_time_step() override;
+    void initialize_workforce();
     virtual void add_to_catalog(Product * product) = 0;
     double get_avg_productivity();
     virtual double get_inventory_level(Product * product);

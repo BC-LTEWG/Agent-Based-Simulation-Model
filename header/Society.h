@@ -24,6 +24,7 @@ class Society : public Agent {
         unsigned int get_id() override;
         void on_time_step() override;
 
+        unsigned int get_num_people();
         std::vector<Ability *>& get_abilities();
         std::vector<Ability *>& get_distribution_abilities();
         std::vector<Good *>& get_goods();

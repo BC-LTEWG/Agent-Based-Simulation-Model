@@ -48,8 +48,8 @@ void Distributor::on_time_step() {
             demands[good],
             demands[consumer_good] * good_per_consumer_good
         );
-
         */
+
         Firm::check_and_reorder_input(good);
         check_and_reorder_input(consumer_good);
     }
@@ -80,9 +80,11 @@ int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Pers
     int available = std::min(static_cast<int>(
                 get_inventory_level(consumer_good)), quantity);
     if (!available) {
+        /*
         if (record_failed_demand) {
             add_demand_signal(consumer_good, quantity);
         }
+        */
         return 0;
     }
     if (available < quantity) {
@@ -92,9 +94,11 @@ int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Pers
     if (consumer_good->public_sector) {
         Society::get_instance()->charge_from_public_fund(cost);
     } else if (!person->charge(cost)) {
+        /*
         if (record_failed_demand) {
             add_demand_signal(consumer_good, quantity);
         }
+        */
         return 0;
     }
     remove_input_from_inventory(consumer_good, available);

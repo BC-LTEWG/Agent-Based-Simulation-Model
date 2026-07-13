@@ -43,12 +43,34 @@ void Firm::on_time_step() {
     }
 }
 
+void Firm::initialize_workforce() {
+    unsigned int num_people = 
+        Society::get_instance()->get_num_people();
+    unsigned int num_firms = 
+        Society::get_instance()->get_firms().size();
+    unsigned int team_size = num_people / num_firms;
+    std::unordered_set<Person *>& unemployed_people =
+        Society::get_instance()->get_unemployed_people();
+    for (unsigned int i = 0; i < team_size; ++i) {
+        Person * worker = *(unemployed_people.begin());
+        unemployed_people.erase(worker);
+        workers.insert(worker);
+        standby_workers.insert(worker);
+    }
+    // std::cout << "Workers: " << id << " " << workers.size() << " " << standby_workers.size() << std::endl;
+}
+
 double Firm::get_inventory_level(Product * product) {
     return input_inventory.count(product) ? input_inventory[product] : 0;
 }
 
 void Firm::receive_shipment(Plan * plan) {
     Order * order = plan->order;
+    /*
+    if (order->product->product_type == Product::ProductType::kTypeMachine) {
+        std::cout << "Received " << id << " " << order->product->id << " " << order->quantity << " " << Sim::get_current_time_step() << std::endl;
+    }
+    */
     input_inventory[order->product] += order->quantity;
     product_to_outbound_orders[order->product].erase(order);
     double transaction_amount = order->product->price_per_unit * order->quantity;
@@ -119,6 +141,11 @@ void Firm::finalize_transfer(Person * worker) {
 }
 
 Producer * Firm::send_order(Order * order) {
+    /*
+    if (order->product->product_type == Product::ProductType::kTypeMachine) {
+        std::cout << "Sending " << id << " " << order->product->id << " " << Sim::get_current_time_step() << std::endl;
+    }
+    */
     double order_rate = 0.0;
     Producer * chosen_producer = nullptr;
     Order * chosen_return_order = nullptr;
@@ -189,6 +216,11 @@ void Firm::check_and_reorder_input(Product * product) {
     if (!send_order(order)) {
         log_reorder_failure(product, order->quantity);
     }
+    /*
+    else if (order->product->product_type == Product::ProductType::kTypeMachine) {
+        std::cout << "Sending " << id << " " << order->product->id << " " << Sim::get_current_time_step() << std::endl;
+    }
+    */
 }
 
 void Firm::start_plan(Plan * plan) {
@@ -196,6 +228,7 @@ void Firm::start_plan(Plan * plan) {
         move_worker_off_standby(worker);
     }
     plans_in_progress.insert(plan);
+    plan->order->status = Order::kOrderInProgress;
     Product * product = plan->order->product;
     for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
         double required_input = input.second * plan->order->quantity;
@@ -214,7 +247,6 @@ void Firm::start_plan(Plan * plan) {
     }
     plan->outlays = plan->inventory;
     account += plan->raw_materials_budget;
-    plan->order->status = Order::kOrderInProgress;
 }
 
 void Firm::move_plan_forward_one_step(Plan * plan) {
@@ -441,6 +473,11 @@ Plan * Firm::draft_plan_for_order(Order * order) {
         Society::get_instance()->get_current_work_hours_daily();
     assign_workers(draft_plan);
     if (draft_plan->workers.empty()) {
+        /*
+        if (order->product->product_type == Product::ProductType::kTypeMachine) {
+            std::cout << "No workers " << id << " " << order->product->id << " " << Sim::get_current_time_step() << std::endl;
+        }
+        */
         return nullptr;
     }
     assign_plan_dependent_fields(draft_plan);

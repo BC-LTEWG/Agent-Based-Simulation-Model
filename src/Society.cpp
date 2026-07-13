@@ -110,6 +110,11 @@ void Society::initialize() {
     for (unsigned int i = 0; i < Sim::get_num_people(); i++) {
         birth_person();
     }
+    /*
+    for (Firm * firm : firms) {
+        firm->initialize_workforce();
+    }
+    */
 }
 
 unsigned int Society::get_id() {
@@ -137,6 +142,10 @@ void Society::on_time_step() {
     }
     PriceController::get_instance()->on_time_step();
     check_expand_public_sector();
+}
+
+unsigned int Society::get_num_people() {
+    return people.size();
 }
 
 void Society::set_initial_products() {
