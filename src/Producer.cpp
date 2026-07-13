@@ -46,6 +46,7 @@ void Producer::add_to_catalog(Product * product) {
         double output_demand = Society::get_instance()->get_initial_production()[product];
         double input_demand = input.second * output_demand
             * Sim::get_num_people() 
+            * Sim::get_num_goods() 
             / Sim::get_num_producers();
         demands[input.first] += input_demand;
     }
