@@ -60,13 +60,30 @@ void Firm::receive_payment(Plan * plan, double transaction_amount) {
     pooled_input_value += transaction_amount;
 }
 
+bool Firm::remove_input_from_inventory(
+        Product * product,
+        double quantity,
+        std::vector<std::pair<Product *, double>>& deducted_inputs
+    ) {
+    if (!input_inventory.count(product) || input_inventory[product] < quantity) {
+        return false;
+    }
+    input_inventory[product] -= quantity;
+    deducted_inputs.push_back(
+        std::make_pair(product, quantity)
+    );
+    add_demand_signal(product, quantity);
+    log_inventory_reduction(product, quantity);
+    log_inventory_level(product, input_inventory[product]);
+    return true;
+}
+
 bool Firm::remove_input_from_inventory(Product * product, double quantity) {
     if (!input_inventory.count(product) || input_inventory[product] < quantity) {
         return false;
     }
     input_inventory[product] -= quantity;
     add_demand_signal(product, quantity);
-    check_and_reorder_input(product);
     log_inventory_reduction(product, quantity);
     log_inventory_level(product, input_inventory[product]);
     return true;
@@ -87,8 +104,10 @@ double Firm::get_pooled_input_value() {
 std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
     double firm_busyness = get_busyness();
     double societal_busyness = Society::get_instance()->get_busyness();
-    double adjusted_societal_busyness = societal_busyness - TRANSFER_BUSYNESS_THRESHOLD;
-    if (adjusted_societal_busyness <= 0 || firm_busyness >= adjusted_societal_busyness) {
+    double adjusted_societal_busyness =
+        societal_busyness - TRANSFER_BUSYNESS_THRESHOLD;
+    if (adjusted_societal_busyness <= 0 ||
+            firm_busyness >= adjusted_societal_busyness) {
         log_busyness(firm_busyness, societal_busyness, 0);
         return {};
     }
@@ -170,28 +189,66 @@ void Firm::check_and_reorder_input(Product * product) {
     if (pending_inventory >= threshold || !threshold) {
         return;
     }
+    double order_quantity = threshold * FIRM_REORDER_MAX_PROP;
+    if (product->product_type == Product::ProductType::TYPE_MACHINE) {
+        order_quantity = std::ceil(order_quantity);
+    }
     Order * order = new Order(
             product,
-            threshold * FIRM_REORDER_MAX_PROP,
+            order_quantity,
             this,
-            FIRM_STOCKPILE_DURATION * pending_inventory * FIRM_REORDER_MAX_PROP / threshold
+            FIRM_STOCKPILE_DURATION * order_quantity *
+            product->price_per_unit / threshold
             );
     if (!send_order(order)) {
         log_reorder_failure(product, order->quantity);
     }
 }
 
+void Firm::rollback_plan_inputs(
+    Plan * plan,
+    const std::vector<std::pair<Product *, double>>& deducted_inputs
+) {
+    for (
+        const std::pair<Product *, double>& deduction :
+        deducted_inputs
+    ) {
+        Product * input = deduction.first;
+        double quantity = deduction.second;
+
+        input_inventory[input] += quantity;
+        log_inventory_level(input, input_inventory[input]);
+    }
+
+    plan->inventory.clear();
+    plan->outlays.clear();
+}
+
 void Firm::start_plan(Plan * plan) {
+    Product * product = plan->order->product;
+
     for (Person * worker : plan->workers) {
         move_worker_off_standby(worker);
     }
-    plans_in_progress.insert(plan);
+
+    std::vector<std::pair<Product *, double>> deducted_inputs;
+
 	for (std::pair<Good * const, double>& input :
             plan->order->product->inputs_per_unit) {
         double required_input = input.second * plan->order->quantity;
-        remove_input_from_inventory(input.first, required_input);
+        if (!remove_input_from_inventory(input.first, required_input, deducted_inputs)) {
+            rollback_plan_inputs(plan, deducted_inputs);
+            return;
+        }
 	}
+
+    for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
+        check_and_reorder_input(input.first);
+    }
+
+    plan->outlays = plan->inventory;
     pooled_input_value += plan->raw_materials_budget;
+    plans_in_progress.insert(plan);
     plan->order->status = Order::kOrderInProgress;
 }
 

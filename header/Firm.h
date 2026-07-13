@@ -54,6 +54,11 @@ class Firm : public Agent {
 
     Producer * send_order(Order * order);
     bool remove_input_from_inventory(Product * product, double quantity);
+    bool remove_input_from_inventory(
+        Product * product,
+        double quantity,
+        std::vector<std::pair<Product *, double>>& deducted_inputs
+    );
     double get_reorder_threshold(Product * product);
     double get_pending_inventory_level(Product * product);
     virtual void check_and_reorder_input(Product * product);
@@ -63,6 +68,10 @@ class Firm : public Agent {
 	void move_plans_forward_one_step();
     double calculate_quantity_produced_from_worker_suitability(Plan * plan);
     bool is_within_work_schedule() const;
+    void rollback_plan_inputs(
+        Plan * plan,
+        const std::vector<std::pair<Product *, double>>& deducted_inputs
+    );
 
 	int predict_workers_needed(Plan * plan);
     void assign_workers(Plan * draft_plan);

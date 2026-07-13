@@ -31,6 +31,9 @@ Logger::Client Producer::get_client_type() {
 
 void Producer::on_time_step() {
     Firm::on_time_step();
+    for (std::pair<Product * const, double>& demand : demands) {
+        check_and_reorder_input(demand.first);
+    }
 }
 
 void Producer::add_to_catalog(Product * product) {
@@ -43,7 +46,6 @@ void Producer::add_to_catalog(Product * product) {
         double output_demand = Society::get_instance()->get_initial_production()[product];
         double input_demand = input.second * output_demand
             * Sim::get_num_people() 
-            * Sim::get_num_goods() 
             / Sim::get_num_producers();
         demands[input.first] += input_demand;
     }
@@ -62,35 +64,88 @@ bool Producer::can_produce(Product * product) {
     return catalog.count(product);
 }
 
-int Producer::get_max_order_quantity(Product * product) {
-    int max_order_quantity = INT_MAX;
-for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
-        int input_max_order_quantity = static_cast<int>(
-                input_inventory[input.first] / input.second
-                );
-        max_order_quantity = std::min(max_order_quantity, input_max_order_quantity);
+double Producer::get_max_order_quantity(Product * product) {
+    double max_order_quantity = std::numeric_limits<double>::infinity();
+    for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
+        if (input.second <= 0.0) {
+            continue;
+        }
+        double input_max_order_quantity = 
+                get_inventory_level(input.first) / input.second;
+                
+        max_order_quantity = 
+            std::min(max_order_quantity, input_max_order_quantity);
     }
     return max_order_quantity;
 }
 
 Order * Producer::draft_plan_and_return_order(const Order * order) {
-    int return_order_quantity = std::min(order->quantity, get_max_order_quantity(order->product));
     Order * return_order = new Order(
-            order->product,
-            return_order_quantity,
-            order->customer,
-            std::max(1.0, order->requested_turnaround_time
-            * return_order_quantity / order->quantity)
-            );
-	Plan * draft_plan = draft_plan_for_order(return_order);
+        order->product,
+        order->quantity,
+        order->customer,
+        order->requested_turnaround_time
+    );
+
+    Plan * draft_plan = draft_plan_for_order(return_order);
+
     if (!draft_plan) {
         return_order->status = Order::kOrderRejected;
         return return_order;
     }
-    return_order->requested_turnaround_time = draft_plan->predicted_turnaround_time;
-	customer_to_draft_plan[order->customer] = draft_plan;
+
+    double max_order_quantity = get_max_order_quantity(order->product);
+
+    int feasible_quantity =
+        static_cast<int>(
+            std::min(static_cast<double>(order->quantity), max_order_quantity)
+        );
+
+    if (feasible_quantity <= 0) {
+        delete draft_plan;
+        delete return_order;
+
+        return_order = new Order(
+            order->product,
+            0,
+            order->customer,
+            1.0
+        );
+        return_order->status = Order::kOrderRejected;
+        return return_order;
+    }
+
+    if (feasible_quantity != return_order->quantity) {
+        delete draft_plan;
+        delete return_order;
+
+        return_order = new Order(
+            order->product,
+            feasible_quantity,
+            order->customer,
+            std::max(
+                1.0,
+                order->requested_turnaround_time *
+                feasible_quantity /
+                order->quantity
+            )
+        );
+
+        draft_plan = draft_plan_for_order(return_order);
+
+        if (!draft_plan) {
+            return_order->status = Order::kOrderRejected;
+            return return_order;
+        }
+    }
+
+    return_order->requested_turnaround_time =
+        draft_plan->predicted_turnaround_time;
+
+    customer_to_draft_plan[order->customer] = draft_plan;
     log_draft_plan(draft_plan);
-	return return_order;
+
+    return return_order;
 }
 
 void Producer::drop_order(Firm * customer) {

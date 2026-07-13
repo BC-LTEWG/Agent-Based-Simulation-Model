@@ -32,6 +32,14 @@ Logger::Client Distributor::get_client_type() {
 
 void Distributor::on_time_step() {
     Firm::on_time_step();
+
+    for (Product * product : catalog) {
+        ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
+        Good * good = consumer_good->corresponding_good;
+
+        Firm::check_and_reorder_input(good);
+        check_and_reorder_input(consumer_good);
+    }
 }
 
 void Distributor::add_to_catalog(Product * product) {
@@ -73,6 +81,32 @@ int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Pers
     return available;
 }
 
+// int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person, bool record_failed_demand) {
+//     int available = std::min(static_cast<int>(
+//                 get_inventory_level(consumer_good)), quantity);
+//     if (!available) {
+//         if (record_failed_demand) {
+//             add_demand_signal(consumer_good, quantity);
+//         }
+//         return 0;
+//     }
+//     if (available < quantity) {
+//         log_shortfall(consumer_good->id, quantity - available);
+//     }
+//     double cost = available * consumer_good->price_per_unit;
+//     if (consumer_good->public_sector) {
+//         Society::get_instance()->charge_from_public_fund(cost);
+//     } else if (!person->charge(cost)) {
+//         if (record_failed_demand) {
+//             add_demand_signal(consumer_good, quantity);
+//         }
+//         return 0;
+//     }
+//     remove_input_from_inventory(consumer_good, available);
+//     PriceController::get_instance()->report_distribution(consumer_good, available);
+//     return available;
+// }
+
 void Distributor::check_and_reorder_input(Product * product) {
     if (product->product_type != Product::TYPE_CONSUMER_GOOD) {
         Firm::check_and_reorder_input(product);
@@ -80,9 +114,11 @@ void Distributor::check_and_reorder_input(Product * product) {
     }
     ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
     Good * good = consumer_good->corresponding_good;
+
     double threshold = get_reorder_threshold(consumer_good);
     log_demand(consumer_good, threshold);
-    int pending_inventory = get_pending_inventory_level(consumer_good);
+
+    double pending_inventory = get_pending_inventory_level(consumer_good);
     log_pending_inventory(consumer_good, pending_inventory);
     if (pending_inventory >= threshold || !threshold) {
         return;
@@ -106,6 +142,7 @@ void Distributor::check_and_reorder_input(Product * product) {
     if (Plan * plan = draft_plan_for_order(order)) {
         product_to_outbound_orders[consumer_good].insert(order);
         start_plan(plan);
+        log_pursued_plan(plan);
     } else {
         log_reorder_failure(product, order->quantity);
     }
