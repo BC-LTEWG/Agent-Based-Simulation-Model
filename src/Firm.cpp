@@ -239,10 +239,6 @@ void Firm::start_plan(Plan * plan) {
         move_worker_off_standby(worker);
     }
 
-    for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
-        check_and_reorder_input(input.first);
-    }
-
     plan->outlays = plan->inventory;
     pooled_input_value += plan->raw_materials_budget;
     plans_in_progress.insert(plan);
