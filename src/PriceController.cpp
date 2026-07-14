@@ -54,7 +54,9 @@ void PriceController::update_price(Plan * plan) {
         }
     }
     if (units <= 0) {
-        throw std::runtime_error("Units cannot be 0 or less for product: " + product->product_name); 
+        std::cerr << "T " << Sim::get_current_time_step() << std::endl;
+        throw std::runtime_error("Units cannot be 0 or less for product: " +
+                std::to_string(product->id)); 
     }
     double price = product->living_labor_per_unit = hours / units;
     double inputs_cost = 0.0;

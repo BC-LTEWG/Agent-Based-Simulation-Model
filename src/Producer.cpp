@@ -90,6 +90,15 @@ double Producer::get_max_order_quantity(Product * product) {
         max_order_quantity =
             std::min(max_order_quantity, input_max_order_quantity);
     }
+    /*
+    for (Machine * machine : product->machines_needed) {
+        double machine_max_order_quantity =
+            (input_inventory[machine] * machine->lifetime) /
+            product->living_labor_per_unit;
+        max_order_quantity =
+            std::min(max_order_quantity, machine_max_order_quantity);
+    }
+    */
     return max_order_quantity;
 }
 
