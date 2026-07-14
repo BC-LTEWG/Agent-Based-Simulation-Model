@@ -206,19 +206,11 @@ void Firm::check_and_reorder_input(Product * product) {
     }
 }
 
-void Firm::rollback_plan_inputs(
-    Plan * plan,
-    const std::vector<std::pair<Product *, double>>& deducted_inputs
-) {
-    for (
-        const std::pair<Product *, double>& deduction :
-        deducted_inputs
-    ) {
-        Product * input = deduction.first;
-        double quantity = deduction.second;
-
-        input_inventory[input] += quantity;
-        log_inventory_level(input, input_inventory[input]);
+void Firm::start_plan(Plan * plan) {
+    std::cout << "T: " << Sim::get_current_time_step() << " " <<
+        id << " " << plan->order->product->id << std::endl;
+    for (Person * worker : plan->workers) {
+        move_worker_off_standby(worker);
     }
 
     plan->inventory.clear();
