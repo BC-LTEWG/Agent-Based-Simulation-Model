@@ -214,6 +214,30 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 }
                 break;
             }
+            case ArgType::kProductionDifficulty: {
+                if (dvalue < 0.0 || dvalue >= 1.0) {
+                    error = true;
+                } else {
+                    args.difficulty_of_production = dvalue;
+                }
+                break;
+            }
+            case ArgType::kConsumptionDemand: {
+                if (dvalue < 0.0 || dvalue >= 1.0) {
+                    error = true;
+                } else {
+                    args.consumption_demand_level = dvalue;
+                }
+                break;
+            }
+            case ArgType::kPublicSectorExpansionPeriod: {
+                if (value < 0) {
+                    error = true;
+                } else {
+                    args.public_sector_expansion_period = value * MONTH;
+                }
+                break;
+            }
             case ArgType::kSeed: {
                 if (value < 0) {
                     error = true;
