@@ -65,18 +65,15 @@ bool Firm::remove_input_from_inventory(
         double quantity,
         std::vector<std::pair<Product *, double>>& deducted_inputs
     ) {
-    if (!input_inventory.count(product) || input_inventory[product] < quantity) {
-        return false;
+    if (remove_input_from_inventory(product, quantity)) {
+       deducted_inputs.push_back(
+            std::make_pair(product, quantity)
+        );
+        return true;
     }
-    input_inventory[product] -= quantity;
-    deducted_inputs.push_back(
-        std::make_pair(product, quantity)
-    );
-    add_demand_signal(product, quantity);
-    log_inventory_reduction(product, quantity);
-    log_inventory_level(product, input_inventory[product]);
-    return true;
+    return false;
 }
+
 
 bool Firm::remove_input_from_inventory(Product * product, double quantity) {
     if (!input_inventory.count(product) || input_inventory[product] < quantity) {
@@ -198,7 +195,7 @@ void Firm::check_and_reorder_input(Product * product) {
             product,
             order_quantity,
             this,
-            order_quantity * product->price_per_unit / demand
+            order_quantity / demand
             );
     if (!send_order(order)) {
         log_reorder_failure(product, order->quantity);
