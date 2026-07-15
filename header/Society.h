@@ -45,6 +45,7 @@ class Society : public Agent {
         double get_busyness();
         double get_average_account();
         double get_total_employment();
+        std::unordered_map<Product *, int>& get_product_production_count();
         void pay_into_public_fund(double amount);
         void charge_from_public_fund(double amount);
 
@@ -104,4 +105,5 @@ class Society : public Agent {
         double average_account;
         double busyness;
         std::unordered_map<Product *, double> initial_production;
+        std::unordered_map<Product *, int> product_production_count;
 };
