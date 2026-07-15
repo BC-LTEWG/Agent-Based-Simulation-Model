@@ -94,8 +94,7 @@ void Distributor::check_and_reorder_input(Product * product) {
         return;
     }
     double distribution_time = 
-        static_cast<double>(distribution_quantity) * consumer_good->price_per_unit 
-            / demands[consumer_good];
+        static_cast<double>(distribution_quantity) / demands[consumer_good];
     Order * order = new Order(
             consumer_good,
             distribution_quantity,
