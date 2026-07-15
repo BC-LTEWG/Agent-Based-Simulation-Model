@@ -29,13 +29,6 @@ Logger::Client Producer::get_client_type() {
     return Logger::PRODUCER;
 }
 
-void Producer::on_time_step() {
-    Firm::on_time_step();
-    for (std::pair<Product * const, double>& demand : demands) {
-        check_and_reorder_input(demand.first);
-    }
-}
-
 void Producer::add_to_catalog(Product * product) {
     catalog.insert(product);
     for (Machine * machine : product->machines_needed) {
@@ -104,32 +97,18 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
 
     if (feasible_quantity <= 0) {
         delete draft_plan;
-        delete return_order;
-
-        return_order = new Order(
-            order->product,
-            0,
-            order->customer,
-            1.0
-        );
         return_order->status = Order::kOrderRejected;
         return return_order;
     }
 
     if (feasible_quantity != return_order->quantity) {
         delete draft_plan;
-        delete return_order;
-
-        return_order = new Order(
-            order->product,
-            feasible_quantity,
-            order->customer,
-            std::max(
-                1.0,
-                order->requested_turnaround_time *
-                feasible_quantity /
-                order->quantity
-            )
+        return_order->quantity = feasible_quantity;
+        return_order->requested_turnaround_time = std::max(
+            1.0,
+            order->requested_turnaround_time * 
+            feasible_quantity / 
+            order->quantity
         );
 
         draft_plan = draft_plan_for_order(return_order);

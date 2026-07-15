@@ -31,18 +31,6 @@ Logger::Client Distributor::get_client_type() {
     return Logger::DISTRIBUTOR;
 }
 
-void Distributor::on_time_step() {
-    Firm::on_time_step();
-
-    for (Product * product : catalog) {
-        ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
-        Good * good = consumer_good->corresponding_good;
-
-        Firm::check_and_reorder_input(good);
-        check_and_reorder_input(consumer_good);
-    }
-}
-
 void Distributor::add_to_catalog(Product * product) {
     catalog.insert(product);
     ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);

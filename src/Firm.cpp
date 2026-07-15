@@ -34,6 +34,9 @@ unsigned int Firm::get_id() {
 
 void Firm::on_time_step() {
     update_demands();
+    for (std::pair<Product * const, double>& demand : demands) {
+        check_and_reorder_input(demand.first);
+    }
 	move_plans_forward_one_step();
     if (plans_in_progress.size()) {
         log_plans();
@@ -222,8 +225,6 @@ void Firm::rollback_plan_inputs(
 }
 
 void Firm::start_plan(Plan * plan) {
-    Product * product = plan->order->product;
-
     std::vector<std::pair<Product *, double>> deducted_inputs;
 
 	for (std::pair<Good * const, double>& input :
@@ -431,6 +432,7 @@ Plan * Firm::draft_plan_for_order(Order * order) {
         Society::get_instance()->get_current_work_hours_daily();
     assign_workers(draft_plan);
     if (draft_plan->workers.empty()) {
+        delete draft_plan;
         return nullptr;
     }
     assign_plan_dependent_fields(draft_plan);
