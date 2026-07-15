@@ -168,7 +168,9 @@ void Society::set_initial_products() {
     }
     for (Product * product : products) {
         product->set_inputs();
-        product->set_machines();
+    }
+    for (Good * good : goods) {
+        good->set_machines();
     }
     set_product_prices_production_consumption();
     log_consumption_frequencies();

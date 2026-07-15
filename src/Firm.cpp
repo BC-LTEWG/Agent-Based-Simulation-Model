@@ -141,11 +141,9 @@ void Firm::finalize_transfer(Person * worker) {
 }
 
 Producer * Firm::send_order(Order * order) {
-    /*
     if (order->product->product_type == Product::ProductType::kTypeMachine) {
         std::cout << "Sending " << id << " " << order->product->id << " " << Sim::get_current_time_step() << std::endl;
     }
-    */
     double order_rate = 0.0;
     Producer * chosen_producer = nullptr;
     Order * chosen_return_order = nullptr;
@@ -197,13 +195,15 @@ double Firm::get_pending_inventory_level(Product * product) {
 void Firm::check_and_reorder_input(Product * product) {
     double threshold = get_reorder_threshold(product);
     log_demand(product, threshold);
-    int pending_inventory = get_pending_inventory_level(product);
+    double pending_inventory = get_pending_inventory_level(product);
     log_pending_inventory(product, pending_inventory);
     if (pending_inventory >= threshold || !threshold) {
         return;
     }
     double order_quantity = threshold * FIRM_REORDER_MAX_PROP;
     if (product->product_type == Product::ProductType::kTypeMachine) {
+        std::cout << "Checking " << id << " " << product->id << " " << Sim::get_current_time_step() <<
+            " " << input_inventory[product] << std::endl;
         order_quantity = std::ceil(order_quantity);
     }
     Order * order = new Order(

@@ -69,6 +69,11 @@ void Producer::add_to_catalog(Product * product) {
             FIRM_STOCKPILE_DURATION;
         if (demand.first->product_type == Product::ProductType::kTypeMachine) {
             input_amount_added = std::ceil(input_amount_added);
+            /*
+            if (id == 1) {
+                std::cout << "Machine added " << input_amount_added << std::endl;
+            }
+            */
         }
         input_inventory[demand.first] = input_amount_added;
     }
