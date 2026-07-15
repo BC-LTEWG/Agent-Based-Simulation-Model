@@ -34,6 +34,9 @@ unsigned int Firm::get_id() {
 
 void Firm::on_time_step() {
     update_demands();
+    for (std::pair<Product * const, double>& demand : demands) {
+        check_and_reorder_input(demand.first);
+    }
 	move_plans_forward_one_step();
     if (plans_in_progress.size()) {
         log_plans();
@@ -60,13 +63,27 @@ void Firm::receive_payment(Plan * plan, double transaction_amount) {
     pooled_input_value += transaction_amount;
 }
 
+bool Firm::remove_input_from_inventory(
+        Product * product,
+        double quantity,
+        std::vector<std::pair<Product *, double>>& deducted_inputs
+    ) {
+    if (remove_input_from_inventory(product, quantity)) {
+       deducted_inputs.push_back(
+            std::make_pair(product, quantity)
+        );
+        return true;
+    }
+    return false;
+}
+
+
 bool Firm::remove_input_from_inventory(Product * product, double quantity) {
     if (!input_inventory.count(product) || input_inventory[product] < quantity) {
         return false;
     }
     input_inventory[product] -= quantity;
     add_demand_signal(product, quantity);
-    check_and_reorder_input(product);
     log_inventory_reduction(product, quantity);
     log_inventory_level(product, input_inventory[product]);
     return true;
@@ -87,8 +104,10 @@ double Firm::get_pooled_input_value() {
 std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
     double firm_busyness = get_busyness();
     double societal_busyness = Society::get_instance()->get_busyness();
-    double adjusted_societal_busyness = societal_busyness - TRANSFER_BUSYNESS_THRESHOLD;
-    if (adjusted_societal_busyness <= 0 || firm_busyness >= adjusted_societal_busyness) {
+    double adjusted_societal_busyness =
+        societal_busyness - TRANSFER_BUSYNESS_THRESHOLD;
+    if (adjusted_societal_busyness <= 0 ||
+            firm_busyness >= adjusted_societal_busyness) {
         log_busyness(firm_busyness, societal_busyness, 0);
         return {};
     }
@@ -163,35 +182,67 @@ double Firm::get_pending_inventory_level(Product * product) {
 }
 
 void Firm::check_and_reorder_input(Product * product) {
-    double threshold = get_reorder_threshold(product);
-    log_demand(product, threshold);
+    double demand = demands[product];
+    double reorder_threshold = demand * FIRM_STOCKPILE_DURATION;
+    log_demand(product, reorder_threshold);
     int pending_inventory = get_pending_inventory_level(product);
     log_pending_inventory(product, pending_inventory);
-    if (pending_inventory >= threshold || !threshold) {
+    if (pending_inventory >= reorder_threshold || !reorder_threshold) {
         return;
+    }
+    double order_quantity = reorder_threshold * FIRM_REORDER_MAX_PROP;
+    if (product->product_type == Product::ProductType::TYPE_MACHINE) {
+        order_quantity = std::ceil(order_quantity);
     }
     Order * order = new Order(
             product,
-            threshold * FIRM_REORDER_MAX_PROP,
+            order_quantity,
             this,
-            FIRM_STOCKPILE_DURATION * pending_inventory * FIRM_REORDER_MAX_PROP / threshold
+            order_quantity / demand
             );
     if (!send_order(order)) {
         log_reorder_failure(product, order->quantity);
     }
 }
 
-void Firm::start_plan(Plan * plan) {
-    for (Person * worker : plan->workers) {
-        move_worker_off_standby(worker);
+void Firm::rollback_plan_inputs(
+    Plan * plan,
+    const std::vector<std::pair<Product *, double>>& deducted_inputs
+) {
+    for (
+        const std::pair<Product *, double>& deduction :
+        deducted_inputs
+    ) {
+        Product * input = deduction.first;
+        double quantity = deduction.second;
+
+        input_inventory[input] += quantity;
+        log_inventory_level(input, input_inventory[input]);
     }
-    plans_in_progress.insert(plan);
+
+    plan->inventory.clear();
+    plan->outlays.clear();
+}
+
+void Firm::start_plan(Plan * plan) {
+    std::vector<std::pair<Product *, double>> deducted_inputs;
+
 	for (std::pair<Good * const, double>& input :
             plan->order->product->inputs_per_unit) {
         double required_input = input.second * plan->order->quantity;
-        remove_input_from_inventory(input.first, required_input);
+        if (!remove_input_from_inventory(input.first, required_input, deducted_inputs)) {
+            rollback_plan_inputs(plan, deducted_inputs);
+            return;
+        }
 	}
+
+    for (Person * worker : plan->workers) {
+        move_worker_off_standby(worker);
+    }
+
+    plan->outlays = plan->inventory;
     pooled_input_value += plan->raw_materials_budget;
+    plans_in_progress.insert(plan);
     plan->order->status = Order::kOrderInProgress;
 }
 
@@ -381,6 +432,7 @@ Plan * Firm::draft_plan_for_order(Order * order) {
         Society::get_instance()->get_current_work_hours_daily();
     assign_workers(draft_plan);
     if (draft_plan->workers.empty()) {
+        delete draft_plan;
         return nullptr;
     }
     assign_plan_dependent_fields(draft_plan);
