@@ -18,7 +18,6 @@ class Distributor : public Firm {
         const std::unordered_set<Product *>& initial_catalog = {}
     );
     Logger::Client get_client_type() override;
-    void on_time_step() override;
     void add_to_catalog(Product * product) override;
     int try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person);
     
