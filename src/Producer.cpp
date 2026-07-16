@@ -37,10 +37,11 @@ void Producer::add_to_catalog(Product * product) {
     for (std::pair<Good * const, double>& input :
             product->inputs_per_unit) {
         double output_demand = Society::get_instance()->get_initial_production()[product];
-        double input_demand = input.second * output_demand
+        double input_demand = 
+            input.second 
+            * output_demand
             * Sim::get_num_people() 
-            * Sim::get_num_goods() 
-            / Sim::get_num_producers();
+            / Society::get_instance()->get_product_production_count()[product];
         demands[input.first] += input_demand;
     }
     static std::normal_distribution<double> demand_mult(1.0, DEMAND_PREDICTION_VARIANCE);
