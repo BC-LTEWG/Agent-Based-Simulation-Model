@@ -82,8 +82,6 @@ test/%.test: test/%.cpp ${TEST_DEPS}
 
 .PHONY: trace plot-tool graphs runtests clean
 
-SHELL := /bin/bash
-
 runtests: tests
 	@echo "Running unit tests"
 	@pushd ${TEST_DIR} && ./run_tests.sh && popd
