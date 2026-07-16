@@ -87,19 +87,25 @@ void Society::initialize() {
     unsigned int num_upstream_products = upstream_products.size();
     if (num_producers >= num_upstream_products) {
         for (unsigned int i = 0; i < num_producers; ++i) {
+            Product * product = upstream_products[i % num_upstream_products];
+            product_production_count[product]++;
+        }
+        for (unsigned int i = 0; i < num_producers; ++i) {
             Producer * producer = producers[i];
             Product * product = upstream_products[i % num_upstream_products];
             producer->add_to_catalog(product);
             product_to_suppliers[product].push_back(producer);
-            product_production_count[product]++;
         }
     } else {
+        for (unsigned int i = 0; i < num_upstream_products; ++i) {
+            Product * product = upstream_products[i];
+            product_production_count[product]++;
+        }
         for (unsigned int i = 0; i < num_upstream_products; ++i) {
             Producer * producer = producers[i % num_producers];
             Product * product = upstream_products[i];
             producer->add_to_catalog(product);
             product_to_suppliers[product].push_back(producer);
-            product_production_count[product]++;
         }
     }
     std::unordered_set<Product *> distributor_catalog(consumer_goods.begin(), consumer_goods.end());
