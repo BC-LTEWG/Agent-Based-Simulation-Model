@@ -71,15 +71,20 @@ ${BUILD_DIR}/Logger.o : ${SRC_DIR}/Logger.cpp ${HDR_DIR}/Logger.h ${HDR_DIR}/Con
 ${BUILD_DIR}/Sim.o : ${SRC_DIR}/Sim.cpp ${HDR_DIR}/Sim.h ${HDR_DIR}/Constants.h
 	g++ ${FLAGS} -c $< -o $@
 
-TEST_DEPS_RAW = $(wildcard ${SRC_DIR}/*.cpp)
-TEST_DEPS = $(filter-out ${SRC_DIR}/main.cpp, ${TEST_DEPS_RAW})
+SRC_FILES = $(wildcard ${SRC_DIR}/*.cpp)
+OBJ_FILES = $(patsubst ${SRC_DIR}/%.cpp, ${BUILD_DIR}/%.o, ${SRC_FILES})
+TEST_DEPS = $(filter-out ${BUILD_DIR}/main.o, ${OBJ_FILES})
 
 tests: ${TEST_EXECS}
 
 test/%.test: test/%.cpp ${TEST_DEPS}
 	g++ ${FLAGS} $^ -o $@
 
-.PHONY: trace plot-tool graphs
+.PHONY: trace plot-tool graphs runtests clean
+
+runtests: tests
+	@echo "Running unit tests"
+	@pushd ${TEST_DIR} && ./run_tests.sh && popd
 
 trace: ${APP}
 	./${APP} > trace.txt
