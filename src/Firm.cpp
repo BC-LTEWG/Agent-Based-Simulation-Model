@@ -181,9 +181,21 @@ double Firm::get_pending_inventory_level(Product * product) {
     return pending_inventory;
 }
 
+double Firm::get_needed_production_rate(Product * product) {
+    double needed_production_rate = demands[product];
+    for (Order * order : product_to_outbound_orders[product]) {
+        double production_rate = order->quantity / order->predicted_turnaround_time;
+        needed_production_rate -= production_rate;
+    }
+    return needed_production_rate <= 0 ? 0 : needed_production_rate;
+}
+
 void Firm::check_and_reorder_input(Product * product) {
-    double demand = demands[product];
-    double reorder_threshold = demand * FIRM_STOCKPILE_DURATION;
+    double production_rate = get_needed_production_rate(product);
+    if (production_rate <= 0) {
+        return;
+    }
+    double reorder_threshold = get_reorder_threshold(product);
     log_demand(product, reorder_threshold);
     int pending_inventory = get_pending_inventory_level(product);
     log_pending_inventory(product, pending_inventory);
@@ -198,7 +210,7 @@ void Firm::check_and_reorder_input(Product * product) {
             product,
             order_quantity,
             this,
-            order_quantity / demand
+            order_quantity / production_rate
             );
     if (!send_order(order)) {
         log_reorder_failure(product, order->quantity);
@@ -363,8 +375,8 @@ void Firm::assign_workers(Plan * draft_plan) {
     }
 }
 
-double Firm::predict_turnaround_time(Plan * plan, std::vector<Person *>& workers) {
-    if (workers.empty()) {
+double Firm::predict_turnaround_time(Plan * plan) {
+    if (plan->workers.empty()) {
         return std::numeric_limits<double>::infinity();
     }
     return plan->order->quantity *
@@ -372,7 +384,7 @@ double Firm::predict_turnaround_time(Plan * plan, std::vector<Person *>& workers
            WEEK /
            Sim::get_work_days_weekly() / 
            plan->local_work_hours_daily /
-           workers.size();
+           plan->workers.size();
 }
 
 double Firm::predict_labor_hours(Order * order, std::vector<Person *>& workers) {
@@ -419,8 +431,8 @@ double Firm::calculate_machinery_cost_for_plan(Plan * draft_plan) {
 }
 
 void Firm::assign_plan_dependent_fields(Plan * draft_plan) {
-    draft_plan->predicted_turnaround_time =
-        predict_turnaround_time(draft_plan, draft_plan->workers);
+    draft_plan->order->predicted_turnaround_time =
+        predict_turnaround_time(draft_plan);
     initialize_plan_budget(draft_plan);
 }
 

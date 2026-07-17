@@ -61,6 +61,7 @@ class Firm : public Agent {
     );
     double get_reorder_threshold(Product * product);
     double get_pending_inventory_level(Product * product);
+    double get_needed_production_rate(Product * product);
     virtual void check_and_reorder_input(Product * product);
 	void start_plan(Plan * plan);
 	void move_plan_forward_one_step(Plan * plan);
@@ -75,7 +76,7 @@ class Firm : public Agent {
 
 	int predict_workers_needed(Plan * plan);
     void assign_workers(Plan * draft_plan);
-	double predict_turnaround_time(Plan * plan, std::vector<Person*>& workers); 
+	double predict_turnaround_time(Plan * plan); 
 	double predict_labor_hours(Order * order, std::vector<Person*>& workers);
     double calculate_raw_material_cost_for_order(Order * order);
     void initialize_plan_budget(Plan * draft_plan);
