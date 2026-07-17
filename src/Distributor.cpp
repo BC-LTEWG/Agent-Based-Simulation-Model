@@ -85,9 +85,8 @@ void Distributor::check_and_reorder_input(Product * product) {
     double reorder_threshold = get_reorder_threshold(consumer_good);
     log_demand(consumer_good, reorder_threshold);
 
-    double pending_inventory = get_pending_inventory_level(consumer_good);
-    log_pending_inventory(consumer_good, pending_inventory);
-    if (pending_inventory >= reorder_threshold || !reorder_threshold) {
+    int inventory = get_inventory_level(consumer_good);
+    if (inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
     int distribution_quantity = std::min(

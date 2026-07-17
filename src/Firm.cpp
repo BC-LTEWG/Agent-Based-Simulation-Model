@@ -170,17 +170,6 @@ double Firm::get_reorder_threshold(Product * product) {
     return demands[product] * FIRM_STOCKPILE_DURATION;
 }
 
-double Firm::get_pending_inventory_level(Product * product) {
-    double pending_inventory = get_inventory_level(product);
-    if (!product_to_outbound_orders.count(product)) {
-        return pending_inventory;
-    }
-    for (Order * order : product_to_outbound_orders[product]) {
-        pending_inventory += order->quantity;
-    }
-    return pending_inventory;
-}
-
 double Firm::get_needed_production_rate(Product * product) {
     double needed_production_rate = demands[product];
     for (Order * order : product_to_outbound_orders[product]) {
@@ -197,9 +186,8 @@ void Firm::check_and_reorder_input(Product * product) {
     }
     double reorder_threshold = get_reorder_threshold(product);
     log_demand(product, reorder_threshold);
-    int pending_inventory = get_pending_inventory_level(product);
-    log_pending_inventory(product, pending_inventory);
-    if (pending_inventory >= reorder_threshold || !reorder_threshold) {
+    int inventory = get_inventory_level(product);
+    if (inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
     double order_quantity = reorder_threshold * FIRM_REORDER_MAX_PROP;
@@ -614,16 +602,6 @@ void Firm::log_demand(const Product * product, double demand) {
             "current_demand",
             LogPair("product_id", product->id),
             LogPair("demand", demand)
-            );
-}
-
-void Firm::log_pending_inventory(const Product * product, double pending_inventory) {
-    Logger::log(
-            get_client_type(),
-            id,
-            "pending_inventory",
-            LogPair("product_id", product->id),
-            LogPair("pending_inventory", pending_inventory)
             );
 }
 
