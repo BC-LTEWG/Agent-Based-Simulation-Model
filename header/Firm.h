@@ -60,7 +60,7 @@ class Firm : public Agent {
         std::vector<std::pair<Product *, double>>& deducted_inputs
     );
     double get_reorder_threshold(Product * product);
-    double get_needed_production_rate(Product * product);
+    double get_needed_resupply_rate(Product * product);
     virtual void check_and_reorder_input(Product * product);
 	void start_plan(Plan * plan);
 	void move_plan_forward_one_step(Plan * plan);

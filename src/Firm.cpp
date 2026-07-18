@@ -170,35 +170,32 @@ double Firm::get_reorder_threshold(Product * product) {
     return demands[product] * FIRM_STOCKPILE_DURATION;
 }
 
-double Firm::get_needed_production_rate(Product * product) {
-    double needed_production_rate = demands[product];
+double Firm::get_needed_resupply_rate(Product * product) {
+    double needed_resupply_rate = demands[product];
     for (Order * order : product_to_outbound_orders[product]) {
-        double production_rate = order->quantity / order->predicted_turnaround_time;
-        needed_production_rate -= production_rate;
+        double resupply_rate = order->quantity / order->predicted_turnaround_time;
+        needed_resupply_rate -= resupply_rate;
     }
-    return needed_production_rate <= 0 ? 0 : needed_production_rate;
+    return needed_resupply_rate <= 0 ? 0 : needed_resupply_rate;
 }
 
 void Firm::check_and_reorder_input(Product * product) {
-    double production_rate = get_needed_production_rate(product);
-    if (production_rate <= 0) {
+    double resupply_rate = get_needed_resupply_rate(product);
+    if (resupply_rate <= 0) {
         return;
     }
     double reorder_threshold = get_reorder_threshold(product);
     log_demand(product, reorder_threshold);
-    int inventory = get_inventory_level(product);
+    double inventory = get_inventory_level(product);
     if (inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
-    double order_quantity = reorder_threshold * FIRM_REORDER_MAX_PROP;
-    if (product->product_type == Product::ProductType::TYPE_MACHINE) {
-        order_quantity = std::ceil(order_quantity);
-    }
+    int order_quantity = std::ceil(reorder_threshold * FIRM_REORDER_MAX_PROP);
     Order * order = new Order(
             product,
             order_quantity,
             this,
-            order_quantity / production_rate
+            order_quantity / resupply_rate
             );
     if (!send_order(order)) {
         log_reorder_failure(product, order->quantity);

@@ -75,8 +75,8 @@ void Distributor::check_and_reorder_input(Product * product) {
         Firm::check_and_reorder_input(product);
         return;
     }
-    double production_rate = get_needed_production_rate(product);
-    if (production_rate <= 0) {
+    double resupply_rate = get_needed_resupply_rate(product);
+    if (resupply_rate <= 0) {
         return;
     }
     ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
@@ -85,14 +85,14 @@ void Distributor::check_and_reorder_input(Product * product) {
     double reorder_threshold = get_reorder_threshold(consumer_good);
     log_demand(consumer_good, reorder_threshold);
 
-    int inventory = get_inventory_level(consumer_good);
+    double inventory = get_inventory_level(consumer_good);
     if (inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
-    int distribution_quantity = std::min(
+    int distribution_quantity = std::ceil(std::min(
             get_inventory_level(good),
             reorder_threshold * FIRM_REORDER_MAX_PROP
-            );
+            ));
     if (!distribution_quantity) {
         return;
     }
@@ -100,7 +100,7 @@ void Distributor::check_and_reorder_input(Product * product) {
             consumer_good,
             distribution_quantity,
             this,
-            distribution_quantity / production_rate
+            distribution_quantity / resupply_rate
             );
     if (Plan * plan = draft_plan_for_order(order)) {
         product_to_outbound_orders[consumer_good].insert(order);
