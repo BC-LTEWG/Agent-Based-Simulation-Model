@@ -671,7 +671,7 @@ static double uncensored_log_likelihood(
         if (x < upper_bound) {
             log_likelihood += std::log(gamma) + std::log(normal_pdf(gamma * x - delta));
         } else {
-            log_likelihood += std::log(normal_cdf(delta - gamma * upper_bound));
+            log_likelihood += std::log(normal_cdf(delta - gamma * x));
         }
     }
     return log_likelihood;

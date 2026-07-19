@@ -12,8 +12,8 @@ const unsigned int YEAR = DAY * 365;
 const unsigned int INITIAL_WORK_HOURS_DAILY = 8;
 const unsigned int INITIAL_WORK_DAYS_WEEKLY = 5;
 const int WORK_HOURS_UPDATE_PERIOD = 3 * MONTH;
-const double WORK_HOURS_UPDATE_ZSCORE = 3;
-const double EFFECTIVELY_CENSORED_BUSYNESS_BUFFER = 0.05;
+const double WORK_HOURS_UPDATE_ZSCORE = 2.5;
+const double EFFECTIVELY_CENSORED_BUSYNESS_BUFFER = 0.10;
 const double INITIAL_ACCOUNT_DURATION = YEAR;
 
 const unsigned int STARTING_NUM_PEOPLE = 1000;

@@ -276,7 +276,7 @@ void Firm::move_plans_forward_one_step() {
     std::unordered_set<Plan *> plans_still_in_progress;
     for (Plan * plan : plans_in_progress) {
         if (plan->order->status == Order::kOrderInProgress) {
-            if (is_within_work_schedule()) {
+            if (is_within_work_schedule(plan)) {
                 move_plan_forward_one_step(plan);
             }
             if (plan->quantity_remaining <= 0.0) {
@@ -305,9 +305,9 @@ double Firm::calculate_quantity_produced_from_worker_suitability(Plan * plan) {
         Society::get_instance()->get_underlying_living_labor_per_unit(plan->order->product);
 }
 
-bool Firm::is_within_work_schedule() const {
+bool Firm::is_within_work_schedule(Plan * plan) const {
     return Sim::get_current_time_step() % DAY <
-        Society::get_instance()->get_current_work_hours_daily() &&
+        plan->local_work_hours_daily &&
         Sim::get_current_time_step() / DAY % 7 <
         Society::get_instance()->get_current_work_days_weekly();
 }
