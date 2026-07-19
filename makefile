@@ -71,15 +71,20 @@ ${BUILD_DIR}/Logger.o : ${SRC_DIR}/Logger.cpp ${HDR_DIR}/Logger.h ${HDR_DIR}/Con
 ${BUILD_DIR}/Sim.o : ${SRC_DIR}/Sim.cpp ${HDR_DIR}/Sim.h ${HDR_DIR}/Constants.h
 	g++ ${FLAGS} -c $< -o $@
 
-TEST_DEPS_RAW = $(wildcard ${SRC_DIR}/*.cpp)
-TEST_DEPS = $(filter-out ${SRC_DIR}/main.cpp, ${TEST_DEPS_RAW})
+SRC_FILES = $(wildcard ${SRC_DIR}/*.cpp)
+OBJ_FILES = $(patsubst ${SRC_DIR}/%.cpp, ${BUILD_DIR}/%.o, ${SRC_FILES})
+TEST_DEPS = $(filter-out ${BUILD_DIR}/main.o, ${OBJ_FILES})
 
 tests: ${TEST_EXECS}
 
 test/%.test: test/%.cpp ${TEST_DEPS}
 	g++ ${FLAGS} $^ -o $@
 
-.PHONY: trace plot-tool graphs
+.PHONY: trace plot-tool graphs runtests clean
+
+runtests: tests
+	@echo "Running unit tests"
+	@pushd ${TEST_DIR} && ./run_tests.sh && popd
 
 trace: ${APP}
 	./${APP} > trace.txt
@@ -95,5 +100,16 @@ graphs: trace plot-tool
 
 clean:
 	rm -rf $(wildcard ${BIN_DIR}/*) $(wildcard ${BUILD_DIR}/*) $(wildcard ${TEST_DIR}/*.test) \
-		$(wildcard ${DATA_DIR}/*)
+		$(wildcard ${DATA_DIR}/*) \
+		*.gcno *.gcda *.profraw *.profdata *.info out_coverage/ test/*.gcno test/*.gcda
 
+coverage: FLAGS += --coverage
+coverage: clean tests
+
+score: coverage
+	cd test && ./run_tests.sh
+	@echo "Calculating coverage percentage:"
+	@lcov --ignore-errors inconsistent,range,format,corrupt,empty --capture --directory . --output-file tmp.info --quiet 2>/dev/null
+	@lcov --ignore-errors inconsistent,range,format,corrupt,empty --extract tmp.info '*/src/*' --output-file tmp.filtered.info --quiet 2>/dev/null
+	@lcov --ignore-errors inconsistent,range,format,corrupt,empty --summary tmp.filtered.info 2>/dev/null
+	@rm -f tmp.info tmp.filtered.info

@@ -30,10 +30,7 @@ namespace {
     };
 }
 
-static void set_abilities(
-        std::vector<Ability *>& abilities,
-        std::vector<Ability *>& distribution_abilities
-        ) {
+void Society::set_abilities() {
     for (unsigned int i = 0; i < Sim::get_num_abilities(); i++) {
         abilities.push_back(new Ability());
     }
@@ -44,10 +41,7 @@ static void set_abilities(
     distribution_abilities.resize(ability_count_dist(Sim::get_random_generator()));
 }
 
-static void set_initial_account(
-        double& initial_account,
-        const std::vector<ConsumerGood *>& consumer_goods
-        ) {
+void Society::set_initial_account() {
     initial_account = 0.0;
     for (ConsumerGood * consumer_good : consumer_goods) {
         initial_account += consumer_good->price_per_unit *
@@ -73,7 +67,7 @@ Society::Society() :
 {}
 
 void Society::initialize() {
-    set_abilities(abilities, distribution_abilities);
+    set_abilities();
     set_initial_products();
     unsigned int num_producers = Sim::get_num_producers();
     for (unsigned int i = 0; i < num_producers; ++i) {
@@ -87,6 +81,10 @@ void Society::initialize() {
     unsigned int num_upstream_products = upstream_products.size();
     if (num_producers >= num_upstream_products) {
         for (unsigned int i = 0; i < num_producers; ++i) {
+            Product * product = upstream_products[i % num_upstream_products];
+            product_production_count[product]++;
+        }
+        for (unsigned int i = 0; i < num_producers; ++i) {
             Producer * producer = producers[i];
             Product * product = upstream_products[i % num_upstream_products];
             producer->add_to_catalog(product);
@@ -94,6 +92,10 @@ void Society::initialize() {
             product_production_count[product]++;
         }
     } else {
+        for (unsigned int i = 0; i < num_upstream_products; ++i) {
+            Product * product = upstream_products[i];
+            product_production_count[product]++;
+        }
         for (unsigned int i = 0; i < num_upstream_products; ++i) {
             Producer * producer = producers[i % num_producers];
             Product * product = upstream_products[i];
@@ -108,7 +110,7 @@ void Society::initialize() {
         distributors.push_back(distributor);
         firms.push_back(distributor);
     }
-    set_initial_account(initial_account, consumer_goods);
+    set_initial_account();
     for (unsigned int i = 0; i < Sim::get_num_people(); i++) {
         birth_person();
     }

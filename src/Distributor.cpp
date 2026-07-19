@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 
+#include "Constants.h"
 #include "ConsumerGood.h"
 #include "Distributor.h"
 #include "Good.h"
@@ -28,10 +29,6 @@ Distributor::Distributor(
 
 Logger::Client Distributor::get_client_type() {
     return Logger::DISTRIBUTOR;
-}
-
-void Distributor::on_time_step() {
-    Firm::on_time_step();
 }
 
 void Distributor::add_to_catalog(Product * product) {
@@ -78,30 +75,32 @@ void Distributor::check_and_reorder_input(Product * product) {
         Firm::check_and_reorder_input(product);
         return;
     }
-    ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
-    Good * good = consumer_good->corresponding_good;
-    double threshold = get_reorder_threshold(consumer_good);
-    log_demand(consumer_good, threshold);
-    int pending_inventory = get_pending_inventory_level(consumer_good);
-    log_pending_inventory(consumer_good, pending_inventory);
-    if (pending_inventory >= threshold || !threshold) {
+    double resupply_rate = get_needed_resupply_rate(product);
+    if (resupply_rate <= 0) {
         return;
     }
-    int distribution_quantity = std::min(
+    ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
+    Good * good = consumer_good->corresponding_good;
+
+    double reorder_threshold = get_reorder_threshold(consumer_good);
+    log_demand(consumer_good, reorder_threshold);
+
+    double inventory = get_inventory_level(consumer_good);
+    if (inventory >= reorder_threshold || !reorder_threshold) {
+        return;
+    }
+    int distribution_quantity = std::ceil(std::min(
             get_inventory_level(good),
-            threshold * FIRM_REORDER_MAX_PROP
-            );
+            reorder_threshold * FIRM_REORDER_MAX_PROP
+            ));
     if (!distribution_quantity) {
         return;
     }
-    double distribution_time = 
-        static_cast<double>(distribution_quantity)
-        / demands[consumer_good];
     Order * order = new Order(
             consumer_good,
             distribution_quantity,
             this,
-            distribution_time
+            distribution_quantity / resupply_rate
             );
     if (Plan * plan = draft_plan_for_order(order)) {
         product_to_outbound_orders[consumer_good].insert(order);

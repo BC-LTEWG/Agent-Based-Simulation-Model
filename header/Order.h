@@ -11,6 +11,7 @@ struct Order {
     int quantity;
     Firm * customer;
     double requested_turnaround_time;
+	double predicted_turnaround_time;
     OrderStatus status;
 
     Order(
