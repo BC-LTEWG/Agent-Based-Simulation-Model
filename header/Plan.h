@@ -10,7 +10,6 @@ struct Plan {
     Firm * firm;
 	std::vector<Person *> workers;
     unsigned int local_work_hours_daily = 0;
-	double predicted_turnaround_time = 0.0;
     double machinery_budget = 0.0;
     double labor_budget = 0.0;
     double raw_materials_budget = 0.0;

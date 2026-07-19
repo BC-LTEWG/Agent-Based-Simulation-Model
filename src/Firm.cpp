@@ -170,35 +170,32 @@ double Firm::get_reorder_threshold(Product * product) {
     return demands[product] * FIRM_STOCKPILE_DURATION;
 }
 
-double Firm::get_pending_inventory_level(Product * product) {
-    double pending_inventory = get_inventory_level(product);
-    if (!product_to_outbound_orders.count(product)) {
-        return pending_inventory;
-    }
+double Firm::get_needed_resupply_rate(Product * product) {
+    double needed_resupply_rate = demands[product];
     for (Order * order : product_to_outbound_orders[product]) {
-        pending_inventory += order->quantity;
+        double resupply_rate = order->quantity / order->predicted_turnaround_time;
+        needed_resupply_rate -= resupply_rate;
     }
-    return pending_inventory;
+    return needed_resupply_rate <= 0 ? 0 : needed_resupply_rate;
 }
 
 void Firm::check_and_reorder_input(Product * product) {
-    double demand = demands[product];
-    double reorder_threshold = demand * FIRM_STOCKPILE_DURATION;
-    log_demand(product, reorder_threshold);
-    int pending_inventory = get_pending_inventory_level(product);
-    log_pending_inventory(product, pending_inventory);
-    if (pending_inventory >= reorder_threshold || !reorder_threshold) {
+    double resupply_rate = get_needed_resupply_rate(product);
+    if (resupply_rate <= 0) {
         return;
     }
-    double order_quantity = reorder_threshold * FIRM_REORDER_MAX_PROP;
-    if (product->product_type == Product::ProductType::TYPE_MACHINE) {
-        order_quantity = std::ceil(order_quantity);
+    double reorder_threshold = get_reorder_threshold(product);
+    log_demand(product, reorder_threshold);
+    double inventory = get_inventory_level(product);
+    if (inventory >= reorder_threshold || !reorder_threshold) {
+        return;
     }
+    int order_quantity = std::ceil(reorder_threshold * FIRM_REORDER_MAX_PROP);
     Order * order = new Order(
             product,
             order_quantity,
             this,
-            order_quantity / demand
+            order_quantity / resupply_rate
             );
     if (!send_order(order)) {
         log_reorder_failure(product, order->quantity);
@@ -363,8 +360,8 @@ void Firm::assign_workers(Plan * draft_plan) {
     }
 }
 
-double Firm::predict_turnaround_time(Plan * plan, std::vector<Person *>& workers) {
-    if (workers.empty()) {
+double Firm::predict_turnaround_time(Plan * plan) {
+    if (plan->workers.empty()) {
         return std::numeric_limits<double>::infinity();
     }
     return plan->order->quantity *
@@ -372,7 +369,7 @@ double Firm::predict_turnaround_time(Plan * plan, std::vector<Person *>& workers
            WEEK /
            Sim::get_work_days_weekly() / 
            plan->local_work_hours_daily /
-           workers.size();
+           plan->workers.size();
 }
 
 double Firm::predict_labor_hours(Order * order, std::vector<Person *>& workers) {
@@ -419,8 +416,8 @@ double Firm::calculate_machinery_cost_for_plan(Plan * draft_plan) {
 }
 
 void Firm::assign_plan_dependent_fields(Plan * draft_plan) {
-    draft_plan->predicted_turnaround_time =
-        predict_turnaround_time(draft_plan, draft_plan->workers);
+    draft_plan->order->predicted_turnaround_time =
+        predict_turnaround_time(draft_plan);
     initialize_plan_budget(draft_plan);
 }
 
@@ -602,16 +599,6 @@ void Firm::log_demand(const Product * product, double demand) {
             "current_demand",
             LogPair("product_id", product->id),
             LogPair("demand", demand)
-            );
-}
-
-void Firm::log_pending_inventory(const Product * product, double pending_inventory) {
-    Logger::log(
-            get_client_type(),
-            id,
-            "pending_inventory",
-            LogPair("product_id", product->id),
-            LogPair("pending_inventory", pending_inventory)
             );
 }
 

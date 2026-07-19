@@ -120,9 +120,6 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
         }
     }
 
-    return_order->requested_turnaround_time =
-        draft_plan->predicted_turnaround_time;
-
     customer_to_draft_plan[order->customer] = draft_plan;
     log_draft_plan(draft_plan);
 

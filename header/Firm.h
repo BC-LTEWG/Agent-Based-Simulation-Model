@@ -27,7 +27,7 @@ class Firm : public Agent {
     virtual void on_time_step() override;
     virtual void add_to_catalog(Product * product) = 0;
     double get_avg_productivity();
-    virtual double get_inventory_level(Product * product);
+    double get_inventory_level(Product * product);
     void receive_shipment(Order * order);
     void receive_shipment(Plan * plan);
     void receive_payment(Plan * plan, double transaction_amount);
@@ -60,7 +60,7 @@ class Firm : public Agent {
         std::vector<std::pair<Product *, double>>& deducted_inputs
     );
     double get_reorder_threshold(Product * product);
-    double get_pending_inventory_level(Product * product);
+    double get_needed_resupply_rate(Product * product);
     virtual void check_and_reorder_input(Product * product);
 	void start_plan(Plan * plan);
 	void move_plan_forward_one_step(Plan * plan);
@@ -75,7 +75,7 @@ class Firm : public Agent {
 
 	int predict_workers_needed(Plan * plan);
     void assign_workers(Plan * draft_plan);
-	double predict_turnaround_time(Plan * plan, std::vector<Person*>& workers); 
+	double predict_turnaround_time(Plan * plan); 
 	double predict_labor_hours(Order * order, std::vector<Person*>& workers);
     double calculate_raw_material_cost_for_order(Order * order);
     void initialize_plan_budget(Plan * draft_plan);
@@ -109,7 +109,6 @@ class Firm : public Agent {
             );
     void log_accepted_order(const Order * original_order, const Order * chosen_return_Order);
     void log_demand(const Product * Product, double demand);
-    void log_pending_inventory(const Product * product, double pending_inventory);
     void log_catalog();
     void log_catalog_addition(Product * product);
 };
