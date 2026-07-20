@@ -337,18 +337,18 @@ std::vector<Person *> Firm::get_available_workers(int max_workers) {
             return a->get_busyness() < b->get_busyness();
             });
 
-    for (Person * worker : sorted_standby_workers) {
-        if (max_workers <= 0) { 
-            return available_workers;
-        }
-        available_workers.push_back(worker);
-        max_workers--;
-    }
     for (Person * unemployed_person : Society::get_instance()->get_unemployed_people()) {
         if (max_workers <= 0) {
             return available_workers;
         } 
         available_workers.push_back(unemployed_person);
+        max_workers--;
+    }
+    for (Person * worker : sorted_standby_workers) {
+        if (max_workers <= 0) { 
+            return available_workers;
+        }
+        available_workers.push_back(worker);
         max_workers--;
     }
     for (Firm * firm : Society::get_instance()->get_firms()) {
