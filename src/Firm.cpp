@@ -172,7 +172,7 @@ double Firm::get_needed_resupply_rate(Product * product) {
     double reorder_threshold = get_reorder_threshold(product);
     double needed_resupply_rate = 
         demands[product] 
-        * std::pow(reorder_threshold / inventory, RESUPPLY_URGENCY) ;
+        * std::pow(reorder_threshold / inventory, FIRM_RESUPPLY_URGENCY) ;
     for (Order * order : product_to_outbound_orders[product]) {
         double resupply_rate = order->quantity / order->predicted_turnaround_time;
         needed_resupply_rate -= resupply_rate;
@@ -378,7 +378,7 @@ int Firm::predict_workers_needed(Plan * plan) {
 
 double Firm::predict_timely_quantity(Plan * plan) {
     return FIRM_STOCKPILE_DURATION * 
-            FIRM_REORDER_MAX_PROP *
+            FIRM_REORDER_DURATION_PROP *
             plan->workers.size() * 
             plan->local_work_hours_daily *
             Sim::get_work_days_weekly() /
