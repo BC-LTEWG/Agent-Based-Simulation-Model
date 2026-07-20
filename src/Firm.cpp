@@ -158,7 +158,7 @@ Producer * Firm::send_order(Order * order) {
         chosen_producer->pursue_order(this);
         product_to_outbound_orders[order->product].insert(chosen_return_order);
         log_reorder(order->product, chosen_return_order->quantity);
-        // log_accepted_order(order, chosen_return_order);
+        log_accepted_order(order, chosen_return_order);
     }
     return chosen_producer;
 }
@@ -168,7 +168,11 @@ double Firm::get_reorder_threshold(Product * product) {
 }
 
 double Firm::get_needed_resupply_rate(Product * product) {
-    double needed_resupply_rate = demands[product];
+    double inventory = get_inventory_level(product);
+    double reorder_threshold = get_reorder_threshold(product);
+    double needed_resupply_rate = 
+        demands[product] 
+        * std::pow(reorder_threshold / inventory, RESUPPLY_URGENCY) ;
     for (Order * order : product_to_outbound_orders[product]) {
         double resupply_rate = order->quantity / order->predicted_turnaround_time;
         needed_resupply_rate -= resupply_rate;
@@ -444,7 +448,7 @@ void Firm::assign_plan_dependent_fields(Plan * draft_plan) {
 }
 
 Plan * Firm::draft_plan_for_order(Order * order) {
-    double max_order_quantity = std::min(static_cast<double>(order->quantity), get_max_order_quantity(order->product));
+    int max_order_quantity = std::min(order->quantity, static_cast<int>(get_max_order_quantity(order->product)));
     if (max_order_quantity <= 0) {
         return nullptr;
     }
