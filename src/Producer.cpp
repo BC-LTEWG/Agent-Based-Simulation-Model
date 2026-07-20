@@ -59,72 +59,6 @@ bool Producer::can_produce(Product * product) {
     return catalog.count(product);
 }
 
-double Producer::get_max_order_quantity(Product * product) {
-    double max_order_quantity = std::numeric_limits<double>::infinity();
-    for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
-        if (input.second <= 0.0) {
-            continue;
-        }
-        double input_max_order_quantity = 
-                get_inventory_level(input.first) / input.second;
-                
-        max_order_quantity = 
-            std::min(max_order_quantity, input_max_order_quantity);
-    }
-    return max_order_quantity;
-}
-
-Order * Producer::draft_plan_and_return_order(const Order * order) {
-    Order * return_order = new Order(
-        order->product,
-        order->quantity,
-        order->customer,
-        order->requested_turnaround_time
-    );
-
-    Plan * draft_plan = draft_plan_for_order(return_order);
-
-    if (!draft_plan) {
-        return_order->status = Order::kOrderRejected;
-        return return_order;
-    }
-
-    double max_order_quantity = get_max_order_quantity(order->product);
-
-    int feasible_quantity =
-        static_cast<int>(
-            std::min(static_cast<double>(order->quantity), max_order_quantity)
-        );
-
-    if (feasible_quantity <= 0) {
-        delete draft_plan;
-        return_order->status = Order::kOrderRejected;
-        return return_order;
-    }
-
-    if (feasible_quantity != return_order->quantity) {
-        delete draft_plan;
-        return_order->quantity = feasible_quantity;
-        return_order->requested_turnaround_time = std::max(
-            1.0,
-            order->requested_turnaround_time * 
-            feasible_quantity / 
-            order->quantity
-        );
-
-        draft_plan = draft_plan_for_order(return_order);
-
-        if (!draft_plan) {
-            return_order->status = Order::kOrderRejected;
-            return return_order;
-        }
-    }
-
-    customer_to_draft_plan[order->customer] = draft_plan;
-    log_draft_plan(draft_plan);
-
-    return return_order;
-}
 
 void Producer::drop_order(Firm * customer) {
     log_dropped_order(customer_to_draft_plan[customer]->order);
@@ -141,6 +75,16 @@ void Producer::pursue_order(Firm * customer) {
     start_plan(plan);
     log_pursued_plan(plan);
     Society::get_instance()->log_total_employment();
+}
+
+Order * Producer::draft_plan_and_return_order(Order * order) {
+    Plan * draft_plan = draft_plan_for_order(order);
+    if (!draft_plan) {
+        order->status = Order::kOrderRejected;
+        return order;
+    }
+    customer_to_draft_plan[order->customer] = draft_plan;
+    return draft_plan->order;
 }
 
 void Producer::log_draft_plan(const Plan * draft_plan) {

@@ -6,13 +6,12 @@ Order::Order(
         Product * product,
         int quantity,
         Firm * customer,
-        double requested_turnaround_time
+        double requested_resupply_rate
         )
     : product(product),
       quantity(quantity),
       customer(customer),
-      requested_turnaround_time(requested_turnaround_time),
-      predicted_turnaround_time(requested_turnaround_time),
+      requested_resupply_rate(requested_resupply_rate),
       status(OrderStatus::kOrderRequested)
 {}
 

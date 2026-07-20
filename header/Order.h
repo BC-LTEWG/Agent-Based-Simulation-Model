@@ -10,7 +10,7 @@ struct Order {
     Product * product;
     int quantity;
     Firm * customer;
-    double requested_turnaround_time;
+    double requested_resupply_rate;
 	double predicted_turnaround_time;
     OrderStatus status;
 
@@ -18,7 +18,7 @@ struct Order {
             Product * product,
             int quantity,
             Firm * customer,
-            double requested_turnaround_time
+            double requested_resupply_rate
          );
 };
 

@@ -22,14 +22,13 @@ class Producer : public Firm {
     Logger::Client get_client_type() override;
     void add_to_catalog(Product * product) override;
     bool can_produce(Product * product);
-	Order * draft_plan_and_return_order(const Order * order);
 	void drop_order(Firm * customer);
 	void pursue_order(Firm * customer);
+	Order * draft_plan_and_return_order(Order * order);
 
   private:
     std::unordered_map<Firm *, Plan *> customer_to_draft_plan;
 
-    double get_max_order_quantity(Product * product);
     void log_draft_plan(const Plan * draft_plan);
     void log_dropped_order(const Order * order);
 };

@@ -67,14 +67,16 @@ class Firm : public Agent {
 	void end_plan(Plan * plan);
 	void move_plans_forward_one_step();
     double calculate_quantity_produced_from_worker_suitability(Plan * plan);
-    bool is_within_work_schedule() const;
+    bool is_within_work_schedule(Plan * plan) const;
     void rollback_plan_inputs(
         Plan * plan,
         const std::vector<std::pair<Product *, double>>& deducted_inputs
     );
 
+    double get_max_order_quantity(Product * product);
+    std::vector<Person *> get_available_workers(int max_workers);
 	int predict_workers_needed(Plan * plan);
-    void assign_workers(Plan * draft_plan);
+    double predict_timely_quantity(Plan * plan);
 	double predict_turnaround_time(Plan * plan); 
 	double predict_labor_hours(Order * order, std::vector<Person*>& workers);
     double calculate_raw_material_cost_for_order(Order * order);

@@ -11,6 +11,7 @@
 #include "Machine.h"
 #include "Order.h"
 #include "Person.h"
+#include "Plan.h"
 #include "PriceController.h"
 #include "Producer.h"
 #include "Product.h"
@@ -80,19 +81,13 @@ void Distributor::check_and_reorder_input(Product * product) {
         return;
     }
     ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
-    Good * good = consumer_good->corresponding_good;
-
     double reorder_threshold = get_reorder_threshold(consumer_good);
     log_demand(consumer_good, reorder_threshold);
-
     double inventory = get_inventory_level(consumer_good);
     if (inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
-    int distribution_quantity = std::ceil(std::min(
-            get_inventory_level(good),
-            reorder_threshold * FIRM_REORDER_MAX_PROP
-            ));
+    int distribution_quantity = std::ceil(reorder_threshold);
     if (!distribution_quantity) {
         return;
     }
@@ -100,10 +95,10 @@ void Distributor::check_and_reorder_input(Product * product) {
             consumer_good,
             distribution_quantity,
             this,
-            distribution_quantity / resupply_rate
+            resupply_rate
             );
     if (Plan * plan = draft_plan_for_order(order)) {
-        product_to_outbound_orders[consumer_good].insert(order);
+        product_to_outbound_orders[consumer_good].insert(plan->order);
         start_plan(plan);
         log_pursued_plan(plan);
     } else {
