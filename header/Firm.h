@@ -75,6 +75,7 @@ class Firm : public Agent {
 
     double get_max_order_quantity(Product * product);
     std::vector<Person *> get_available_workers(int max_workers);
+    double get_plan_work_week_proportion(Plan * plan);
 	int predict_workers_needed(Plan * plan);
     double predict_timely_quantity(Plan * plan);
 	double predict_turnaround_time(Plan * plan); 

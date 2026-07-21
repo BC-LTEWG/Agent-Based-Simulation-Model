@@ -104,6 +104,7 @@ void Distributor::check_and_reorder_input(Product * product) {
     } else {
         log_reorder_failure(product, order->quantity);
     }
+    delete order;
 }
 
 void Distributor::log_shortfall(unsigned int product_id, int shortfall) {

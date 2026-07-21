@@ -196,11 +196,12 @@ void Firm::check_and_reorder_input(Product * product) {
             product,
             order_quantity,
             this,
-            order_quantity / resupply_rate
+            resupply_rate
             );
     if (!send_order(order)) {
         log_reorder_failure(product, order->quantity);
     }
+    delete order;
 }
 
 void Firm::rollback_plan_inputs(
@@ -307,18 +308,14 @@ double Firm::calculate_quantity_produced_from_worker_suitability(Plan * plan) {
 }
 
 bool Firm::is_within_work_schedule(Plan * plan) const {
-    return Sim::get_current_time_step() % DAY <
-        plan->local_work_hours_daily &&
-        Sim::get_current_time_step() / DAY % 7 <
-        Society::get_instance()->get_current_work_days_weekly();
+    int time = Sim::get_current_time_step();
+    return time % DAY < plan->local_work_hours_daily &&
+        time / DAY % 7 < Society::get_instance()->get_current_work_days_weekly();
 }
 
 double Firm::get_max_order_quantity(Product * product) {
     double max_order_quantity = std::numeric_limits<double>::infinity();
     for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
-        if (input.second <= 0.0) {
-            continue;
-        }
         double input_max_order_quantity = 
                 get_inventory_level(input.first) / input.second;
                 
@@ -355,9 +352,9 @@ std::vector<Person *> Firm::get_available_workers(int max_workers) {
         if (max_workers <= 0) {
             return available_workers;
         } 
-        log_transfer_request();
         if (firm == this) continue;
         std::vector<Person *> transfers = firm->propose_transfer(max_workers);
+        log_transfer_request();
         for (Person * transfer : transfers) {
             available_workers.push_back(transfer);
         }
@@ -366,23 +363,25 @@ std::vector<Person *> Firm::get_available_workers(int max_workers) {
     return available_workers;
 }
 
+double Firm::get_plan_work_week_proportion(Plan * plan) {
+    return static_cast<double>(plan->local_work_hours_daily)
+        * Sim::get_work_days_weekly() 
+        / WEEK;
+}
+
 int Firm::predict_workers_needed(Plan * plan) {
+    double working_resupply_rate = 
+        plan->order->requested_resupply_rate / get_plan_work_week_proportion(plan);
     return std::ceil(
-            recorded_living_labor_per_unit[plan->order->product] *
-            WEEK /
-            Sim::get_work_days_weekly() / 
-            plan->local_work_hours_daily /
-            plan->order->requested_resupply_rate
+            working_resupply_rate * recorded_living_labor_per_unit[plan->order->product] 
             );
 }
 
 double Firm::predict_timely_quantity(Plan * plan) {
-    return FIRM_STOCKPILE_DURATION * 
-            FIRM_REORDER_DURATION_PROP *
-            plan->workers.size() * 
-            plan->local_work_hours_daily *
-            Sim::get_work_days_weekly() /
-            WEEK /
+    double deadline = FIRM_STOCKPILE_DURATION * FIRM_REORDER_DURATION_PROP;
+    double living_labor_per_timestep = plan->workers.size() * get_plan_work_week_proportion(plan);
+    return deadline *
+            living_labor_per_timestep /
             recorded_living_labor_per_unit[plan->order->product];
 }
 
@@ -390,21 +389,17 @@ double Firm::predict_turnaround_time(Plan * plan) {
     if (plan->workers.empty()) {
         return std::numeric_limits<double>::infinity();
     }
+    double living_labor_per_timestep = plan->workers.size() * get_plan_work_week_proportion(plan);
     return plan->order->quantity *
-           recorded_living_labor_per_unit[plan->order->product] *
-           WEEK /
-           Sim::get_work_days_weekly() / 
-           plan->local_work_hours_daily /
-           plan->workers.size();
+           recorded_living_labor_per_unit[plan->order->product] /
+           living_labor_per_timestep;
 }
 
 double Firm::predict_labor_hours(Order * order, std::vector<Person *>& workers) {
     if (workers.empty()) {
         throw std::runtime_error("Cannot predict labor hours with 0 workers: " + order->product->product_name);
     }
-    return order->quantity *
-           recorded_living_labor_per_unit[order->product] / 
-           workers.size();
+    return order->quantity * recorded_living_labor_per_unit[order->product];
 }
 
 double Firm::calculate_raw_material_cost_for_order(Order * order) {
@@ -466,8 +461,7 @@ Plan * Firm::draft_plan_for_order(Order * order) {
         Society::get_instance()->get_current_work_hours_daily();
 
     int requested_workers = predict_workers_needed(draft_plan);
-    std::vector<Person *> available_workers = get_available_workers(requested_workers);
-    draft_plan->workers = available_workers;
+    draft_plan->workers = get_available_workers(requested_workers);
     int timely_quantity = std::min(draft_plan->order->quantity, static_cast<int>(predict_timely_quantity(draft_plan)));
     if (timely_quantity <= 0) {
         delete draft_plan->order;
