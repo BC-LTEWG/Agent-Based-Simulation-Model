@@ -2,18 +2,14 @@
 
 #include <string>
 #include <tuple>
-#include <map>
-#include <set>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <queue>
 
 #include "Agent.h"
 #include "Logger.h"
 #include "Person.h"
-
-struct ProductID {
-    bool operator()(const Product* a, const Product* b ) const;
-};
 
 struct Ability;
 struct Machine;
@@ -48,12 +44,12 @@ class Firm : public Agent {
     std::unordered_set<Person *> workers,
         standby_workers;
 	
-    std::map<Product *, double, ProductID> input_inventory;
-    std::set<Product *, ProductID> catalog;
+    std::unordered_map<Product *, double> input_inventory;
+    std::unordered_set<Product *> catalog;
     
-    std::map<Product *, double, ProductID> demands;
-    std::map<Product *, std::unordered_set<Order *>, ProductID> product_to_outbound_orders;
-    std::map<Product *, double, ProductID> recorded_living_labor_per_unit;
+    std::unordered_map<Product *, double> demands;
+    std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
+    std::unordered_map<Product *, double> recorded_living_labor_per_unit;
 
     std::unordered_set<Plan *> plans_in_progress;
 

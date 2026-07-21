@@ -20,10 +20,6 @@
 #include "Sim.h"
 #include "Society.h"
 
-bool ProductID::operator()(const Product* a, const Product* b) const {
-    return a->id < b->id;
-}
-
 Firm::Firm() {
     static unsigned int unique_id = 0;
     id = unique_id++;
