@@ -15,7 +15,7 @@ struct Machine;
 Product::Product() {
     static unsigned int unique_id = 0;
     id = unique_id++;
-    static std::uniform_real_distribution<>
+    std::uniform_real_distribution<>
         living_labor_dist(
                 PRODUCT_LABOR_PER_UNIT_MIN,
                 PRODUCT_LABOR_PER_UNIT_MAX
@@ -31,7 +31,7 @@ Product::Product() {
             required_abilities.end(),
             Sim::get_random_generator()
             );
-    static std::uniform_int_distribution<>
+    std::uniform_int_distribution<>
         ability_count_dist(1, PRODUCT_ABILITY_COUNT_MAX);
     required_abilities.resize(ability_count_dist(Sim::get_random_generator()));
 }
@@ -39,7 +39,7 @@ Product::Product() {
 void Product::set_inputs() {
     std::vector<Good *>& goods = Society::get_instance()->get_goods();
     int max_num_inputs = std::min<int>(Sim::get_max_num_inputs(), goods.size());
-    static std::uniform_int_distribution<>
+    std::uniform_int_distribution<>
         num_inputs_dist(PRODUCT_NUM_INPUTS_MIN, max_num_inputs);
     const std::size_t num_inputs = num_inputs_dist(Sim::get_random_generator());
     std::uniform_int_distribution<>
@@ -48,7 +48,7 @@ void Product::set_inputs() {
     while (indices.size() < num_inputs) {
         indices.insert(product_input_index_dist(Sim::get_random_generator()));
     }
-    static std::uniform_real_distribution<>
+    std::uniform_real_distribution<>
         input_per_unit_dist(PRODUCT_INPUT_AMOUNT_MIN, PRODUCT_INPUT_AMOUNT_MAX);
     for (int index : indices) {
         inputs_per_unit[goods[index]] =
@@ -64,7 +64,7 @@ void Product::set_machines() {
     const unsigned int global_num_machines = Sim::get_num_machines();
     const int num_machines_max =
         global_num_machines / MAX_PROPORTION_OF_MACHINES_PER_PRODUCT;
-    static std::uniform_int_distribution<>
+    std::uniform_int_distribution<>
         num_machines_dist(PRODUCT_NUM_MACHINES_MIN, num_machines_max);
     const std::size_t num_machines =
         num_machines_dist(Sim::get_random_generator());

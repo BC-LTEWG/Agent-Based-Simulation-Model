@@ -9,7 +9,8 @@ GRAPH_DIR = ${DOCS_DIR}/graphs
 TEST_SRCS = $(wildcard ${TEST_DIR}/*.cpp)
 TEST_EXECS = $(patsubst %.cpp, %.test, ${TEST_SRCS})
 APP = ${BIN_DIR}/sim
-FLAGS = -Wall -Wsign-compare -Iheader -std=c++17 -g
+OPT_FLAG = -O2
+FLAGS = -Wall -Wsign-compare -Iheader -std=c++17 -g $(OPT_FLAG)
 PLOT_SRC = ${GRAPH_DIR}/plot_producer_distributor_transactions.cpp
 PLOT_APP = ${BIN_DIR}/plot_producer_distributor_transactions
 MATPLOT_INCLUDE ?= ${HOME}/.local/include
@@ -101,15 +102,24 @@ graphs: trace plot-tool
 clean:
 	rm -rf $(wildcard ${BIN_DIR}/*) $(wildcard ${BUILD_DIR}/*) $(wildcard ${TEST_DIR}/*.test) \
 		$(wildcard ${DATA_DIR}/*) \
-		*.gcno *.gcda *.profraw *.profdata *.info out_coverage/ test/*.gcno test/*.gcda
+		*.gcno *.gcda *.profraw *.profdata *.info out_coverage/ test/*.gcno test/*.gcda *.gcov
 
+coverage: OPT_FLAG = -O0
 coverage: FLAGS += --coverage
 coverage: clean tests
 
 score: coverage
 	cd test && ./run_tests.sh
 	@echo "Calculating coverage percentage:"
-	@lcov --ignore-errors inconsistent,range,format,corrupt,empty --capture --directory . --output-file tmp.info --quiet 2>/dev/null
-	@lcov --ignore-errors inconsistent,range,format,corrupt,empty --extract tmp.info '*/src/*' --output-file tmp.filtered.info --quiet 2>/dev/null
-	@lcov --ignore-errors inconsistent,range,format,corrupt,empty --summary tmp.filtered.info 2>/dev/null
-	@rm -f tmp.info tmp.filtered.info
+	@gcov --object-directory ${BUILD_DIR} $(filter-out ${SRC_DIR}/main.cpp, ${SRC_FILES}) > .gcov_log 2>&1
+	@awk -F'[: %]+' '/Lines executed/ { \
+		if ($$5 > 0 && $$3 != "nan") { \
+			exec += ($$3 * $$5 / 100); \
+			total += $$5; \
+		} \
+	} \
+	END { \
+		if (total > 0) \
+			printf "TOTAL PROJECT COVERAGE: %.2f%%\n", (exec / total) * 100; \
+	}' .gcov_log
+	@rm -f .gcov_log
