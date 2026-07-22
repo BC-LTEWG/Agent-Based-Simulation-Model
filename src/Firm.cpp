@@ -171,7 +171,10 @@ double Firm::get_reorder_threshold(Product * product) {
 }
 
 double Firm::get_needed_resupply_rate(Product * product) {
-    double needed_resupply_rate = demands[product];
+    double inventory = get_inventory_level(product);
+    double reorder_threshold = get_reorder_threshold(product);
+    double needed_resupply_rate = demands[product]
+        * std::pow(reorder_threshold / inventory, FIRM_REORDER_URGENCY);
     for (Order * order : product_to_outbound_orders[product]) {
         double resupply_rate = order->quantity / order->predicted_turnaround_time;
         needed_resupply_rate -= resupply_rate;
@@ -276,7 +279,7 @@ void Firm::move_plans_forward_one_step() {
     std::unordered_set<Plan *> plans_still_in_progress;
     for (Plan * plan : plans_in_progress) {
         if (plan->order->status == Order::kOrderInProgress) {
-            if (is_within_work_schedule()) {
+            if (is_within_work_schedule(plan)) {
                 move_plan_forward_one_step(plan);
             }
             if (plan->quantity_remaining <= 0.0) {
@@ -305,21 +308,26 @@ double Firm::calculate_quantity_produced_from_worker_suitability(Plan * plan) {
         Society::get_instance()->get_underlying_living_labor_per_unit(plan->order->product);
 }
 
-bool Firm::is_within_work_schedule() const {
-    return Sim::get_current_time_step() % DAY <
-        Society::get_instance()->get_current_work_hours_daily() &&
-        Sim::get_current_time_step() / DAY % 7 <
-        Society::get_instance()->get_current_work_days_weekly();
+bool Firm::is_within_work_schedule(Plan * plan) const {
+    int time = Sim::get_current_time_step();
+    return time % DAY < Society::get_instance()->get_current_work_hours_daily() &&
+        time / DAY % 7 < Society::get_instance()->get_current_work_days_weekly();
+}
+
+double Firm::get_plan_work_week_proportion(Plan * plan) {
+    return static_cast<double>(plan->local_work_hours_daily) 
+        * Society::get_instance()->get_current_work_days_weekly()
+        / WEEK;
 }
 
 int Firm::predict_workers_needed(Plan * plan) {
+    double work_time = 
+        plan->order->requested_turnaround_time
+        * get_plan_work_week_proportion(plan);
     return std::ceil(
             plan->order->quantity *
-            recorded_living_labor_per_unit[plan->order->product] *
-            WEEK /
-            Sim::get_work_days_weekly() / 
-            plan->local_work_hours_daily /
-            plan->order->requested_turnaround_time
+            recorded_living_labor_per_unit[plan->order->product] /
+            work_time
             );
 }
 
@@ -332,13 +340,6 @@ void Firm::assign_workers(Plan * draft_plan) {
             });
 
     int workers_left = predict_workers_needed(draft_plan);
-    for (Person * worker : sorted_standby_workers) {
-        if (workers_left <= 0) { 
-            return;
-        }
-        draft_plan->workers.push_back(worker);
-        workers_left--;
-    }
     for (Person * unemployed_person : Society::get_instance()->get_unemployed_people()) {
         if (workers_left <= 0) {
             return;
@@ -346,13 +347,20 @@ void Firm::assign_workers(Plan * draft_plan) {
         draft_plan->workers.push_back(unemployed_person);
         workers_left--;
     }
+    for (Person * worker : sorted_standby_workers) {
+        if (workers_left <= 0) { 
+            return;
+        }
+        draft_plan->workers.push_back(worker);
+        workers_left--;
+    }
     for (Firm * firm : Society::get_instance()->get_firms()) {
         if (workers_left <= 0) {
             return;
         } 
-        log_transfer_request();
         if (firm == this) continue;
         std::vector<Person *> transfers = firm->propose_transfer(workers_left);
+        log_transfer_request();
         for (Person * transfer : transfers) {
             draft_plan->workers.push_back(transfer);
         }
@@ -364,12 +372,12 @@ double Firm::predict_turnaround_time(Plan * plan) {
     if (plan->workers.empty()) {
         return std::numeric_limits<double>::infinity();
     }
+    double labor_hours_per_timestep = 
+        plan->workers.size()
+        * get_plan_work_week_proportion(plan);
     return plan->order->quantity *
-           recorded_living_labor_per_unit[plan->order->product] *
-           WEEK /
-           Sim::get_work_days_weekly() / 
-           plan->local_work_hours_daily /
-           plan->workers.size();
+           recorded_living_labor_per_unit[plan->order->product] /
+           labor_hours_per_timestep;
 }
 
 double Firm::predict_labor_hours(Order * order, std::vector<Person *>& workers) {
@@ -377,8 +385,7 @@ double Firm::predict_labor_hours(Order * order, std::vector<Person *>& workers) 
         throw std::runtime_error("Cannot predict labor hours with 0 workers: " + order->product->product_name);
     }
     return order->quantity *
-           recorded_living_labor_per_unit[order->product] / 
-           workers.size();
+           recorded_living_labor_per_unit[order->product];
 }
 
 double Firm::calculate_raw_material_cost_for_order(Order * order) {
@@ -428,7 +435,20 @@ Plan * Firm::draft_plan_for_order(Order * order) {
     draft_plan->local_work_hours_daily = 
         Society::get_instance()->get_current_work_hours_daily();
     assign_workers(draft_plan);
+    double deadline = FIRM_STOCKPILE_DURATION * FIRM_REORDER_MAX_PROP;
+    double living_labor_per_timestep = draft_plan->workers.size() * get_plan_work_week_proportion(draft_plan);
+    order->quantity = std::min(order->quantity, static_cast<int>(deadline *
+            living_labor_per_timestep /
+            recorded_living_labor_per_unit[order->product]));
+    if (order->quantity <= 0) {
+        std::cout << "time: " << Sim::get_current_time_step() << std::endl;
+        std::cout << "rejected for no quantity" << std::endl;
+        delete draft_plan;
+        return nullptr;
+    }
     if (draft_plan->workers.empty()) {
+        std::cout << "time: " << Sim::get_current_time_step() << std::endl;
+        std::cout << "rejected for no workers" << std::endl;
         delete draft_plan;
         return nullptr;
     }

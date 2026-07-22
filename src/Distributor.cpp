@@ -93,9 +93,6 @@ void Distributor::check_and_reorder_input(Product * product) {
             get_inventory_level(good),
             reorder_threshold * FIRM_REORDER_MAX_PROP
             ));
-    if (!distribution_quantity) {
-        return;
-    }
     Order * order = new Order(
             consumer_good,
             distribution_quantity,
