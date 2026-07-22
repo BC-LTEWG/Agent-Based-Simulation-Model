@@ -73,10 +73,11 @@ class Firm : public Agent {
         const std::vector<std::pair<Product *, double>>& deducted_inputs
     );
 
+    double get_pending_inventory(Product * product);
     double get_plan_work_week_proportion(Plan * plan);
 	int predict_workers_needed(Plan * plan);
     void assign_workers(Plan * draft_plan);
-    double predict_timely_quantity(Plan * plan);
+    void adjust_quantity_for_deadline(Plan * plan);
 	double predict_turnaround_time(Plan * plan); 
 	double predict_labor_hours(Order * order, std::vector<Person*>& workers);
     double calculate_raw_material_cost_for_order(Order * order);

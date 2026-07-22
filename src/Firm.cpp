@@ -171,7 +171,7 @@ double Firm::get_reorder_threshold(Product * product) {
 }
 
 double Firm::get_needed_resupply_rate(Product * product) {
-    double inventory = get_inventory_level(product);
+    double inventory = get_pending_inventory(product);
     double reorder_threshold = get_reorder_threshold(product);
     double needed_resupply_rate = demands[product]
         * std::pow(reorder_threshold / inventory, FIRM_REORDER_URGENCY);
@@ -189,17 +189,17 @@ void Firm::check_and_reorder_input(Product * product) {
     }
     double reorder_threshold = get_reorder_threshold(product);
     log_demand(product, reorder_threshold);
-    double inventory = get_inventory_level(product);
+    double inventory = get_pending_inventory(product);
     if (inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
-    int order_quantity = reorder_threshold;
+    int deadline = FIRM_STOCKPILE_DURATION * FIRM_REORDER_DEADLINE_PROP;
     Order * order = new Order(
-            product,
-            order_quantity,
-            this,
-            order_quantity / resupply_rate
-            );
+        product,
+        std::ceil(deadline * resupply_rate),
+        this,
+        deadline
+        );
     if (!send_order(order)) {
         log_reorder_failure(product, order->quantity);
     }
@@ -314,6 +314,14 @@ bool Firm::is_within_work_schedule(Plan * plan) const {
         time / DAY % 7 < Society::get_instance()->get_current_work_days_weekly();
 }
 
+double Firm::get_pending_inventory(Product * product) {
+    double pending_inventory = get_inventory_level(product);
+    for (Order * order : product_to_outbound_orders[product]) {
+        pending_inventory += order->quantity;
+    }
+    return pending_inventory;
+}
+
 double Firm::get_plan_work_week_proportion(Plan * plan) {
     return static_cast<double>(plan->local_work_hours_daily) 
         * Society::get_instance()->get_current_work_days_weekly()
@@ -368,12 +376,14 @@ void Firm::assign_workers(Plan * draft_plan) {
     }
 }
 
-double Firm::predict_timely_quantity(Plan * plan) {
-    double deadline = FIRM_STOCKPILE_DURATION * FIRM_REORDER_DURATION_PROP;
+void Firm::adjust_quantity_for_deadline(Plan * plan) {
     double living_labor_per_timestep = plan->workers.size() * get_plan_work_week_proportion(plan);
-    return deadline *
-            living_labor_per_timestep /
-            recorded_living_labor_per_unit[plan->order->product];
+    int maximum_quantity_for_deadline = 
+        plan->order->requested_turnaround_time *
+        living_labor_per_timestep / 
+        recorded_living_labor_per_unit[plan->order->product];
+    plan->order->quantity = 
+        std::min(plan->order->quantity, maximum_quantity_for_deadline);
 }
 
 double Firm::predict_turnaround_time(Plan * plan) {
@@ -443,10 +453,7 @@ Plan * Firm::draft_plan_for_order(Order * order) {
     draft_plan->local_work_hours_daily = 
         Society::get_instance()->get_current_work_hours_daily();
     assign_workers(draft_plan);
-    order->quantity = std::min(
-            order->quantity,
-            static_cast<int>(predict_timely_quantity(draft_plan))
-            );
+    adjust_quantity_for_deadline(draft_plan);
     if (order->quantity <= 0) {
         delete draft_plan;
         return nullptr;

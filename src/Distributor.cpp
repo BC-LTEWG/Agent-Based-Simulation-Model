@@ -86,16 +86,17 @@ void Distributor::check_and_reorder_input(Product * product) {
     double reorder_threshold = get_reorder_threshold(consumer_good);
     log_demand(consumer_good, reorder_threshold);
 
-    double inventory = get_inventory_level(consumer_good);
+    double inventory = get_pending_inventory(consumer_good);
     if (inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
-    int distribution_quantity = get_inventory_level(good);
+    int deadline = get_inventory_level(good) / resupply_rate;
+    deadline = std::min(deadline, static_cast<int>(FIRM_STOCKPILE_DURATION * FIRM_REORDER_DEADLINE_PROP));
     Order * order = new Order(
             consumer_good,
-            distribution_quantity,
+            deadline * resupply_rate,
             this,
-            distribution_quantity / resupply_rate
+            deadline
             );
     if (Plan * plan = draft_plan_for_order(order)) {
         product_to_outbound_orders[consumer_good].insert(order);
