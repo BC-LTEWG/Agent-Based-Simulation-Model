@@ -193,7 +193,7 @@ void Firm::check_and_reorder_input(Product * product) {
     if (inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
-    int order_quantity = std::ceil(reorder_threshold * FIRM_REORDER_MAX_PROP);
+    int order_quantity = reorder_threshold;
     Order * order = new Order(
             product,
             order_quantity,
@@ -340,18 +340,18 @@ void Firm::assign_workers(Plan * draft_plan) {
             });
 
     int workers_left = predict_workers_needed(draft_plan);
-    for (Person * unemployed_person : Society::get_instance()->get_unemployed_people()) {
-        if (workers_left <= 0) {
-            return;
-        } 
-        draft_plan->workers.push_back(unemployed_person);
-        workers_left--;
-    }
     for (Person * worker : sorted_standby_workers) {
         if (workers_left <= 0) { 
             return;
         }
         draft_plan->workers.push_back(worker);
+        workers_left--;
+    }
+    for (Person * unemployed_person : Society::get_instance()->get_unemployed_people()) {
+        if (workers_left <= 0) {
+            return;
+        } 
+        draft_plan->workers.push_back(unemployed_person);
         workers_left--;
     }
     for (Firm * firm : Society::get_instance()->get_firms()) {
@@ -366,6 +366,14 @@ void Firm::assign_workers(Plan * draft_plan) {
         }
         workers_left -= transfers.size();
     }
+}
+
+double Firm::predict_timely_quantity(Plan * plan) {
+    double deadline = FIRM_STOCKPILE_DURATION * FIRM_REORDER_DURATION_PROP;
+    double living_labor_per_timestep = plan->workers.size() * get_plan_work_week_proportion(plan);
+    return deadline *
+            living_labor_per_timestep /
+            recorded_living_labor_per_unit[plan->order->product];
 }
 
 double Firm::predict_turnaround_time(Plan * plan) {
@@ -435,20 +443,15 @@ Plan * Firm::draft_plan_for_order(Order * order) {
     draft_plan->local_work_hours_daily = 
         Society::get_instance()->get_current_work_hours_daily();
     assign_workers(draft_plan);
-    double deadline = FIRM_STOCKPILE_DURATION * FIRM_REORDER_MAX_PROP;
-    double living_labor_per_timestep = draft_plan->workers.size() * get_plan_work_week_proportion(draft_plan);
-    order->quantity = std::min(order->quantity, static_cast<int>(deadline *
-            living_labor_per_timestep /
-            recorded_living_labor_per_unit[order->product]));
+    order->quantity = std::min(
+            order->quantity,
+            static_cast<int>(predict_timely_quantity(draft_plan))
+            );
     if (order->quantity <= 0) {
-        std::cout << "time: " << Sim::get_current_time_step() << std::endl;
-        std::cout << "rejected for no quantity" << std::endl;
         delete draft_plan;
         return nullptr;
     }
     if (draft_plan->workers.empty()) {
-        std::cout << "time: " << Sim::get_current_time_step() << std::endl;
-        std::cout << "rejected for no workers" << std::endl;
         delete draft_plan;
         return nullptr;
     }

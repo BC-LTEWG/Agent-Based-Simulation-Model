@@ -11,6 +11,7 @@
 #include "Machine.h"
 #include "Order.h"
 #include "Person.h"
+#include "Plan.h"
 #include "PriceController.h"
 #include "Producer.h"
 #include "Product.h"
@@ -89,10 +90,7 @@ void Distributor::check_and_reorder_input(Product * product) {
     if (inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
-    int distribution_quantity = std::ceil(std::min(
-            get_inventory_level(good),
-            reorder_threshold * FIRM_REORDER_MAX_PROP
-            ));
+    int distribution_quantity = get_inventory_level(good);
     Order * order = new Order(
             consumer_good,
             distribution_quantity,
