@@ -68,10 +68,10 @@ void Firm::receive_payment(Plan * plan, double transaction_amount) {
 bool Firm::remove_input_from_inventory(
         Product * product,
         double quantity,
-        std::unordered_map<Product *, double>& plan_inventory
+        std::unordered_map<Product *, double>& deducted_inputs
     ) {
     if (remove_input_from_inventory(product, quantity)) {
-        plan_inventory[product] += quantity;
+        deducted_inputs[product] += quantity;
         return true;
     }
     return false;
@@ -202,14 +202,21 @@ void Firm::check_and_reorder_input(Product * product) {
     }
 }
 
-void Firm::rollback_plan_inputs(Plan * plan) {
-    for (const std::pair<Product * const, double>& deduction : plan->inventory) {
+void Firm::return_inputs_to_inventory(
+        const std::unordered_map<Product *, double> deducted_inputs
+        ) {
+    for (const std::pair<Product * const, double>& deduction :
+            deducted_inputs) {
         Product * input = deduction.first;
         double quantity = deduction.second;
         input_inventory[input] += quantity;
         add_demand_signal(input, -quantity);
         log_inventory_level(input, input_inventory[input]);
     }
+}
+
+void Firm::rollback_plan_inputs(Plan * plan) {
+    return_inputs_to_inventory(plan->inventory);
     plan->inventory.clear();
     plan->outlays.clear();
     plan->order->status = Order::OrderStatus::kOrderRequested;
@@ -269,19 +276,23 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
         plan->needed_this_step[machine] =
             portion_of_hour_worked / machine->lifetime;
     }
+    std::unordered_map<Product*, double> deducted_inputs;
     for (std::pair<Product *, double> requirement : plan->needed_this_step) {
         double have_on_hand = plan->inventory[requirement.first];
         if (have_on_hand < requirement.second) {
-            double deficit = requirement.second - have_on_hand;
+           double deficit = requirement.second - have_on_hand;
             if (!remove_input_from_inventory(
                         requirement.first,
                         deficit,
-                        plan->inventory
+                        deducted_inputs
                         )) {
-                rollback_plan_inputs(plan);
+                return_inputs_to_inventory(deducted_inputs);
                 return;
             }
         }
+    }
+    for (std::pair<Product *, double> input : deducted_inputs) {
+        plan->inventory[input.first] += input.second;
     }
     for (std::pair<Product *, double> requirement : plan->needed_this_step) {
         plan->inventory[requirement.first] -= requirement.second;

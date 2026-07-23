@@ -56,12 +56,13 @@ class Firm : public Agent {
     bool remove_input_from_inventory(
         Product * product,
         double quantity,
-        std::unordered_map<Product *, double>& plan_inventory
+        std::unordered_map<Product *, double>& container
     );
     double get_reorder_threshold(Product * product);
     double get_needed_resupply_rate(Product * product);
     virtual void check_and_reorder_input(Product * product);
     void start_plan(Plan * plan);
+    void return_inputs_to_inventory(std::unordered_map<Product *, double> container);
     void rollback_plan_inputs(Plan * plan);
     void move_plan_forward_one_step(Plan * plan);
     void end_plan(Plan * plan);
