@@ -27,7 +27,7 @@ class Firm : public Agent {
     virtual void on_time_step() override;
     virtual void add_to_catalog(Product * product) = 0;
     double get_avg_productivity();
-    double get_inventory_level(Product * product);
+    virtual double get_inventory_level(Product * product);
     void receive_shipment(Order * order);
     void receive_shipment(Plan * plan);
     void receive_payment(Plan * plan, double transaction_amount);
@@ -43,7 +43,6 @@ class Firm : public Agent {
     std::unordered_set<Machine *> machines;
     std::unordered_set<Person *> workers,
         standby_workers;
-	
     std::unordered_map<Product *, double> input_inventory;
     std::unordered_set<Product *> catalog;
     
@@ -57,30 +56,27 @@ class Firm : public Agent {
     bool remove_input_from_inventory(
         Product * product,
         double quantity,
-        std::vector<std::pair<Product *, double>>& deducted_inputs
+        std::unordered_map<Product *, double>& plan_inventory
     );
     double get_reorder_threshold(Product * product);
     double get_needed_resupply_rate(Product * product);
     virtual void check_and_reorder_input(Product * product);
-	void start_plan(Plan * plan);
-	void move_plan_forward_one_step(Plan * plan);
-	void end_plan(Plan * plan);
-	void move_plans_forward_one_step();
+    void start_plan(Plan * plan);
+    void rollback_plan_inputs(Plan * plan);
+    void move_plan_forward_one_step(Plan * plan);
+    void end_plan(Plan * plan);
+    void move_plans_forward_one_step();
     double calculate_quantity_produced_from_worker_suitability(Plan * plan);
     bool is_within_work_schedule() const;
-    void rollback_plan_inputs(
-        Plan * plan,
-        const std::vector<std::pair<Product *, double>>& deducted_inputs
-    );
 
-	int predict_workers_needed(Plan * plan);
+    int predict_workers_needed(Plan * plan);
     void assign_workers(Plan * draft_plan);
-	double predict_turnaround_time(Plan * plan); 
-	double predict_labor_hours(Order * order, std::vector<Person*>& workers);
+    double predict_turnaround_time(Plan * plan); 
+    double predict_labor_hours(Order * order, std::vector<Person*>& workers);
     double calculate_raw_material_cost_for_order(Order * order);
     void initialize_plan_budget(Plan * draft_plan);
     double calculate_machinery_cost_for_plan(Plan * draft_plan);
-	void assign_plan_dependent_fields(Plan * draft_plan);
+    void assign_plan_dependent_fields(Plan * draft_plan);
     void add_demand_signal(Product * product, double quantity);
     Plan * draft_plan_for_order(Order * order); 
     void update_demands();

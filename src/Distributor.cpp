@@ -40,17 +40,22 @@ void Distributor::add_to_catalog(Product * product) {
         consumer_good->mean_consumption_frequency 
         * Sim::get_num_people() 
         / Sim::get_num_distributors();
-    static std::normal_distribution<double> demand_mult(1.0, DEMAND_PREDICTION_VARIANCE);
+    static std::normal_distribution<double>
+        demand_mult(1.0, DEMAND_PREDICTION_VARIANCE);
     demands[good] *= demand_mult(Sim::get_random_generator());
     demands[consumer_good] *= demand_mult(Sim::get_random_generator());
     input_inventory[good] = demands[good] * FIRM_STOCKPILE_DURATION;
-    input_inventory[consumer_good] = demands[consumer_good] * FIRM_STOCKPILE_DURATION;
+    input_inventory[consumer_good] =
+        demands[consumer_good] * FIRM_STOCKPILE_DURATION;
     log_inventory_level(good, input_inventory[good]);
     log_inventory_level(consumer_good, input_inventory[consumer_good]);
     log_catalog_addition(product);
 }
 
-int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person) {
+int Distributor::try_sell_goods(
+        ConsumerGood * consumer_good,
+        int quantity, Person * person
+        ) {
     int available = std::min(static_cast<int>(
                 get_inventory_level(consumer_good)), quantity);
     if (!available) {
@@ -71,7 +76,7 @@ int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Pers
 }
 
 void Distributor::check_and_reorder_input(Product * product) {
-    if (product->product_type != Product::TYPE_CONSUMER_GOOD) {
+    if (product->product_type != Product::ProductType::kTypeConsumerGood) {
         Firm::check_and_reorder_input(product);
         return;
     }
