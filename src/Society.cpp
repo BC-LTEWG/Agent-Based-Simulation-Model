@@ -295,6 +295,10 @@ void Society::adjust_io_matrix(Eigen::MatrixXd& io_matrix) {
         }
     }
 
+    for (Machine * machine : machines) {
+        machine->lifetime *= divisor;
+    }
+
     for (std::size_t j = 0; j < dim; ++j) {
         for (std::pair<Good * const, double>& input : products[j]->inputs_per_unit) {
             input.second = io_matrix(input.first->id, j);
