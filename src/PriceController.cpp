@@ -30,39 +30,38 @@ void PriceController::update_price(Plan * plan) {
     Product * product = plan->order->product;
     int now = Sim::get_current_time_step();
     int end_time = now - PRICE_AVERAGING_WINDOW;
-    if (plan_history.count(product) && !plan_history[product].empty()) {
-        while (plan_history[product].front().second <= end_time) {
+    if (plan_history.count(product)) {
+        while (!plan_history[product].empty() &&
+                plan_history[product].front().second <= end_time) {
+            Plan * old_plan = plan_history[product].front().first;
             plan_history[product].pop_front();
+            delete old_plan->order;
+            delete old_plan;
         }
     }
     plan_history[product].push_back(std::make_pair(plan, now));
     int units = 0.0;
     double hours = 0.0;
-    int workers = 0;
+    std::unordered_map<Product *, double> inputs_used;
     for (std::pair<Plan *, int> entry : plan_history[product]) {
         Plan * plan = entry.first;
         units += plan->order->quantity - plan->quantity_remaining;
         hours += plan->labor_hours_used;
-        workers += plan->workers.size();
+        for (std::pair<Product *, double> input : plan->outlays) {
+            inputs_used[input.first] += input.second;
+        }
     }
-    if (units <= 0) {
-        throw std::runtime_error("Units cannot be 0 or less for product: " + product->product_name); 
-    }
-    if (workers <= 0) {
-        throw std::runtime_error("Plan cannot be completed without workers: " + product->product_name); 
+    if (units < 0) {
+        std::cerr << "T " << Sim::get_current_time_step() << std::endl;
+        throw std::runtime_error("Units cannot be 0 or less for product: " +
+                std::to_string(product->id)); 
     }
     double price = product->living_labor_per_unit = hours / units;
-    double machine_use_hours = hours / workers;
-    double machine_hours_per_unit = machine_use_hours / units;
-    for (std::pair<Good * const, double>& input_pair : product->inputs_per_unit) {
-        double input_quantity_per_unit = input_pair.second;
-        price += input_pair.first->price_per_unit * input_quantity_per_unit;
+    double inputs_cost = 0.0;
+    for (std::pair<Product *, double> input : inputs_used) {
+        inputs_cost += input.second * input.first->price_per_unit;
     }
-    for (Machine * machine : product->machines_needed) {
-        double machine_cost_per_hour =
-            machine->price_per_unit / machine->lifetime;
-        price += machine_cost_per_hour * machine_hours_per_unit;
-    }
+    price += inputs_cost / units;
     product->price_per_unit = price;
     Logger::log(
             Logger::SOCIETY,
