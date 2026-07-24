@@ -91,7 +91,7 @@ double Producer::get_max_order_quantity(Product * product) {
     for (Machine * machine : product->machines_needed) {
         double machine_max_order_quantity =
             (input_inventory[machine] * machine->lifetime) /
-            recorded_living_labor_per_unit[machine];
+            recorded_living_labor_per_unit[product];
         max_order_quantity =
             std::min(max_order_quantity, machine_max_order_quantity);
     }
@@ -111,9 +111,6 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
         return return_order;
     }
     double max_order_quantity = get_max_order_quantity(order->product);
-    if (order->product->product_type == Product::ProductType::kTypeMachine) {
-        max_order_quantity = std::ceil(max_order_quantity);
-    }
     int feasible_quantity =
         static_cast<int>(
             std::min(static_cast<double>(order->quantity), max_order_quantity)

@@ -293,6 +293,7 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
     }
     for (std::pair<Product *, double> input : deducted_inputs) {
         plan->inventory[input.first] += input.second;
+        plan->outlays[input.first] += input.second;
     }
     for (std::pair<Product *, double> requirement : plan->needed_this_step) {
         plan->inventory[requirement.first] -= requirement.second;
@@ -453,14 +454,15 @@ void Firm::initialize_plan_budget(Plan * draft_plan) {
 
 double Firm::calculate_machinery_cost_for_plan(Plan * draft_plan) {
     double machinery_cost_per_hour = 0.0;
-    for (Machine * machine : machines) {
+    for (Machine * machine : draft_plan->order->product->machines_needed) {
         machinery_cost_per_hour += machine->price_per_unit / machine->lifetime;
     }
     if (draft_plan->workers.empty()) {
-        throw std::runtime_error("Cannot calculate machinery cost with 0 workers: " + draft_plan->order->product->product_name);
+        throw std::runtime_error("Cannot calculate machinery cost with 0 workers: "
+               "Product " + std::to_string(draft_plan->order->product->id));
     }
     return machinery_cost_per_hour *
-        (static_cast<double>(draft_plan->labor_budget) / draft_plan->workers.size());
+        draft_plan->labor_budget / draft_plan->workers.size();
 }
 
 void Firm::assign_plan_dependent_fields(Plan * draft_plan) {
