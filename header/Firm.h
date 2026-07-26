@@ -39,6 +39,7 @@ class Firm : public Agent {
 
   protected:
     unsigned int id;
+    std::unordered_map<Product *, double> average_team_sizes;
     double pooled_input_value = 0.0;
     std::unordered_set<Person *> workers,
         standby_workers;
@@ -83,6 +84,7 @@ class Firm : public Agent {
     void add_demand_signal(Product * product, double quantity);
     Plan * draft_plan_for_order(Order * order); 
     void update_demands();
+    void update_average_team_size(Plan * plan);
     void move_worker_off_standby(Person * worker);
 
     void log_plans();

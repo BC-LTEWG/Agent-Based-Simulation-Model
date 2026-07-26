@@ -211,7 +211,7 @@ void Person::update_health_status() {
 }
 
 void Person::update_busyness() {
-    double growth = busyness_this_time_step / BUSYNESS_AVERAGING_WINDOW;
+    double growth = busyness_this_time_step / BUSYNESS_AVERAGING_WINDOW; // this should be just busyness_this_timestep??
     double decay = busyness / BUSYNESS_AVERAGING_WINDOW;
     busyness += growth - decay;
     busyness_this_time_step = 0.0;

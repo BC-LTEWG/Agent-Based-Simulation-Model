@@ -275,6 +275,7 @@ void Firm::start_plan(Plan * plan) {
         plan->is_stalled = false;
         log_start_plan_stallage_resolved(plan);
     }
+    update_average_team_size(plan);
 }
 
 void Firm::move_plan_forward_one_step(Plan * plan) {
@@ -333,14 +334,6 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
     }
     plan->labor_hours_used += portion_of_hour_worked * plan->workers.size();
     plan->quantity_remaining -= quantity_produced;
-    // double next_expected_quantity_produced =
-    //     calculate_quantity_produced_from_worker_suitability(plan);
-    // double next_quantity_produced =
-    //     std::min(next_expected_quantity_produced, plan->quantity_remaining);
-    // if (next_quantity_produced <= 0.0) {
-    //     end_plan(plan);
-    //     return;
-    // }
 }
 
 void Firm::end_plan(Plan * plan) {
@@ -571,6 +564,15 @@ void Firm::update_demands() {
         double decay = demand.second / DEMAND_AVERAGING_WINDOW;
         demand.second -= decay;
     }
+}
+
+void Firm::update_average_team_size(Plan * plan) {
+    double observed_team_size = static_cast<double>(plan->workers.size());
+    Product * product = plan->order->product;
+
+    average_team_sizes[product] = 
+        1.0 / TEAM_SIZE_AVERAGING_WINDOW * observed_team_size +
+        (1.0 -  1.0 / TEAM_SIZE_AVERAGING_WINDOW) * average_team_sizes[product];
 }
 
 void Firm::move_worker_off_standby(Person * worker) {
