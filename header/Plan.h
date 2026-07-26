@@ -6,6 +6,9 @@
 #include "Product.h"
 
 struct Plan {
+    inline static int next_id = 0;
+    const int id = next_id++;
+
     Order * order;
     Firm * firm;
     std::vector<Person *> workers;
@@ -20,5 +23,6 @@ struct Plan {
     std::unordered_map<Product *, double> outlays;
     double quantity_remaining = 0.0;
     int outgoing_units_consumed = 0;
+    bool is_stalled = false;
 };
 

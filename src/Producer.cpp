@@ -139,6 +139,7 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
     int feasible_quantity =
             std::min(static_cast<double>(order->quantity), max_order_quantity);
 
+
     if (feasible_quantity != return_order->quantity) {
         delete draft_plan;
         return_order->quantity = feasible_quantity;

@@ -107,6 +107,9 @@ class Firm : public Agent {
             const double quantity
             );
     void log_accepted_order(const Order * original_order, const Order * chosen_return_Order);
+    void log_plan_stallage(Plan * plan, std::string situation);
+    void log_start_plan_stalled(Plan * plan, Product * product);
+    void log_start_plan_stallage_resolved(Plan * plan);
     void log_demand(const Product * Product, double demand);
     void log_catalog();
     void log_catalog_addition(Product * product);

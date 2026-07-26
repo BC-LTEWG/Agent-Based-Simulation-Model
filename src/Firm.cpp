@@ -246,6 +246,8 @@ void Firm::start_plan(Plan * plan) {
                     plan->inventory
                     )) {
             rollback_plan_inputs(plan);
+            log_start_plan_stalled(plan, input.first);
+            plan->is_stalled = true;
             return;
         }
     }
@@ -258,6 +260,8 @@ void Firm::start_plan(Plan * plan) {
                     plan->inventory
                     )) {
             rollback_plan_inputs(plan);
+            log_start_plan_stalled(plan, machine);
+            plan->is_stalled = true;
             return;
         }
     }
@@ -267,6 +271,10 @@ void Firm::start_plan(Plan * plan) {
     plan->outlays = plan->inventory;
     pooled_input_value +=
         plan->raw_materials_budget + plan->machinery_budget;
+    if (plan->is_stalled) {
+        plan->is_stalled = false;
+        log_start_plan_stallage_resolved(plan);
+    }
 }
 
 void Firm::move_plan_forward_one_step(Plan * plan) {
@@ -289,6 +297,7 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
             portion_of_hour_worked / machine->lifetime;
     }
     std::unordered_map<Product*, double> deducted_inputs;
+    bool was_stalled = plan->is_stalled;
     for (std::pair<Product *, double> requirement : plan->needed_this_step) {
         double have_on_hand = plan->inventory[requirement.first];
         if (have_on_hand < requirement.second) {
@@ -299,9 +308,18 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
                         deducted_inputs
                         )) {
                 return_inputs_to_inventory(deducted_inputs);
+
+                if (!plan->is_stalled) {
+                    log_plan_stallage(plan, "stalled_plan");
+                }
+                plan->is_stalled = true;
                 return;
             }
         }
+    }
+    if (was_stalled) {
+        plan->is_stalled = false;
+        log_plan_stallage(plan, "unstalled_plan");
     }
     for (std::pair<Product *, double> input : deducted_inputs) {
         plan->inventory[input.first] += input.second;
@@ -418,18 +436,18 @@ void Firm::assign_workers(Plan * draft_plan) {
             });
 
     int workers_left = predict_workers_needed(draft_plan);
-    for (Person * worker : sorted_standby_workers) {
-        if (workers_left <= 0) { 
-            return;
-        }
-        draft_plan->workers.push_back(worker);
-        workers_left--;
-    }
     for (Person * unemployed_person : Society::get_instance()->get_unemployed_people()) {
         if (workers_left <= 0) {
             return;
         } 
         draft_plan->workers.push_back(unemployed_person);
+        workers_left--;
+    }
+    for (Person * worker : sorted_standby_workers) {
+        if (workers_left <= 0) { 
+            return;
+        }
+        draft_plan->workers.push_back(worker);
         workers_left--;
     }
     for (Firm * firm : Society::get_instance()->get_firms()) {
@@ -739,3 +757,31 @@ void Firm::log_catalog_addition(Product * product) {
     Logger::log(get_client_type(), id, "catalog_addition", LogPair("product_id", product->id));
 }
 
+void Firm::log_plan_stallage(Plan * plan, std::string situation) {
+    Logger::log(
+        get_client_type(),
+        id,
+        situation,
+        LogPair("plan_id", plan->id),
+        LogPair("product_id", plan->order->product->id)
+    );
+}
+
+void Firm::log_start_plan_stalled(Plan * plan, Product * product) {
+    Logger::log(
+        get_client_type(),
+        id,
+        "start_plan_stalled",
+        LogPair("plan_id", plan->id),
+        LogPair("product_id", product->id)
+    );
+}
+
+void Firm::log_start_plan_stallage_resolved(Plan * plan) {
+    Logger::log(
+        get_client_type(),
+        id,
+        "start_plan_stallage_resolved",
+        LogPair("plan_id", plan->id)
+    );
+}
