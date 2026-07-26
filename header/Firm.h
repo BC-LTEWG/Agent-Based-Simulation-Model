@@ -58,7 +58,7 @@ class Firm : public Agent {
         std::unordered_map<Product *, double>& container
     );
     double get_reorder_threshold(Product * product);
-    double get_needed_resupply_rate(Product * product);
+    double get_resupply_deficit(Product * product);
     virtual void check_and_reorder_input(Product * product);
     void start_plan(Plan * plan);
     void return_inputs_to_inventory(std::unordered_map<Product *, double> container);
@@ -67,10 +67,13 @@ class Firm : public Agent {
     void end_plan(Plan * plan);
     void move_plans_forward_one_step();
     double calculate_quantity_produced_from_worker_suitability(Plan * plan);
-    bool is_within_work_schedule() const;
+    bool is_within_work_schedule(Plan * plan) const;
 
+    double get_pending_inventory(Product * product);
+    double get_plan_work_week_proportion(Plan * plan);
     int predict_workers_needed(Plan * plan);
     void assign_workers(Plan * draft_plan);
+    void adjust_quantity_for_deadline(Plan * plan);
     double predict_turnaround_time(Plan * plan); 
     double predict_labor_hours(Order * order, std::vector<Person*>& workers);
     double calculate_raw_material_cost_for_order(Order * order);
@@ -96,7 +99,7 @@ class Firm : public Agent {
             const unsigned int old_workplace_id,
             const unsigned int new_workplace_id
             );
-    void log_reorder_failure(const Product * product, int quantity);
+    void log_reorder_failure(const Product * product, std::string reason);
     void log_transfer_request();
     void log_product_quantity(
             const char * const label,

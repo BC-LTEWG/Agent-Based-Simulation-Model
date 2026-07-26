@@ -11,6 +11,7 @@
 #include "Machine.h"
 #include "Order.h"
 #include "Person.h"
+#include "Plan.h"
 #include "PriceController.h"
 #include "Producer.h"
 #include "Product.h"
@@ -80,8 +81,8 @@ void Distributor::check_and_reorder_input(Product * product) {
         Firm::check_and_reorder_input(product);
         return;
     }
-    double resupply_rate = get_needed_resupply_rate(product);
-    if (resupply_rate <= 0) {
+    double resupply_deficit = get_resupply_deficit(product);
+    if (resupply_deficit <= 0) {
         return;
     }
     ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
@@ -90,29 +91,34 @@ void Distributor::check_and_reorder_input(Product * product) {
     double reorder_threshold = get_reorder_threshold(consumer_good);
     log_demand(consumer_good, reorder_threshold);
 
-    double inventory = get_inventory_level(consumer_good);
+    double inventory = get_pending_inventory(consumer_good);
     if (inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
-    int distribution_quantity = std::ceil(std::min(
-            get_inventory_level(good),
-            reorder_threshold * FIRM_REORDER_MAX_PROP
-            ));
-    if (!distribution_quantity) {
-        return;
-    }
+    
+    int lead_time = 
+        get_inventory_level(good) / resupply_deficit;
+
+    lead_time = std::min(
+        lead_time,
+        static_cast<int>(
+            FIRM_STOCKPILE_DURATION * 
+            FIRM_REORDER_MAX_PROP
+        )
+    );
+    // int order_quantity = lead_time * resupply_deficit;
     Order * order = new Order(
             consumer_good,
-            distribution_quantity,
+            lead_time * resupply_deficit,
             this,
-            distribution_quantity / resupply_rate
+            lead_time
             );
     if (Plan * plan = draft_plan_for_order(order)) {
         product_to_outbound_orders[consumer_good].insert(order);
         start_plan(plan);
         log_pursued_plan(plan);
     } else {
-        log_reorder_failure(product, order->quantity);
+        log_reorder_failure(product, "no_workers_available");
     }
 }
 

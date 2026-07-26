@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include <unordered_map>
 #include <unordered_set>
 #include <numeric>
 
@@ -34,18 +35,18 @@ void Producer::add_to_catalog(Product * product) {
     catalog.insert(product);
     double output_demand =
         Society::get_instance()->get_initial_production()[product];
-    double demand_scale = output_demand * Sim::get_num_people() *
-        Sim::get_num_goods() / Sim::get_num_producers();
-    if (product->product_type == Product::ProductType::kTypeMachine) {
-        demand_scale = 1.0;
-    }
+    double demand_scale = 
+        output_demand * Sim::get_num_people() / 
+        Society::get_instance()->get_product_production_count()[product];
+
     double starting_num_firms =
-        Sim::get_num_producers() + Sim::get_num_distributors();
+        Sim::get_num_producers() +
+        Sim::get_num_distributors();
     double average_team_size =
         std::max<double>(
-                Sim::get_num_people() / starting_num_firms,
-                1.0
-                );
+            Sim::get_num_people() / starting_num_firms,
+            1.0
+        );
     double machine_use_per_unit =
         product->living_labor_per_unit / average_team_size;
     for (Machine * machine : product->machines_needed) {
@@ -58,14 +59,37 @@ void Producer::add_to_catalog(Product * product) {
     }
     static std::normal_distribution<double> demand_mult(
             1.0, DEMAND_PREDICTION_VARIANCE);
+
     for (std::pair<Product * const, double>& demand : demands) {
         double input_amount_added =
             demand.second * demand_mult(Sim::get_random_generator()) *
             FIRM_STOCKPILE_DURATION;
-        if (demand.first->product_type == Product::ProductType::kTypeMachine) {
-            input_amount_added = std::ceil(input_amount_added);
+
+        if (demand.first->product_type ==
+                Product::ProductType::kTypeMachine) {
+            input_amount_added *= average_team_size;
         }
         input_inventory[demand.first] = input_amount_added;
+    }
+    for (std::pair<Good * const, double>& input :
+            product->inputs_per_unit) {
+        input_inventory[input.first] = 
+            std::max(
+                input_inventory[input.first],
+                input.second * MIN_BOOTSTRAP_BATCH
+            );
+    }
+    for (Machine * machine : product->machines_needed) {
+        double minimum_machine_input = 
+            product->living_labor_per_unit * 
+            MIN_BOOTSTRAP_BATCH /
+            machine->lifetime;
+
+        input_inventory[machine] = 
+            std::max(
+                input_inventory[machine],
+                minimum_machine_input
+            );
     }
     for (std::pair<Product * const, double>& stockpile : input_inventory) {
         log_inventory_level(stockpile.first, stockpile.second);
@@ -110,33 +134,26 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
         return_order->status = Order::kOrderRejected;
         return return_order;
     }
+
     double max_order_quantity = get_max_order_quantity(order->product);
     int feasible_quantity =
-        static_cast<int>(
-            std::min(static_cast<double>(order->quantity), max_order_quantity)
-        );
-    if (feasible_quantity <= 0) {
-        delete draft_plan;
-        return_order->status = Order::kOrderRejected;
-        return return_order;
-    }
+            std::min(static_cast<double>(order->quantity), max_order_quantity);
+
     if (feasible_quantity != return_order->quantity) {
         delete draft_plan;
         return_order->quantity = feasible_quantity;
-        return_order->requested_turnaround_time = std::max(
-            1.0,
-            order->requested_turnaround_time * 
-            feasible_quantity / 
-            order->quantity
-        );
+        log_reorder_failure(order->product, "insufficient_resources");
+
         draft_plan = draft_plan_for_order(return_order);
         if (!draft_plan) {
             return_order->status = Order::kOrderRejected;
             return return_order;
         }
     }
+
     customer_to_draft_plan[order->customer] = draft_plan;
     log_draft_plan(draft_plan);
+
     return return_order;
 }
 

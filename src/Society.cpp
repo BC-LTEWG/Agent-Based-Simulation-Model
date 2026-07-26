@@ -166,7 +166,7 @@ void Society::set_initial_products() {
         products.push_back(new_machine);
     }
     for (Product * product : products) {
-        product->set_inputs();
+        product->set_inputs(); // These should be in the contructor
         product->set_machines();
     }
     set_product_prices_production_consumption();

@@ -133,6 +133,7 @@ void Firm::finalize_transfer(Person * worker) {
 }
 
 Producer * Firm::send_order(Order * order) {
+    // what is going on here exactly
     double order_rate = 0.0;
     Producer * chosen_producer = nullptr;
     Order * chosen_return_order = nullptr;
@@ -146,6 +147,7 @@ Producer * Firm::send_order(Order * order) {
         double return_order_rate =
             static_cast<double>(return_order->quantity) /
             return_order->requested_turnaround_time;
+
         if (return_order_rate > order_rate) {
             if (chosen_producer) {
                 chosen_producer->drop_order(this);
@@ -170,36 +172,46 @@ double Firm::get_reorder_threshold(Product * product) {
     return demands[product] * FIRM_STOCKPILE_DURATION;
 }
 
-double Firm::get_needed_resupply_rate(Product * product) {
-    double needed_resupply_rate = demands[product];
+double Firm::get_resupply_deficit(Product * product) {
+    double inventory = get_pending_inventory(product);
+    double reorder_threshold = get_reorder_threshold(product);
+
+    double resupply_rate = 0.0;
     for (Order * order : product_to_outbound_orders[product]) {
-        double resupply_rate = order->quantity / order->predicted_turnaround_time;
-        needed_resupply_rate -= resupply_rate;
+        resupply_rate += order->quantity / order->predicted_turnaround_time;
     }
-    return needed_resupply_rate <= 0 ? 0 : needed_resupply_rate;
+    double inventory_adjusted_demand = demands[product]
+        * std::pow(reorder_threshold / inventory, FIRM_REORDER_URGENCY);
+    double raw_resupply_deficit = inventory_adjusted_demand - resupply_rate;
+    double resupply_deficit = 
+        raw_resupply_deficit <= 0 ? 0 : raw_resupply_deficit;
+    return resupply_deficit;
 }
 
 void Firm::check_and_reorder_input(Product * product) {
-    double resupply_rate = get_needed_resupply_rate(product);
-    if (resupply_rate <= 0) {
+    double resupply_deficit = get_resupply_deficit(product);
+    if (resupply_deficit <= 0) {
         return;
     }
     double reorder_threshold = get_reorder_threshold(product);
     log_demand(product, reorder_threshold);
-    double inventory = get_inventory_level(product);
+    double inventory = get_pending_inventory(product);
     if (inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
-    int order_quantity = std::ceil(reorder_threshold * FIRM_REORDER_MAX_PROP);
+    // double lead_time = std::min(
+    //     get_inventory_level(product) / resupply_deficit,
+    //     FIRM_STOCKPILE_DURATION * FIRM_REORDER_MAX_PROP
+    // );
+    int lead_time = FIRM_STOCKPILE_DURATION * FIRM_REORDER_MAX_PROP;
+    int order_quantity = std::ceil(lead_time * resupply_deficit);
     Order * order = new Order(
             product,
             order_quantity,
             this,
-            order_quantity / resupply_rate
+            lead_time
             );
-    if (!send_order(order)) {
-        log_reorder_failure(product, order->quantity);
-    }
+    send_order(order);
 }
 
 void Firm::return_inputs_to_inventory(
@@ -303,6 +315,14 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
     }
     plan->labor_hours_used += portion_of_hour_worked * plan->workers.size();
     plan->quantity_remaining -= quantity_produced;
+    // double next_expected_quantity_produced =
+    //     calculate_quantity_produced_from_worker_suitability(plan);
+    // double next_quantity_produced =
+    //     std::min(next_expected_quantity_produced, plan->quantity_remaining);
+    // if (next_quantity_produced <= 0.0) {
+    //     end_plan(plan);
+    //     return;
+    // }
 }
 
 void Firm::end_plan(Plan * plan) {
@@ -325,9 +345,13 @@ void Firm::end_plan(Plan * plan) {
 void Firm::move_plans_forward_one_step() {
     std::unordered_set<Plan *> plans_still_in_progress;
     for (Plan * plan : plans_in_progress) {
-        if (is_within_work_schedule()) {
+        if (is_within_work_schedule(plan)) {
             if (plan->order->status == Order::OrderStatus::kOrderInProgress) {
                 move_plan_forward_one_step(plan);
+            if (plan->order->status == Order::kOrderInProgress &&
+                    plan->quantity_remaining <= 0.0) {
+                end_plan(plan);
+            }
             } else if (plan->order->status == Order::kOrderRequested) {
                 start_plan(plan);
             }
@@ -354,21 +378,34 @@ double Firm::calculate_quantity_produced_from_worker_suitability(Plan * plan) {
         Society::get_instance()->get_underlying_living_labor_per_unit(plan->order->product);
 }
 
-bool Firm::is_within_work_schedule() const {
-    return Sim::get_current_time_step() % DAY <
-        Society::get_instance()->get_current_work_hours_daily() &&
-        Sim::get_current_time_step() / DAY % 7 <
-        Society::get_instance()->get_current_work_days_weekly();
+bool Firm::is_within_work_schedule(Plan * plan) const {
+    int time = Sim::get_current_time_step();
+    return time % DAY < Society::get_instance()->get_current_work_hours_daily() &&
+        time / DAY % 7 < Society::get_instance()->get_current_work_days_weekly();
+}
+
+double Firm::get_pending_inventory(Product * product) {
+    double pending_inventory = get_inventory_level(product);
+    for (Order * order : product_to_outbound_orders[product]) {
+        pending_inventory += order->quantity;
+    }
+    return pending_inventory;
+}
+
+double Firm::get_plan_work_week_proportion(Plan * plan) {
+    return static_cast<double>(plan->local_work_hours_daily) 
+        * Society::get_instance()->get_current_work_days_weekly()
+        / WEEK;
 }
 
 int Firm::predict_workers_needed(Plan * plan) {
+    double work_time = 
+        plan->order->requested_turnaround_time
+        * get_plan_work_week_proportion(plan);
     return std::ceil(
             plan->order->quantity *
-            recorded_living_labor_per_unit[plan->order->product] *
-            WEEK /
-            Sim::get_work_days_weekly() / 
-            plan->local_work_hours_daily /
-            plan->order->requested_turnaround_time
+            recorded_living_labor_per_unit[plan->order->product] /
+            work_time
             );
 }
 
@@ -409,16 +446,26 @@ void Firm::assign_workers(Plan * draft_plan) {
     }
 }
 
+void Firm::adjust_quantity_for_deadline(Plan * plan) {
+    double living_labor_per_timestep = plan->workers.size() * get_plan_work_week_proportion(plan);
+    int maximum_quantity_for_deadline = 
+        plan->order->requested_turnaround_time *
+        living_labor_per_timestep / 
+        recorded_living_labor_per_unit[plan->order->product];
+    plan->order->quantity = 
+        std::min(plan->order->quantity, maximum_quantity_for_deadline);
+}
+
 double Firm::predict_turnaround_time(Plan * plan) {
     if (plan->workers.empty()) {
         return std::numeric_limits<double>::infinity();
     }
+    double labor_hours_per_timestep = 
+        plan->workers.size()
+        * get_plan_work_week_proportion(plan);
     return plan->order->quantity *
-           recorded_living_labor_per_unit[plan->order->product] *
-           WEEK /
-           Sim::get_work_days_weekly() / 
-           plan->local_work_hours_daily /
-           plan->workers.size();
+           recorded_living_labor_per_unit[plan->order->product] /
+           labor_hours_per_timestep;
 }
 
 double Firm::predict_labor_hours(Order * order, std::vector<Person *>& workers) {
@@ -478,7 +525,18 @@ Plan * Firm::draft_plan_for_order(Order * order) {
     draft_plan->local_work_hours_daily = 
         Society::get_instance()->get_current_work_hours_daily();
     assign_workers(draft_plan);
+    adjust_quantity_for_deadline(draft_plan);
+    if (order->quantity <= 0) {
+        log_reorder_failure(order->product, "not_enough_workers_available");
+        delete draft_plan;
+        return nullptr;
+    }
     if (draft_plan->workers.empty()) {
+        if (predict_workers_needed(draft_plan) > 0) {
+            log_reorder_failure(order->product, "no_workers_available");
+        } else {
+            log_reorder_failure(order->product, "bogus_order");
+        }
         delete draft_plan;
         return nullptr;
     }
@@ -533,7 +591,8 @@ void Firm::log_pursued_plan(const Plan * draft_plan) {
             LogPair("customer_id", order->customer->get_id()),
             LogPair("product_id", order->product->id),
             LogPair("quantity", order->quantity),
-            LogPair("num_workers", draft_plan->workers.size())
+            LogPair("num_workers", draft_plan->workers.size()),
+            LogPair("lead_time", order->predicted_turnaround_time)
             );
 }
 
@@ -606,8 +665,14 @@ void Firm::log_reorder(const Product * product, const int quantity) {
     log_product_quantity("reorder", product, quantity);
 }
 
-void Firm::log_reorder_failure(const Product * product, const int quantity) {
-    log_product_quantity("reorder_failure", product, quantity);
+void Firm::log_reorder_failure(const Product * product, const std::string reason) {
+    Logger::log(
+        get_client_type(),
+        id,
+        "reorder_failure",
+        LogPair("product_id", product->id),
+        LogPairS("reason", reason)
+    );
 }
 
 void Firm::log_product_quantity(
