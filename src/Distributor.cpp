@@ -82,7 +82,6 @@ void Distributor::check_and_reorder_input(Product * product) {
         return;
     }
     double resupply_deficit = get_resupply_deficit(product);
-
     if (resupply_deficit <= 0) {
         return;
     }
@@ -96,14 +95,6 @@ void Distributor::check_and_reorder_input(Product * product) {
     if (inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
-    Logger::log(
-        get_client_type(),
-        id,
-        "resupply_rate_info",
-        LogPair("product_id", product->id),
-        LogPair("resupply_deficit", resupply_deficit)
-    );
-
     
     int lead_time = 
         get_inventory_level(good) / resupply_deficit;
