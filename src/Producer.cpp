@@ -231,7 +231,7 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
             return return_order;
     }
 
-    draft_plan = draft_plan_for_order(return_order);
+    Plan * draft_plan = draft_plan_for_order(return_order);
 
     if (!draft_plan) {
         return_order->status = Order::kOrderRejected;

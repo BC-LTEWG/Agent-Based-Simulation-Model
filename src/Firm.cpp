@@ -199,6 +199,16 @@ void Firm::check_and_reorder_input(Product * product) {
     if (inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
+    Logger::log(
+        get_client_type(),
+        id,
+        "resupply_rate_info",
+        LogPair("product_id", product->id),
+        LogPair("resupply_deficit", resupply_deficit)
+    );
+
+
+
     // double lead_time = std::min(
     //     get_inventory_level(product) / resupply_deficit,
     //     FIRM_STOCKPILE_DURATION * FIRM_REORDER_MAX_PROP
