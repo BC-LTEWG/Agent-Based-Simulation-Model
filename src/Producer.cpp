@@ -82,25 +82,16 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
         order->requested_turnaround_time
     );
 
+    return_order->quantity = std::min(
+            return_order->quantity,
+            static_cast<int>(get_max_order_quantity(order->product))
+            );
+
     Plan * draft_plan = draft_plan_for_order(return_order);
     if (!draft_plan) {
+        delete draft_plan;
         return_order->status = Order::kOrderRejected;
         return return_order;
-    }
-
-    double max_order_quantity = get_max_order_quantity(order->product);
-    int feasible_quantity =
-        std::min(static_cast<double>(order->quantity), max_order_quantity);
-
-    if (feasible_quantity != return_order->quantity) {
-        delete draft_plan;
-        return_order->quantity = feasible_quantity;
-
-        draft_plan = draft_plan_for_order(return_order);
-        if (!draft_plan) {
-            return_order->status = Order::kOrderRejected;
-            return return_order;
-        }
     }
 
     customer_to_draft_plan[order->customer] = draft_plan;
