@@ -206,9 +206,6 @@ void Firm::check_and_reorder_input(Product * product) {
         LogPair("product_id", product->id),
         LogPair("resupply_deficit", resupply_deficit)
     );
-
-
-
     // double lead_time = std::min(
     //     get_inventory_level(product) / resupply_deficit,
     //     FIRM_STOCKPILE_DURATION * FIRM_REORDER_MAX_PROP
