@@ -47,6 +47,7 @@ class Firm : public Agent {
     std::unordered_set<Product *> catalog;
     
     // std::unordered_map<Product *, double> demands;
+    std::unordered_map<Product *, double> demand_averaging_windows;
     std::unordered_map<Product *, double> consumer_demands;
     std::unordered_map<Product *, double> producer_demands;
     std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
@@ -73,6 +74,7 @@ class Firm : public Agent {
         std::unordered_map<Product *, double> deducted_inputs,
         Firm * firm
     );
+    double get_initial_demand_averaging_window(Product * product);
     void rollback_plan_inputs(Plan * plan, Firm * firm);
     void move_plan_forward_one_step(Plan * plan);
     void end_plan(Plan * plan);
@@ -100,6 +102,7 @@ class Firm : public Agent {
     double get_demand(Product * product);
     Plan * draft_plan_for_order(Order * order); 
     void update_demands();
+    void update_demand_averaging_window(Product * product);
     void update_average_team_size(Plan * plan);
     void move_worker_off_standby(Person * worker);
 

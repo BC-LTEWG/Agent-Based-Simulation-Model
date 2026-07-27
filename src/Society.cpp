@@ -108,6 +108,9 @@ void Society::initialize() {
             product_to_suppliers[product].push_back(producer);
         }
     }
+    for (Producer * producer : producers) {
+        producer->initialize_after_catalog_assignment();
+    }
     std::unordered_set<Product *> distributor_catalog(consumer_goods.begin(), consumer_goods.end());
     for (unsigned int i = 0; i < Sim::get_num_distributors(); i++) {
         Distributor * distributor = new Distributor(distributor_catalog);

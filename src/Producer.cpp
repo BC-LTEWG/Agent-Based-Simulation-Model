@@ -25,10 +25,68 @@ Producer::Producer(
     for (Product * product : initial_catalog) {
         add_to_catalog(product);
     }
+
+}
+
+void Producer::initialize_after_catalog_assignment() {
+    for (std::pair<Product * const, double>& demand :
+            producer_demands) {
+        update_demand_averaging_window(demand.first);
+    }
+
+    initialize_input_inventories();
+
+    for (std::pair<Product * const, double>& stockpile :
+            input_inventory) {
+        log_inventory_level(stockpile.first, stockpile.second);
+    }
 }
 
 Logger::Client Producer::get_client_type() {
     return Logger::PRODUCER;
+}
+
+void Producer::initialize_input_inventories() {
+    static std::normal_distribution<double> demand_mult(
+        1.0,
+        DEMAND_PREDICTION_VARIANCE
+    );
+
+    for (std::pair<Product * const, double>& demand :
+            producer_demands) {
+        double initial_coverage =
+            demand_averaging_windows.at(demand.first) /
+            DEMAND_WINDOW_COVERAGE_MULTIPLIER;
+
+        input_inventory[demand.first] =
+            demand.second *
+            demand_mult(Sim::get_random_generator()) *
+            initial_coverage;
+    }
+
+    for (Product * product : catalog) {
+        for (std::pair<Good * const, double>& input :
+                product->inputs_per_unit) {
+            input_inventory[input.first] =
+                std::max(
+                    input_inventory[input.first],
+                    input.second * MIN_BOOTSTRAP_BATCH
+                );
+        }
+
+        for (Machine * machine : product->machines_needed) {
+            double minimum_machine_input =
+                product->living_labor_per_unit *
+                MIN_BOOTSTRAP_BATCH /
+                machine->lifetime;
+
+            input_inventory[machine] =
+                std::max(
+                    input_inventory[machine],
+                    minimum_machine_input
+                );
+        }
+    }
 }
 
 void Producer::add_to_catalog(Product * product) {
@@ -58,43 +116,40 @@ void Producer::add_to_catalog(Product * product) {
             product->inputs_per_unit) {
         producer_demands[input.first] += input.second * demand_scale;
     }
-    static std::normal_distribution<double> demand_mult(
-            1.0, DEMAND_PREDICTION_VARIANCE);
+    // static std::normal_distribution<double> demand_mult(
+    //         1.0, DEMAND_PREDICTION_VARIANCE);
 
-    for (std::pair<Product * const, double>& demand : producer_demands) {
-        double input_amount_added =
-            demand.second * demand_mult(Sim::get_random_generator()) *
-            FIRM_STOCKPILE_DURATION;
+    // for (std::pair<Product * const, double>& demand : producer_demands) {
+    //     double input_amount_added =
+    //         demand.second * demand_mult(Sim::get_random_generator()) *
+    //         FIRM_STOCKPILE_DURATION;
 
-        if (demand.first->product_type ==
-                Product::ProductType::kTypeMachine) {
-            input_amount_added *= average_team_sizes[product];
-        }
-        input_inventory[demand.first] = input_amount_added;
-    }
-    for (std::pair<Good * const, double>& input :
-            product->inputs_per_unit) {
-        input_inventory[input.first] = 
-            std::max(
-                input_inventory[input.first],
-                input.second * MIN_BOOTSTRAP_BATCH
-            );
-    }
-    for (Machine * machine : product->machines_needed) {
-        double minimum_machine_input = 
-            product->living_labor_per_unit * 
-            MIN_BOOTSTRAP_BATCH /
-            machine->lifetime;
+    //     // if (demand.first->product_type ==
+    //     //         Product::ProductType::kTypeMachine) {
+    //     //     input_amount_added *= average_team_sizes[product];
+    //     // }
+    //     input_inventory[demand.first] = input_amount_added;
+    // }
+    // for (std::pair<Good * const, double>& input :
+    //         product->inputs_per_unit) {
+    //     input_inventory[input.first] = 
+    //         std::max(
+    //             input_inventory[input.first],
+    //             input.second * MIN_BOOTSTRAP_BATCH
+    //         );
+    // }
+    // for (Machine * machine : product->machines_needed) {
+    //     double minimum_machine_input = 
+    //         product->living_labor_per_unit * 
+    //         MIN_BOOTSTRAP_BATCH /
+    //         machine->lifetime;
 
-        input_inventory[machine] = 
-            std::max(
-                input_inventory[machine],
-                minimum_machine_input
-            );
-    }
-    for (std::pair<Product * const, double>& stockpile : input_inventory) {
-        log_inventory_level(stockpile.first, stockpile.second);
-    }
+    //     input_inventory[machine] = 
+    //         std::max(
+    //             input_inventory[machine],
+    //             minimum_machine_input
+    //         );
+    // }
     log_catalog_addition(product);
 }
 

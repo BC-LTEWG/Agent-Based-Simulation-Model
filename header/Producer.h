@@ -26,12 +26,14 @@ class Producer : public Firm {
 	Order * draft_plan_and_return_order(const Order * order);
 	void drop_order(Firm * customer);
 	void pursue_order(Firm * customer);
+    void initialize_after_catalog_assignment();
 
   private:
     std::unordered_map<Firm *, Plan *> customer_to_draft_plan;
 
     double get_estimated_max_order_quantity(Product * product);
     double get_exact_max_order_quantity(Product * product, const Plan * draft_plan);
+    void initialize_input_inventories();
     double get_max_order_quantity(Product * product);
     void adjust_workers_for_quantity(Plan * draft_plan);
     void trim_worker_assignment(Plan * draft_plan);

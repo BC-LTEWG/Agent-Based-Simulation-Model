@@ -57,6 +57,21 @@ double Firm::get_inventory_level(Product * product) {
     return input_inventory.count(product) ? input_inventory[product] : 0;
 }
 
+double Firm::get_initial_demand_averaging_window(Product * product) {
+    double producer_demand = producer_demands[product];
+    double consumer_demand = consumer_demands[product];
+    double total_demand = producer_demand + consumer_demand;
+
+    if (total_demand <= DEMAND_RATE_EPSILON) {
+        return MAX_DEMAND_AVERAGING_WINDOW;
+    }
+
+    return (
+        producer_demand * PRODUCER_DEMAND_AVERAGING_WINDOW +
+        consumer_demand * DISTRIBUTOR_DEMAND_AVERAGING_WINDOW
+    ) / total_demand;
+}
+
 void Firm::receive_shipment(Plan * plan) {
     Order * order = plan->order;
     double quantity_delivered = order->quantity - plan->quantity_remaining;
@@ -593,41 +608,94 @@ Plan * Firm::draft_plan_for_order(Order * order) {
 }
 
 void Firm::add_demand_signal(Product * product, double quantity, Firm * firm) {
-    double averaging_window = get_averaging_window(product);
     if (firm->get_client_type() == Logger::PRODUCER) {
-        producer_demands[product] += quantity / averaging_window;
+        producer_demands[product] += quantity / demand_averaging_windows[product];
     } else if (firm->get_client_type() == Logger::DISTRIBUTOR) {
-        consumer_demands[product] += quantity / averaging_window;
+        consumer_demands[product] += quantity / demand_averaging_windows[product];
     }
     // demands[product] += quantity / DEMAND_AVERAGING_WINDOW;
 }
 
-double Firm::get_averaging_window(Product * product) {
-    double coverage_time = 
-        get_pending_inventory(product) / 
-        std::max(get_demand(product), MIN_DEMAND_RATE);
+// double Firm::get_averaging_window(Product * product) {
+//     double coverage_time = 
+//         get_inventory_level(product) / 
+//         std::max(get_demand(product), MIN_DEMAND_RATE);
 
-    double averaging_window = std::clamp(
-        DEMAND_COVERAGE_WINDOW * coverage_time,
-        MIN_DEMAND_AVERAGING_WINDOW,
-        MAX_DEMAND_AVERAGING_WINDOW
-    );
+//     double averaging_window = DEMAND_COVERAGE_WINDOW * coverage_time;
 
-    return averaging_window;
+//     // double averaging_window = std::clamp(
+//     //     DEMAND_COVERAGE_WINDOW * coverage_time,
+//     //     MIN_DEMAND_AVERAGING_WINDOW,
+//     //     MAX_DEMAND_AVERAGING_WINDOW
+//     // );
+
+//     return averaging_window;
+// }
+
+void Firm::update_demand_averaging_window(Product * product) {
+    if (!demand_averaging_windows.count(product)) {
+        demand_averaging_windows[product] =
+            get_initial_demand_averaging_window(product);
+        return;
+    }
+
+    double demand = get_demand(product);
+    double target_window = MAX_DEMAND_AVERAGING_WINDOW;
+
+    if (demand > DEMAND_RATE_EPSILON) {
+        double coverage_time =
+            get_inventory_level(product) / demand;
+
+        target_window = std::clamp(
+            DEMAND_WINDOW_COVERAGE_MULTIPLIER * coverage_time,
+            static_cast<double>(MIN_DEMAND_AVERAGING_WINDOW),
+            static_cast<double>(MAX_DEMAND_AVERAGING_WINDOW)
+        );
+    }
+
+    demand_averaging_windows[product] +=
+        WINDOW_ADJUSTMENT_RATE *
+        (target_window - demand_averaging_windows[product]);
 }
 
 void Firm::update_demands() {
-    for (std::pair<Product * const, double>& demand : consumer_demands) {
-        double averaging_window = get_averaging_window(demand.first);
-        double decay = demand.second / averaging_window;
-        demand.second -= decay;
+    std::unordered_set<Product *> products;
+
+    for (const std::pair<Product * const, double>& demand :
+            producer_demands) {
+        products.insert(demand.first);
     }
-    for (std::pair<Product * const, double>& demand : producer_demands) {
-        double averaging_window = get_averaging_window(demand.first);
-        double decay = demand.second / averaging_window;
-        demand.second -= decay;
+
+    for (const std::pair<Product * const, double>& demand :
+            consumer_demands) {
+        products.insert(demand.first);
+    }
+
+    for (Product * product : products) {
+        update_demand_averaging_window(product);
+
+        double window = demand_averaging_windows[product];
+
+        producer_demands[product] -=
+            producer_demands[product] / window;
+
+        consumer_demands[product] -=
+            consumer_demands[product] / window;
     }
 }
+
+// void Firm::update_demands() {
+//     for (std::pair<Product * const, double>& demand : consumer_demands) {
+//         double averaging_window = get_averaging_window(demand.first);
+//         double decay = demand.second / averaging_window;
+//         demand.second -= decay;
+//     }
+//     for (std::pair<Product * const, double>& demand : producer_demands) {
+//         double averaging_window = get_averaging_window(demand.first);
+//         double decay = demand.second / averaging_window;
+//         demand.second -= decay;
+//     }
+// }
 
 double Firm::get_demand(Product * product) {
     return producer_demands[product] + consumer_demands[product];

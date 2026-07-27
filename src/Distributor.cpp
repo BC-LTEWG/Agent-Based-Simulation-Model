@@ -33,9 +33,13 @@ Logger::Client Distributor::get_client_type() {
 }
 
 void Distributor::add_to_catalog(Product * product) {
+
     catalog.insert(product);
     ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
     Good * good = consumer_good->corresponding_good;
+    update_demand_averaging_window(good);
+    update_demand_averaging_window(consumer_good);
+
     consumer_demands[good] = 
         consumer_demands[consumer_good] = 
         consumer_good->mean_consumption_frequency 
@@ -48,6 +52,7 @@ void Distributor::add_to_catalog(Product * product) {
     input_inventory[good] = consumer_demands[good] * FIRM_STOCKPILE_DURATION;
     input_inventory[consumer_good] =
         consumer_demands[consumer_good] * FIRM_STOCKPILE_DURATION;
+
     log_inventory_level(good, input_inventory[good]);
     log_inventory_level(consumer_good, input_inventory[consumer_good]);
     log_catalog_addition(product);
