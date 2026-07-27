@@ -34,8 +34,15 @@ unsigned int Firm::get_id() {
 
 void Firm::on_time_step() {
     update_demands();
-    for (std::pair<Product * const, double>& demand : demands) {
-        check_and_reorder_input(demand.first);
+    std::unordered_set<Product *> products_to_check;
+    for (std::pair<Product * const, double>& demand : reproduction_demands) {
+        products_to_check.insert(demand.first);
+    }
+    for (std::pair<Product * const, double>& demand : consumer_demands) {
+        products_to_check.insert(demand.first);
+    }
+    for (Product * product : products_to_check) {
+        check_and_reorder_input(product);
     }
 	move_plans_forward_one_step();
     if (plans_in_progress.size()) {
@@ -63,12 +70,13 @@ void Firm::receive_payment(Plan * plan, double transaction_amount) {
     pooled_input_value += transaction_amount;
 }
 
-bool Firm::remove_input_from_inventory(
+bool Firm::remove_input_caused_by_firm(
         Product * product,
         double quantity,
+        Firm * firm,
         std::vector<std::pair<Product *, double>>& deducted_inputs
     ) {
-    if (remove_input_from_inventory(product, quantity)) {
+    if (remove_input_caused_by_firm(product, quantity, firm)) {
        deducted_inputs.push_back(
             std::make_pair(product, quantity)
         );
@@ -78,12 +86,16 @@ bool Firm::remove_input_from_inventory(
 }
 
 
-bool Firm::remove_input_from_inventory(Product * product, double quantity) {
+bool Firm::remove_input_caused_by_firm(
+        Product * product,
+        double quantity,
+        Firm * firm
+        ) {
     if (!input_inventory.count(product) || input_inventory[product] < quantity) {
         return false;
     }
     input_inventory[product] -= quantity;
-    add_demand_signal(product, quantity);
+    add_demand_signal_caused_by_firm(product, quantity, firm);
     log_inventory_reduction(product, quantity);
     log_inventory_level(product, input_inventory[product]);
     return true;
@@ -167,13 +179,13 @@ Producer * Firm::send_order(Order * order) {
 }
 
 double Firm::get_reorder_threshold(Product * product) {
-    return demands[product] * FIRM_STOCKPILE_DURATION;
+    return get_demand(product) * FIRM_STOCKPILE_DURATION;
 }
 
 double Firm::get_needed_resupply_rate(Product * product) {
     double inventory = get_pending_inventory(product);
     double reorder_threshold = get_reorder_threshold(product);
-    double needed_resupply_rate = demands[product]
+    double needed_resupply_rate = get_demand(product)
         * std::pow(reorder_threshold / inventory, FIRM_REORDER_URGENCY);
     for (Order * order : product_to_outbound_orders[product]) {
         double resupply_rate = order->quantity / order->predicted_turnaround_time;
@@ -200,9 +212,6 @@ void Firm::check_and_reorder_input(Product * product) {
         this,
         deadline
         );
-    if (get_client_type() == Logger::PRODUCER) {
-        std::cout << "producer to producer: time: " << Sim::get_current_time_step() << " initial order quantity set by resupply rate to " << order->quantity << std::endl;
-    }
     if (!send_order(order)) {
         log_reorder_failure(product, order->quantity);
     }
@@ -233,7 +242,7 @@ void Firm::start_plan(Plan * plan) {
 	for (std::pair<Good * const, double>& input :
             plan->order->product->inputs_per_unit) {
         double required_input = input.second * plan->order->quantity;
-        if (!remove_input_from_inventory(input.first, required_input, deducted_inputs)) {
+        if (!remove_input_caused_by_firm(input.first, required_input, plan->order->customer, deducted_inputs)) {
             rollback_plan_inputs(plan, deducted_inputs);
             return;
         }
@@ -469,13 +478,25 @@ Plan * Firm::draft_plan_for_order(Order * order) {
     return draft_plan;
 }
 
-void Firm::add_demand_signal(Product * product, double quantity) {
-    demands[product] += quantity / DEMAND_AVERAGING_WINDOW;
+void Firm::add_demand_signal_caused_by_firm(Product * product, double quantity, Firm * firm) {
+    if (firm->get_client_type() == Logger::PRODUCER) {
+        reproduction_demands[product] += quantity / REPRODUCTION_DEMAND_AVERAGING_WINDOW;
+    } else if (firm->get_client_type() == Logger::DISTRIBUTOR) {
+        consumer_demands[product] += quantity / CONSUMER_DEMAND_AVERAGING_WINDOW;
+    }
+}
+
+double Firm::get_demand(Product * product) {
+    return reproduction_demands[product] + consumer_demands[product];
 }
 
 void Firm::update_demands() {
-    for (std::pair<Product * const, double>& demand : demands) {
-        double decay = demand.second / DEMAND_AVERAGING_WINDOW;
+    for (std::pair<Product * const, double>& demand : reproduction_demands) {
+        double decay = demand.second / REPRODUCTION_DEMAND_AVERAGING_WINDOW;
+        demand.second -= decay;
+    }
+    for (std::pair<Product * const, double>& demand : consumer_demands) {
+        double decay = demand.second / CONSUMER_DEMAND_AVERAGING_WINDOW;
         demand.second -= decay;
     }
 }

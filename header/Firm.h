@@ -47,16 +47,22 @@ class Firm : public Agent {
     std::unordered_map<Product *, double> input_inventory;
     std::unordered_set<Product *> catalog;
     
-    std::unordered_map<Product *, double> demands;
+    std::unordered_map<Product *, double> consumer_demands;
+    std::unordered_map<Product *, double> reproduction_demands;
     std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
     std::unordered_map<Product *, double> recorded_living_labor_per_unit;
     std::unordered_set<Plan *> plans_in_progress;
 
     Producer * send_order(Order * order);
-    bool remove_input_from_inventory(Product * product, double quantity);
-    bool remove_input_from_inventory(
+    bool remove_input_caused_by_firm(
         Product * product,
         double quantity,
+        Firm * firm
+    );
+    bool remove_input_caused_by_firm(
+        Product * product,
+        double quantity,
+        Firm * firm,
         std::vector<std::pair<Product *, double>>& deducted_inputs
     );
     double get_reorder_threshold(Product * product);
@@ -84,7 +90,8 @@ class Firm : public Agent {
     void initialize_plan_budget(Plan * draft_plan);
     double calculate_machinery_cost_for_plan(Plan * draft_plan);
 	void assign_plan_dependent_fields(Plan * draft_plan);
-    void add_demand_signal(Product * product, double quantity);
+    void add_demand_signal_caused_by_firm(Product * product, double quantity, Firm * firm);
+    double get_demand(Product * product);
     Plan * draft_plan_for_order(Order * order); 
     void update_demands();
     void move_worker_off_standby(Person * worker);
