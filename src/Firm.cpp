@@ -34,8 +34,18 @@ unsigned int Firm::get_id() {
 
 void Firm::on_time_step() {
     update_demands();
-    for (std::pair<Product * const, double>& demand : demands) {
-        check_and_reorder_input(demand.first);
+    // for (std::pair<Product * const, double>& demand : demands) {
+    //     check_and_reorder_input(demand.first);
+    // }
+    std::unordered_set<Product *> products_to_check;
+    for (std::pair<Product * const, double>& demand : producer_demands) {
+        products_to_check.insert(demand.first);
+    }
+    for (std::pair<Product * const, double>& demand : consumer_demands) {
+        products_to_check.insert(demand.first);
+    }
+    for (Product * product : products_to_check) {
+        check_and_reorder_input(product);
     }
     move_plans_forward_one_step();
     if (plans_in_progress.size()) {
@@ -68,9 +78,10 @@ void Firm::receive_payment(Plan * plan, double transaction_amount) {
 bool Firm::remove_input_from_inventory(
         Product * product,
         double quantity,
+        Firm * firm,
         std::unordered_map<Product *, double>& deducted_inputs
     ) {
-    if (remove_input_from_inventory(product, quantity)) {
+    if (remove_input_from_inventory(product, quantity, firm)) {
         deducted_inputs[product] += quantity;
         return true;
     }
@@ -78,12 +89,16 @@ bool Firm::remove_input_from_inventory(
 }
 
 
-bool Firm::remove_input_from_inventory(Product * product, double quantity) {
+bool Firm::remove_input_from_inventory(
+        Product * product,
+        double quantity,
+        Firm * firm
+    ) {
     if (!input_inventory.count(product) || input_inventory[product] < quantity) {
         return false;
     }
     input_inventory[product] -= quantity;
-    add_demand_signal(product, quantity);
+    add_demand_signal(product, quantity, firm);
     log_inventory_reduction(product, quantity);
     log_inventory_level(product, input_inventory[product]);
     return true;
@@ -169,7 +184,7 @@ Producer * Firm::send_order(Order * order) {
 }
 
 double Firm::get_reorder_threshold(Product * product) {
-    return demands[product] * FIRM_STOCKPILE_DURATION;
+    return get_demand(product) * FIRM_STOCKPILE_DURATION;
 }
 
 double Firm::get_resupply_deficit(Product * product) {
@@ -180,7 +195,7 @@ double Firm::get_resupply_deficit(Product * product) {
     for (Order * order : product_to_outbound_orders[product]) {
         resupply_rate += order->quantity / order->predicted_turnaround_time;
     }
-    double inventory_adjusted_demand = demands[product]
+    double inventory_adjusted_demand = get_demand(product)
         * std::pow(reorder_threshold / inventory, FIRM_REORDER_URGENCY);
     double raw_resupply_deficit = inventory_adjusted_demand - resupply_rate;
     double resupply_deficit = 
@@ -222,20 +237,21 @@ void Firm::check_and_reorder_input(Product * product) {
 }
 
 void Firm::return_inputs_to_inventory(
-        const std::unordered_map<Product *, double> deducted_inputs
-        ) {
+        const std::unordered_map<Product *, double> deducted_inputs,
+        Firm * firm
+    ) {
     for (const std::pair<Product * const, double>& deduction :
             deducted_inputs) {
         Product * input = deduction.first;
         double quantity = deduction.second;
         input_inventory[input] += quantity;
-        add_demand_signal(input, -quantity);
+        add_demand_signal(input, -quantity, firm);
         log_inventory_level(input, input_inventory[input]);
     }
 }
 
-void Firm::rollback_plan_inputs(Plan * plan) {
-    return_inputs_to_inventory(plan->inventory);
+void Firm::rollback_plan_inputs(Plan * plan, Firm * firm) {
+    return_inputs_to_inventory(plan->inventory, firm);
     plan->inventory.clear();
     plan->outlays.clear();
     plan->order->status = Order::OrderStatus::kOrderRequested;
@@ -250,9 +266,10 @@ void Firm::start_plan(Plan * plan) {
         if (!remove_input_from_inventory(
                     input.first,
                     amount_needed,
+                    plan->order->customer,
                     plan->inventory
-                    )) {
-            rollback_plan_inputs(plan);
+                )) {
+            rollback_plan_inputs(plan, plan->order->customer);
             log_start_plan_stalled(plan, input.first);
             plan->is_stalled = true;
             return;
@@ -264,9 +281,10 @@ void Firm::start_plan(Plan * plan) {
         if (!remove_input_from_inventory(
                     machine,
                     expected_machine_use,
+                    plan->order->customer,
                     plan->inventory
                     )) {
-            rollback_plan_inputs(plan);
+            rollback_plan_inputs(plan, plan->order->customer);
             log_start_plan_stalled(plan, machine);
             plan->is_stalled = true;
             return;
@@ -313,9 +331,10 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
             if (!remove_input_from_inventory(
                         requirement.first,
                         deficit,
+                        plan->order->customer,
                         deducted_inputs
                         )) {
-                return_inputs_to_inventory(deducted_inputs);
+                return_inputs_to_inventory(deducted_inputs, plan->order->customer);
 
                 if (!plan->is_stalled) {
                     log_plan_stallage(plan, "stalled_plan");
@@ -349,8 +368,11 @@ void Firm::end_plan(Plan * plan) {
     plan->order->customer->receive_shipment(plan);
     for (std::pair<Product *, double> input : plan->inventory) {
         plan->outlays[input.first] -= input.second;
-        input_inventory[input.first] += input.second;
     }
+    return_inputs_to_inventory(
+        plan->inventory,
+        plan->order->customer
+    );
     recorded_living_labor_per_unit[plan->order->product] = 
         plan->labor_hours_used /
         (plan->order->quantity - plan->quantity_remaining); 
@@ -562,15 +584,28 @@ Plan * Firm::draft_plan_for_order(Order * order) {
     return draft_plan;
 }
 
-void Firm::add_demand_signal(Product * product, double quantity) {
-    demands[product] += quantity / DEMAND_AVERAGING_WINDOW;
+void Firm::add_demand_signal(Product * product, double quantity, Firm * firm) {
+    if (firm->get_client_type() == Logger::PRODUCER) {
+        producer_demands[product] += quantity / PRODUCER_DEMAND_AVERAGING_WINDOW;
+    } else if (firm->get_client_type() == Logger::DISTRIBUTOR) {
+        consumer_demands[product] += quantity / DISTRIBUTOR_DEMAND_AVERAGING_WINDOW;
+    }
+    // demands[product] += quantity / DEMAND_AVERAGING_WINDOW;
 }
 
 void Firm::update_demands() {
-    for (std::pair<Product * const, double>& demand : demands) {
-        double decay = demand.second / DEMAND_AVERAGING_WINDOW;
+    for (std::pair<Product * const, double>& demand : consumer_demands) {
+        double decay = demand.second / DISTRIBUTOR_DEMAND_AVERAGING_WINDOW;
         demand.second -= decay;
     }
+    for (std::pair<Product * const, double>& demand : producer_demands) {
+        double decay = demand.second / PRODUCER_DEMAND_AVERAGING_WINDOW;
+        demand.second -= decay;
+    }
+}
+
+double Firm::get_demand(Product * product) {
+    return producer_demands[product] + consumer_demands[product];
 }
 
 void Firm::update_average_team_size(Plan * plan) {

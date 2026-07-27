@@ -46,24 +46,34 @@ class Firm : public Agent {
     std::unordered_map<Product *, double> input_inventory;
     std::unordered_set<Product *> catalog;
     
-    std::unordered_map<Product *, double> demands;
+    // std::unordered_map<Product *, double> demands;
+    std::unordered_map<Product *, double> consumer_demands;
+    std::unordered_map<Product *, double> producer_demands;
     std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
     std::unordered_map<Product *, double> recorded_living_labor_per_unit;
     std::unordered_set<Plan *> plans_in_progress;
 
     Producer * send_order(Order * order);
-    bool remove_input_from_inventory(Product * product, double quantity);
     bool remove_input_from_inventory(
         Product * product,
         double quantity,
+        Firm * firm
+    );
+    bool remove_input_from_inventory(
+        Product * product,
+        double quantity,
+        Firm * firm,
         std::unordered_map<Product *, double>& container
     );
     double get_reorder_threshold(Product * product);
     double get_resupply_deficit(Product * product);
     virtual void check_and_reorder_input(Product * product);
     void start_plan(Plan * plan);
-    void return_inputs_to_inventory(std::unordered_map<Product *, double> container);
-    void rollback_plan_inputs(Plan * plan);
+    void return_inputs_to_inventory(
+        std::unordered_map<Product *, double> deducted_inputs,
+        Firm * firm
+    );
+    void rollback_plan_inputs(Plan * plan, Firm * firm);
     void move_plan_forward_one_step(Plan * plan);
     void end_plan(Plan * plan);
     void move_plans_forward_one_step();
@@ -81,7 +91,12 @@ class Firm : public Agent {
     void initialize_plan_budget(Plan * draft_plan);
     double calculate_machinery_cost_for_plan(Plan * draft_plan);
     void assign_plan_dependent_fields(Plan * draft_plan);
-    void add_demand_signal(Product * product, double quantity);
+    void add_demand_signal(
+        Product * product,
+        double quantity,
+        Firm * firm
+    );
+    double get_demand(Product * product);
     Plan * draft_plan_for_order(Order * order); 
     void update_demands();
     void update_average_team_size(Plan * plan);

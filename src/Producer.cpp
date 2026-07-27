@@ -51,17 +51,17 @@ void Producer::add_to_catalog(Product * product) {
     double machine_use_per_unit =
         product->living_labor_per_unit / average_team_sizes[product];
     for (Machine * machine : product->machines_needed) {
-        demands[machine] +=
+        producer_demands[machine] +=
             (machine_use_per_unit / machine->lifetime) * demand_scale;
     }
     for (std::pair<Good * const, double>& input :
             product->inputs_per_unit) {
-        demands[input.first] += input.second * demand_scale;
+        producer_demands[input.first] += input.second * demand_scale;
     }
     static std::normal_distribution<double> demand_mult(
             1.0, DEMAND_PREDICTION_VARIANCE);
 
-    for (std::pair<Product * const, double>& demand : demands) {
+    for (std::pair<Product * const, double>& demand : producer_demands) {
         double input_amount_added =
             demand.second * demand_mult(Sim::get_random_generator()) *
             FIRM_STOCKPILE_DURATION;

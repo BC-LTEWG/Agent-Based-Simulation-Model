@@ -36,18 +36,18 @@ void Distributor::add_to_catalog(Product * product) {
     catalog.insert(product);
     ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
     Good * good = consumer_good->corresponding_good;
-    demands[good] = 
-        demands[consumer_good] = 
+    consumer_demands[good] = 
+        consumer_demands[consumer_good] = 
         consumer_good->mean_consumption_frequency 
         * Sim::get_num_people() 
         / Sim::get_num_distributors();
     static std::normal_distribution<double>
         demand_mult(1.0, DEMAND_PREDICTION_VARIANCE);
-    demands[good] *= demand_mult(Sim::get_random_generator());
-    demands[consumer_good] *= demand_mult(Sim::get_random_generator());
-    input_inventory[good] = demands[good] * FIRM_STOCKPILE_DURATION;
+    consumer_demands[good] *= demand_mult(Sim::get_random_generator());
+    consumer_demands[consumer_good] *= demand_mult(Sim::get_random_generator());
+    input_inventory[good] = consumer_demands[good] * FIRM_STOCKPILE_DURATION;
     input_inventory[consumer_good] =
-        demands[consumer_good] * FIRM_STOCKPILE_DURATION;
+        consumer_demands[consumer_good] * FIRM_STOCKPILE_DURATION;
     log_inventory_level(good, input_inventory[good]);
     log_inventory_level(consumer_good, input_inventory[consumer_good]);
     log_catalog_addition(product);
@@ -71,7 +71,7 @@ int Distributor::try_sell_goods(
     } else if (!person->charge(cost)) {
         return 0;
     }
-    remove_input_from_inventory(consumer_good, available);
+    remove_input_from_inventory(consumer_good, available, this);
     PriceController::get_instance()->report_distribution(consumer_good, available);
     return available;
 }
