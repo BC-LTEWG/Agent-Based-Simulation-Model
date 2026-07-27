@@ -72,6 +72,7 @@ int Distributor::try_sell_goods(
         return 0;
     }
     remove_input_from_inventory(consumer_good, available, this);
+    // add_demand_signal(consumer_good, available, this);
     PriceController::get_instance()->report_distribution(consumer_good, available);
     return available;
 }

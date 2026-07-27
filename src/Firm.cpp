@@ -357,6 +357,11 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
     }
     for (std::pair<Product *, double> requirement : plan->needed_this_step) {
         plan->inventory[requirement.first] -= requirement.second;
+        // add_demand_signal(
+        //     requirement.first,
+        //     requirement.second,
+        //     plan->order->customer
+        // );
     }
     for (Person * worker : plan->workers) {
     	worker->register_hours_worked(portion_of_hour_worked);
@@ -588,21 +593,38 @@ Plan * Firm::draft_plan_for_order(Order * order) {
 }
 
 void Firm::add_demand_signal(Product * product, double quantity, Firm * firm) {
+    double averaging_window = get_averaging_window(product);
     if (firm->get_client_type() == Logger::PRODUCER) {
-        producer_demands[product] += quantity / PRODUCER_DEMAND_AVERAGING_WINDOW;
+        producer_demands[product] += quantity / averaging_window;
     } else if (firm->get_client_type() == Logger::DISTRIBUTOR) {
-        consumer_demands[product] += quantity / DISTRIBUTOR_DEMAND_AVERAGING_WINDOW;
+        consumer_demands[product] += quantity / averaging_window;
     }
     // demands[product] += quantity / DEMAND_AVERAGING_WINDOW;
 }
 
+double Firm::get_averaging_window(Product * product) {
+    double coverage_time = 
+        get_pending_inventory(product) / 
+        std::max(get_demand(product), MIN_DEMAND_RATE);
+
+    double averaging_window = std::clamp(
+        DEMAND_COVERAGE_WINDOW * coverage_time,
+        MIN_DEMAND_AVERAGING_WINDOW,
+        MAX_DEMAND_AVERAGING_WINDOW
+    );
+
+    return averaging_window;
+}
+
 void Firm::update_demands() {
     for (std::pair<Product * const, double>& demand : consumer_demands) {
-        double decay = demand.second / DISTRIBUTOR_DEMAND_AVERAGING_WINDOW;
+        double averaging_window = get_averaging_window(demand.first);
+        double decay = demand.second / averaging_window;
         demand.second -= decay;
     }
     for (std::pair<Product * const, double>& demand : producer_demands) {
-        double decay = demand.second / PRODUCER_DEMAND_AVERAGING_WINDOW;
+        double averaging_window = get_averaging_window(demand.first);
+        double decay = demand.second / averaging_window;
         demand.second -= decay;
     }
 }
