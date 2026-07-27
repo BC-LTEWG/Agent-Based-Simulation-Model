@@ -93,7 +93,6 @@ class Firm : public Agent {
     void initialize_plan_budget(Plan * draft_plan);
     double calculate_machinery_cost_for_plan(Plan * draft_plan);
     void assign_plan_dependent_fields(Plan * draft_plan);
-    double get_averaging_window(Product * product);
     void add_demand_signal(
         Product * product,
         double quantity,
