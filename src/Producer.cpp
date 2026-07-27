@@ -86,6 +86,9 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
             return_order->quantity,
             static_cast<int>(get_max_order_quantity(order->product))
             );
+    if (order->customer->get_client_type() == Logger::PRODUCER) {
+        std::cout << "producer to producer: time: " << Sim::get_current_time_step() << " restricting quantity by max order to " << return_order->quantity << std::endl;
+    }
 
     Plan * draft_plan = draft_plan_for_order(return_order);
     if (!draft_plan) {
