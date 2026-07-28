@@ -40,10 +40,8 @@ class Firm : public Agent {
   protected:
     unsigned int id;
     double pooled_input_value = 0.0;
-    std::unordered_set<Machine *> machines;
     std::unordered_set<Person *> workers,
         standby_workers;
-	
     std::unordered_map<Product *, double> input_inventory;
     std::unordered_set<Product *> catalog;
     
@@ -63,10 +61,10 @@ class Firm : public Agent {
         Product * product,
         double quantity,
         Firm * firm,
-        std::vector<std::pair<Product *, double>>& deducted_inputs
+        std::unordered_map<Product *, double>& deducted_inputs
     );
     double get_reorder_threshold(Product * product);
-    double get_needed_resupply_rate(Product * product);
+    double get_resupply_deficit(Product * product);
     virtual void check_and_reorder_input(Product * product);
 	void start_plan(Plan * plan);
 	void move_plan_forward_one_step(Plan * plan);
@@ -74,15 +72,15 @@ class Firm : public Agent {
 	void move_plans_forward_one_step();
     double calculate_quantity_produced_from_worker_suitability(Plan * plan);
     bool is_within_work_schedule(Plan * plan) const;
-    void rollback_plan_inputs(
-        Plan * plan,
-        const std::vector<std::pair<Product *, double>>& deducted_inputs
+    void return_inputs_to_inventory(
+        std::unordered_map<Product *, double> deducted_inputs,
+        Firm * firm
     );
+    void rollback_plan_inputs(Plan * plan, Firm * firm);
 
     double get_pending_inventory(Product * product);
-    double get_plan_work_week_proportion(Plan * plan);
-	int predict_workers_needed(Plan * plan);
-    void assign_workers(Plan * draft_plan);
+	int predict_workers_needed(const Order * order);
+    std::vector<Person *> get_available_workers(const Order * order);
     void adjust_quantity_for_deadline(Plan * plan);
 	double predict_turnaround_time(Plan * plan); 
 	double predict_labor_hours(Order * order, std::vector<Person*>& workers);
@@ -110,7 +108,7 @@ class Firm : public Agent {
             const unsigned int old_workplace_id,
             const unsigned int new_workplace_id
             );
-    void log_reorder_failure(const Product * product, int quantity);
+    void log_reorder_failure(const Product * product, std::string reason);
     void log_transfer_request();
     void log_product_quantity(
             const char * const label,

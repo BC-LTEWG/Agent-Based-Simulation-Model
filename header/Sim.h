@@ -37,7 +37,8 @@ class Sim {
         static unsigned int get_work_days_weekly();
         static unsigned int get_num_goods();
         static unsigned int get_num_machines();
-        static unsigned int get_max_num_inputs();
+        static unsigned int get_max_num_inputs_goods();
+        static unsigned int get_max_num_inputs_machines();
         static unsigned int get_num_producers();
         static unsigned int get_num_distributors();
         static unsigned int get_num_abilities();

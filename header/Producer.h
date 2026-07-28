@@ -29,7 +29,7 @@ class Producer : public Firm {
   private:
     std::unordered_map<Firm *, Plan *> customer_to_draft_plan;
 
-    double get_max_order_quantity(Product * product);
+    double get_max_order_quantity(const Order * order);
     void log_draft_plan(const Plan * draft_plan);
     void log_dropped_order(const Order * order);
 };

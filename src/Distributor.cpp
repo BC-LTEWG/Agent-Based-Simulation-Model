@@ -33,6 +33,7 @@ Logger::Client Distributor::get_client_type() {
 }
 
 void Distributor::add_to_catalog(Product * product) {
+
     catalog.insert(product);
     ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
     Good * good = consumer_good->corresponding_good;
@@ -51,7 +52,10 @@ void Distributor::add_to_catalog(Product * product) {
     log_catalog_addition(product);
 }
 
-int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person) {
+int Distributor::try_sell_goods(
+        ConsumerGood * consumer_good,
+        int quantity, Person * person
+        ) {
     int available = std::min(static_cast<int>(
                 get_inventory_level(consumer_good)), quantity);
     if (!available) {
@@ -72,12 +76,12 @@ int Distributor::try_sell_goods(ConsumerGood * consumer_good, int quantity, Pers
 }
 
 void Distributor::check_and_reorder_input(Product * product) {
-    if (product->product_type != Product::TYPE_CONSUMER_GOOD) {
+    if (product->product_type != Product::ProductType::kTypeConsumerGood) {
         Firm::check_and_reorder_input(product);
         return;
     }
-    double resupply_rate = get_needed_resupply_rate(product);
-    if (resupply_rate <= 0) {
+    double resupply_deficit = get_resupply_deficit(product);
+    if (resupply_deficit <= 0) {
         return;
     }
     ConsumerGood * consumer_good = static_cast<ConsumerGood *>(product);
@@ -90,20 +94,20 @@ void Distributor::check_and_reorder_input(Product * product) {
     if (inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
-    int deadline = get_inventory_level(good) / resupply_rate;
-    deadline = std::min(deadline, static_cast<int>(FIRM_STOCKPILE_DURATION * FIRM_REORDER_DEADLINE_PROP));
+    double lead_time = get_inventory_level(good) / resupply_deficit;
+    lead_time = std::min(lead_time, FIRM_STOCKPILE_DURATION * FIRM_REORDER_DEADLINE_PROP);
     Order * order = new Order(
             consumer_good,
-            deadline * resupply_rate,
+            lead_time * resupply_deficit,
             this,
-            deadline
+            lead_time
             );
     if (Plan * plan = draft_plan_for_order(order)) {
         product_to_outbound_orders[consumer_good].insert(order);
         start_plan(plan);
         log_pursued_plan(plan);
     } else {
-        log_reorder_failure(product, order->quantity);
+        log_reorder_failure(product, "no_workers_available");
     }
 }
 
