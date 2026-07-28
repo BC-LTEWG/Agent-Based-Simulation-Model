@@ -52,7 +52,7 @@ void Firm::on_time_step() {
     for (std::pair<Product * const, double>& demand : demands) {
         check_and_reorder_input(demand.first);
     }
-	move_plans_forward_one_step();
+    move_plans_forward_one_step();
     if (plans_in_progress.size()) {
         log_plans();
     }
@@ -64,12 +64,14 @@ double Firm::get_inventory_level(Product * product) {
 
 void Firm::receive_shipment(Plan * plan) {
     Order * order = plan->order;
-    input_inventory[order->product] += order->quantity;
+    double quantity_delivered = order->quantity - plan->quantity_remaining;
+    input_inventory[order->product] += quantity_delivered;
     product_to_outbound_orders[order->product].erase(order);
-    double transaction_amount = order->product->price_per_unit * order->quantity;
+    double transaction_amount =
+        order->product->price_per_unit * quantity_delivered;
     pooled_input_value -= transaction_amount;
     plan->firm->receive_payment(plan, transaction_amount);
-    log_shipment_received(order->product, order->quantity);
+    log_shipment_received(order->product, quantity_delivered);
     log_inventory_level(order->product, input_inventory[order->product]);
 }
 
@@ -81,12 +83,10 @@ void Firm::receive_payment(Plan * plan, double transaction_amount) {
 bool Firm::remove_input_from_inventory(
         Product * product,
         double quantity,
-        std::vector<std::pair<Product *, double>>& deducted_inputs
+        std::unordered_map<Product *, double>& deducted_inputs
     ) {
     if (remove_input_from_inventory(product, quantity)) {
-       deducted_inputs.push_back(
-            std::make_pair(product, quantity)
-        );
+        deducted_inputs[product] += quantity;
         return true;
     }
     return false;
@@ -217,59 +217,106 @@ void Firm::check_and_reorder_input(Product * product) {
     }
 }
 
-void Firm::rollback_plan_inputs(
-    Plan * plan,
-    const std::vector<std::pair<Product *, double>>& deducted_inputs
-) {
-    for (
-        const std::pair<Product *, double>& deduction :
-        deducted_inputs
-    ) {
+void Firm::return_inputs_to_inventory(
+        const std::unordered_map<Product *, double> deducted_inputs
+        ) {
+    for (const std::pair<Product * const, double>& deduction :
+            deducted_inputs) {
         Product * input = deduction.first;
         double quantity = deduction.second;
-
         input_inventory[input] += quantity;
+        add_demand_signal(input, -quantity);
         log_inventory_level(input, input_inventory[input]);
     }
+}
 
+void Firm::rollback_plan_inputs(Plan * plan) {
+    return_inputs_to_inventory(plan->inventory);
     plan->inventory.clear();
     plan->outlays.clear();
+    plan->order->status = Order::OrderStatus::kOrderRequested;
 }
 
 void Firm::start_plan(Plan * plan) {
-    std::vector<std::pair<Product *, double>> deducted_inputs;
-
-	for (std::pair<Good * const, double>& input :
-            plan->order->product->inputs_per_unit) {
-        double required_input = input.second * plan->order->quantity;
-        if (!remove_input_from_inventory(input.first, required_input, deducted_inputs)) {
-            rollback_plan_inputs(plan, deducted_inputs);
+    plans_in_progress.insert(plan);
+    plan->order->status = Order::kOrderInProgress;
+    Product * product = plan->order->product;
+    for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
+        double amount_needed = input.second * plan->order->quantity;
+        if (!remove_input_from_inventory(
+                    input.first,
+                    amount_needed,
+                    plan->inventory
+                    )) {
+            rollback_plan_inputs(plan);
             return;
         }
-	}
-
+    }
+    double expected_plan_duration = plan->labor_budget / plan->workers.size();
+    for (Machine * machine : product->machines_needed) {
+        double expected_machine_use = expected_plan_duration / machine->lifetime;
+        if (!remove_input_from_inventory(
+                    machine,
+                    expected_machine_use,
+                    plan->inventory
+                    )) {
+            rollback_plan_inputs(plan);
+            return;
+        }
+    }
     for (Person * worker : plan->workers) {
         move_worker_off_standby(worker);
     }
-
     plan->outlays = plan->inventory;
-    pooled_input_value += plan->raw_materials_budget;
-    plans_in_progress.insert(plan);
-    plan->order->status = Order::kOrderInProgress;
+    pooled_input_value +=
+        plan->raw_materials_budget + plan->machinery_budget;
 }
 
 void Firm::move_plan_forward_one_step(Plan * plan) {
-    double ideal_quantity_produced = calculate_quantity_produced_from_worker_suitability(plan);
-    double quantity_produced = std::min(ideal_quantity_produced, plan->quantity_remaining);
+    double expected_quantity_produced =
+        calculate_quantity_produced_from_worker_suitability(plan);
+    double quantity_produced =
+        std::min(expected_quantity_produced, plan->quantity_remaining);
     if (quantity_produced <= 0.0) {
+        end_plan(plan);
         return;
     }
-
-    double labor_hours_per_worker = quantity_produced / ideal_quantity_produced;
-	for (Person * worker : plan->workers) {
-		worker->register_hours_worked(labor_hours_per_worker);
-	}
-    plan->labor_hours_used += labor_hours_per_worker * plan->workers.size();
+    Product * product = plan->order->product;
+    for (std::pair<Good *, double> input : product->inputs_per_unit) {
+        plan->needed_this_step[input.first] = input.second * quantity_produced;
+    }
+    double portion_of_hour_worked =
+        quantity_produced / expected_quantity_produced;
+    for (Machine * machine : product->machines_needed) {
+        plan->needed_this_step[machine] =
+            portion_of_hour_worked / machine->lifetime;
+    }
+    std::unordered_map<Product*, double> deducted_inputs;
+    for (std::pair<Product *, double> requirement : plan->needed_this_step) {
+        double have_on_hand = plan->inventory[requirement.first];
+        if (have_on_hand < requirement.second) {
+           double deficit = requirement.second - have_on_hand;
+            if (!remove_input_from_inventory(
+                        requirement.first,
+                        deficit,
+                        deducted_inputs
+                        )) {
+                return_inputs_to_inventory(deducted_inputs);
+                return;
+            }
+        }
+    }
+    for (std::pair<Product *, double> input : deducted_inputs) {
+        plan->inventory[input.first] += input.second;
+        plan->outlays[input.first] += input.second;
+    }
+    for (std::pair<Product *, double> requirement : plan->needed_this_step) {
+        plan->inventory[requirement.first] -= requirement.second;
+    }
+    for (Person * worker : plan->workers) {
+    	worker->register_hours_worked(portion_of_hour_worked);
+    }
+    plan->labor_hours_used += portion_of_hour_worked * plan->workers.size();
     plan->quantity_remaining -= quantity_produced;
 }
 
@@ -277,10 +324,13 @@ void Firm::end_plan(Plan * plan) {
     log_ended_plan(plan);
     plan->order->status = Order::kOrderFinished;
     plan->order->customer->receive_shipment(plan);
+    for (std::pair<Product *, double> input : plan->inventory) {
+        plan->outlays[input.first] -= input.second;
+        input_inventory[input.first] += input.second;
+    }
     recorded_living_labor_per_unit[plan->order->product] = 
         plan->labor_hours_used /
         (plan->order->quantity - plan->quantity_remaining); 
-    pooled_input_value += plan->order->quantity * plan->order->product->price_per_unit;
     PriceController::get_instance()->update_price(plan);
     for (Person * worker : plan->workers) {
         standby_workers.insert(worker);
@@ -294,12 +344,11 @@ void Firm::move_plans_forward_one_step() {
     std::unordered_set<Plan *> plans_still_in_progress;
 #endif
     for (Plan * plan : plans_in_progress) {
-        if (plan->order->status == Order::kOrderInProgress) {
-            if (is_within_work_schedule()) {
+        if (is_within_work_schedule()) {
+            if (plan->order->status == Order::OrderStatus::kOrderInProgress) {
                 move_plan_forward_one_step(plan);
-            }
-            if (plan->quantity_remaining <= 0.0) {
-                end_plan(plan);
+            } else if (plan->order->status == Order::kOrderRequested) {
+                start_plan(plan);
             }
         }
     }
@@ -393,11 +442,11 @@ double Firm::predict_turnaround_time(Plan * plan) {
 
 double Firm::predict_labor_hours(Order * order, std::vector<Person *>& workers) {
     if (workers.empty()) {
-        throw std::runtime_error("Cannot predict labor hours with 0 workers: " + order->product->product_name);
+        throw std::runtime_error("Cannot predict labor hours with 0 workers: "
+                "Product " + std::to_string(order->product->id));
     }
     return order->quantity *
-           recorded_living_labor_per_unit[order->product] / 
-           workers.size();
+        recorded_living_labor_per_unit[order->product];
 }
 
 double Firm::calculate_raw_material_cost_for_order(Order * order) {
@@ -424,14 +473,15 @@ void Firm::initialize_plan_budget(Plan * draft_plan) {
 
 double Firm::calculate_machinery_cost_for_plan(Plan * draft_plan) {
     double machinery_cost_per_hour = 0.0;
-    for (Machine * machine : machines) {
+    for (Machine * machine : draft_plan->order->product->machines_needed) {
         machinery_cost_per_hour += machine->price_per_unit / machine->lifetime;
     }
     if (draft_plan->workers.empty()) {
-        throw std::runtime_error("Cannot calculate machinery cost with 0 workers: " + draft_plan->order->product->product_name);
+        throw std::runtime_error("Cannot calculate machinery cost with 0 workers: "
+               "Product " + std::to_string(draft_plan->order->product->id));
     }
     return machinery_cost_per_hour *
-        (static_cast<double>(draft_plan->labor_budget) / draft_plan->workers.size());
+        draft_plan->labor_budget / draft_plan->workers.size();
 }
 
 void Firm::assign_plan_dependent_fields(Plan * draft_plan) {

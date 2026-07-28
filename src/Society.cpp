@@ -273,7 +273,7 @@ void Society::adjust_io_matrix(Eigen::MatrixXd& io_matrix) {
     kept_indices.reserve(new_dim);
 
     for (size_t i = 0; i < products.size(); ++i) {
-        if (products[i]->product_type != Product::TYPE_CONSUMER_GOOD) {
+        if (products[i]->product_type != Product::ProductType::kTypeConsumerGood) {
             kept_indices.push_back(products[i]->id);
         }
     }
@@ -293,6 +293,10 @@ void Society::adjust_io_matrix(Eigen::MatrixXd& io_matrix) {
         for (size_t j = 0; j < new_dim; ++j) {
             io_matrix(kept_indices[i], kept_indices[j]) /= divisor;
         }
+    }
+
+    for (Machine * machine : machines) {
+        machine->lifetime *= divisor;
     }
 
     for (std::size_t j = 0; j < dim; ++j) {
