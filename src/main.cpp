@@ -270,6 +270,10 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
 int main(int argc, const char ** argv) {
     SimArgs args;
     set_params(argc, argv, args);
+#ifdef DEBUG
+    args.seed = 1;
+    args.fixed_seed = true;
+#endif
     Sim::run(args);
 	return EXIT_SUCCESS;
 }
