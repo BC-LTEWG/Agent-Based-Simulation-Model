@@ -20,6 +20,19 @@
 #include "Sim.h"
 #include "Society.h"
 
+bool ProductID::operator()(const Product* a, const Product* b) const {
+    return a->id < b->id;
+}
+bool OrderID::operator()(Order* a, Order* b) const {
+    return a->id < b->id;
+}
+bool PersonID::operator()(Person* a, Person* b) const {
+    return a->get_id() < b->get_id(); 
+}
+bool PlanID::operator()(Plan* a, Plan* b) const {
+    return a->id < b->id;
+}
+
 Firm::Firm() {
     static unsigned int unique_id = 0;
     id = unique_id++;
@@ -273,7 +286,7 @@ void Firm::end_plan(Plan * plan) {
 }
 
 void Firm::move_plans_forward_one_step() {
-    std::unordered_set<Plan *> plans_still_in_progress;
+    std::set<Plan *, PlanID> plans_still_in_progress;
     for (Plan * plan : plans_in_progress) {
         if (plan->order->status == Order::kOrderInProgress) {
             if (is_within_work_schedule()) {

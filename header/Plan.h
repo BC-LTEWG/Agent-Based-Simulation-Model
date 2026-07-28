@@ -6,6 +6,11 @@
 #include "Product.h"
 
 struct Plan {
+    unsigned int id;
+    Plan() {
+        static unsigned int unique_plan_id = 0;
+        id = unique_plan_id++;
+    }
 	Order * order;
     Firm * firm;
 	std::vector<Person *> workers;

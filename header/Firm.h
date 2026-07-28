@@ -2,8 +2,8 @@
 
 #include <string>
 #include <tuple>
-#include <unordered_map>
-#include <unordered_set>
+#include <map>
+#include <set>
 #include <vector>
 #include <queue>
 
@@ -14,10 +14,24 @@
 struct Ability;
 struct Machine;
 struct Order;
+struct Plan;
 struct Product;
 class Firm;
 class Producer;
 class Society;
+
+struct ProductID { 
+    bool operator()(const Product* a, const Product* b) const; 
+};
+struct OrderID { 
+    bool operator()(Order* a, Order* b) const; 
+};
+struct PersonID { 
+    bool operator()(Person* a, Person* b) const; 
+};
+struct PlanID { 
+    bool operator()(Plan* a, Plan* b) const; 
+};
 
 class Firm : public Agent {
   public:
@@ -41,17 +55,17 @@ class Firm : public Agent {
     unsigned int id;
     double pooled_input_value = 0.0;
     std::unordered_set<Machine *> machines;
-    std::unordered_set<Person *> workers,
+    std::set<Person *, PersonID> workers,
         standby_workers;
 	
-    std::unordered_map<Product *, double> input_inventory;
-    std::unordered_set<Product *> catalog;
+    std::map<Product *, double, ProductID> input_inventory;
+    std::set<Product *, ProductID> catalog;
     
-    std::unordered_map<Product *, double> demands;
-    std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
-    std::unordered_map<Product *, double> recorded_living_labor_per_unit;
+    std::map<Product *, double, ProductID> demands;
+    std::map<Product *, std::set<Order *, OrderID>, ProductID> product_to_outbound_orders;
+    std::map<Product *, double, ProductID> recorded_living_labor_per_unit;
 
-    std::unordered_set<Plan *> plans_in_progress;
+    std::set<Plan *, PlanID> plans_in_progress;
 
     Producer * send_order(Order * order);
     bool remove_input_from_inventory(Product * product, double quantity);

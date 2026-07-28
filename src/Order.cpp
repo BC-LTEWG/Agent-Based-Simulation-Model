@@ -14,6 +14,9 @@ Order::Order(
       requested_turnaround_time(requested_turnaround_time),
       predicted_turnaround_time(requested_turnaround_time),
       status(OrderStatus::kOrderRequested)
-{}
+{
+  static unsigned int unique_order_id = 0;
+  id = unique_order_id++;
+}
 
 
