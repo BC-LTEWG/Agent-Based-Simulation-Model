@@ -82,6 +82,7 @@ class Firm : public Agent {
 
     double get_pending_inventory(Product * product);
     double get_plan_work_week_proportion(Plan * plan);
+    void reorder_stalled_plan_input(Product * product, double deficit);
     int predict_workers_needed(Plan * plan);
     void assign_workers(Plan * draft_plan);
     void adjust_quantity_for_deadline(Plan * plan);

@@ -220,14 +220,11 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
         get_estimated_max_order_quantity(order->product);
 
     if (estimated_max_order_quantity < return_order->quantity) {
-        if (!wiretripped) {
-            wiretripped = true;
-            std::cout << "wire has been tripped" << std::endl;
-        }
         return_order->quantity = static_cast<int>(estimated_max_order_quantity);
     }
     if (return_order->quantity <= 0) {
             return_order->status = Order::kOrderRejected;
+            log_reorder_failure(order->product, "insufficient_resources");
             return return_order;
     }
 
@@ -235,7 +232,6 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
 
     if (!draft_plan) {
         return_order->status = Order::kOrderRejected;
-        log_reorder_failure(order->product, "insufficient_resources");
         return return_order;
     }
 

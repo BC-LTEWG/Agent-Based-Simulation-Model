@@ -34,9 +34,6 @@ unsigned int Firm::get_id() {
 
 void Firm::on_time_step() {
     update_demands();
-    // for (std::pair<Product * const, double>& demand : demands) {
-    //     check_and_reorder_input(demand.first);
-    // }
     std::unordered_set<Product *> products_to_check;
     for (std::pair<Product * const, double>& demand : producer_demands) {
         products_to_check.insert(demand.first);
@@ -148,7 +145,6 @@ void Firm::finalize_transfer(Person * worker) {
 }
 
 Producer * Firm::send_order(Order * order) {
-    // what is going on here exactly
     double order_rate = 0.0;
     Producer * chosen_producer = nullptr;
     Order * chosen_return_order = nullptr;
@@ -184,7 +180,24 @@ Producer * Firm::send_order(Order * order) {
 }
 
 double Firm::get_reorder_threshold(Product * product) {
-    return get_demand(product) * FIRM_STOCKPILE_DURATION;
+    double minimum_requirement = 0.0;
+    for (Product * output_product : catalog) {
+        for (std::pair<Good * const, double>& input :
+             output_product->inputs_per_unit) {
+            
+            if (input.first == product) {
+                minimum_requirement = std::max(
+                    minimum_requirement,
+                    input.second
+                );
+            }
+        }
+    }
+
+    return std::max(
+        get_demand(product) * FIRM_STOCKPILE_DURATION,
+        minimum_requirement
+    );
 }
 
 double Firm::get_resupply_deficit(Product * product) {
@@ -303,6 +316,52 @@ void Firm::start_plan(Plan * plan) {
     update_average_team_size(plan);
 }
 
+void Firm::reorder_stalled_plan_input(
+        Product * product,
+        double deficit
+    ) {
+    /*
+     * Do not send another order if one is already in progress.
+     */
+    if (!product_to_outbound_orders[product].empty()) {
+        return;
+    }
+
+    int lead_time =
+        FIRM_STOCKPILE_DURATION * FIRM_REORDER_MAX_PROP;
+
+    /*
+     * Machine orders are integers, so any positive fractional
+     * shortage requires at least one machine.
+     */
+    int order_quantity = std::max(
+        1,
+        static_cast<int>(std::ceil(deficit))
+    );
+
+    Logger::log(
+        get_client_type(),
+        id,
+        "text_log",
+        LogPair("placing order for", product->id),
+        LogPair("amount", order_quantity),
+        LogPair("lead_time", lead_time)
+    );
+
+    Order * order = new Order(
+        product,
+        order_quantity,
+        this,
+        lead_time
+    );
+
+    if (!send_order(order)) {
+        std::cout << "order failed" << std::endl;
+    } else {
+        std::cout << "order successfully placed?" << std::endl;
+    }
+}
+
 void Firm::move_plan_forward_one_step(Plan * plan) {
     double expected_quantity_produced =
         calculate_quantity_produced_from_worker_suitability(plan);
@@ -337,6 +396,17 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
                 return_inputs_to_inventory(deducted_inputs, plan->order->customer);
 
                 if (!plan->is_stalled) {
+                    Logger::log(
+                        get_client_type(),
+                        id,
+                        "text_log",
+                        LogPair("shortage_of", requirement.first->id)
+                    );
+                    reorder_stalled_plan_input(
+                        requirement.first,
+                        deficit
+                    );
+
                     log_plan_stallage(plan, "stalled_plan");
                 }
                 plan->is_stalled = true;
@@ -567,7 +637,7 @@ Plan * Firm::draft_plan_for_order(Order * order) {
     assign_workers(draft_plan);
     adjust_quantity_for_deadline(draft_plan);
     if (order->quantity <= 0) {
-        log_reorder_failure(order->product, "not_enough_workers_available");
+        log_reorder_failure(order->product, "insufficient_resources");
         delete draft_plan;
         return nullptr;
     }
