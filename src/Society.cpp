@@ -88,7 +88,7 @@ void Society::initialize() {
     if (num_producers >= num_upstream_products) {
         for (unsigned int i = 0; i < num_producers; ++i) {
             Product * product = upstream_products[i % num_upstream_products];
-            product_production_count[product]++;
+            product_to_number_of_producers[product]++;
         }
         for (unsigned int i = 0; i < num_producers; ++i) {
             Producer * producer = producers[i];
@@ -99,7 +99,7 @@ void Society::initialize() {
     } else {
         for (unsigned int i = 0; i < num_upstream_products; ++i) {
             Product * product = upstream_products[i];
-            product_production_count[product]++;
+            product_to_number_of_producers[product]++;
         }
         for (unsigned int i = 0; i < num_upstream_products; ++i) {
             Producer * producer = producers[i % num_producers];
@@ -107,6 +107,10 @@ void Society::initialize() {
             producer->add_to_catalog(product);
             product_to_suppliers[product].push_back(producer);
         }
+    }
+    for (Producer * producer : producers) {
+        producer->initialize_inventory();
+        producer->inject_randomness_into_demand();
     }
     std::unordered_set<Product *> distributor_catalog(consumer_goods.begin(), consumer_goods.end());
     for (unsigned int i = 0; i < Sim::get_num_distributors(); i++) {
@@ -251,8 +255,8 @@ double Society::get_total_employment() {
     return static_cast<double>(employed) / people.size();
 }
 
-std::unordered_map<Product *, int>& Society::get_product_production_count() {
-    return product_production_count;
+std::unordered_map<Product *, int>& Society::get_number_of_producers_for_product() {
+    return product_to_number_of_producers;
 }
 
 void Society::log_total_employment() {
@@ -356,9 +360,9 @@ void Society::set_product_prices_production_consumption() {
     for (ConsumerGood * consumer_good : consumer_goods) {
         demands[consumer_good->id] = consumer_good->mean_consumption_frequency;
     }
-    Eigen::VectorXd production = leontief_inverse * demands;
+    Eigen::VectorXd gross_hourly_demand_per_capita_vec = leontief_inverse * demands;
     for (std::size_t i = 0; i < dim; ++i) {
-        initial_production[products[i]] = production(i);
+        gross_hourly_demand_per_capita[products[i]] = gross_hourly_demand_per_capita_vec(i);
     }
 }
 
@@ -606,8 +610,8 @@ int Society::get_initial_account() {
     return initial_account;
 }
 
-std::unordered_map<Product *, double>& Society::get_initial_production() {
-    return initial_production;
+std::unordered_map<Product *, double>& Society::get_gross_hourly_demand_per_capita() {
+    return gross_hourly_demand_per_capita;
 }
 
 Person * Society::birth_person() {

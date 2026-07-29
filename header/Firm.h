@@ -26,12 +26,15 @@ class Firm : public Agent {
     virtual Logger::Client get_client_type() = 0;
     virtual void on_time_step() override;
     virtual void add_to_catalog(Product * product) = 0;
+    virtual void initialize_inventory() = 0;
+    void inject_randomness_into_demand();
     double get_avg_productivity();
     virtual double get_inventory_level(Product * product);
     void receive_shipment(Order * order);
     void receive_shipment(Plan * plan);
     void receive_payment(Plan * plan, double transaction_amount);
     double get_busyness();
+    std::unordered_set<Product *> get_catalog();
     double get_pooled_input_value();
     std::vector<Person *> propose_transfer(int workers_wanted);
     void finalize_transfer(Person * worker);
@@ -46,7 +49,6 @@ class Firm : public Agent {
     std::unordered_map<Product *, double> input_inventory;
     std::unordered_set<Product *> catalog;
     
-    // std::unordered_map<Product *, double> demands;
     std::unordered_map<Product *, double> consumer_demands;
     std::unordered_map<Product *, double> producer_demands;
     std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
@@ -81,9 +83,10 @@ class Firm : public Agent {
     bool is_within_work_schedule(Plan * plan) const;
 
     double get_pending_inventory(Product * product);
-    double get_plan_work_week_proportion(Plan * plan);
+    double get_work_week_proportion();
     void reorder_stalled_plan_input(Product * product, double deficit);
-    int predict_workers_needed(Plan * plan);
+    int predict_workers_needed(const Order * order);
+    std::vector<Person *> get_available_workers(const Order * order);
     void assign_workers(Plan * draft_plan);
     void adjust_quantity_for_deadline(Plan * plan);
     double predict_turnaround_time(Plan * plan); 

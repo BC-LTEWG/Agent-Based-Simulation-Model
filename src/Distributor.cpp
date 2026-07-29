@@ -26,6 +26,8 @@ Distributor::Distributor(
     for (Product * product : initial_catalog) {
         add_to_catalog(product);
     }
+    initialize_inventory();
+    inject_randomness_into_demand();
 }
 
 Logger::Client Distributor::get_client_type() {
@@ -43,15 +45,25 @@ void Distributor::add_to_catalog(Product * product) {
         / Sim::get_num_distributors();
     static std::normal_distribution<double>
         demand_mult(1.0, DEMAND_PREDICTION_VARIANCE);
-    consumer_demands[good] *= demand_mult(Sim::get_random_generator());
-    consumer_demands[consumer_good] *= demand_mult(Sim::get_random_generator());
-    input_inventory[good] = consumer_demands[good] * FIRM_STOCKPILE_DURATION;
-    input_inventory[consumer_good] =
-        consumer_demands[consumer_good] * FIRM_STOCKPILE_DURATION;
-    log_inventory_level(good, input_inventory[good]);
-    log_inventory_level(consumer_good, input_inventory[consumer_good]);
     log_catalog_addition(product);
 }
+
+void Distributor::initialize_inventory() {
+    std::normal_distribution<double>
+        input_noise_dist(1.0, DEMAND_PREDICTION_VARIANCE);
+
+    for (std::pair<Product * const, double>& demand : consumer_demands) {
+        double noise = std::max(
+            input_noise_dist(Sim::get_random_generator()),
+            0.01
+        );
+        input_inventory[demand.first] = 
+            get_reorder_threshold(demand.first) * noise;
+
+        log_inventory_level(demand.first, input_inventory[demand.first]);
+    }
+}
+
 
 int Distributor::try_sell_goods(
         ConsumerGood * consumer_good,
@@ -96,14 +108,6 @@ void Distributor::check_and_reorder_input(Product * product) {
     if (inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
-    Logger::log(
-        get_client_type(),
-        id,
-        "resupply_rate_info",
-        LogPair("product_id", product->id),
-        LogPair("resupply_deficit", resupply_deficit)
-    );
-
     
     int lead_time = 
         get_inventory_level(good) / resupply_deficit;
@@ -115,7 +119,6 @@ void Distributor::check_and_reorder_input(Product * product) {
             FIRM_REORDER_MAX_PROP
         )
     );
-    // int order_quantity = lead_time * resupply_deficit;
     Order * order = new Order(
             consumer_good,
             lead_time * resupply_deficit,

@@ -39,13 +39,13 @@ class Society : public Agent {
         unsigned int get_current_work_hours_daily();
         unsigned int get_current_work_days_weekly();
         int get_initial_account();
-        std::unordered_map<Product *, double>& get_initial_production();
+        std::unordered_map<Product *, double>& get_gross_hourly_demand_per_capita();
         std::vector<Producer *>& get_producers();
         std::vector<Producer *>& get_suppliers(Product * product);
         double get_busyness();
         double get_average_account();
         double get_total_employment();
-        std::unordered_map<Product *, int>& get_product_production_count();
+        std::unordered_map<Product *, int>& get_number_of_producers_for_product();
         void pay_into_public_fund(double amount);
         void charge_from_public_fund(double amount);
 
@@ -104,6 +104,6 @@ class Society : public Agent {
         double initial_account;
         double average_account;
         double busyness;
-        std::unordered_map<Product *, double> initial_production;
-        std::unordered_map<Product *, int> product_production_count;
+        std::unordered_map<Product *, double> gross_hourly_demand_per_capita;
+        std::unordered_map<Product *, int> product_to_number_of_producers;
 };
