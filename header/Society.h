@@ -70,7 +70,12 @@ class Society : public Agent {
                 const std::vector<ConsumerGood *>&,
                 std::size_t
                 );
-        void adjust_io_matrix(Eigen::MatrixXd&);
+        double adjust_io_matrix(Eigen::MatrixXd&, double);
+        // void apply_machine_scaling(Eigen::MatrixXd&, Eigen::VectorXd&, double);
+        void apply_machine_scaling(Eigen::MatrixXd&, Eigen::VectorXd&);
+        // void apply_matrix_to_products(Eigen::MatrixXd&, Eigen::VectorXd&, double);
+        void apply_matrix_to_products(const Eigen::MatrixXd&);
+        double get_productive_spectral_radius(const Eigen::MatrixXd&);
         void check_expand_public_sector();
         void log_io_matrix(Eigen::MatrixXd&, size_t);
         void log_vector(Eigen::VectorXd&, std::string, size_t);
