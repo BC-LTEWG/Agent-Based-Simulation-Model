@@ -109,14 +109,14 @@ void Distributor::check_and_reorder_input(Product * product) {
     
     double lead_time = 
         static_cast<int>(get_inventory_level(good)) / resupply_deficit;
-
     lead_time = std::min(
         lead_time,
         FIRM_STOCKPILE_DURATION * FIRM_REORDER_MAX_PROP
     );
+    int order_quantity = std::ceil(lead_time * resupply_deficit);
     Order * order = new Order(
             consumer_good,
-            lead_time * resupply_deficit,
+            order_quantity,
             this,
             lead_time
             );
