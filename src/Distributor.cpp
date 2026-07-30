@@ -43,8 +43,6 @@ void Distributor::add_to_catalog(Product * product) {
         consumer_good->mean_consumption_frequency 
         * Sim::get_num_people() 
         / Sim::get_num_distributors();
-    static std::normal_distribution<double>
-        demand_mult(1.0, DEMAND_PREDICTION_VARIANCE);
     log_catalog_addition(product);
 }
 
@@ -109,15 +107,12 @@ void Distributor::check_and_reorder_input(Product * product) {
         return;
     }
     
-    int lead_time = 
-        get_inventory_level(good) / resupply_deficit;
+    double lead_time = 
+        static_cast<int>(get_inventory_level(good)) / resupply_deficit;
 
     lead_time = std::min(
         lead_time,
-        static_cast<int>(
-            FIRM_STOCKPILE_DURATION * 
-            FIRM_REORDER_MAX_PROP
-        )
+        FIRM_STOCKPILE_DURATION * FIRM_REORDER_MAX_PROP
     );
     Order * order = new Order(
             consumer_good,

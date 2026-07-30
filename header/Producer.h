@@ -16,7 +16,6 @@ class Person;
 
 class Producer : public Firm {
   public:
-    inline static bool wiretripped = false;
     Producer(
         const std::unordered_set<Product *>& initial_catalog = {}
     );
@@ -32,7 +31,6 @@ class Producer : public Firm {
     std::unordered_map<Firm *, Plan *> customer_to_draft_plan;
 
     double get_max_order_quantity(const Order * order);
-    void adjust_workers_for_quantity(Plan * draft_plan);
     void log_draft_plan(const Plan * draft_plan);
     void log_dropped_order(const Order * order);
     

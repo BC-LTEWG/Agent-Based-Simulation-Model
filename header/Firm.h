@@ -34,7 +34,6 @@ class Firm : public Agent {
     void receive_shipment(Plan * plan);
     void receive_payment(Plan * plan, double transaction_amount);
     double get_busyness();
-    std::unordered_set<Product *> get_catalog();
     double get_pooled_input_value();
     std::vector<Person *> propose_transfer(int workers_wanted);
     void finalize_transfer(Person * worker);
@@ -103,7 +102,6 @@ class Firm : public Agent {
     double get_demand(Product * product);
     Plan * draft_plan_for_order(Order * order); 
     void update_demands();
-    void update_average_team_size(Plan * plan);
     void move_worker_off_standby(Person * worker);
 
     void log_plans();
@@ -114,7 +112,7 @@ class Firm : public Agent {
     void log_inventory_reduction(const Product * product, const double quantity);
     void log_reorder(const Product * product, int quantity);
     void log_initial_employment(const unsigned int worker_id, const unsigned int workplace_id);
-    void log_busyness(double firm_busyness, double societal_busyness, int max_workers_for_transfer);
+    void log_busyness(double firm_busyness, int max_workers_for_transfer);
     void log_employment_transfer(
             const unsigned int worker_id,
             const unsigned int old_workplace_id,

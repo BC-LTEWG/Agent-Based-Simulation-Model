@@ -32,10 +32,6 @@ unsigned int Firm::get_id() {
     return id;
 }
 
-std::unordered_set<Product *> Firm::get_catalog() {
-    return catalog;
-}
-
 void Firm::on_time_step() {
     update_demands();
     std::unordered_set<Product *> products_to_check;
@@ -139,21 +135,20 @@ double Firm::get_pooled_input_value() {
 std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
     double firm_busyness = get_busyness();
     double societal_busyness = Society::get_instance()->get_busyness();
-    double adjusted_societal_busyness =
-        societal_busyness - TRANSFER_BUSYNESS_THRESHOLD;
-    if (adjusted_societal_busyness <= 0 ||
-            firm_busyness >= adjusted_societal_busyness) {
-        log_busyness(firm_busyness, societal_busyness, 0);
+    societal_busyness = std::max(1e-5, societal_busyness);
+    double relative_difference = 
+        (societal_busyness - firm_busyness) / societal_busyness;
+    if (relative_difference < TRANSFER_BUSYNESS_THRESHOLD) {
+        log_busyness(firm_busyness, 0);
         return {};
     }
-    int available_workers_for_transfer = std::max(
+    int available_workers_for_transfer = 
         static_cast<int>(
-            workers.size() * (1.0 - firm_busyness / adjusted_societal_busyness)
-        ),
-        0
-    ); 
+            workers.size() * 
+            (firm_busyness / societal_busyness)
+        );
     int max_workers_to_transfer = std::min(available_workers_for_transfer, workers_wanted);
-    log_busyness(firm_busyness, societal_busyness, max_workers_to_transfer);
+    log_busyness(firm_busyness, max_workers_to_transfer);
     std::vector<Person *> transfers;
     for (Person * worker : standby_workers) {
         if (static_cast<int>(transfers.size()) == max_workers_to_transfer) break;
@@ -250,7 +245,7 @@ void Firm::check_and_reorder_input(Product * product) {
     if (inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
-    int lead_time = FIRM_STOCKPILE_DURATION * FIRM_REORDER_MAX_PROP;
+    double lead_time = FIRM_STOCKPILE_DURATION * FIRM_REORDER_MAX_PROP;
     int order_quantity = std::ceil(lead_time * resupply_deficit);
     Order * order = new Order(
             product,
@@ -296,6 +291,10 @@ void Firm::start_plan(Plan * plan) {
                 )) {
             rollback_plan_inputs(plan, plan->order->customer);
             if (!plan->is_stalled) {
+                reorder_stalled_plan_input(
+                    input.first,
+                    amount_needed
+                );
                 log_start_plan_stalled(plan, input.first);
                 Logger::log(
                     get_client_type(),
@@ -356,7 +355,6 @@ void Firm::start_plan(Plan * plan) {
         );
         log_start_plan_stallage_resolved(plan);
     }
-    update_average_team_size(plan);
 }
 
 void Firm::reorder_stalled_plan_input(
@@ -409,7 +407,7 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
     for (std::pair<Product *, double> requirement : plan->needed_this_step) {
         double have_on_hand = plan->inventory[requirement.first];
         if (have_on_hand < requirement.second) {
-           double deficit = requirement.second - have_on_hand;
+            double deficit = requirement.second - have_on_hand;
             if (!remove_input_from_inventory(
                         requirement.first,
                         deficit,
@@ -664,7 +662,10 @@ void Firm::assign_plan_dependent_fields(Plan * draft_plan) {
 }
 
 Plan * Firm::draft_plan_for_order(Order * order) {
-    bool insufficient_workers = false;
+    if (order->quantity <= 0) {
+        log_reorder_failure(order->product, "insufficient_resources");
+        return nullptr;
+    }
     Plan * draft_plan = new Plan;
     draft_plan->order = order;
     draft_plan->firm = this;
@@ -672,15 +673,13 @@ Plan * Firm::draft_plan_for_order(Order * order) {
         Society::get_instance()->get_current_work_hours_daily();
     draft_plan->workers = get_available_workers(draft_plan->order);
     if (draft_plan->workers.empty()) {
-        insufficient_workers = true;
+        log_reorder_failure(order->product, "no_workers_available");
+        delete draft_plan;
+        return nullptr;
     }
     adjust_quantity_for_deadline(draft_plan);
     if (order->quantity <= 0) {
-        if (insufficient_workers) {
-            log_reorder_failure(order->product, "not_enough_workers_available");
-        } else {
-            log_reorder_failure(order->product, "insufficient_resources");
-        }
+        log_reorder_failure(order->product, "not_enough_workers_available");
         delete draft_plan;
         return nullptr;
     }
@@ -709,15 +708,6 @@ void Firm::update_demands() {
 
 double Firm::get_demand(Product * product) {
     return producer_demands[product] + consumer_demands[product];
-}
-
-void Firm::update_average_team_size(Plan * plan) {
-    double observed_team_size = static_cast<double>(plan->workers.size());
-    Product * product = plan->order->product;
-
-    average_team_sizes[product] = 
-        1.0 / TEAM_SIZE_AVERAGING_WINDOW * observed_team_size +
-        (1.0 -  1.0 / TEAM_SIZE_AVERAGING_WINDOW) * average_team_sizes[product];
 }
 
 void Firm::move_worker_off_standby(Person * worker) {
@@ -813,7 +803,6 @@ void Firm::log_employment_transfer(
 
 void Firm::log_busyness(
     double firm_busyness,
-    double societal_busyness,
     int max_workers_for_transfer
 ) {
     Logger::log(
@@ -821,7 +810,6 @@ void Firm::log_busyness(
         id,
         "busyness",
         LogPair("firm_busyness", firm_busyness),
-        LogPair("societal_busyness", societal_busyness),
         LogPair("max_workers_for_transfer", max_workers_for_transfer)
     );
 }

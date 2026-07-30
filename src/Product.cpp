@@ -54,11 +54,6 @@ void Product::set_inputs() {
         inputs_per_unit[goods[index]] =
             input_per_unit_dist(Sim::get_random_generator());
     }
-    // if (product_type == kTypeMachine) {
-    //     living_labor_per_unit *= MACHINE_SCALE_MULTIPLIER;
-    //     Society::get_instance()->
-    //         set_underlying_living_labor_per_unit(this, living_labor_per_unit);
-    // }
 }
 
 void Product::set_machines() {

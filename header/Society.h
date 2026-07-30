@@ -49,8 +49,6 @@ class Society : public Agent {
         void pay_into_public_fund(double amount);
         void charge_from_public_fund(double amount);
 
-        void log_total_employment();
-
     private:
         Society();
         void initialize();
@@ -82,6 +80,8 @@ class Society : public Agent {
         void log_public_revenue(double);
         void log_public_expenditure(double);
         void log_public_sector_expansion(ConsumerGood * consumer_good);
+        void log_busyness();
+        void log_total_employment();
         void set_abilities(std::vector<Ability *>& abilities, std::vector<Ability *>& distribution_abilities);
         void set_initial_account(double& initial_account, const std::vector<ConsumerGood *>& consumer_goods);
 

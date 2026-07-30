@@ -138,6 +138,8 @@ void Society::on_time_step() {
         average_account += person->get_account();
     }
     busyness /= people.size();
+    log_busyness();
+    log_total_employment();
     average_account /= people.size();
 
     for (Person * person : people) {
@@ -169,7 +171,7 @@ void Society::set_initial_products() {
         products.push_back(new_machine);
     }
     for (Product * product : products) {
-        product->set_inputs(); // These should be in the contructor
+        product->set_inputs(); 
         product->set_machines();
     }
     set_product_prices_production_consumption();
@@ -710,59 +712,68 @@ void Society::log_io_matrix(Eigen::MatrixXd& A, size_t dim) {
 void Society::log_vector(Eigen::VectorXd& v, std::string name, size_t dim) {
     for (size_t i = 0; i < dim; ++i) {
         Logger::log(
-                Logger::SOCIETY,
-                id,
-                name,
-                LogPair("prod_id", i),
-                LogPair("value", v(i))
-                );
+            Logger::SOCIETY,
+            id,
+            name,
+            LogPair("prod_id", i),
+            LogPair("value", v(i))
+        );
     }
 }
 
 void Society::log_consumption_frequencies() {
     for (const ConsumerGood * consumer_good : consumer_goods) {
         Logger::log(
-                Logger::SOCIETY,
-                id,
-                "mean_consumption_frequency",
-                LogPair("product_id", consumer_good->id),
-                LogPair("value", consumer_good->mean_consumption_frequency)
-                );
+            Logger::SOCIETY,
+            id,
+            "mean_consumption_frequency",
+            LogPair("product_id", consumer_good->id),
+            LogPair("value", consumer_good->mean_consumption_frequency)
+        );
     }
 }
 
 void Society::log_public_fund() {
     Logger::log(
-            Logger::SOCIETY,
-            id,
-            "public_fund",
-            LogPair("value", public_fund)
-            );
+        Logger::SOCIETY,
+        id,
+        "public_fund",
+        LogPair("value", public_fund)
+    );
+}
+
+void Society::log_busyness() {
+    Logger::log(
+        Logger::SOCIETY,
+        id,
+        "societal_busyness",
+        LogPair("value", busyness)
+    );
 }
 
 void Society::log_public_revenue(double revenue) {
     Logger::log(
-            Logger::SOCIETY,
-            id,
-            "public_revenue",
-            LogPair("value", revenue)
-            );
+        Logger::SOCIETY,
+        id,
+        "public_revenue",
+        LogPair("value", revenue)
+    );
 }
 
 void Society::log_public_expenditure(double expenditure) {
     Logger::log(
-            Logger::SOCIETY,
-            id,
-            "public_expenditure",
-            LogPair("value", expenditure)
-            );
+        Logger::SOCIETY,
+        id,
+        "public_expenditure",
+        LogPair("value", expenditure)
+    );
 }
 
 void Society::log_public_sector_expansion(ConsumerGood * consumer_good) {
     Logger::log(
-            Logger::SOCIETY,
-            id,
-            "public_sector_expansion",
-            LogPair("product_id", consumer_good->id)
-            );
+        Logger::SOCIETY,
+        id,
+        "public_sector_expansion",
+        LogPair("product_id", consumer_good->id)
+    );
 }

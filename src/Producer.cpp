@@ -44,14 +44,14 @@ void Producer::add_to_catalog(Product * product) {
         Sim::get_num_producers() +
         Sim::get_num_distributors();
 
-    average_team_sizes[product] = std::max<double>(
+    double average_team_size = std::max<double>(
             Sim::get_num_people() / starting_num_firms,
             1.0
         );
     for (Machine * machine : product->machines_needed) {
         double machine_use_per_unit =
             product->living_labor_per_unit / 
-            (machine->lifetime * average_team_sizes[product]);
+            (machine->lifetime * average_team_size);
         producer_demands[machine] +=
             machine_use_per_unit * gross_demand_per_producer;
     }
@@ -64,22 +64,22 @@ void Producer::add_to_catalog(Product * product) {
 }
 
 void Producer::initialize_inventory() {
-    double starting_num_firms =
-        Sim::get_num_producers() +
-        Sim::get_num_distributors();
-
-    double average_team_size = std::max<double>(
-            Sim::get_num_people() / starting_num_firms,
-            1.0
-        );
 
     for (std::pair<Product * const, double>& demand : producer_demands) {
         double input_amount_added = get_reorder_threshold(demand.first);
         if (demand.first->product_type == Product::ProductType::kTypeMachine) {
-            // I don't understand why this needs to be here.
-            // When I remove it, there are influxes of failed plans at the start
-            // of the simulation. Will try to figure out before merging with main.
-            input_amount_added *= average_team_size;
+            Machine * machine = static_cast<Machine *>(demand.first);
+            std::uniform_int_distribution<> machine_initial_age_dist(
+                static_cast<int>(
+                    INITIAL_MACHINE_AGE_MIN_PROP * machine->lifetime
+                ),
+                machine->lifetime
+            );
+            input_amount_added = std::max(
+                input_amount_added,
+                machine_initial_age_dist(Sim::get_random_generator()) /
+                machine->lifetime
+            );
         }
         input_inventory[demand.first] = input_amount_added;
         log_inventory_level(demand.first, input_amount_added);
@@ -152,7 +152,6 @@ void Producer::pursue_order(Firm * customer) {
     customer_to_draft_plan[customer] = nullptr;
     start_plan(plan);
     log_pursued_plan(plan);
-    Society::get_instance()->log_total_employment();
 }
 
 void Producer::log_draft_plan(const Plan * draft_plan) {
