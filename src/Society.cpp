@@ -222,8 +222,7 @@ double get_max_eigenvalue(const Eigen::MatrixXd &io_matrix) {
     return max_eigenvalue;
 }
 
-double Society::get_productive_spectral_radius(
-        const Eigen::MatrixXd& io_matrix) {
+double Society::get_production_spectral_radius(const Eigen::MatrixXd& io_matrix) {
 
     std::vector<std::size_t> kept_indices;
     for (Product * product : products) {
@@ -238,14 +237,12 @@ double Society::get_productive_spectral_radius(
         productive_dim,
         productive_dim
     );
-
     for (std::size_t i = 0; i < productive_dim; ++i) {
         for (std::size_t j = 0; j < productive_dim; ++j) {
             productive_matrix(i, j) =
                 io_matrix(kept_indices[i], kept_indices[j]);
         }
     }
-
     return get_max_eigenvalue(productive_matrix);
 }
 
@@ -295,26 +292,21 @@ void Society::log_total_employment() {
             );
 }
 
-double Society::adjust_io_matrix(Eigen::MatrixXd& io_matrix, double target_radius) {
-    const double current_radius = get_productive_spectral_radius(io_matrix);
-    const double divisor = current_radius / target_radius;
+double Society::normalize_io_matrix(Eigen::MatrixXd& io_matrix) {
+    const double current_radius = get_production_spectral_radius(io_matrix);
+    const double divisor = current_radius / Sim::get_difficulty_of_production();
 
     for (Product * input_product : products) {
         if (input_product->product_type ==
             Product::ProductType::kTypeConsumerGood) {
             continue;
         }
-
         for (Product * output_product : products) {
-            if (output_product->product_type ==
+            if (output_product->product_type == 
                 Product::ProductType::kTypeConsumerGood) {
                 continue;
             }
-
-            io_matrix(
-                input_product->id,
-                output_product->id
-            ) /= divisor;
+            io_matrix(input_product->id, output_product->id) /= divisor;
         }
     }
     return divisor;
@@ -337,67 +329,14 @@ void Society::apply_machine_scaling(
     }
 }
 
-// void Society::apply_machine_scaling(
-//         Eigen::MatrixXd& A,
-//         Eigen::VectorXd& l,
-//         double target_radius
-//     ) {
-//     double low = 1.0;
-//     double high = MACHINE_SCALE_MULTIPLIER;
-//     double effective_radius = target_radius;
-//     Eigen::MatrixXd trial_matrix = A;
-
-//     int num_iterations = 60;
-//     for (int attempt = 0; attempt < num_iterations; ++attempt) {
-//         double mid = (low + high) / 2.0;
-
-//         trial_matrix = A;
-//         for (Machine * machine : machines) {
-//             trial_matrix.col(machine->id) *= mid;
-//         }
-//         effective_radius = get_productive_spectral_radius(trial_matrix);
-//         if (effective_radius <= target_radius) {
-//             low = mid;
-//         } else {
-//             high = mid;
-//         }
-//     }
-//     double effective_machine_scalar = low;
-//     apply_matrix_to_products(
-//         A,
-//         l,
-//         effective_machine_scalar
-//     );
-// }
-
-// void Society::apply_matrix_to_products(
-//     Eigen::MatrixXd& A,
-//     Eigen::VectorXd& l,
-//     double machine_scalar
-// ) {
-//     for (Machine * machine : machines) {
-//         A.col(machine->id) *= machine_scalar;
-//         l(machine->id) *= machine_scalar;
-//         machine->living_labor_per_unit *= machine_scalar;
-//         set_underlying_living_labor_per_unit(machine, machine->living_labor_per_unit);
-//     }
-//     for (Product * product : products) {
-//         for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
-//             input.second = A(input.first->id, product->id);
-//         }
-//     }
-// }
-
-void Society::apply_matrix_to_products(
-        const Eigen::MatrixXd& A) {
-
+void Society::apply_normalization_to_products(const Eigen::MatrixXd& io_matrix, double divisor) {
     for (Product * product : products) {
-        for (std::pair<Good * const, double>& input :
-             product->inputs_per_unit) {
-
-            input.second =
-                A(input.first->id, product->id);
+        for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
+            input.second = io_matrix(input.first->id, product->id);
         }
+    }
+    for (Machine * machine : machines) {
+        machine->lifetime *= divisor;
     }
 }
 
@@ -432,36 +371,9 @@ void Society::set_product_prices_production_consumption() {
     Eigen::MatrixXd A = Eigen::MatrixXd::Zero(dim, dim);
     Eigen::VectorXd l = Eigen::VectorXd::Zero(dim);
     populate_io_matrix_and_labor_vector(A, l);
-
-    // const double final_target_radius = Sim::get_difficulty_of_production();
-    // const double original_radius = get_max_eigenvalue(A);
-    // double machine_share = 
-    //     static_cast<double>(machines.size()) /
-    //     (goods.size() + machines.size());
-
-    // double growth_estimate = 
-    //     1.0 + (MACHINE_SCALE_MULTIPLIER - 1.0) *
-    //     machine_share;
-
-    // double radius_with_headroom = 
-    //     Sim::get_difficulty_of_production() / growth_estimate;
-
-    // double lifetime_adjustment_coeff = adjust_io_matrix(A, radius_with_headroom);
-
     apply_machine_scaling(A, l);
-    const double target_radius =
-        Sim::get_difficulty_of_production();
-    const double normalization_divisor =
-        adjust_io_matrix(A, target_radius);
-    for (Machine * machine : machines) {
-        machine->lifetime *= normalization_divisor;
-    }
-
-    apply_matrix_to_products(A);
-    // apply_machine_scaling(A, l, final_target_radius);
-    // for (Machine * machine : machines) {
-    //     machine->lifetime *= lifetime_adjustment_coeff;
-    // }
+    double divisor = normalize_io_matrix(A);
+    apply_normalization_to_products(A, divisor);
     log_io_matrix(A, dim);
     log_vector(l, "l", dim);
     Eigen::MatrixXd leontief_inverse = get_leontief_inverse(A);
