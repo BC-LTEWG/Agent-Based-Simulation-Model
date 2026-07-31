@@ -49,7 +49,7 @@ void Product::set_inputs() {
         indices.insert(product_input_index_dist(Sim::get_random_generator()));
     }
     std::uniform_real_distribution<>
-        input_per_unit_dist(PRODUCT_INPUT_AMOUNT_MIN, PRODUCT_INPUT_AMOUNT_MAX);
+        input_per_unit_dist(1, PRODUCT_INPUT_MIN_MAX_RATIO);
     for (int index : indices) {
         inputs_per_unit[goods[index]] =
             input_per_unit_dist(Sim::get_random_generator());

@@ -45,7 +45,7 @@ class Society : public Agent {
         double get_busyness();
         double get_average_account();
         double get_total_employment();
-        std::unordered_map<Product *, int>& get_number_of_producers_for_product();
+        std::unordered_map<Product *, int>& get_product_to_number_of_producers();
         void pay_into_public_fund(double amount);
         void charge_from_public_fund(double amount);
 
@@ -82,6 +82,8 @@ class Society : public Agent {
         void log_public_revenue(double);
         void log_public_expenditure(double);
         void log_public_sector_expansion(ConsumerGood * consumer_good);
+        void log_busyness();
+        void log_total_employment();
         void log_busyness_data();
         void log_work_hours_weekly();
         void set_abilities();

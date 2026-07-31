@@ -41,7 +41,6 @@ class Firm : public Agent {
 
   protected:
     unsigned int id;
-    std::unordered_map<Product *, double> average_team_sizes;
     double pooled_input_value = 0.0;
     std::unordered_set<Person *> workers,
         standby_workers;

@@ -88,7 +88,6 @@ void Society::initialize() {
             Product * product = upstream_products[i % num_upstream_products];
             producer->add_to_catalog(product);
             product_to_suppliers[product].push_back(producer);
-            product_production_count[product]++;
         }
     } else {
         for (unsigned int i = 0; i < num_upstream_products; ++i) {
@@ -100,7 +99,6 @@ void Society::initialize() {
             Product * product = upstream_products[i];
             producer->add_to_catalog(product);
             product_to_suppliers[product].push_back(producer);
-            product_production_count[product]++;
         }
     }
     for (Producer * producer : producers) {
@@ -279,7 +277,7 @@ double Society::get_total_employment() {
     return static_cast<double>(employed) / people.size();
 }
 
-std::unordered_map<Product *, int>& Society::get_number_of_producers_for_product() {
+std::unordered_map<Product *, int>& Society::get_product_to_number_of_producers() {
     return product_to_number_of_producers;
 }
 
