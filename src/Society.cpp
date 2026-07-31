@@ -636,6 +636,12 @@ unsigned int Society::get_current_work_days_weekly() {
 	return current_work_days_weekly;
 }
 
+double Society::get_work_week_proportion() {
+    return static_cast<double>(Society::get_instance()->get_current_work_hours_daily()) 
+        * Society::get_instance()->get_current_work_days_weekly()
+        / WEEK;
+}
+
 int Society::get_initial_account() {
     return initial_account;
 }
@@ -714,7 +720,7 @@ static double uncensored_log_likelihood(
             log_likelihood += std::log(normal_cdf(delta - gamma * upper_bound));
         }
     }
-    return log_likelihood;
+    return log_likelihood / data.size();
 }
 
 static void log_censored_busyness_distribution(double mean, double stddev) {
@@ -742,31 +748,39 @@ static std::pair<double, double> predict_uncensored_distribution(
     double upper_bound) {
     double mean = std::accumulate(data.begin(), data.end(), 0.0) / data.size();
     double variance = 0.0;
+    std::cout << ":( - ";
     for (double x : data) {
+        std::cout << x << ",";
         variance += (x - mean) * (x - mean);
     }
+    std::cout << std::endl;
     variance /= data.size();
     double stddev = std::sqrt(variance);
+    std::cout << ":( - actual mean: " << mean << ", stddev: " << stddev << std::endl;
     log_censored_busyness_distribution(mean, stddev);
     double gamma = 1 / stddev;
     double delta = mean * gamma;
+    std::cout << ":( - initial delta: " << delta << ", gamma: " << gamma << std::endl;
     double dd_gamma = 0.0;
     double dd_delta = 0.0;
     double d_gamma = 0.001;
     double d_delta = 0.001;
-    double learning_rate = 0.001;
-    double convergence_threshold = 0.01;
+    double gamma_learning_rate = 0.05;
+    double delta_learning_rate = 0.05;
+    double convergence_threshold = 0.0001;
     do {
         dd_delta = (uncensored_log_likelihood(data, upper_bound, delta + d_delta, gamma) 
             - uncensored_log_likelihood(data, upper_bound, delta, gamma)) / d_delta;
         dd_gamma = (uncensored_log_likelihood(data, upper_bound, delta, gamma + d_gamma) 
             - uncensored_log_likelihood(data, upper_bound, delta, gamma)) / d_gamma;
-        delta += learning_rate * dd_delta;
-        gamma += learning_rate * dd_gamma;
+        delta += delta_learning_rate * dd_delta;
+        gamma += gamma_learning_rate * dd_gamma;
         gamma = std::max(gamma, 1e-6);
+        std::cout << ":( - updated delta: " << delta << ", gamma: " << gamma << std::endl;
     } while (std::abs(dd_delta) > convergence_threshold || std::abs(dd_gamma) > convergence_threshold);
     double predicted_mean = delta / gamma;
     double predicted_stddev = 1 / gamma;
+    std::cout << ":( - predicted mean: " << predicted_mean << ", stddev: " << predicted_stddev << std::endl;
     log_predicted_uncensored_busyness_distribution(predicted_mean, predicted_stddev);
     return {predicted_mean, predicted_stddev};
 }

@@ -540,16 +540,10 @@ double Firm::get_pending_inventory(Product * product) {
     return pending_inventory;
 }
 
-double Firm::get_work_week_proportion() {
-    return static_cast<double>(Society::get_instance()->get_current_work_hours_daily()) 
-        * Society::get_instance()->get_current_work_days_weekly()
-        / WEEK;
-}
-
 int Firm::predict_workers_needed(const Order * order) {
     double work_time = 
         order->requested_turnaround_time
-        * get_work_week_proportion();
+        * Society::get_instance()->get_work_week_proportion();
     return std::ceil(
             order->quantity *
             recorded_living_labor_per_unit[order->product] /
@@ -597,7 +591,7 @@ std::vector<Person *> Firm::get_available_workers(const Order * order) {
 }
 
 void Firm::adjust_quantity_for_deadline(Plan * plan) {
-    double living_labor_per_timestep = plan->workers.size() * get_work_week_proportion();
+    double living_labor_per_timestep = plan->workers.size() * Society::get_instance()->get_work_week_proportion();
     int maximum_quantity_for_deadline = 
         plan->order->requested_turnaround_time *
         living_labor_per_timestep / 
@@ -612,7 +606,7 @@ double Firm::predict_turnaround_time(Plan * plan) {
     }
     double labor_hours_per_timestep = 
         plan->workers.size()
-        * get_work_week_proportion();
+        * Society::get_instance()->get_work_week_proportion();
     return plan->order->quantity *
            recorded_living_labor_per_unit[plan->order->product] /
            labor_hours_per_timestep;
