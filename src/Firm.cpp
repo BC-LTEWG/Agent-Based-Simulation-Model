@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <climits>
 #include <iostream>
+#include <limits>
 #include <numeric>
 #include <sstream>
 
@@ -133,6 +134,9 @@ double Firm::get_pooled_input_value() {
 }
 
 std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
+    if (workers.empty()) {
+        return {};
+    }
     double firm_busyness = get_busyness();
     double societal_busyness = Society::get_instance()->get_busyness();
     societal_busyness = std::max(1e-5, societal_busyness);
@@ -143,9 +147,12 @@ std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
         return {};
     }
     int available_workers_for_transfer = 
-        static_cast<int>(
-            workers.size() * 
-            (1 - firm_busyness / (societal_busyness + TRANSFER_BUSYNESS_THRESHOLD))
+        std::max(
+            static_cast<int>(
+                workers.size() * 
+                (1 - firm_busyness / (societal_busyness + TRANSFER_BUSYNESS_THRESHOLD))
+            ),
+            1
         );
     int max_workers_to_transfer = std::min(available_workers_for_transfer, workers_wanted);
     log_busyness(firm_busyness, max_workers_to_transfer);
