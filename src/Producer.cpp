@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include <unordered_map>
 #include <unordered_set>
 #include <numeric>
 
@@ -32,50 +33,66 @@ Logger::Client Producer::get_client_type() {
 
 void Producer::add_to_catalog(Product * product) {
     catalog.insert(product);
-    double output_demand =
-        Society::get_instance()->get_initial_production()[product];
-    double demand_scale = 
-        output_demand 
-        * Sim::get_num_people() 
-        / Society::get_instance()->get_product_production_count()[product];
+    double gross_hourly_demand_per_capita =
+        Society::get_instance()->get_gross_hourly_demand_per_capita()[product];
+    double gross_hourly_demand = gross_hourly_demand_per_capita * Sim::get_num_people();
+    double gross_demand_per_producer = 
+        gross_hourly_demand /
+        Society::get_instance()->get_number_of_producers_for_product()[product];
+
     double starting_num_firms =
-        Sim::get_num_producers() + Sim::get_num_distributors();
-    double average_team_size =
-        std::max<double>(
-                Sim::get_num_people() / starting_num_firms,
-                1.0
-                );
-    double machine_use_per_unit =
-        product->living_labor_per_unit / average_team_size;
+        Sim::get_num_producers() +
+        Sim::get_num_distributors();
+
+    double average_team_size = std::max<double>(
+            Sim::get_num_people() / starting_num_firms,
+            1.0
+        );
     for (Machine * machine : product->machines_needed) {
-        demands[machine] +=
-            (machine_use_per_unit / machine->lifetime) * demand_scale;
+        double machine_use_per_unit =
+            product->living_labor_per_unit / 
+            (machine->lifetime * average_team_size);
+        producer_demands[machine] +=
+            machine_use_per_unit * gross_demand_per_producer;
     }
     for (std::pair<Good * const, double>& input :
             product->inputs_per_unit) {
-        demands[input.first] += input.second * demand_scale;
-    }
-    static std::normal_distribution<double> demand_mult(
-            1.0, DEMAND_PREDICTION_VARIANCE);
-    for (std::pair<Product * const, double>& demand : demands) {
-        input_inventory[demand.first] =
-            demand.second 
-            * demand_mult(Sim::get_random_generator()) 
-            * FIRM_STOCKPILE_DURATION;
-    }
-    for (std::pair<Product * const, double>& stockpile : input_inventory) {
-        log_inventory_level(stockpile.first, stockpile.second);
+        producer_demands[input.first] +=
+            input.second * gross_demand_per_producer;
     }
     log_catalog_addition(product);
+}
+
+void Producer::initialize_inventory() {
+
+    for (std::pair<Product * const, double>& demand : producer_demands) {
+        double input_amount_added = get_reorder_threshold(demand.first);
+        if (demand.first->product_type == Product::ProductType::kTypeMachine) {
+            Machine * machine = static_cast<Machine *>(demand.first);
+            std::uniform_int_distribution<> machine_initial_age_dist(
+                static_cast<int>(
+                    INITIAL_MACHINE_AGE_MIN_PROP * machine->lifetime
+                ),
+                machine->lifetime
+            );
+            input_amount_added = std::max(
+                input_amount_added,
+                machine_initial_age_dist(Sim::get_random_generator()) /
+                machine->lifetime
+            );
+        }
+        input_inventory[demand.first] = input_amount_added;
+        log_inventory_level(demand.first, input_amount_added);
+    }
 }
 
 bool Producer::can_produce(Product * product) {
     return catalog.count(product);
 }
 
-double Producer::get_max_order_quantity(Product * product) {
+double Producer::get_max_order_quantity(const Order * order) {
     double max_order_quantity = std::numeric_limits<double>::infinity();
-    for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
+    for (std::pair<Good * const, double>& input : order->product->inputs_per_unit) {
         if (input.second <= 0.0) {
             continue;
         }
@@ -84,10 +101,12 @@ double Producer::get_max_order_quantity(Product * product) {
         max_order_quantity = 
             std::min(max_order_quantity, input_max_order_quantity);
     }
-    for (Machine * machine : product->machines_needed) {
+    std::vector<Person *> available_workers = get_available_workers(order);
+    for (Machine * machine : order->product->machines_needed) {
         double machine_max_order_quantity =
-            (input_inventory[machine] * machine->lifetime) /
-            recorded_living_labor_per_unit[product];
+            (input_inventory[machine] * machine->lifetime) *
+            available_workers.size() /
+            recorded_living_labor_per_unit[order->product];
         max_order_quantity =
             std::min(max_order_quantity, machine_max_order_quantity);
     }
@@ -101,38 +120,21 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
         order->customer,
         order->requested_turnaround_time
     );
+    return_order->quantity = std::min(
+        return_order->quantity,
+        static_cast<int>(get_max_order_quantity(order))
+    );
     Plan * draft_plan = draft_plan_for_order(return_order);
     if (!draft_plan) {
-        return_order->status = Order::kOrderRejected;
-        return return_order;
-    }
-    double max_order_quantity = get_max_order_quantity(order->product);
-    int feasible_quantity =
-        static_cast<int>(
-            std::min(static_cast<double>(order->quantity), max_order_quantity)
-        );
-    if (feasible_quantity <= 0) {
         delete draft_plan;
         return_order->status = Order::kOrderRejected;
         return return_order;
     }
-    if (feasible_quantity != return_order->quantity) {
-        delete draft_plan;
-        return_order->quantity = feasible_quantity;
-        return_order->requested_turnaround_time = std::max(
-            1.0,
-            order->requested_turnaround_time * 
-            feasible_quantity / 
-            order->quantity
-        );
-        draft_plan = draft_plan_for_order(return_order);
-        if (!draft_plan) {
-            return_order->status = Order::kOrderRejected;
-            return return_order;
-        }
-    }
+
+    assign_plan_dependent_fields(draft_plan);
     customer_to_draft_plan[order->customer] = draft_plan;
     log_draft_plan(draft_plan);
+
     return return_order;
 }
 
@@ -150,7 +152,6 @@ void Producer::pursue_order(Firm * customer) {
     customer_to_draft_plan[customer] = nullptr;
     start_plan(plan);
     log_pursued_plan(plan);
-    Society::get_instance()->log_total_employment();
 }
 
 void Producer::log_draft_plan(const Plan * draft_plan) {

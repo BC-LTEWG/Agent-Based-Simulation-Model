@@ -8,5 +8,9 @@ Machine::Machine() : Product() {
     static std::uniform_int_distribution<>
         machine_lifetime_dist(MACHINE_LIFETIME_MIN, MACHINE_LIFETIME_MAX);
     lifetime = machine_lifetime_dist(Sim::get_random_generator());
+    // living_labor_per_unit *= MACHINE_SCALE_MULTIPLIER;
+    // Society::get_instance()->set_underlying_living_labor_per_unit(
+    //     this, living_labor_per_unit
+    // );
 }
 

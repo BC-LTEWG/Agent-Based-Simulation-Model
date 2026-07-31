@@ -15,7 +15,7 @@ struct Machine;
 Product::Product() {
     static unsigned int unique_id = 0;
     id = unique_id++;
-    static std::uniform_real_distribution<>
+    std::uniform_real_distribution<>
         living_labor_dist(
                 PRODUCT_LABOR_PER_UNIT_MIN,
                 PRODUCT_LABOR_PER_UNIT_MAX
@@ -31,15 +31,15 @@ Product::Product() {
             required_abilities.end(),
             Sim::get_random_generator()
             );
-    static std::uniform_int_distribution<>
+    std::uniform_int_distribution<>
         ability_count_dist(1, PRODUCT_ABILITY_COUNT_MAX);
     required_abilities.resize(ability_count_dist(Sim::get_random_generator()));
 }
 
 void Product::set_inputs() {
     std::vector<Good *>& goods = Society::get_instance()->get_goods();
-    int max_num_inputs = std::min<int>(Sim::get_max_num_inputs(), goods.size());
-    static std::uniform_int_distribution<>
+    int max_num_inputs = std::min<int>(Sim::get_max_num_inputs_goods(), goods.size());
+    std::uniform_int_distribution<>
         num_inputs_dist(PRODUCT_NUM_INPUTS_MIN, max_num_inputs);
     const std::size_t num_inputs = num_inputs_dist(Sim::get_random_generator());
     std::uniform_int_distribution<>
@@ -48,8 +48,8 @@ void Product::set_inputs() {
     while (indices.size() < num_inputs) {
         indices.insert(product_input_index_dist(Sim::get_random_generator()));
     }
-    static std::uniform_real_distribution<>
-        input_per_unit_dist(1.0, PRODUCT_INPUT_MIN_MAX_RATIO);
+    std::uniform_real_distribution<>
+        input_per_unit_dist(PRODUCT_INPUT_AMOUNT_MIN, PRODUCT_INPUT_AMOUNT_MAX);
     for (int index : indices) {
         inputs_per_unit[goods[index]] =
             input_per_unit_dist(Sim::get_random_generator());
@@ -61,16 +61,24 @@ void Product::set_machines() {
     if (!machines.size()) {
         return;
     }
-    const unsigned int num_machines_max = Sim::get_num_machines();
-    static std::uniform_int_distribution<>
-        num_machines_dist(PRODUCT_NUM_MACHINES_MIN, num_machines_max);
+    int min_num_inputs = std::min<int>(PRODUCT_NUM_INPUT_MACHINES_MIN, machines.size());
+    int machines_upper_bound;
+    if (product_type == kTypeMachine) {
+        machines_upper_bound = PRODUCT_NUM_INPUT_MACHINES_MAX - 1;
+    } else {
+        machines_upper_bound = PRODUCT_NUM_INPUT_MACHINES_MAX;
+    }
+    int max_num_inputs = std::min<int>(machines_upper_bound, machines.size());
+    std::uniform_int_distribution<>
+        num_machines_dist(min_num_inputs, max_num_inputs);
     const std::size_t num_machines =
         num_machines_dist(Sim::get_random_generator());
     std::uniform_int_distribution<>
         product_machine_index_dist(0, machines.size() - 1);
     std::set<int> indices;
     while (indices.size() < num_machines) {
-        indices.insert(product_machine_index_dist(Sim::get_random_generator()));
+        int index = product_machine_index_dist(Sim::get_random_generator());
+        indices.insert(index);
     }
     for (int index : indices) {
         machines_needed.push_back(machines[index]);

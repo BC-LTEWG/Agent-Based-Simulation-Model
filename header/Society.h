@@ -39,17 +39,15 @@ class Society : public Agent {
         unsigned int get_current_work_hours_daily();
         unsigned int get_current_work_days_weekly();
         int get_initial_account();
-        std::unordered_map<Product *, double>& get_initial_production();
+        std::unordered_map<Product *, double>& get_gross_hourly_demand_per_capita();
         std::vector<Producer *>& get_producers();
         std::vector<Producer *>& get_suppliers(Product * product);
         double get_busyness();
         double get_average_account();
         double get_total_employment();
-        std::unordered_map<Product *, int>& get_product_production_count();
+        std::unordered_map<Product *, int>& get_number_of_producers_for_product();
         void pay_into_public_fund(double amount);
         void charge_from_public_fund(double amount);
-
-        void log_total_employment();
 
     private:
         Society();
@@ -70,7 +68,10 @@ class Society : public Agent {
                 const std::vector<ConsumerGood *>&,
                 std::size_t
                 );
-        void adjust_io_matrix(Eigen::MatrixXd&);
+        double normalize_io_matrix(Eigen::MatrixXd&);
+        void apply_machine_scaling(Eigen::MatrixXd&, Eigen::VectorXd&);
+        void apply_normalization_to_products(const Eigen::MatrixXd&, double);
+        double get_production_spectral_radius(const Eigen::MatrixXd&);
         void check_expand_public_sector();
         void check_sample_busyness_data();
         void check_update_work_hours();
@@ -108,7 +109,7 @@ class Society : public Agent {
         double initial_account;
         double average_account;
         double busyness;
-        std::unordered_map<Product *, double> initial_production;
-        std::unordered_map<Product *, int> product_production_count;
+        std::unordered_map<Product *, double> gross_hourly_demand_per_capita;
+        std::unordered_map<Product *, int> product_to_number_of_producers;
         std::vector<double> busyness_data;
 };
