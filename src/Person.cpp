@@ -220,9 +220,10 @@ void Person::update_busyness() {
 void Person::on_time_step() {
 	++age;
     consume();
-	if (will_retire()) {
-        retire();
-    }
+    // this is not a good idea until we implement replacement population growth
+	// if (will_retire()) {
+        // retire();
+    // }
 	update_health_status();
 
 	if (will_shop()) {

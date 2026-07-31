@@ -21,6 +21,7 @@ class Producer : public Firm {
     );
     Logger::Client get_client_type() override;
     void add_to_catalog(Product * product) override;
+    void initialize_inventory() override;
     bool can_produce(Product * product);
 	Order * draft_plan_and_return_order(const Order * order);
 	void drop_order(Firm * customer);
@@ -29,7 +30,8 @@ class Producer : public Firm {
   private:
     std::unordered_map<Firm *, Plan *> customer_to_draft_plan;
 
-    double get_max_order_quantity(Product * product);
+    double get_max_order_quantity(const Order * order);
     void log_draft_plan(const Plan * draft_plan);
     void log_dropped_order(const Order * order);
+    
 };
