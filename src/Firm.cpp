@@ -145,7 +145,7 @@ std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
     int available_workers_for_transfer = 
         static_cast<int>(
             workers.size() * 
-            (firm_busyness / societal_busyness)
+            (1 - firm_busyness / (societal_busyness + TRANSFER_BUSYNESS_THRESHOLD))
         );
     int max_workers_to_transfer = std::min(available_workers_for_transfer, workers_wanted);
     log_busyness(firm_busyness, max_workers_to_transfer);
