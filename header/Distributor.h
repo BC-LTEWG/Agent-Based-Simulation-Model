@@ -2,10 +2,10 @@
 
 #include <string>
 #include <tuple>
-#include <unordered_map>
 #include <vector>
 
 #include "Firm.h"
+#include "ContainerTypes.h"
 
 struct Product;
 class Distributor;
@@ -15,7 +15,7 @@ class Producer;
 class Distributor : public Firm {
   public:
     Distributor(
-        const std::unordered_set<Product *>& initial_catalog = {}
+        const SET<Product *>& initial_catalog = {}
     );
     Logger::Client get_client_type() override;
     void add_to_catalog(Product * product) override;

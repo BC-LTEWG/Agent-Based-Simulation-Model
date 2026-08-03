@@ -9,7 +9,7 @@ GRAPH_DIR = ${DOCS_DIR}/graphs
 TEST_SRCS = $(wildcard ${TEST_DIR}/*.cpp)
 TEST_EXECS = $(patsubst %.cpp, %.test, ${TEST_SRCS})
 APP = ${BIN_DIR}/sim
-FLAGS = -Wall -Wsign-compare -Iheader -std=c++17 -g
+FLAGS = -Wall -Wsign-compare -Iheader -std=c++17 -g -D DEBUG
 PLOT_SRC = ${GRAPH_DIR}/plot_producer_distributor_transactions.cpp
 PLOT_APP = ${BIN_DIR}/plot_producer_distributor_transactions
 MATPLOT_INCLUDE ?= ${HOME}/.local/include
@@ -113,3 +113,6 @@ score: coverage
 	@lcov --ignore-errors inconsistent,range,format,corrupt,empty --extract tmp.info '*/src/*' --output-file tmp.filtered.info --quiet 2>/dev/null
 	@lcov --ignore-errors inconsistent,range,format,corrupt,empty --summary tmp.filtered.info 2>/dev/null
 	@rm -f tmp.info tmp.filtered.info
+
+g++ -Wall -Wsign-compare -Iheader -std=c++17 src/Distributor.cpp -E
+
