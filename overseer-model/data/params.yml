@@ -1,0 +1,230 @@
+presets:
+  default_preset:
+    name: Default
+    desc: ''
+    params:
+      exe_path: /media/Big-Boy/Nextcloud/Personal-Programming/Labor-Time-Economy-Simulation/bin/sim
+      N_g: 5
+      N_S: 10000
+      N_h: 500
+      N_inputs_max: 5
+      N_m: 1
+      N_p: 5
+      N_d: 5
+      W: 5
+      T: 8
+      S: 0.5
+      v_ability: 0.1
+      N_a: 5
+      fixed_seed: true
+      seed: 686198000
+      is_logging: false
+      productivity: 0.9
+      consump_epsilon: 0.6
+      init_prices: labor_values
+      free_goods: true
+      new_free_good_interval: 2
+  problems:
+    name: Problems
+    desc: Everyone ran out of stuff.
+    params:
+      N_c: 5
+      N_S: 10000
+      N_h: 100
+      m_r: 5
+      N_p: 5
+      N_d: 5
+      W: 5
+      T: 8
+      S: 0.01
+      v_ability: 0.0005
+      is_logging: false
+  devins_pr:
+    name: Devins PR
+    desc: ''
+    params:
+      N_c: 5
+      N_S: 10000
+      N_h: 100
+      N_inputs_max: 5
+      N_m: 1
+      N_p: 5
+      N_d: 5
+      W: 5
+      T: 8
+      S: 0.1
+      v_ability: 0.1
+      N_a: 5
+      fixed_seed: false
+      seed: 2728540000
+      is_logging: false
+      productivity: 0.5
+      consump_epsilon: 0.6
+      init_prices: labor_values
+  fixed_seed:
+    name: fixed seed
+    desc: ''
+    params:
+      N_c: 5
+      N_S: 10000
+      N_h: 100
+      N_inputs_max: 5
+      N_m: 1
+      N_p: 5
+      N_d: 5
+      W: 5
+      T: 8
+      S: 0.1
+      v_ability: 0.1
+      N_a: 5
+      fixed_seed: true
+      seed: 2094100000
+      is_logging: false
+      productivity: 0.5
+      consump_epsilon: 0.6
+      init_prices: labor_values
+  busyness_problems:
+    name: busyness problems
+    desc: ''
+    params:
+      N_c: 5
+      N_S: 10000
+      N_h: 100
+      N_inputs_max: 5
+      N_m: 0
+      N_p: 6
+      N_d: 5
+      W: 5
+      T: 8
+      S: 0.1
+      v_ability: 0.1
+      N_a: 5
+      fixed_seed: true
+      seed: 50
+      is_logging: false
+      productivity: 0.8
+      consump_epsilon: 0.6
+      init_prices: labor_values
+  good_test_for_working_day_reduction:
+    name: Good test for working day reduction
+    desc: ''
+    params:
+      N_c: 5
+      N_S: 10000
+      N_h: 100
+      N_inputs_max: 5
+      N_m: 0
+      N_p: 6
+      N_d: 5
+      W: 5
+      T: 8
+      S: 0.1
+      v_ability: 0.1
+      N_a: 5
+      fixed_seed: true
+      seed: 50
+      is_logging: false
+      productivity: 0.6
+      consump_epsilon: 0.6
+      init_prices: labor_values
+  machien_problems:
+    name: machien_problems
+    desc: ''
+    params:
+      exe_path: /media/Big-Boy/Nextcloud/Personal-Programming/Labor-Time-Economy-Simulation/bin/sim
+      N_g: 5
+      N_S: 10000
+      N_h: 100
+      N_inputs_max: 5
+      N_m: 1
+      N_p: 5
+      N_d: 5
+      W: 5
+      T: 8
+      S: 0.1
+      v_ability: 0.1
+      N_a: 5
+      fixed_seed: true
+      seed: 245806000
+      is_logging: false
+      productivity: 0.5
+      consump_epsilon: 0.6
+      init_prices: labor_values
+      free_goods: false
+      new_free_good_interval: 2160
+  spooky:
+    name: Spooky
+    desc: Order sizes suddenly get halved for seemingly no reason
+    params:
+      exe_path: /media/Big-Boy/Nextcloud/Personal-Programming/Labor-Time-Economy-Simulation/bin/sim
+      N_g: 5
+      N_S: 10000
+      N_h: 500
+      N_inputs_max: 5
+      N_m: 1
+      N_p: 5
+      N_d: 5
+      W: 5
+      T: 8
+      S: 0.1
+      v_ability: 0.1
+      N_a: 5
+      fixed_seed: true
+      seed: 245806000
+      is_logging: false
+      productivity: 0.9
+      consump_epsilon: 0.6
+      init_prices: labor_values
+      free_goods: false
+      new_free_good_interval: 2160
+  emergency_orders_are_necessary_during_stalls:
+    name: emergency orders are necessary during stalls
+    desc: there should be a stallage between 1k and 2k hours during a plan. commenting
+      out the emergency reorder makes the economy crash.
+    params:
+      exe_path: /media/Big-Boy/Nextcloud/Personal-Programming/Labor-Time-Economy-Simulation/bin/sim
+      N_g: 5
+      N_S: 10000
+      N_h: 500
+      N_inputs_max: 5
+      N_m: 1
+      N_p: 5
+      N_d: 5
+      W: 5
+      T: 8
+      S: 0.1
+      v_ability: 0.1
+      N_a: 5
+      fixed_seed: true
+      seed: 245806000
+      is_logging: false
+      productivity: 0.8
+      consump_epsilon: 0.6
+      init_prices: labor_values
+      free_goods: false
+      new_free_good_interval: 2160
+  diagnose:
+    name: diagnose!
+    desc: ''
+    params:
+      exe_path: /home/alex/Nextcloud/Personal-Programming/Labor-Time-Economy-Simulation/bin/sim
+      N_g: 5
+      N_S: 10000
+      N_h: 500
+      N_inputs_max: 5
+      N_m: 1
+      N_p: 5
+      N_d: 5
+      W: 5
+      T: 8
+      S: 0.5
+      v_ability: 0.1
+      N_a: 5
+      fixed_seed: false
+      seed: 686198000
+      is_logging: false
+      productivity: 0.9
+      consump_epsilon: 0.6
+      init_prices: labor_values
+      free_goods: true
+      new_free_good_interval: 2

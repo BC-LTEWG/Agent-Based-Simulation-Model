@@ -50,6 +50,7 @@ Houes-Money\ Interface\ Improved/main
 myenv
 .vscode
 *.json
+*.jsonl
 
 # debug information files
 *.dwo
@@ -58,10 +59,13 @@ myenv
 __pycache__/
 *.py[cod]
 *.egg-info/
+*.pyc
 *.eggs/
 build/
 dist/
 
+overseer_model/data/params.yml
+saved_results/
 
 bin/*
 build/*

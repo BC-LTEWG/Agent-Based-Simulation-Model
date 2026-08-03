@@ -1,0 +1,23 @@
+demos:
+  bc_lte:
+    name: BC LTE
+    desc: ''
+    details:
+      simulation_function: get_trajectories
+      default_preset: default_preset
+      axis_settings:
+        limits:
+          a1: [[-1.10232, 0.922859], [-0.497232, 0.65777]]
+        dimension: [1, 1]
+        dropdown_indices: [4]
+        checked_plots:
+          a1: [Dependency Graph]
+        settings:
+          a1:
+            legend_visible: true
+            legend_fontsize: 10
+            legend_loc: upper right
+            title: true
+            xlabel: true
+            ylabel: true
+    default: true
