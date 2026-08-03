@@ -92,7 +92,6 @@ void Distributor::check_and_reorder_input(Product * product) {
         return;
     }
     double resupply_deficit = get_resupply_deficit(product);
-
     if (resupply_deficit <= 0) {
         return;
     }
@@ -106,7 +105,7 @@ void Distributor::check_and_reorder_input(Product * product) {
     if (inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
-    
+    log_reorder_attempt(product);
     double lead_time = 
         static_cast<int>(get_inventory_level(good)) / resupply_deficit;
     lead_time = std::min(
@@ -120,12 +119,15 @@ void Distributor::check_and_reorder_input(Product * product) {
             this,
             lead_time
             );
-    if (Plan * plan = draft_plan_for_order(order)) {
-        product_to_outbound_orders[consumer_good].insert(order);
-        start_plan(plan);
+
+    Plan * plan = draft_plan_for_order(order);
+    if (!plan) {
+        log_reorder_failure(product);
+        return;
+    }
+    product_to_outbound_orders[consumer_good].insert(order);
+    if (start_plan(plan)) {
         log_pursued_plan(plan);
-    } else {
-        log_reorder_failure(product, "no_workers_available");
     }
 }
 

@@ -69,7 +69,8 @@ class Firm : public Agent {
     double get_reorder_threshold(Product * product);
     double get_resupply_deficit(Product * product);
     virtual void check_and_reorder_input(Product * product);
-    void start_plan(Plan * plan);
+    bool start_plan(Plan * plan);
+    void handle_start_plan_failure(Plan * plan, Product * product, double missing);
     void return_inputs_to_inventory(
         std::unordered_map<Product *, double> deducted_inputs,
         Firm * firm
@@ -110,7 +111,6 @@ class Firm : public Agent {
     void log_shipment_received(const Product * product, const double quantity);
     void log_inventory_level(const Product * product, const double quantity);
     void log_inventory_reduction(const Product * product, const double quantity);
-    void log_reorder(const Product * product, int quantity);
     void log_initial_employment(const unsigned int worker_id, const unsigned int workplace_id);
     void log_busyness(double firm_busyness, int max_workers_for_transfer);
     void log_employment_transfer(
@@ -118,18 +118,33 @@ class Firm : public Agent {
             const unsigned int old_workplace_id,
             const unsigned int new_workplace_id
             );
-    void log_reorder_failure(const Product * product, std::string reason);
+    void log_drafting_failure_goods(
+        const Product * product,
+        std::vector<Product *> missing_resources
+    );
+    void log_drafting_failure_workers(const Product * product);
+    void log_reorder_attempt(const Product * product);
+    void log_reorder_failure(const Product * product);
     void log_transfer_request();
     void log_product_quantity(
             const char * const label,
             const Product * product,
             const double quantity
             );
-    void log_accepted_order(const Order * original_order, const Order * chosen_return_Order);
-    void log_plan_stallage(Plan * plan, std::string situation);
-    void log_start_plan_stalled(Plan * plan, Product * product);
+    void log_accepted_order(
+        const Order * original_order,
+        const Order * chosen_return_Order
+    );
+    void log_plan_stallage(Plan *, Product *, double);
+    void log_plan_stallage_resolved(Plan *);
+    void log_start_plan_stalled(Plan * plan, Product * product, double missing);
     void log_start_plan_stallage_resolved(Plan * plan);
-    void log_demand(const Product * Product, double demand);
+    void log_demand(Product * Product, double demand);
+    void log_resupply_rate(
+        const Product * product,
+        double resupply_rate,
+        double resupply_deficit
+    );
     void log_catalog();
     void log_catalog_addition(Product * product);
 };

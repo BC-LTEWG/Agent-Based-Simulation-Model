@@ -68,8 +68,9 @@ void PriceController::update_price(Plan * plan) {
             0,
             "new_price",
             LogPair("product_id", product->id),
-            LogPair("price", price)
-            );
+            LogPair("price", price),
+            LogPair("living_labor_per_unit", product->living_labor_per_unit)
+        );
 }
 
 void PriceController::report_distribution(ConsumerGood * consumer_good, int quantity) {
