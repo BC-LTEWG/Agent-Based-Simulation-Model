@@ -2,8 +2,6 @@
 
 #include <string>
 #include <tuple>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 #include <queue>
 
@@ -41,18 +39,18 @@ class Firm : public Agent {
 
   protected:
     unsigned int id;
-    std::unordered_map<Product *, double> average_team_sizes;
+    MAP<Product *, double> average_team_sizes;
     double pooled_input_value = 0.0;
-    std::unordered_set<Person *> workers,
+    SET<Person *> workers,
         standby_workers;
-    std::unordered_map<Product *, double> input_inventory;
-    std::unordered_set<Product *> catalog;
+    MAP<Product *, double> input_inventory;
+    SET<Product *> catalog;
     
-    std::unordered_map<Product *, double> consumer_demands;
-    std::unordered_map<Product *, double> producer_demands;
-    std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
-    std::unordered_map<Product *, double> recorded_living_labor_per_unit;
-    std::unordered_set<Plan *> plans_in_progress;
+    MAP<Product *, double> consumer_demands;
+    MAP<Product *, double> producer_demands;
+    MAP<Product *, SET<Order *>> product_to_outbound_orders;
+    MAP<Product *, double> recorded_living_labor_per_unit;
+    SET<Plan *> plans_in_progress;
 
     Producer * send_order(Order * order);
     bool remove_input_from_inventory(
@@ -64,14 +62,14 @@ class Firm : public Agent {
         Product * product,
         double quantity,
         Firm * firm,
-        std::unordered_map<Product *, double>& container
+        MAP<Product *, double>& container
     );
     double get_reorder_threshold(Product * product);
     double get_resupply_deficit(Product * product);
     virtual void check_and_reorder_input(Product * product);
     void start_plan(Plan * plan);
     void return_inputs_to_inventory(
-        std::unordered_map<Product *, double> deducted_inputs,
+        MAP<Product *, double> deducted_inputs,
         Firm * firm
     );
     void rollback_plan_inputs(Plan * plan, Firm * firm);

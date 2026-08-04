@@ -331,7 +331,7 @@ class ThreadPoolTempl : public Eigen::ThreadPoolInterface {
 #ifndef EIGEN_THREAD_LOCAL
   std::unique_ptr<Barrier> init_barrier_;
   EIGEN_MUTEX per_thread_map_mutex_;  // Protects per_thread_map_.
-  std::unordered_map<uint64_t, std::unique_ptr<PerThread>> per_thread_map_;
+  MAP<uint64_t, std::unique_ptr<PerThread>> per_thread_map_;
 #endif
 
   unsigned NumBlockedThreads() const { return blocked_.load(); }

@@ -114,5 +114,3 @@ score: coverage
 	@lcov --ignore-errors inconsistent,range,format,corrupt,empty --summary tmp.filtered.info 2>/dev/null
 	@rm -f tmp.info tmp.filtered.info
 
-g++ -Wall -Wsign-compare -Iheader -std=c++17 src/Distributor.cpp -E
-

@@ -1,12 +1,11 @@
 #pragma once
 
 #include <Eigen/Dense>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include "Agent.h"
 #include "Constants.h"
+#include "Debug.h"
 
 struct Ability;
 struct ConsumerGood;
@@ -34,18 +33,18 @@ class Society : public Agent {
         void set_underlying_living_labor_per_unit(Product * product, double ll);
         std::vector<Firm *>& get_firms();
         std::vector<Distributor *>& get_distributors();
-        std::unordered_set<Person *>& get_unemployed_people();
+        SET<Person *>& get_unemployed_people();
         void retire_person(Person * person);
         unsigned int get_current_work_hours_daily();
         unsigned int get_current_work_days_weekly();
         int get_initial_account();
-        std::unordered_map<Product *, double>& get_gross_hourly_demand_per_capita();
+        MAP<Product *, double>& get_gross_hourly_demand_per_capita();
         std::vector<Producer *>& get_producers();
         std::vector<Producer *>& get_suppliers(Product * product);
         double get_busyness();
         double get_average_account();
         double get_total_employment();
-        std::unordered_map<Product *, int>& get_number_of_producers_for_product();
+        MAP<Product *, int>& get_number_of_producers_for_product();
         void pay_into_public_fund(double amount);
         void charge_from_public_fund(double amount);
 
@@ -91,22 +90,22 @@ class Society : public Agent {
         std::vector<ConsumerGood *> consumer_goods;
         std::vector<Machine *> machines;
         std::vector<Product *> products;
-        std::unordered_map<Product *, double> underlying_living_labor_per_unit;
+        MAP<Product *, double> underlying_living_labor_per_unit;
         std::vector<Firm *> firms;
         std::vector<Producer *> producers;
-        std::unordered_map<Product *, std::vector<Producer *>>
+        MAP<Product *, std::vector<Producer *>>
             product_to_suppliers;
         std::vector<Distributor *> distributors;
-        std::unordered_map<Product *, std::vector<Distributor *>>
+        MAP<Product *, std::vector<Distributor *>>
             product_to_distributors;
         std::vector<Ability *> abilities;
         std::vector<Ability *> distribution_abilities;
         unsigned int current_work_hours_daily = INITIAL_WORK_HOURS_DAILY;
 		unsigned int current_work_days_weekly = INITIAL_WORK_DAYS_WEEKLY;
-        std::unordered_set<Person *> unemployed_people;
+        SET<Person *> unemployed_people;
         double initial_account;
         double average_account;
         double busyness;
-        std::unordered_map<Product *, double> gross_hourly_demand_per_capita;
-        std::unordered_map<Product *, int> product_to_number_of_producers;
+        MAP<Product *, double> gross_hourly_demand_per_capita;
+        MAP<Product *, int> product_to_number_of_producers;
 };

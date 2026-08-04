@@ -1,10 +1,9 @@
 #include <algorithm>
 #include <iostream>
-#include <unordered_map>
-#include <unordered_set>
 #include <numeric>
 
 #include "ConsumerGood.h"
+#include "Debug.h"
 #include "Distributor.h"
 #include "Good.h"
 #include "Logger.h"
@@ -18,7 +17,7 @@
 #include "Society.h"
 
 Producer::Producer(
-        const std::unordered_set<Product *>& initial_catalog
+        const SET<Product *>& initial_catalog
         ) :
     Firm()
 {
