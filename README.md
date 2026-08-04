@@ -1,4 +1,4 @@
-# Agent-Based Simulation
+# Labor Time Economy Agent Based Simulation
 
 Code and supporting documents for the Labor-Time Economy Working Group project at Boston College.
 
