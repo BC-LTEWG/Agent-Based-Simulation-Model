@@ -66,7 +66,7 @@ dist/
 
 # Overseer related
 overseer_model/data/params.yml
-overseer_mode/demos.yml
+# overseer_mode/demos.yml
 saved_results/
 logs/
 
