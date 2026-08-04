@@ -106,6 +106,15 @@ chmod +x "$LAUNCHER_FILE"
 
 echo
 echo "Setup complete."
-echo "To launch Overseer, run:"
+echo "To launch the application, run:"
 echo
 echo "    ./run.sh"
+echo 
+echo "Additional details which might be relevant to you:"
+echo "If you want the rest of the models that come packaged with Overseer, 
+        go into the settings and change your 'User models directory to a
+        directory where you want your user data to go (make sure that the 
+        exact folder does not exist yet). The models will be created there 
+        the next time that you launch Overseer."
+echo "You can then move the overseer_model directory here to that user models folder
+        and have everything in one place."
