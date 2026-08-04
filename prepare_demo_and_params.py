@@ -18,7 +18,6 @@ def prepare_LTE_demo(model_path: Path, bc_demo_file: Path) -> None:
 
     demos = demo_dict.get("demos")
     if not isinstance(demos, dict):
-        print("Demos section is missing or invalid. Creating from scratch.")
         demo_dict["demos"] = {}
         demos = demo_dict["demos"]
 
@@ -40,7 +39,6 @@ def prepare_LTE_demo(model_path: Path, bc_demo_file: Path) -> None:
 
     bc_lte_dict = demos.get("bc_lte")
     if not isinstance(bc_lte_dict, dict):
-        print("Demos dict has a missing or invalid BC-LTE entry. Creating one.")
         demos["bc_lte"] = bc_demo
 
     with open(demos_file, "w") as f:
