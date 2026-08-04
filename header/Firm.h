@@ -41,6 +41,8 @@ class Firm : public Agent {
     virtual Logger::Client get_client_type() = 0;
     virtual void on_time_step() override;
     virtual void add_to_catalog(Product * product) = 0;
+    virtual void initialize_inventory() = 0;
+    void inject_randomness_into_demand();
     double get_avg_productivity();
     virtual double get_inventory_level(Product * product);
     void receive_shipment(Order * order);
@@ -54,6 +56,7 @@ class Firm : public Agent {
 
   protected:
     unsigned int id;
+    std::unordered_map<Product *, double> average_team_sizes;
     double pooled_input_value = 0.0;
     std::unordered_set<Machine *> machines;
     std::unordered_set<Person *> workers,
@@ -61,39 +64,58 @@ class Firm : public Agent {
     std::unordered_map<Product *, double> input_inventory;
     std::unordered_set<Product *> catalog;
     
-    std::unordered_map<Product *, double> demands;
+    std::unordered_map<Product *, double> consumer_demands;
+    std::unordered_map<Product *, double> producer_demands;
     std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
     std::unordered_map<Product *, double> recorded_living_labor_per_unit;
     std::unordered_set<Plan *> plans_in_progress;
 
     Producer * send_order(Order * order);
-    bool remove_input_from_inventory(Product * product, double quantity);
     bool remove_input_from_inventory(
         Product * product,
         double quantity,
+        Firm * firm
+    );
+    bool remove_input_from_inventory(
+        Product * product,
+        double quantity,
+        Firm * firm,
         std::unordered_map<Product *, double>& container
     );
     double get_reorder_threshold(Product * product);
-    double get_needed_resupply_rate(Product * product);
+    double get_resupply_deficit(Product * product);
     virtual void check_and_reorder_input(Product * product);
     void start_plan(Plan * plan);
-    void return_inputs_to_inventory(std::unordered_map<Product *, double> container);
-    void rollback_plan_inputs(Plan * plan);
+    void return_inputs_to_inventory(
+        std::unordered_map<Product *, double> deducted_inputs,
+        Firm * firm
+    );
+    void rollback_plan_inputs(Plan * plan, Firm * firm);
     void move_plan_forward_one_step(Plan * plan);
     void end_plan(Plan * plan);
     void move_plans_forward_one_step();
     double calculate_quantity_produced_from_worker_suitability(Plan * plan);
-    bool is_within_work_schedule() const;
+    bool is_within_work_schedule(Plan * plan) const;
 
-    int predict_workers_needed(Plan * plan);
+    double get_pending_inventory(Product * product);
+    double get_work_week_proportion();
+    void reorder_stalled_plan_input(Product * product, double deficit);
+    int predict_workers_needed(const Order * order);
+    std::vector<Person *> get_available_workers(const Order * order);
     void assign_workers(Plan * draft_plan);
+    void adjust_quantity_for_deadline(Plan * plan);
     double predict_turnaround_time(Plan * plan); 
     double predict_labor_hours(Order * order, std::vector<Person*>& workers);
     double calculate_raw_material_cost_for_order(Order * order);
     void initialize_plan_budget(Plan * draft_plan);
     double calculate_machinery_cost_for_plan(Plan * draft_plan);
     void assign_plan_dependent_fields(Plan * draft_plan);
-    void add_demand_signal(Product * product, double quantity);
+    void add_demand_signal(
+        Product * product,
+        double quantity,
+        Firm * firm
+    );
+    double get_demand(Product * product);
     Plan * draft_plan_for_order(Order * order); 
     void update_demands();
     void move_worker_off_standby(Person * worker);
@@ -106,13 +128,13 @@ class Firm : public Agent {
     void log_inventory_reduction(const Product * product, const double quantity);
     void log_reorder(const Product * product, int quantity);
     void log_initial_employment(const unsigned int worker_id, const unsigned int workplace_id);
-    void log_busyness(double firm_busyness, double societal_busyness, int max_workers_for_transfer);
+    void log_busyness(double firm_busyness, int max_workers_for_transfer);
     void log_employment_transfer(
             const unsigned int worker_id,
             const unsigned int old_workplace_id,
             const unsigned int new_workplace_id
             );
-    void log_reorder_failure(const Product * product, int quantity);
+    void log_reorder_failure(const Product * product, std::string reason);
     void log_transfer_request();
     void log_product_quantity(
             const char * const label,
@@ -120,6 +142,9 @@ class Firm : public Agent {
             const double quantity
             );
     void log_accepted_order(const Order * original_order, const Order * chosen_return_Order);
+    void log_plan_stallage(Plan * plan, std::string situation);
+    void log_start_plan_stalled(Plan * plan, Product * product);
+    void log_start_plan_stallage_resolved(Plan * plan);
     void log_demand(const Product * Product, double demand);
     void log_catalog();
     void log_catalog_addition(Product * product);

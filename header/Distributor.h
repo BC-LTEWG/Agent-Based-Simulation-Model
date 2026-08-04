@@ -19,6 +19,7 @@ class Distributor : public Firm {
     );
     Logger::Client get_client_type() override;
     void add_to_catalog(Product * product) override;
+    void initialize_inventory() override;
     int try_sell_goods(ConsumerGood * consumer_good, int quantity, Person * person);
     
   private:

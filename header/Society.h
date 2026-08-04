@@ -39,17 +39,15 @@ class Society : public Agent {
         unsigned int get_current_work_hours_daily();
         unsigned int get_current_work_days_weekly();
         int get_initial_account();
-        std::unordered_map<Product *, double>& get_initial_production();
+        std::unordered_map<Product *, double>& get_gross_hourly_demand_per_capita();
         std::vector<Producer *>& get_producers();
         std::vector<Producer *>& get_suppliers(Product * product);
         double get_busyness();
         double get_average_account();
         double get_total_employment();
-        std::unordered_map<Product *, int>& get_product_production_count();
+        std::unordered_map<Product *, int>& get_number_of_producers_for_product();
         void pay_into_public_fund(double amount);
         void charge_from_public_fund(double amount);
-
-        void log_total_employment();
 
     private:
         Society();
@@ -70,7 +68,10 @@ class Society : public Agent {
                 const std::vector<ConsumerGood *>&,
                 std::size_t
                 );
-        void adjust_io_matrix(Eigen::MatrixXd&);
+        double normalize_io_matrix(Eigen::MatrixXd&);
+        void apply_machine_scaling(Eigen::MatrixXd&, Eigen::VectorXd&);
+        void apply_normalization_to_products(const Eigen::MatrixXd&, double);
+        double get_production_spectral_radius(const Eigen::MatrixXd&);
         void check_expand_public_sector();
         void log_io_matrix(Eigen::MatrixXd&, size_t);
         void log_vector(Eigen::VectorXd&, std::string, size_t);
@@ -79,6 +80,8 @@ class Society : public Agent {
         void log_public_revenue(double);
         void log_public_expenditure(double);
         void log_public_sector_expansion(ConsumerGood * consumer_good);
+        void log_busyness();
+        void log_total_employment();
         void set_abilities(std::vector<Ability *>& abilities, std::vector<Ability *>& distribution_abilities);
         void set_initial_account(double& initial_account, const std::vector<ConsumerGood *>& consumer_goods);
 
@@ -104,6 +107,6 @@ class Society : public Agent {
         double initial_account;
         double average_account;
         double busyness;
-        std::unordered_map<Product *, double> initial_production;
-        std::unordered_map<Product *, int> product_production_count;
+        std::unordered_map<Product *, double> gross_hourly_demand_per_capita;
+        std::unordered_map<Product *, int> product_to_number_of_producers;
 };
