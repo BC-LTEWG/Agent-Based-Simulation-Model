@@ -66,6 +66,7 @@ dist/
 
 overseer_model/data/params.yml
 saved_results/
+logs/
 
 bin/*
 build/*
