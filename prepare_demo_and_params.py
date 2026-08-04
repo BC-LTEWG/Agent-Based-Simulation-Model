@@ -10,9 +10,10 @@ def prepare_LTE_demo(model_path: Path, bc_demo_file: Path) -> None:
 
         if not isinstance(demo_dict, dict):
             raise ValueError
+    except FileNotFoundError:
+        demo_dict = {}
     except (OSError, ValueError, yaml.YAMLError) as e:
-        print(f"Error loading user's demos.yml file: {e}.")
-        print("It is probably broken. Replacing.")
+        print(f"Replacing missing or invalid demos.yml file.")
         demo_dict = {}
 
     demos = demo_dict.get("demos")
@@ -54,6 +55,9 @@ def prepare_model_preset(model_path: Path, sim_path: str) -> None:
         presets = presets_dict["presets"]
         if not isinstance(presets, dict):
             raise ValueError
+    except FileNotFoundError:
+        presets_dict = {"presets": {}}
+        presets = presets_dict["presets"]
     except (OSError, ValueError, yaml.YAMLError) as e:
         print(f"Error loading user's params.yml file: {e}")
         print("It is probably broken. Replacing.")
