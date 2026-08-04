@@ -20,6 +20,8 @@ if ! command -v make >/dev/null 2>&1; then
     exit 1
 fi
 
+echo "All checks passed. Proceeding to installation."
+
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
@@ -29,10 +31,12 @@ source "$SCRIPT_DIR/venv/bin/activate"
 
 echo "Installing Overseer..."
 "$PYTHON_CMD" -m pip install -e "$SCRIPT_DIR/Overseer"
-
+echo "Successfully installed Overseer!"
+echo ""
 echo "Building simulation binary..."
 make
-
+echo "Successfully created binary!"
+echo ""
 echo "Configuring files..."
 USER_CONFIG_DIR="$(python -c '
     from platformdirs import user_config_dir
@@ -76,17 +80,10 @@ global_settings:
 EOF
 fi
 
-PARAMS_FILE="$SCRIPT_DIR/overseer_model/data/params.yml"
-
-cat > "$PARAMS_FILE" <<EOF
-presets:
-    default_preset:
-        name: default_preset
-        params:
-            exe_path: "$SCRIPT_DIR/bin/sim"
-EOF
-
-echo "Creating launcher script..."
+BC_DEMO_FILE="$SCRIPT_DIR/bc_lte_demo.yml" \
+SIM_PATH="$SCRIPT_DIR/bin/sim" \
+MODEL_PATH="$USER_MODELS_DIR/overseer_model" \
+"$PYTHON_CMD" "$SCRIPT_DIR/prepare_demo_and_params.py"
 
 LAUNCHER_FILE="$SCRIPT_DIR/run.sh"
 
@@ -111,10 +108,9 @@ echo
 echo "    ./run.sh"
 echo 
 echo "Additional details which might be relevant to you:"
-echo "If you want the rest of the models that come packaged with Overseer, 
-        go into the settings and change your 'User models directory to a
-        directory where you want your user data to go (make sure that the 
-        exact folder does not exist yet). The models will be created there 
-        the next time that you launch Overseer."
-echo "You can then move the overseer_model directory here to that user models folder
-        and have everything in one place."
+echo "If you want the rest of the models that come packaged with Overseer, " \
+    "go into the settings and change your 'User models directory to a " \
+    "directory where you want your user data to go (make sure that the " \
+    "exact folder does not exist yet). The models will be created there " \
+    "the next time that you launch Overseer. You can then move the overseer_model " \
+    "directory here to that user models folder and have everything in one place."
