@@ -71,7 +71,8 @@ class Aggregator:
         self.current_day = 0
         self.stdout_done = False
         self.stderr_done = False
-
+        self.unknown_clients = set()
+        self.unknown_labels = set()
         self.current_cout = []
 
         self.fic = 0.0
@@ -81,13 +82,74 @@ class Aggregator:
         self.public_expenditure = 0.0
         self.public_revenue = 0.0
 
-        # HERE IS WHERE YOU WOULD DECLARE ANY QUANTITIES WHICH YOU WANT THE OVERSEER TO KEEP TRACK OF
         self.prices = np.zeros(self.settings["n_products"])
         self.living_labor_values = np.zeros(self.settings["n_products"])
-        self.turnover_times = [[] for n in range(self.settings["n_products"])]
+        self.turnover_times = [[] for _ in range(self.settings["n_products"])]
         self.current_employment = 0
 
+        self.firm_client_types = {"Producer", "Distributor"}
+        self.client_dic_lookup = {
+            "Simulation": {
+                "random_seed": self.record_sim_seed
+            },
+            "Society": {
+                "A": self.record_A_matrix_entry,
+                "l": self.record_living_labor_coeff,
+                "b": self.record_real_wage_entry,
+                "price": self.record_initial_price,
+                "new_price": self.record_price_change,
+                "mean_consumption_frequency": self.record_consumption_frequency,
+                "employment": self.record_current_employment_level,
+                "societal_busyness": self.record_societal_busyness,
+                "fic": self.record_fic,
+                "public_sector_distribution_value": self.record_public_sector_distribution_value,
+                "all_distribution_value": self.record_average_consumer_goods_value,
+                "public_fund": self.record_public_fund,
+                "public_expenditure": self.record_public_expenditure,
+                "public_revenue": self.record_public_revenue,
+                "censored_busyness_distribution": self.record_censored_busyness_dist,
+                "predicted_uncensored_busyness_distribution": self.record_uncensored_busyness_dist,
+                "work_hours_weekly": self.record_work_hours_weekly,
+                "busyness_data": self.record_busyness_data
+            },
+            "Person": {
+                "age": self.record_person_age,
+                "account": self.record_person_account,
+                "health_status": self.record_person_health,
+                "consumption": self.record_person_consumption,
+                "ability": self.record_person_ability,
+                "inventory": self.record_person_inventory,
+                "purchase": self.record_person_purchase,
+                "hours_worked": self.record_hours_worked
+            },
+            "Firm": {
+                "inventory_level": self.record_inventory_level,
+                "inventory_reduction": self.record_inventory_reduction,
+                "catalog_addition": self.record_catalog_addition,
+                "pursued_plan": self.record_pursued_plan,
+                "ended_plan": self.record_plan_ended,
+                "shipment_received": self.record_shipment_received,
+                "current_demand": self.record_demand_signal,
+                "resupply_rate": self.record_resupply_rate,
+                "drafting_failure": self.record_drafting_failure,
+                "stalled_plan": self.record_stalled_plan,
+                "unstalled_plan": self.record_stallage_resolved,
+                "start_plan_stalled": self.record_start_plan_stalled,
+                "start_plan_stallage_resolved": self.record_start_plan_stallage_resolved,
+                "reorder_attempt": self.record_reorder_attempt,
+                "reorder_failure": self.record_reorder_failure,
+                "newly_employed": self.record_newly_employed,
+                "busyness": self.record_sector_busyness,
+                "accepted_order": self.record_accepted_order,
+                "transfer_request": self.record_transfer_request,
+                "transfer": self.record_employment_transfer
+            },
+            "Producer": {},
+            "Distributor": {}
+        }
+
         self.persons = {i: {
+            "age": 17,
             "account": 0,
             "endowment": np.zeros(self.settings["n_products"]),
             "abilities": np.zeros(self.settings["n_abilities"]),
@@ -102,7 +164,7 @@ class Aggregator:
             "demand_signals": np.zeros(self.settings["n_products"]),
             "reorder_thresholds": np.zeros(self.settings["n_products"]),
             "resupply_rates": np.zeros(self.settings["n_products"]),
-            "resupply_rates_daily": np.zeros(self.settings["n_products"]),
+            "resupply_rates_weekly": np.zeros(self.settings["n_products"]),
             "resupply_deficits": np.zeros(self.settings["n_products"]),
             "tracked_inputs": np.zeros(self.settings["n_products"], dtype= bool),
             "catalog": [],
@@ -117,7 +179,7 @@ class Aggregator:
             "demand_signals": np.zeros(self.settings["n_products"]),
             "reorder_thresholds": np.zeros(self.settings["n_products"]),
             "resupply_rates": np.zeros(self.settings["n_products"]),
-            "resupply_rates_daily": np.zeros(self.settings["n_products"]),
+            "resupply_rates_weekly": np.zeros(self.settings["n_products"]),
             "resupply_deficits": np.zeros(self.settings["n_products"]),
             "tracked_inputs": np.zeros(self.settings["n_products"], dtype= bool),
             "catalog": [],
@@ -142,8 +204,11 @@ class Aggregator:
         self.active_plans = {i: {"plans": 0, "quantity": 0} for i in range(self.settings["n_products"])}
         self.reorder_attempts = np.zeros(self.settings["n_products"])
         self.reorder_failures = np.zeros(self.settings["n_products"])
+        self.resupply_rate_data = {
+            "Producer": [[] for _ in range(self.settings["n_products"])],
+            "Distributor": [[] for _ in range(self.settings["n_products"])]
+        }
         self.overall_busyness = 0
-        self.overall_busyness_data = []
         self.overall_weekly_busyness = 0
         self.weekly_working_hours = 5*8
         self.long_run_employment_by_sector = np.zeros(self.settings["n_goods"]+self.settings["n_machines"]+1)
@@ -184,401 +249,44 @@ class Aggregator:
 
     def _process_dic(self, dic):
         """ 
-        Looks at the contents of a json logged dictionary and updates the relevant quantities accordingly
+        Looks at the contents of a json logged dictionary and updates 
+        the relevant quantities accordingly
         """
-        id = dic["id"]
-        client = dic.get("client", "")
         label = dic.get("label", "")
-        values = dic.get("values", [])
 
         if label == "text_log":
             self.log_text(dic)
             return
 
-        match client:
-            case "Simulation":
-                if label == "random_seed":
-                    self.seed = dic["value"]
-
-            case "Society":
-                if label == "A":
-                    coords_str = dic["coords"]
-                    coords = tuple(int(num) for num in coords_str[1:len(coords_str)-1].split(","))
-                    i, j = coords
-                    a_ij = dic["value"]
-                    self.A[i][j] = a_ij
-
-                if label == "l":
-                    i = dic["prod_id"]
-                    l_i = dic["value"]
-
-                    self.l[i] = l_i
-
-                if label == "b":
-                    i = dic["prod_id"]
-                    b_i = dic["value"]
-                    self.b[i] = b_i
-
-                if label == "price":
-                    id = dic["product_id"]
-                    val = dic["price_per_unit"]
-                    self.prices[id] = val
-
-                if label == "new_price":
-                    prod_id = dic["product_id"]
-                    living_labor_per_unit = dic["living_labor_per_unit"]
-                    price = dic["price"]
-                    self.prices[prod_id] = price
-                    self.living_labor_values[prod_id] = living_labor_per_unit
-
-                if label == "mean_consumption_frequency":
-                    id = dic["product_id"]
-                    val = dic["value"]
-                    self.consumption_frequencies[id] = val
-                    self.consumption_periods[id] = 1/max(val, 1e-5)
-
-                if label == "employment":
-                    self.current_employment = dic["total"]
-
-                if label == "societal_busyness":
-                    self.overall_busyness = dic["value"]
-
-                if label == "fic":
-                    self.fic = dic["value"]
-
-                if label == "public_sector_distribution_value":
-                    self.average_public_sector_consumer_goods_value = dic["value"]
-
-                if label == "all_distribution_value":
-                    self.average_consumer_goods_value = dic["value"]
-
-                if label == "public_fund":
-                    self.public_fund = dic["value"]
-
-                if label == "public_expenditure":
-                    self.public_expenditure = dic["value"]
-
-                if label == "public_revenue":
-                    self.public_revenue = dic["value"]
-
-                if label == "work_hours_weekly":
-                    self.weekly_working_hours = dic["work_hours_daily"] * dic["work_days_weekly"]
-                    self.busy_upper_bd = self.weekly_working_hours / 24 / 7
-
-                if label == "censored_busyness_distribution":
-                    self.work_hours_update_this_step = True
-                    self.censored_busyness_mean = dic["mean"]
-                    self.censored_busyness_stddev = dic["stddev"]
-                    logger.info(f"Received censored busyness update: mean = {self.censored_busyness_mean}, stddev = {self.censored_busyness_stddev}")
-
-                if label == "predicted_uncensored_busyness_distribution":
-                    self.work_hours_update_this_step = True
-                    self.uncensored_busyness_mean = dic["mean"]
-                    self.uncensored_busyness_stddev = dic["stddev"]
-
-                if label == "work_hours_weekly":
-                    self.work_hours_update_this_step = True
-                    work_hours_daily = dic["work_hours_daily"]
-                    work_days_weekly = dic["work_days_weekly"]
-                    self.busy_upper_bd = (work_hours_daily * work_days_weekly) / (24*7)
-
-                if label == "busyness_data":
-                    self.individual_busyness_data.append(dic["value"])
-
-            case "Person":
-                if label == "age":
-                    self.persons[id]["health"] = values[0]
-
-                if label == "account":
-                    self.persons[id]["account"] = dic["value"]
-
-                if label == "health_status":
-                    self.persons[id]["health"] = dic["status"]
-
-                if label == "consumption":
-                    prod_id = dic["product_id"]
-                    amt = dic["quantity"]
-                    self.persons[id]["endowment"][prod_id] -= amt
-
-                if label == "ability":
-                    ability_id = dic["ability"]
-                    val = dic["value"]
-                    person_id = dic['id']
-                    self.persons[person_id]["abilities"][ability_id] = val
-
-                if label == "inventory":
-                    prod_id = dic["product_id"]
-                    amt = dic["amount"]
-                    person_id = dic['id']
-                    self.persons[person_id]["endowment"][prod_id] = amt
-
-                if label == "purchase":
-                    prod_id = dic["product_id"]
-                    amt = dic["quantity"]
-                    self.persons[id]["endowment"][prod_id] += amt
-                    cost = self.prices[prod_id]*amt
-                    self.persons[id]["account"] -= cost
-
-                if label == "hours_worked":
-                    self.persons[id]["account"] += dic["hours"]
-
-            case "Producer":
-                if label == "inventory_level":
-                    prod_id = dic["product_id"]
-                    amt = dic["amount"]
-                    producer_id = dic['id']
-                    self.producers[producer_id]["inventory"][prod_id] = amt
-
-                if label == "inventory_reduction":
-                    prod_id = dic["product_id"]
-                    amt = dic["amount"]
-                    producer_id = dic["id"]
-                    self.producers[producer_id]["inventory"][prod_id] -= amt
-                    # distributor_inventories[id-n_producers][prod_id] -= amt
-
-                if label == "catalog_addition":
-                    product_id = dic["product_id"]
-                    self.producers[id]["catalog"].append(product_id)
-
-                if label == "pursued_plan":
-                    producer_id = id
-                    customer_id = dic["customer_id"]
-                    is_distributor = (customer_id >= self.settings["n_producers"])
-                    if is_distributor:
-                        customer_id = self._get_dist_key(customer_id)
-                    prod_id = dic["product_id"]
-                    sector_id = self.get_sector_idx(prod_id)
-                    quantity = dic["quantity"]
-                    lead_time = dic.get("lead_time", 0)
-                    team_size = dic["num_workers"]
-
-                    self.active_plans[prod_id]["plans"] += 1
-                    self.active_plans[prod_id]["quantity"] += quantity
-                    self.lead_times[prod_id].append(lead_time)
-                    self.team_sizes[prod_id].append(team_size)
-                    self.order_sizes[prod_id].append(quantity)
-                    self.long_run_sector_activity[sector_id] += quantity
-
-                    if is_distributor:
-                        self.distributors[customer_id]["inc_inventory"][prod_id] += quantity
-                    else:
-                        self.producers[customer_id]["inc_inventory"][prod_id] += quantity
-
-                if label == "ended_plan":
-                    prod_id = dic["product_id"]
-                    amt = dic["quantity"]
-                    self.active_plans[prod_id]["plans"] -= 1
-                    self.active_plans[prod_id]["quantity"] -= amt
-
-                if label == "shipment_received":
-                    prod_id = dic["product_id"]
-                    amt = dic["amount"]
-                    self.producers[id]["inc_inventory"][prod_id] -= amt
-
-                if label == "current_demand":
-                    self.record_demand_signal(dic)
-
-                if label == "resupply_rate":
-                    self.record_resupply_rate(dic)
-
-                if label == "drafting_failure":
-                    self.record_drafting_failure(dic)
-
-                if label == "stalled_plan":
-                    self.record_stalled_plan(dic)
-
-                if label == "unstalled_plan":
-                    self.record_stallage_resolved(dic)
-
-                if label == "start_plan_stalled":
-                    self.record_start_plan_stalled(dic)
-
-                if label == "start_plan_stallage_resolved":
-                    self.record_start_plan_stallage_resolved(dic)
-
-                if label == "reorder_attempt":
-                    prod_id = dic["product_id"]
-                    self.reorder_attempts[prod_id] += 1
-
-                if label == "reorder_failure":
-                    prod_id = dic["product_id"]
-                    self.reorder_failures[prod_id] += 1
-
-                if label == "newly_employed":
-                    self.producers[id]["employees"] += 1
-
-                if label == "busyness":
-                    firm_busyness = dic["firm_busyness"]
-                    transfers_available = dic["max_workers_for_transfer"]
-                    self.producers[id]["recent_busyness"] = firm_busyness
-                    self.overall_busyness_data.append(firm_busyness)
-
-                if label == "accepted_order":
-                    prod_id = dic["product_id"]
-                    time = dic["offered_turnaround_time"]
-                    self.turnover_times[prod_id].append(time)
-
-                if label == "transfer_request":
-                    cat = self.producers[id]["catalog"]
-                    for i in cat:
-                        sector_idx = self.get_sector_idx(i)
-                        self.transfer_requests_by_sector[sector_idx] +=  1
-                        if len(self.transfer_requests_by_sector_t) == 0 or self.current_t != self.transfer_requests_by_sector_t[-1]:
-                            self.transfer_requests_by_sector_t = np.append(self.transfer_requests_by_sector_t, self.current_t)
-
-                if label == "transfer":
-                    old_emp = dic["old_workplace_id"]
-                    old_emp_is_distributor = (old_emp >= self.settings["n_producers"])
-                    if old_emp_is_distributor:
-                        old_emp = self._get_dist_key(old_emp)
-                        self.distributors[old_emp]["employees"] -= 1
-                    else:
-                        self.producers[old_emp]["employees"] -= 1
-
-                    new_emp = dic["new_workplace_id"]
-                    new_emp_is_distributor = (new_emp >= self.settings["n_producers"])
-                    if new_emp_is_distributor:
-                        new_emp = self._get_dist_key(new_emp)
-                        self.distributors[new_emp]["employees"] += 1
-                    else:
-                        self.producers[new_emp]["employees"] += 1
-
-                # if label == "draft_plan":
-                #     prod_id = dic["product_id"]
-                #     quantity = dic["quantity"]
-                #     self.order_sizes[prod_id].append(quantity)
-
-            case "Distributor":
-                if label == "inventory_level":
-                    prod_id = dic["product_id"]
-                    amt = dic["amount"]
-                    distributor_id = dic['id']
-                    dist_key = self._get_dist_key(distributor_id)
-                    self.distributors[dist_key]["inventory"][prod_id] = amt
-
-                if label == "inventory_reduction":
-                    prod_id = dic["product_id"]
-                    amt = dic["amount"]
-                    dist_key = self._get_dist_key(id)
-                    self.distributors[dist_key]["inventory"][prod_id] -= amt
-
-                if label == "catalog":
-                    product_ids_str = dic["product_ids"]
-                    product_ids_str_list = product_ids_str.split(",")
-                    product_ids = [int(product_id) for product_id in product_ids_str_list]
-                    dist_key = self._get_dist_key(id)
-                    self.distributors[dist_key]["catalog"] = product_ids
-
-                if label == "accepted_order":
-                    prod_id = dic["product_id"]
-                    time = dic["offered_turnaround_time"]
-                    self.turnover_times[prod_id].append(time)
-
-                if label == "shipment_received":
-                    prod_id = dic["product_id"]
-                    amt = dic["amount"]
-                    dist_id = self._get_dist_key(id)
-                    self.distributors[dist_id]["inc_inventory"][prod_id] -= amt
-
-                if label == "catalog_addition":
-                    prod_id = dic["product_id"]
-                    dist_id = self._get_dist_key(id)
-                    self.distributors[dist_id]["catalog"].append(prod_id)
-
-                if label == "current_demand":
-                    self.record_demand_signal(dic)
-
-                if label == "resupply_rate":
-                    self.record_resupply_rate(dic)
-
-                if label == "drafting_failure":
-                    self.record_drafting_failure(dic)
-
-                if label == "reorder_failure":
-                    prod_id = dic["product_id"]
-                    self.reorder_failures[prod_id] += 1
-
-                if label == "reorder_attempt":
-                    prod_id = dic["product_id"]
-                    self.reorder_attempts[prod_id] += 1
-
-                if label == "newly_employed":
-                    dist_id = self._get_dist_key(id)
-                    self.distributors[dist_id]["employees"] += 1
-
-                if label == "busyness":
-                    firm_busyness = dic["firm_busyness"]
-                    dist_id = self._get_dist_key(id)
-                    self.distributors[dist_id]["recent_busyness"] = firm_busyness
-                    self.overall_busyness_data.append(firm_busyness)
-
-                if label == "transfer":
-                    old_emp = dic["old_workplace_id"]
-                    old_emp_is_distributor = (old_emp >= self.settings["n_producers"])
-                    if old_emp_is_distributor:
-                        old_emp = self._get_dist_key(old_emp)
-                        self.distributors[old_emp]["employees"] -= 1
-                    else:
-                        self.producers[old_emp]["employees"] -= 1
-
-                    new_emp = dic["new_workplace_id"]
-                    new_emp_is_distributor = (new_emp >= self.settings["n_producers"])
-                    if new_emp_is_distributor:
-                        new_emp = self._get_dist_key(new_emp)
-                        self.distributors[new_emp]["employees"] += 1
-                    else:
-                        self.producers[new_emp]["employees"] += 1
-
-                if label == "transfer_request":
-                    dist_id = self._get_dist_key(id)
-                    cat = self.distributors[dist_id]["catalog"]
-                    if len(cat) == 0:
-                        return
-                    sector_idx = self.get_sector_idx(cat[0])
-                    self.transfer_requests_by_sector[sector_idx] +=  1
-                    if len(self.transfer_requests_by_sector_t) == 0 or self.current_t != self.transfer_requests_by_sector_t[-1]:
-                        self.transfer_requests_by_sector_t = np.append(self.transfer_requests_by_sector_t, self.current_t)
-
-                if label == "pursued_plan":
-                    customer_id = dic["customer_id"]
-                    is_distributor = (customer_id >= self.settings["n_producers"])
-                    if is_distributor:
-                        customer_id = self._get_dist_key(customer_id)
-                    prod_id = dic["product_id"]
-                    sector_id = self.get_sector_idx(prod_id)
-                    quantity = dic["quantity"]
-                    lead_time = dic.get("lead_time", 0)
-                    team_size = dic.get("num_workers")
-
-                    self.active_plans[prod_id]["plans"] += 1
-                    self.active_plans[prod_id]["quantity"] += quantity
-                    self.order_sizes[prod_id].append(quantity)
-                    self.lead_times[prod_id].append(lead_time)
-                    self.team_sizes[prod_id].append(team_size)
-                    self.long_run_sector_activity[sector_id] += quantity
-
-                    if is_distributor:
-                        self.distributors[customer_id]["inc_inventory"][prod_id] += quantity
-                    else:
-                        self.producers[customer_id]["inc_inventory"][prod_id] += quantity
-
-                if label == "stalled_plan":
-                    self.record_stalled_plan(dic)
-
-                if label == "unstalled_plan":
-                    self.record_stallage_resolved(dic)
-
-                if label == "start_plan_stalled":
-                    self.record_start_plan_stalled(dic)
-
-                if label == "start_plan_stallage_resolved":
-                    self.record_start_plan_stallage_resolved(dic)
-
-                if label == "ended_plan":
-                    prod_id = dic["product_id"]
-                    amt = dic["quantity"]
-                    self.active_plans[prod_id]["plans"] -= 1
-                    self.active_plans[prod_id]["quantity"] -= amt
+        client = dic.get("client", "")
+
+        if client not in self.client_dic_lookup:
+            first_time_client = (client not in self.unknown_clients)
+            if first_time_client:
+                logger.warning(f"Unknown client type: {client}.")
+            self.unknown_clients.add(client)
+            return
+
+        is_firm = (client in self.firm_client_types)
+        if is_firm and label in self.client_dic_lookup["Firm"]:
+            record_func = self.client_dic_lookup["Firm"][label]
+        else:
+            record_func = self.client_dic_lookup[client].get(label)
+
+        if record_func is None:
+            first_time_label = ((client, label) not in self.unknown_labels)
+            if first_time_label:
+                logger.warning(
+                    f"Label {label} from client type {client} has no matching recording function"
+                )
+            self.unknown_labels.add((client, label))
+            return
+    
+        try:
+            record_func(dic)
+        except Exception as e:
+            logger.error(f"Exception while processing label {label} for client {client}: {e}", exc_info= e)
+            raise
 
     def log_text(self, dic):
         extra = {
@@ -677,7 +385,7 @@ class Aggregator:
         sectoral_drafting_casualty_totals = drafting_casualty_totals_goods + \
                                             drafting_casualty_totals_distribution + \
                                             drafting_casualty_totals_machines
-        
+
         goods_drafting_failures_caused_by_workers = self.drafting_failures_casualties_from_workers[good_lo:good_hi]
         machines_drafting_failures_caused_by_workers = self.drafting_failures_casualties_from_workers[m_lo:m_hi]
         c_goods_drafting_failures_caused_by_workers = self.drafting_failures_casualties_from_workers[c_good_lo:c_good_hi]
@@ -726,13 +434,6 @@ class Aggregator:
 
         start_plan_stall_deficits_machines = \
             start_plan_stall_deficits[m_lo:m_hi]
-
-        busyness_data = np.asarray(self.overall_busyness_data)
-        if len(self.overall_busyness_data) > 0:
-            low, hi = np.quantile(busyness_data, [0.005, 0.995])
-            overall_busyness_bins = np.linspace(low, hi, 100)
-        else:
-            overall_busyness_bins = np.array([0.5])
 
         self.long_run_employment_by_sector += sectoral_employment
 
@@ -817,6 +518,10 @@ class Aggregator:
 
             "hrly_sectoral_drafting_casualty_totals": Append(sectoral_drafting_casualty_totals),
 
+            "goods_drafting_casualties": Append(self.drafting_failures_casualties[good_lo:good_hi]),
+            "c_goods_drafting_casualties": Append(self.drafting_failures_casualties[c_good_lo:c_good_hi]),
+            "machines_drafting_casualties": Append(self.drafting_failures_casualties[m_lo:m_hi]),
+
             "goods_drafting_failures_caused_by_workers": Append(goods_drafting_failures_caused_by_workers),
             "c_goods_drafting_failures_caused_by_workers": Append(c_goods_drafting_failures_caused_by_workers),
             "machines_drafting_failures_caused_by_workers": Append(machines_drafting_failures_caused_by_workers),
@@ -828,8 +533,6 @@ class Aggregator:
 
             "sectoral_busyness": Append(sectoral_busyness),
             "overall_busyness": Append(self.overall_busyness),
-            "busyness_data": Replace(self.overall_busyness_data),
-            "overall_busyness_bins": Replace(overall_busyness_bins),
 
             "l_goods": Append(l_list[good_lo:good_hi]),
             "l_c_goods": Append(l_list[c_good_lo:c_good_hi]),
@@ -893,9 +596,29 @@ class Aggregator:
         c_good_lo, c_good_hi = self.get_consumer_goods_idxs()
         m_lo, m_hi = self.get_machines_idxs()
 
+        resupply_rate_data_producers = self.resupply_rate_data["Producer"]
+        average_resupply_rates_producers_daily = [
+            np.average(prod_data) if len(prod_data) > 0 else 0
+            for prod_data in resupply_rate_data_producers
+        ]
+
+        resupply_rate_data_distributors = self.resupply_rate_data["Distributor"]
+        average_resupply_rates_distributors_daily = [
+            np.average(prod_data) if len(prod_data) > 0 else 0
+            for prod_data in resupply_rate_data_distributors
+        ]
+
+        self.resupply_rate_data = {
+            "Producer": [[] for _ in range(self.settings["n_products"])],
+            "Distributor": [[] for _ in range(self.settings["n_products"])]
+        }
+
+        self.traj["resupply_rates_producers_goods_daily"] = Append(average_resupply_rates_producers_daily[good_lo:good_hi])
+        self.traj["resupply_rates_distributors_goods_daily"] = Append(average_resupply_rates_distributors_daily[good_lo:good_hi])
+        self.traj["resupply_rates_machines_daily"] = Append(average_resupply_rates_producers_daily[m_lo:m_hi])
+        self.traj["resupply_rates_c_goods_daily"] = Append(average_resupply_rates_distributors_daily[c_good_lo:c_good_hi])
 
         self.traj["day_counter"] = Append(self.current_t)
-
 
     def _update_weekly_stats(self):
         good_lo, good_hi = self.get_goods_idxs()
@@ -927,7 +650,7 @@ class Aggregator:
             else:
                 team_size_averages.append(self.old_team_size_avgs[i])
 
-        self.team_size_averages = team_size_averages
+        self.old_team_size_avgs = team_size_averages
 
         self.traj["order_sizes_goods"] = Append(order_size_averages[good_lo:good_hi])
         self.traj["order_sizes_c_goods"] = Append(order_size_averages[c_good_lo:c_good_hi])
@@ -941,25 +664,6 @@ class Aggregator:
         self.traj["team_sizes_c_goods"] = Append(team_size_averages[c_good_lo:c_good_hi])
         self.traj["team_sizes_machines"] = Append(team_size_averages[m_lo:m_hi])
         self.traj["week_counter"] = Append(self.current_t)
-
-        average_resupply_rates_producers_daily = self._get_product_property_aggregate(
-            self.producers, key="resupply_rates_daily"
-        )
-        average_resupply_rates_distributors_daily = self._get_product_property_aggregate(
-            self.distributors, key="resupply_rates_daily"
-        )
-
-        self.traj["resupply_rates_producers_goods_daily"] = Append(average_resupply_rates_producers_daily[good_lo:good_hi])
-        self.traj["resupply_rates_distributors_goods_daily"] = Append(average_resupply_rates_distributors_daily[good_lo:good_hi])
-        self.traj["resupply_rates_machines_daily"] = Append(average_resupply_rates_producers_daily[m_lo:m_hi])
-        self.traj["resupply_rates_c_goods_daily"] = Append(average_resupply_rates_distributors_daily[c_good_lo:c_good_hi])
-
-        for producer_dict in self.producers.values():
-            producer_dict["resupply_rates_daily"] = np.zeros(self.settings["n_products"])
-
-        for distributor_dict in self.producers.values():
-            distributor_dict["resupply_rates_daily"] = np.zeros(self.settings["n_products"])
-
 
         for dataset in (self.order_sizes, self.lead_times, self.team_sizes):
             for ls in dataset:
@@ -1046,7 +750,6 @@ class Aggregator:
 
         logger.info(f"Spectral radius of A: {r_hat}")
 
-
         if self.settings["init_prices"] == "values":
             self.b = self.consumption_frequencies
 
@@ -1056,9 +759,6 @@ class Aggregator:
             idx = np.argmax(evals.real)
             r_hat = np.real(evals[idx])
             epr = 1/r_hat - 1
-
-    # The stuff below this point are all just helper functions. 
-    # Unless you're making your own or debugging something, you shouldn't ever have to look below here.
 
     def step(self) -> bool:
         """ 
@@ -1382,6 +1082,219 @@ class Aggregator:
 
         return group_dict, real_id
 
+    def record_sim_seed(self, dic):
+        self.seed = dic["value"]
+
+    def record_A_matrix_entry(self, dic):
+        coords_str = dic["coords"]
+        coords = tuple(int(num) for num in coords_str[1:len(coords_str)-1].split(","))
+        i, j = coords
+        a_ij = dic["value"]
+        self.A[i][j] = a_ij
+
+    def record_living_labor_coeff(self, dic):
+        i = dic["prod_id"]
+        l_i = dic["value"]
+
+        self.l[i] = l_i
+
+    def record_real_wage_entry(self, dic):
+        i = dic["prod_id"]
+        b_i = dic["value"]
+        self.b[i] = b_i
+
+    def record_initial_price(self, dic):
+        id = dic["product_id"]
+        val = dic["price_per_unit"]
+        self.prices[id] = val
+
+    def record_price_change(self, dic):
+        prod_id = dic["product_id"]
+        living_labor_per_unit = dic["living_labor_per_unit"]
+        price = dic["price"]
+        self.prices[prod_id] = price
+        self.living_labor_values[prod_id] = living_labor_per_unit
+
+    def record_consumption_frequency(self, dic):
+        id = dic["product_id"]
+        val = dic["value"]
+        self.consumption_frequencies[id] = val
+        self.consumption_periods[id] = 1/max(val, 1e-5)
+
+    def record_current_employment_level(self, dic):
+        self.current_employment = dic["total"]
+
+    def record_societal_busyness(self, dic):
+        self.overall_busyness = dic["value"]
+
+    def record_fic(self, dic):
+        self.fic = dic["value"]
+
+    def record_public_sector_distribution_value(self, dic):
+        self.average_public_sector_consumer_goods_value = dic["value"]
+
+    def record_average_consumer_goods_value(self, dic):
+        self.average_consumer_goods_value = dic["value"]
+
+    def record_public_fund(self, dic):
+        self.public_fund = dic["value"]
+
+    def record_public_expenditure(self, dic):
+        self.public_expenditure = dic["value"]
+
+    def record_public_revenue(self, dic):
+        self.public_revenue = dic["value"]
+
+    def record_censored_busyness_dist(self, dic):
+        self.work_hours_update_this_step = True
+        self.censored_busyness_mean = dic["mean"]
+        self.censored_busyness_stddev = dic["stddev"]
+
+    def record_uncensored_busyness_dist(self, dic):
+        self.work_hours_update_this_step = True
+        self.uncensored_busyness_mean = dic["mean"]
+        self.uncensored_busyness_stddev = dic["stddev"]
+
+    def record_work_hours_weekly(self, dic):
+        self.weekly_working_hours = dic["work_hours_daily"] * dic["work_days_weekly"]
+        self.work_hours_update_this_step = True
+        work_hours_daily = dic["work_hours_daily"]
+        work_days_weekly = dic["work_days_weekly"]
+        self.busy_upper_bd = (work_hours_daily * work_days_weekly) / (24*7)
+
+    def record_busyness_data(self, dic):
+        self.individual_busyness_data.append(dic["value"])
+
+    def record_person_age(self, dic):
+        pass
+
+    def record_person_account(self, dic):
+        id = dic["id"]
+        account = dic["value"]
+        self.persons[id]["account"] = account
+
+    def record_person_health(self, dic):
+        id = dic["id"]
+        self.persons[id]["health"] = dic["status"]
+
+    def record_person_consumption(self, dic):
+        id = dic["id"]
+        prod_id = dic["product_id"]
+        amt = dic["quantity"]
+        self.persons[id]["endowment"][prod_id] -= amt
+
+    def record_person_ability(self, dic):
+        ability_id = dic["ability"]
+        val = dic["value"]
+        person_id = dic['id']
+        self.persons[person_id]["abilities"][ability_id] = val
+
+    def record_person_inventory(self, dic):
+        prod_id = dic["product_id"]
+        amt = dic["amount"]
+        person_id = dic['id']
+        self.persons[person_id]["endowment"][prod_id] = amt
+
+    def record_person_purchase(self, dic):
+        prod_id = dic["product_id"]
+        amt = dic["quantity"]
+        id = dic["id"]
+        self.persons[id]["endowment"][prod_id] += amt
+        cost = self.prices[prod_id]*amt
+        self.persons[id]["account"] -= cost
+
+    def record_hours_worked(self, dic):
+        id = dic["id"]
+        self.persons[id]["account"] += dic["hours"]
+
+    def record_inventory_level(self, dic):
+        prod_id= dic["product_id"]
+        firm_id = dic["id"]
+        client = dic["client"]
+        amt = dic["amount"]
+
+        if client == "Producer":
+            self.producers[firm_id]["inventory"][prod_id] = amt
+
+        if client == "Distributor":
+            self.distributors[self._get_dist_key(firm_id)]["inventory"][prod_id] = amt
+
+    def record_inventory_reduction(self, dic):
+        prod_id = dic["product_id"]
+        amt = dic["amount"]
+        client = dic["client"]
+        firm_id = dic["id"]
+
+        if client == "Producer":
+            self.producers[firm_id]["inventory"][prod_id] -= amt
+ 
+        if client == "Distributor":
+            self.distributors[self._get_dist_key(firm_id)]["inventory"][prod_id] -= amt
+
+    def record_shipment_received(self, dic):
+        prod_id = dic["product_id"]
+        client = dic["client"]
+        amt = dic["amount"]
+        firm_id = dic["id"]
+
+        if client == "Producer":
+            self.producers[firm_id]["inc_inventory"][prod_id] -= amt
+
+        if client == "Distributor":
+            dist_id = self._get_dist_key(firm_id)
+            self.distributors[dist_id]["inc_inventory"][prod_id] -= amt
+
+    def record_reorder_attempt(self, dic):
+        prod_id = dic["product_id"]
+        self.reorder_attempts[prod_id] += 1
+
+    def record_catalog_addition(self, dic):
+        product_id = dic["product_id"]
+        client = dic["client"]
+        firm_id = dic["id"]
+
+        if client == "Producer":
+            self.producers[firm_id]["catalog"].append(product_id)
+
+        if client == "Distributor":
+            self.distributors[self._get_dist_key(firm_id)]["catalog"].append(product_id)
+
+    def record_accepted_order(self, dic):
+        prod_id = dic["product_id"]
+        time = dic["offered_turnaround_time"]
+        self.turnover_times[prod_id].append(time)
+
+    def record_pursued_plan(self, dic):
+        customer_id = dic["customer_id"]
+        is_distributor = (customer_id >= self.settings["n_producers"])
+        if is_distributor:
+            customer_id = self._get_dist_key(customer_id)
+        prod_id = dic["product_id"]
+        sector_id = self.get_sector_idx(prod_id)
+        quantity = dic["quantity"]
+        lead_time = dic.get("lead_time", 0)
+        team_size = dic.get("num_workers")
+
+        self.active_plans[prod_id]["plans"] += 1
+        self.active_plans[prod_id]["quantity"] += quantity
+        self.lead_times[prod_id].append(lead_time)
+        self.order_sizes[prod_id].append(quantity)
+        self.long_run_sector_activity[sector_id] += quantity
+
+        if team_size is not None:
+            self.team_sizes[prod_id].append(team_size)
+
+        if is_distributor:
+            self.distributors[customer_id]["inc_inventory"][prod_id] += quantity
+        else:
+            self.producers[customer_id]["inc_inventory"][prod_id] += quantity
+
+    def record_plan_ended(self, dic):
+        prod_id = dic["product_id"]
+        amt = dic["quantity"]
+        self.active_plans[prod_id]["plans"] -= 1
+        self.active_plans[prod_id]["quantity"] -= amt
+
     def record_demand_signal(self, dic):
         prod_id = dic["product_id"]
         group_dict, real_id = self._get_group_dict_and_id(dic)
@@ -1394,13 +1307,14 @@ class Aggregator:
 
     def record_resupply_rate(self, dic):
         prod_id = dic["product_id"]
+        client = dic["client"]
         group_dict, real_id = self._get_group_dict_and_id(dic)
         if real_id == -1:
             return
 
         prod_id = dic["product_id"]
         group_dict[real_id]["resupply_rates"][prod_id] = dic["resupply_rate"]
-        group_dict[real_id]["resupply_rates_daily"][prod_id] = dic["resupply_rate"]
+        self.resupply_rate_data[client][prod_id].append(dic["resupply_rate"])
         group_dict[real_id]["resupply_deficits"][prod_id] = dic["resupply_deficit"]
 
     def record_stalled_plan(self, dic):
@@ -1459,3 +1373,78 @@ class Aggregator:
             ]
             for product_id in missing_product_ids:
                 self.drafting_failures_causes_resources[product_id] += 1
+
+    def record_reorder_failure(self, dic):
+        prod_id = dic["product_id"]
+        self.reorder_failures[prod_id] += 1
+
+    def record_newly_employed(self, dic):
+        firm_id = dic["id"]
+        client = dic["client"]
+        if client == "Producer": 
+            self.producers[firm_id]["employees"] += 1
+
+        if client == "Distributor":
+            dist_id = self._get_dist_key(firm_id)
+            self.distributors[dist_id]["employees"] += 1
+
+    def record_sector_busyness(self, dic):
+        firm_id = dic["id"]
+        client = dic["client"]
+        firm_busyness = dic["firm_busyness"]
+        # transfers_available = dic["max_workers_for_transfer"]
+
+        if client == "Producer": 
+            self.producers[firm_id]["recent_busyness"] = firm_busyness
+
+        if client == "Distributor":
+            dist_id = self._get_dist_key(firm_id)
+            self.distributors[dist_id]["recent_busyness"] = firm_busyness
+
+    def record_employment_transfer(self, dic):
+        old_emp = dic["old_workplace_id"]
+        old_emp_is_distributor = (old_emp >= self.settings["n_producers"])
+        if old_emp_is_distributor:
+            old_emp = self._get_dist_key(old_emp)
+            self.distributors[old_emp]["employees"] -= 1
+        else:
+            self.producers[old_emp]["employees"] -= 1
+
+        new_emp = dic["new_workplace_id"]
+        new_emp_is_distributor = (new_emp >= self.settings["n_producers"])
+        if new_emp_is_distributor:
+            new_emp = self._get_dist_key(new_emp)
+            self.distributors[new_emp]["employees"] += 1
+        else:
+            self.producers[new_emp]["employees"] += 1
+
+    def record_transfer_request(self, dic):
+        firm_id = dic["id"]
+        client = dic["client"]
+        if client == "Producer":
+            cat = self.producers[firm_id]["catalog"]
+        elif client == "Distributor":
+            dist_id = self._get_dist_key(firm_id)
+            cat = self.distributors[dist_id]["catalog"]
+        else:
+            return
+
+        if len(cat) == 0:
+            return
+
+        if client == "Producer":
+            for product_id in cat:
+                sector_idx = self.get_sector_idx(product_id)
+                self.transfer_requests_by_sector[sector_idx] += 1
+        else:
+            sector_idx = self.get_sector_idx(cat[0])
+            self.transfer_requests_by_sector[sector_idx] +=  1
+
+        if (
+            len(self.transfer_requests_by_sector_t) == 0 
+            or self.current_t != self.transfer_requests_by_sector_t[-1]
+        ):
+            self.transfer_requests_by_sector_t = np.append(
+                self.transfer_requests_by_sector_t,
+                self.current_t
+            )
