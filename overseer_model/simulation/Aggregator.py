@@ -68,6 +68,7 @@ class Aggregator:
         self.t = [0]
         self.current_t = 0
         self.current_week = 0
+        self.current_day = 0
         self.stdout_done = False
         self.stderr_done = False
 
@@ -101,6 +102,7 @@ class Aggregator:
             "demand_signals": np.zeros(self.settings["n_products"]),
             "reorder_thresholds": np.zeros(self.settings["n_products"]),
             "resupply_rates": np.zeros(self.settings["n_products"]),
+            "resupply_rates_daily": np.zeros(self.settings["n_products"]),
             "resupply_deficits": np.zeros(self.settings["n_products"]),
             "tracked_inputs": np.zeros(self.settings["n_products"], dtype= bool),
             "catalog": [],
@@ -115,6 +117,7 @@ class Aggregator:
             "demand_signals": np.zeros(self.settings["n_products"]),
             "reorder_thresholds": np.zeros(self.settings["n_products"]),
             "resupply_rates": np.zeros(self.settings["n_products"]),
+            "resupply_rates_daily": np.zeros(self.settings["n_products"]),
             "resupply_deficits": np.zeros(self.settings["n_products"]),
             "tracked_inputs": np.zeros(self.settings["n_products"], dtype= bool),
             "catalog": [],
@@ -642,12 +645,10 @@ class Aggregator:
         overall_reorder_thresholds = self._get_product_property_aggregate(
             self.producers, self.distributors,
             key= "reorder_thresholds", 
-            operation= "sum"
         )
         overall_pending_inventory = self._get_product_property_aggregate(
             self.producers, self.distributors,
             key= "pending_inventory",
-            operation= "sum"
         )
 
         accounts = [dic["account"] for _, dic in self.persons.items()]
@@ -887,6 +888,15 @@ class Aggregator:
         self.drafting_failures_casualties = np.zeros(self.settings["n_products"])
         self.drafting_failures_causes_resources = np.zeros(self.settings["n_products"])
 
+    def _update_daily_stats(self):
+        good_lo, good_hi = self.get_goods_idxs()
+        c_good_lo, c_good_hi = self.get_consumer_goods_idxs()
+        m_lo, m_hi = self.get_machines_idxs()
+
+
+        self.traj["day_counter"] = Append(self.current_t)
+
+
     def _update_weekly_stats(self):
         good_lo, good_hi = self.get_goods_idxs()
         c_good_lo, c_good_hi = self.get_consumer_goods_idxs()
@@ -931,6 +941,25 @@ class Aggregator:
         self.traj["team_sizes_c_goods"] = Append(team_size_averages[c_good_lo:c_good_hi])
         self.traj["team_sizes_machines"] = Append(team_size_averages[m_lo:m_hi])
         self.traj["week_counter"] = Append(self.current_t)
+
+        average_resupply_rates_producers_daily = self._get_product_property_aggregate(
+            self.producers, key="resupply_rates_daily"
+        )
+        average_resupply_rates_distributors_daily = self._get_product_property_aggregate(
+            self.distributors, key="resupply_rates_daily"
+        )
+
+        self.traj["resupply_rates_producers_goods_daily"] = Append(average_resupply_rates_producers_daily[good_lo:good_hi])
+        self.traj["resupply_rates_distributors_goods_daily"] = Append(average_resupply_rates_distributors_daily[good_lo:good_hi])
+        self.traj["resupply_rates_machines_daily"] = Append(average_resupply_rates_producers_daily[m_lo:m_hi])
+        self.traj["resupply_rates_c_goods_daily"] = Append(average_resupply_rates_distributors_daily[c_good_lo:c_good_hi])
+
+        for producer_dict in self.producers.values():
+            producer_dict["resupply_rates_daily"] = np.zeros(self.settings["n_products"])
+
+        for distributor_dict in self.producers.values():
+            distributor_dict["resupply_rates_daily"] = np.zeros(self.settings["n_products"])
+
 
         for dataset in (self.order_sizes, self.lead_times, self.team_sizes):
             for ls in dataset:
@@ -1076,6 +1105,9 @@ class Aggregator:
                             self._update_hourly_stats()
 
                         self.current_t = dic["t"]
+                        if self.current_t % 24 == 0:
+                            self.current_day += 1
+                            self._update_daily_stats()
                         if self.current_t % (24*7) == 0:
                             self.current_week += 1
                             self._update_weekly_stats()
@@ -1368,6 +1400,7 @@ class Aggregator:
 
         prod_id = dic["product_id"]
         group_dict[real_id]["resupply_rates"][prod_id] = dic["resupply_rate"]
+        group_dict[real_id]["resupply_rates_daily"][prod_id] = dic["resupply_rate"]
         group_dict[real_id]["resupply_deficits"][prod_id] = dic["resupply_deficit"]
 
     def record_stalled_plan(self, dic):

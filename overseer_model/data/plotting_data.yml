@@ -140,7 +140,7 @@ inventory:
       linewidth: 1.5
       markersize: 6.0
       label_template: Supply of Consumer Good {i}
-      colors: [red, blue, green, purple, orange]
+      colors: ['#ff4c4c', '#4e2fff', '#488045', '#803e63', '#ffc76c']
       traj_key: consumer_goods_supply
     supply_of_machines:
       checkbox_name: Supply of Machines
@@ -149,7 +149,7 @@ inventory:
       linewidth: 1.5
       markersize: 6.0
       label_template: Supply of Machine {i}
-      colors: ['']
+      colors: ['#0ffbff', '#1eff2d', '#df03db']
       traj_key: producer_supply_machines
     distributor_supply_unshelved:
       checkbox_name: Distributor Supply (Unshelved)
@@ -167,7 +167,7 @@ inventory:
       linewidth: 1.5
       markersize: 6.0
       label_template: Average {i} posessed
-      colors: [red, blue, green, purple, orange]
+      colors: ['#ff4c4c', '#4e2fff', '#488045', '#803e63', '#ffc76c']
       traj_key: avg_endowments
   default_lims: [[-233.182, 13738.1], [-8468.43, 34869.1]]
 supply_chain:
@@ -194,7 +194,7 @@ supply_chain:
       traj_key: total_pending_inventories_goods
     goods_pending_inventory_producers:
       checkbox_name: Goods Pending Inventory (Producers)
-      toggled: false
+      toggled: true
       linestyle: dashed
       linewidth: 1.5
       markersize: 6.0
@@ -230,7 +230,7 @@ supply_chain:
       traj_key: average_reorder_thresholds_distributors_goods
     c_goods_pending_inventory:
       checkbox_name: C Goods Pending Inventory
-      toggled: true
+      toggled: false
       linestyle: dashed
       linewidth: 1.5
       markersize: 6.0
@@ -239,7 +239,7 @@ supply_chain:
       traj_key: average_pending_inventories_c_goods
     c_goods_reorder_threshold:
       checkbox_name: C Goods Reorder Threshold
-      toggled: true
+      toggled: false
       linestyle: solid
       linewidth: 1.5
       markersize: 6.0
@@ -248,7 +248,7 @@ supply_chain:
       traj_key: average_reorder_thresholds_c_goods
     machines_pending_inventory:
       checkbox_name: Machines Pending Inventory
-      toggled: true
+      toggled: false
       linestyle: dashed
       linewidth: 1.5
       markersize: 6.0
@@ -269,6 +269,7 @@ supply_chain:
   grid_visible: true
   ticks_visible: true
   frame_visible: true
+  default_lims: [[-90.6895, 10093.2], [7487.92, 29330.4]]
 demand:
   name: Demand
   projection: 2d
@@ -349,6 +350,46 @@ demand:
       label_template: Average Resupply Rate for C Good {i}
       colors: [red, blue, green, purple, orange]
       traj_key: resupply_rates_c_goods
+    avg_resupply_rates_goods_producers:
+      checkbox_name: Avg Resupply Rates Goods (Producers)
+      toggled: false
+      linestyle: dashed
+      linewidth: 1.5
+      markersize: 6.0
+      label_template: Average Producer Resupply Rate for Good {i}
+      colors: [red, blue, green, purple, orange]
+      traj_key: resupply_rates_producers_goods_daily
+      traj_key_x: week_counter
+    avg_resupply_rates_goods_distributors:
+      checkbox_name: Avg Resupply Rates Goods (Distributors)
+      toggled: false
+      linestyle: dashed
+      linewidth: 1.5
+      markersize: 6.0
+      label_template: Average Distributor Resupply Rate for Good {i}
+      colors: [red, blue, green, purple, orange]
+      traj_key: resupply_rates_distributors_goods_daily
+      traj_key_x: week_counter
+    avg_resupply_rates_machines:
+      checkbox_name: Avg Resupply Rates Machines
+      toggled: false
+      linestyle: dashed
+      linewidth: 1.5
+      markersize: 6.0
+      label_template: Resupply Rate Machine {i}
+      colors: ['#0ffbff', '#1eff2d', '#df03db']
+      traj_key: resupply_rates_machines_daily
+      traj_key_x: week_counter
+    avg_resupply_rates_c_goods:
+      checkbox_name: Avg Resupply Rates C Goods
+      toggled: false
+      linestyle: dashed
+      linewidth: 1.5
+      markersize: 6.0
+      label_template: Average Resupply Rate for C Good {i}
+      colors: [red, blue, green, purple, orange]
+      traj_key: resupply_rates_c_goods_daily
+      traj_key_x: week_counter
     resupply_deficits_goods_producers:
       checkbox_name: Resupply Deficits Goods (Producers)
       toggled: false
@@ -385,7 +426,7 @@ demand:
       label_template: Average Resupply Deficit for C Good {i}
       colors: [red, blue, green, purple, orange]
       traj_key: resupply_deficits_c_goods
-  default_lims: [[195.569, 4343.47], [-13.2898, 123.674]]
+  default_lims: [[238.264, 9855.89], [-5.03123, 127.339]]
 wealth:
   name: Wealth
   projection: 2d
