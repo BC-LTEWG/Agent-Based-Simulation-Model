@@ -1,25 +1,23 @@
-demos:
-  bc_lte:
-    name: BC-LTE
-    desc: ''
-    details:
-      simulation_function: get_trajectories
-      default_preset: default_preset
-      plot_preprocess: format_plot_config
-      simulation_speed: '0.0'
-      axis_settings:
-        dimension: [1, 1]
-        limits:
-          a1: [[-93.0158, 12332.3], [-818.821, 83472.4]]
-        dropdown_indices: [1]
-        checked_plots:
-          a1: [Producer Supply, Consumer Goods Supply]
-        settings:
-          a1:
-            legend_visible: true
-            legend_fontsize: 10
-            legend_loc: upper right
-            title: true
-            xlabel: true
-            ylabel: true
-    default: true
+name: BC-LTE
+desc: ''
+details:
+  simulation_function: get_trajectories
+  default_preset: default_preset
+  plot_preprocess: format_plot_config
+  simulation_speed: '0.0'
+  axis_settings:
+    dimension: [1, 1]
+    limits:
+      a1: [[-93.0158, 12332.3], [-818.821, 83472.4]]
+    dropdown_indices: [1]
+    checked_plots:
+      a1: [Producer Supply, Consumer Goods Supply]
+    settings:
+      a1:
+        legend_visible: true
+        legend_fontsize: 10
+        legend_loc: upper right
+        title: true
+        xlabel: true
+        ylabel: true
+default: true
