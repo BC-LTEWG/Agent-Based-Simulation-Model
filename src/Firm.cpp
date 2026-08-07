@@ -479,10 +479,10 @@ void Firm::move_plans_forward_one_step() {
         if (is_within_work_schedule(plan)) {
             if (plan->order->status == Order::OrderStatus::kOrderInProgress) {
                 move_plan_forward_one_step(plan);
-            if (plan->order->status == Order::kOrderInProgress &&
-                    plan->quantity_remaining <= 0.0) {
-                end_plan(plan);
-            }
+                if (plan->order->status == Order::kOrderInProgress &&
+                        plan->quantity_remaining <= 0.0) {
+                    end_plan(plan);
+                }
             } else if (plan->order->status == Order::kOrderRequested) {
                 if (start_plan(plan)) {
                     log_pursued_plan(plan);

@@ -94,7 +94,7 @@ bool Producer::can_produce(Product * product) {
 double Producer::get_max_order_quantity(
     const Order * order,
     std::vector<Product *>& missing_resources,
-    bool& no_workers_available
+    bool& workers_are_unavailable
 ) {
     double max_order_quantity = std::numeric_limits<double>::infinity();
     for (std::pair<Good * const, double>& input : order->product->inputs_per_unit) {
@@ -110,7 +110,7 @@ double Producer::get_max_order_quantity(
             std::min(max_order_quantity, input_max_order_quantity);
     }
     std::vector<Person *> available_workers = get_available_workers(order);
-    no_workers_available = available_workers.empty();
+    workers_are_unavailable = available_workers.empty();
     for (Machine * machine : order->product->machines_needed) {
         double machine_max_order_quantity =
             (get_inventory_level(machine) * machine->lifetime) *
@@ -133,18 +133,18 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
         order->requested_turnaround_time
     );
     std::vector<Product *> missing_resources;
-    bool no_workers_available = false;
+    bool workers_are_unavailable = false;
     return_order->quantity = std::min(
         return_order->quantity,
         static_cast<int>(get_max_order_quantity(
             order,
             missing_resources,
-            no_workers_available
+            workers_are_unavailable
         ))
     );
     Plan * draft_plan = nullptr;
     if (return_order->quantity <= 0) {
-        if (no_workers_available) {
+        if (workers_are_unavailable) {
             log_drafting_failure_workers(order->product);
         } else {
             log_drafting_failure_goods(order->product, missing_resources);

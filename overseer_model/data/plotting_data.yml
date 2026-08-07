@@ -839,7 +839,7 @@ busyness:
       labels: [Length of Working Day]
       colors: [green]
       traj_key: work_hours_daily
-  default_lims: [[-97.4987, 10093.2], [0.0143653, 0.302306]]
+  default_lims: [[43.9775, 9977.01], [0.0117958, 0.265722]]
 plan_details:
   name: Plan Details
   tooltip: null

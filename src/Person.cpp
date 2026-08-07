@@ -27,9 +27,9 @@ Person::Person():
     static unsigned int unique_id = 0;
     id = unique_id++;
 
-    double sigma = Sim::get_ability_stddev();
+    double ability_std_dev = Sim::get_ability_stddev();
     std::lognormal_distribution<>
-        ability_dist(-0.5 * sigma * sigma, sigma);
+        ability_dist(-0.5 * ability_std_dev * ability_std_dev, ability_std_dev);
     for (Ability * ability : Society::get_instance()->get_abilities()) {
         abilities[ability] = ability_dist(Sim::get_random_generator());
     }

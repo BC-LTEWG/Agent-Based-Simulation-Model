@@ -307,7 +307,6 @@ class Aggregator:
         """ 
         Updates the trajectories dictionary.
         """
-
         good_lo, good_hi = self.get_goods_idxs()
         c_good_lo, c_good_hi = self.get_consumer_goods_idxs()
         m_lo, m_hi = self.get_machines_idxs()

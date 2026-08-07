@@ -33,7 +33,7 @@ class Producer : public Firm {
     double get_max_order_quantity(
         const Order * order,
         std::vector<Product *>& missing_resources,
-        bool& no_workers_available
+        bool& workers_are_unavailable
     );
     void log_dropped_order(const Order * order);
     
