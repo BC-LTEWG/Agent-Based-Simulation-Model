@@ -154,7 +154,8 @@ class Aggregator:
             "endowment": np.zeros(self.settings["n_products"]),
             "abilities": np.zeros(self.settings["n_abilities"]),
             "health": "Healthy", # everyone starts in good health
-            "recent_busyness": 0.0
+            "recent_busyness": 0.0,
+            "employer_id": None,
         } for i in range(self.settings["n_persons"])}
 
         self.producers = {i: {
@@ -359,6 +360,8 @@ class Aggregator:
         )
 
         accounts = [dic["account"] for _, dic in self.persons.items()]
+        sectoral_avg_accounts = self._get_sectoral_avg_accounts()
+
         health_statuses = [0 if dic["health"] == "Healthy" else 1 for _, dic in self.persons.items()]
         n_unhealthy = sum(health_statuses)
         n_healthy = len(self.persons) - n_unhealthy
@@ -461,6 +464,7 @@ class Aggregator:
             "avg_account": Append(np.average(accounts)),
             "min_account": Append(np.min(accounts)),
             "max_account": Append(np.max(accounts)),
+            "sectoral_avg_account": Append(sectoral_avg_accounts),
             "avg_endowments": Append(average_endowments),
 
             "plans_in_progress_goods": Append(plans_in_motion_goods),
@@ -1045,6 +1049,24 @@ class Aggregator:
         sectoral_busyness = np.array([np.average(sector) if sector else 0.0 for sector in sectoral_busyness_data])
         return sectoral_busyness
 
+    def _get_sectoral_avg_accounts(self):
+        sectoral_accounts = [[] for _ in range(self.settings["n_sectors"])]
+        for person_dict in self.persons.values():
+            account = person_dict["account"]
+            employer_id = person_dict["employer_id"]
+            if employer_id is not None:
+                if self._is_distributor(employer_id):
+                    dist_dict = self.distributors[self._get_dist_key(employer_id)]
+                    catalog = dist_dict["catalog"]
+                else:
+                    prod_dict = self.producers[employer_id]
+                    catalog = prod_dict["catalog"]
+                for product_id in catalog:
+                    sector_id = self.get_sector_idx(product_id)
+                    sectoral_accounts[sector_id].append(account)
+
+        return [np.average(accounts) for accounts in sectoral_accounts]
+
     def _set_pending_inventories(self):
         for _, producer_dict in self.producers.items():
             producer_dict["pending_inventory"] = producer_dict["inventory"]+producer_dict["inc_inventory"]
@@ -1263,9 +1285,12 @@ class Aggregator:
         time = dic["offered_turnaround_time"]
         self.turnover_times[prod_id].append(time)
 
+    def _is_distributor(self, firm_id):
+        return (firm_id >= self.settings["n_producers"])
+
     def record_pursued_plan(self, dic):
         customer_id = dic["customer_id"]
-        is_distributor = (customer_id >= self.settings["n_producers"])
+        is_distributor = self._is_distributor(customer_id)
         if is_distributor:
             customer_id = self._get_dist_key(customer_id)
         prod_id = dic["product_id"]
@@ -1379,6 +1404,8 @@ class Aggregator:
 
     def record_newly_employed(self, dic):
         firm_id = dic["id"]
+        worker_id = dic["worker_id"]
+        self.persons[worker_id]["employer_id"] = firm_id
         client = dic["client"]
         if client == "Producer": 
             self.producers[firm_id]["employees"] += 1
@@ -1402,6 +1429,7 @@ class Aggregator:
 
     def record_employment_transfer(self, dic):
         old_emp = dic["old_workplace_id"]
+        worker_id = dic["worker_id"]
         old_emp_is_distributor = (old_emp >= self.settings["n_producers"])
         if old_emp_is_distributor:
             old_emp = self._get_dist_key(old_emp)
@@ -1410,6 +1438,7 @@ class Aggregator:
             self.producers[old_emp]["employees"] -= 1
 
         new_emp = dic["new_workplace_id"]
+        self.persons[worker_id]["employer_id"] = new_emp
         new_emp_is_distributor = (new_emp >= self.settings["n_producers"])
         if new_emp_is_distributor:
             new_emp = self._get_dist_key(new_emp)

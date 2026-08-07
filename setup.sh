@@ -80,10 +80,10 @@ global_settings:
 EOF
 fi
 
-BC_DEMO_FILE="$SCRIPT_DIR/bc_lte_demo.yml" \
+BC_DEMO_FILE="$SCRIPT_DIR/overseer_model/bc_lte_demo.yml" \
 SIM_PATH="$SCRIPT_DIR/bin/sim" \
 MODEL_PATH="$USER_MODELS_DIR/overseer_model" \
-"$PYTHON_CMD" "$SCRIPT_DIR/prepare_demo_and_params.py"
+"$PYTHON_CMD" "$SCRIPT_DIR/overseer_model/prepare_demo_and_params.py"
 
 LAUNCHER_FILE="$SCRIPT_DIR/run.sh"
 

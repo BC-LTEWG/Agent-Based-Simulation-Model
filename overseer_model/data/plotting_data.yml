@@ -463,6 +463,15 @@ wealth:
       labels: [Maximum Account]
       colors: ['#00807c']
       traj_key: max_account
+    sectoral_average_account:
+      checkbox_name: Sectoral Average Account
+      toggled: true
+      linestyle: solid
+      linewidth: 1.5
+      markersize: 6.0
+      label_template: Average Account in Sector {i}
+      colors: [red, blue, green, purple, orange]
+      traj_key: sectoral_avg_account
   default_lims: [[-149.854, 10220.7], [-19.7051, 2234.65]]
 dependency_graph:
   name: Dependency Graph

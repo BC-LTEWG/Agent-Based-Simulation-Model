@@ -112,7 +112,7 @@ class Firm : public Agent {
     void log_inventory_level(const Product * product, const double quantity);
     void log_inventory_reduction(const Product * product, const double quantity);
     void log_initial_employment(const unsigned int worker_id, const unsigned int workplace_id);
-    void log_busyness(double firm_busyness, int max_workers_for_transfer);
+    void log_busyness(double firm_busyness);
     void log_employment_transfer(
             const unsigned int worker_id,
             const unsigned int old_workplace_id,

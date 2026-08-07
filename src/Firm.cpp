@@ -49,6 +49,8 @@ void Firm::on_time_step() {
     if (plans_in_progress.size()) {
         log_plans();
     }
+    double firm_busyness = get_busyness();
+    log_busyness(firm_busyness);
 }
 
 void Firm::inject_randomness_into_demand() {
@@ -143,7 +145,6 @@ std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
     double relative_difference = 
         (societal_busyness - firm_busyness) / societal_busyness;
     if (relative_difference < TRANSFER_BUSYNESS_THRESHOLD) {
-        log_busyness(firm_busyness, 0);
         return {};
     }
     int available_workers_for_transfer = 
@@ -155,7 +156,6 @@ std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
             1
         );
     int max_workers_to_transfer = std::min(available_workers_for_transfer, workers_wanted);
-    log_busyness(firm_busyness, max_workers_to_transfer);
     std::vector<Person *> transfers;
     for (Person * worker : standby_workers) {
         if (static_cast<int>(transfers.size()) == max_workers_to_transfer) break;
@@ -790,15 +790,13 @@ void Firm::log_employment_transfer(
 }
 
 void Firm::log_busyness(
-    double firm_busyness,
-    int max_workers_for_transfer
+    double firm_busyness
 ) {
     Logger::log(
         get_client_type(),
         id,
         "busyness",
-        LogPair("firm_busyness", firm_busyness),
-        LogPair("max_workers_for_transfer", max_workers_for_transfer)
+        LogPair("firm_busyness", firm_busyness)
     );
 }
 
