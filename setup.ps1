@@ -85,6 +85,7 @@ if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($UserConfigDir)) {
 
 $UserConfigFile = Join-Path $UserConfigDir "config.yml"
 $UserModelsDir = $ScriptDir
+$OverseerModelDir = Join-Path $UserModelsDir "overseer_model"
 $UserLogsDir = Join-Path $ScriptDir "logs"
 
 New-Item -ItemType Directory -Path $UserConfigDir -Force | Out-Null
@@ -132,20 +133,19 @@ if (-not (Test-Path $SimPath -PathType Leaf)) {
     }
 }
 
-$EnvironmentVariableNames = @("DEMOS_FILE", "SIM_PATH", "MODEL_PATH")
+$EnvironmentVariableNames = @("BC_DEMO_FILE", "SIM_PATH", "MODEL_PATH")
 $PreviousEnvironment = @{}
 foreach ($Name in $EnvironmentVariableNames) {
     $PreviousEnvironment[$Name] = [Environment]::GetEnvironmentVariable($Name, "Process")
 }
 
 try {
-    # prepare_demo_and_params.py currently reads DEMOS_FILE, SIM_PATH, and MODEL_PATH.
-    $env:BC_DEMO_FILE = Join-Path $ScriptDir "bc_lte_demo.yml"
+    $env:BC_DEMO_FILE = Join-Path $OverseerModelDir "bc_lte_demo.yml"
     $env:SIM_PATH = $SimPath
-    $env:MODEL_PATH = Join-Path $UserModelsDir "overseer_model"
+    $env:MODEL_PATH = $OverseerModelDir
 
     Invoke-CheckedCommand -Command $VenvPython -Arguments @(
-        (Join-Path $ScriptDir "prepare_demo_and_params.py")
+        (Join-Path $OverseerModelDir "prepare_demo_and_params.py")
     )
 }
 finally {
