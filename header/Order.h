@@ -5,7 +5,6 @@ struct Order {
         kOrderRequested,
         kOrderRejected,
         kOrderInProgress,
-        kOrderIsStalled,
         kOrderFinished
     };
     Product * product;
