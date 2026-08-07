@@ -24,5 +24,6 @@ struct Plan {
     double quantity_remaining = 0.0;
     int outgoing_units_consumed = 0;
     bool is_stalled = false;
+    Product * missing_resource = nullptr;
 };
 

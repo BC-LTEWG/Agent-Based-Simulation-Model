@@ -1,0 +1,185 @@
+divider1:
+  title: Parameters
+row1:
+  exe_path:
+    param_name: exe_path
+    control_type: file_picker
+    label: 'Binary path: '
+    mode: file
+    tooltip: Location of binary.
+row2:
+  N_S:
+    param_name: N_S
+    tooltip: Number of time steps (hours) to simulate. There are about 8760 hours
+      in a year, so for simplicity you can consider 10k hours = 1 year.
+    control_type: entry_block
+    label: $N_S=$
+    type: scalar
+    scalar_type: int
+    range: [0, 10000]
+  T:
+    param_name: T
+    tooltip: Starting number of hours in the working day.
+    control_type: entry_block
+    type: scalar
+    scalar_type: int
+    range: [1, 24]
+    label: T=
+  W:
+    param_name: W
+    tooltip: Starting number of days in the working week.
+    control_type: entry_block
+    type: scalar
+    scalar_type: int
+    range: [1, 7]
+    label: $W=$
+row3:
+  N_g:
+    param_name: N_g
+    tooltip: Number of circulating goods.
+    control_type: entry_block
+    type: scalar
+    scalar_type: int
+    range: [1, 100]
+    label: $N_C=$
+  N_m:
+    param_name: N_m
+    tooltip: 'Number of machines (fixed capital). Rather than being consumed during
+      production, machines gradually wear out due from use and have fixed lifetimes. '
+    control_type: entry_block
+    type: scalar
+    scalar_type: int
+    range: [1, 10]
+    label: $N_m=$
+  N_inputs_max:
+    param_name: N_inputs_max
+    control_type: entry_block
+    type: scalar
+    scalar_type: int
+    range: [1, 10]
+    label: $N_i=$
+    tooltip: Max number of inputs per good
+row4:
+  N_h:
+    param_name: N_h
+    tooltip: 'The number of people. '
+    control_type: entry_block
+    type: scalar
+    scalar_type: int
+    range: [10, 1000]
+    label: $N_h=$
+  N_p:
+    param_name: N_p
+    tooltip: The number of producers.
+    control_type: entry_block
+    type: scalar
+    scalar_type: int
+    range: [1, 100]
+    label: $N_p=$
+  N_d:
+    param_name: N_d
+    tooltip: The number of distributors.
+    control_type: entry_block
+    type: scalar
+    scalar_type: int
+    range: [1, 100]
+    label: $N_d=$
+row5:
+  S:
+    param_name: S
+    control_type: entry_block
+    type: scalar
+    scalar_type: float
+    range: [0.0, 1.0]
+    label: $S=$
+    tooltip: Annual chance of getting sick.
+  N_a:
+    param_name: N_a
+    control_type: entry_block
+    type: scalar
+    scalar_type: int
+    range: [1, 100]
+    label: $N_a=$
+    tooltip: The number of abilities.
+  v_ability:
+    param_name: v_ability
+    control_type: entry_block
+    type: scalar
+    scalar_type: float
+    range: [0.0, 1.0]
+    label: $\sigma_a=$
+    tooltip: 'Person ability standard deviation. Controls how dramatic the differences
+      in aptitude are from person to person. '
+row6:
+  productivity:
+    param_name: productivity
+    control_type: entry_block
+    type: scalar
+    scalar_type: float
+    range: [0.0, 1.0]
+    label: $\epsilon_A=$
+    tooltip: The degree of productivity in society, or more technically the exact
+      spectral radius of the input/output matrix. The closer to 1 this gets, the more
+      'difficult' it is to produce a surplus.  Thus we see this as representing the
+      'difficulty' of the economy. Higher values of this number put massive additional
+      strain on the productive demands of the producers specifically, which have a
+      variety of observable consequences.
+  consump_epsilon:
+    param_name: consump_epsilon
+    control_type: entry_block
+    type: scalar
+    scalar_type: float
+    range: [0.0, 1.0]
+    label: $\epsilon_c=$
+    tooltip: 'Controls how much labor value a person wants to consume per hour. As
+      it gets close to 1, it becomes increasingly the case that people will find themselves
+      working on plans every working hour. '
+row7:
+  init_prices:
+    control_type: dropdown
+    label: Initial Prices
+    tooltip: "Controls how prices are initialized. If set to labor values, prices\
+      \ will be set initially equal to the theoretical labor values predicted by the\
+      \ input/output matrix (keep in mind these can differ from the socially necessary\
+      \ labor values, which also depend on the average person's aptitude and their\
+      \ sickness rate). \n\nIf set to equilibrium prices, values are set equal to\
+      \ the Perron-Frobenius equilibrium prices associated with the requirements matrix\
+      \ along with a real wage vector which is obtained from scaling down the consumption\
+      \ frequencies until the resulting system becomes profitable.  "
+    param_name: init_prices
+    names: [Labor Values, Equilibrium Prices]
+    values: [labor_values, equilibrium_prices]
+    use_names_func: false
+row8:
+  fixed_seed:
+    control_type: checkbox
+    label: Fixed Seed
+    tooltip: 'If unchecked, the seed will be generated differently every time the
+      simulation is ran. If checked, you can fix the seed and test a particular simulation
+      run more carefully. '
+    param_name: fixed_seed
+    change_effect: send_message
+  seed:
+    param_name: seed
+    control_type: entry_block
+    type: scalar
+    scalar_type: int
+    range: [0, 10000]
+    label: 'Seed = '
+    tooltip: 'The pseudo-RNG seed. '
+  free_goods:
+    control_type: checkbox
+    label: Free Goods
+    tooltip: If checked, a random good will be made free every $\Delta_F$ many time
+      steps.
+    param_name: free_goods
+    change_effect: send_message
+  new_free_good_interval:
+    param_name: new_free_good_interval
+    control_type: entry_block
+    type: scalar
+    scalar_type: int
+    range: [1, 10000]
+    label: $\Delta_F=$
+    tooltip: After this many time steps, a new random good is made free through public
+      sector taxation.
