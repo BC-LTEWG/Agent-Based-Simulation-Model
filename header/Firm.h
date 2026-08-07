@@ -118,7 +118,7 @@ class Firm : public Agent {
             const unsigned int old_workplace_id,
             const unsigned int new_workplace_id
             );
-    void log_drafting_failure_goods(
+    void log_drafting_failure_inputs(
         const Product * product,
         std::vector<Product *> missing_resources
     );
@@ -135,10 +135,10 @@ class Firm : public Agent {
         const Order * original_order,
         const Order * chosen_return_Order
     );
-    void log_plan_stallage(Plan *, Product *, double);
-    void log_plan_stallage_resolved(Plan *);
+    void log_plan_stall(Plan *, Product *, double);
+    void log_plan_stall_resolved(Plan *);
     void log_start_plan_stalled(Plan * plan, Product * product, double missing);
-    void log_start_plan_stallage_resolved(Plan * plan);
+    void log_start_plan_stall_resolved(Plan * plan);
     void log_demand(Product * Product, double demand);
     void log_resupply_rate(
         const Product * product,

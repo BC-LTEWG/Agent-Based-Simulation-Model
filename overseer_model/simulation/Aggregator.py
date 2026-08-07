@@ -133,9 +133,9 @@ class Aggregator:
                 "resupply_rate": self.record_resupply_rate,
                 "drafting_failure": self.record_drafting_failure,
                 "stalled_plan": self.record_stalled_plan,
-                "unstalled_plan": self.record_stallage_resolved,
+                "unstalled_plan": self.record_stall_resolved,
                 "start_plan_stalled": self.record_start_plan_stalled,
-                "start_plan_stallage_resolved": self.record_start_plan_stallage_resolved,
+                "start_plan_stall_resolved": self.record_start_plan_stall_resolved,
                 "reorder_attempt": self.record_reorder_attempt,
                 "reorder_failure": self.record_reorder_failure,
                 "newly_employed": self.record_newly_employed,
@@ -399,7 +399,7 @@ class Aggregator:
         stalled_plan_causes_goods = [len(self.stalled_plan_causes[i]) for i in range(good_lo,good_hi)]
         stalled_plan_causes_machines = [len(self.stalled_plan_causes[i]) for i in range(m_lo,m_hi)]
 
-        stalled_plan_causes_total_deficits = self.get_plan_stallage_deficits()
+        stalled_plan_causes_total_deficits = self.get_plan_stall_deficits()
         stalled_plan_causes_total_deficits_goods = stalled_plan_causes_total_deficits[good_lo:good_hi]
         stalled_plan_causes_total_deficits_machines = stalled_plan_causes_total_deficits[m_lo:m_hi]
 
@@ -1324,7 +1324,7 @@ class Aggregator:
         self.stalled_plan_casualties[product_id].add(plan_id)
         self.stalled_plan_causes[missing_resource_id][plan_id] = deficit
 
-    def record_stallage_resolved(self, dic):
+    def record_stall_resolved(self, dic):
         plan_id = dic["plan_id"]
         product_id = dic["product_id"]
 
@@ -1333,7 +1333,7 @@ class Aggregator:
         for plan_deficits in self.stalled_plan_causes.values():
             plan_deficits.pop(plan_id, None)
 
-    def get_plan_stallage_deficits(self):
+    def get_plan_stall_deficits(self):
         return [
             sum(plan_deficits.values())
             for plan_deficits in self.stalled_plan_causes.values()
@@ -1349,7 +1349,7 @@ class Aggregator:
         self.start_plan_stall_causes[missing_resource_id][plan_id] = deficit
 
 
-    def record_start_plan_stallage_resolved(self, dic):
+    def record_start_plan_stall_resolved(self, dic):
         plan_id = dic["plan_id"]
         product_id = dic["product_id"]
 

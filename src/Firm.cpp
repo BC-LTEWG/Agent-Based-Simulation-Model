@@ -324,8 +324,8 @@ bool Firm::start_plan(Plan * plan) {
         plan->raw_materials_budget + plan->machinery_budget;
     if (plan->is_stalled) {
         plan->is_stalled = false;
-        plan->stalled_resource = nullptr;
-        log_start_plan_stallage_resolved(plan);
+        plan->missing_resource = nullptr;
+        log_start_plan_stall_resolved(plan);
     }
     return true;
 }
@@ -340,15 +340,15 @@ void Firm::handle_start_plan_failure(
 
     rollback_plan_inputs(plan, plan->order->customer);
     bool new_stall =
-        !plan->is_stalled || plan->stalled_resource != missing_resource;
+        !plan->is_stalled || plan->missing_resource != missing_resource;
 
     if (new_stall) {
         if (plan->is_stalled) {
-            log_start_plan_stallage_resolved(plan);
+            log_start_plan_stall_resolved(plan);
         }
         reorder_stalled_plan_input(missing_resource, deficit);
         log_start_plan_stalled(plan, missing_resource, deficit);
-        plan->stalled_resource = missing_resource;
+        plan->missing_resource = missing_resource;
     }
     plan->is_stalled = true;
 }
@@ -416,18 +416,18 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
                 return_inputs_to_inventory(deducted_inputs, plan->order->customer);
 
                 bool new_stall = !plan->is_stalled ||
-                    plan->stalled_resource != requirement.first;
+                    plan->missing_resource != requirement.first;
 
                 if (new_stall) {
                     if (plan->is_stalled) {
-                        log_plan_stallage_resolved(plan);
+                        log_plan_stall_resolved(plan);
                     }
                     reorder_stalled_plan_input(
                         requirement.first,
                         deficit
                     );
-                    log_plan_stallage(plan, requirement.first, deficit);
-                    plan->stalled_resource = requirement.first;
+                    log_plan_stall(plan, requirement.first, deficit);
+                    plan->missing_resource = requirement.first;
                 }
                 plan->is_stalled = true;
                 return;
@@ -436,8 +436,8 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
     }
     if (was_stalled) {
         plan->is_stalled = false;
-        plan->stalled_resource = nullptr;
-        log_plan_stallage_resolved(plan);
+        plan->missing_resource = nullptr;
+        log_plan_stall_resolved(plan);
     }
     for (std::pair<Product *, double> input : deducted_inputs) {
         plan->inventory[input.first] += input.second;
@@ -802,7 +802,7 @@ void Firm::log_busyness(
     );
 }
 
-void Firm::log_drafting_failure_goods(
+void Firm::log_drafting_failure_inputs(
     const Product * product,
     std::vector<Product *> missing_resources
 ) {
@@ -936,7 +936,7 @@ void Firm::log_catalog_addition(Product * product) {
     Logger::log(get_client_type(), id, "catalog_addition", LogPair("product_id", product->id));
 }
 
-void Firm::log_plan_stallage(Plan * plan, Product * missing_product, double deficit) {
+void Firm::log_plan_stall(Plan * plan, Product * missing_product, double deficit) {
     Logger::log(
         get_client_type(),
         id,
@@ -948,7 +948,7 @@ void Firm::log_plan_stallage(Plan * plan, Product * missing_product, double defi
     );
 }
 
-void Firm::log_plan_stallage_resolved(Plan * plan) {
+void Firm::log_plan_stall_resolved(Plan * plan) {
     Logger::log(
         get_client_type(),
         id,
@@ -970,11 +970,11 @@ void Firm::log_start_plan_stalled(Plan * plan, Product * product, double missing
     );
 }
 
-void Firm::log_start_plan_stallage_resolved(Plan * plan) {
+void Firm::log_start_plan_stall_resolved(Plan * plan) {
     Logger::log(
         get_client_type(),
         id,
-        "start_plan_stallage_resolved",
+        "start_plan_stall_resolved",
         LogPair("plan_id", plan->id),
         LogPair("product_id", plan->order->product->id)
     );

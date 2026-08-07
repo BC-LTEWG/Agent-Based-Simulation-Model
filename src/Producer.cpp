@@ -147,7 +147,7 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
         if (workers_are_unavailable) {
             log_drafting_failure_workers(order->product);
         } else {
-            log_drafting_failure_goods(order->product, missing_resources);
+            log_drafting_failure_inputs(order->product, missing_resources);
         }
     } else {
         draft_plan = draft_plan_for_order(return_order);
