@@ -34,7 +34,7 @@ class Firm : public Agent {
     void receive_shipment(Plan * plan);
     void receive_payment(Plan * plan, double transaction_amount);
     double get_busyness();
-    double get_pooled_input_value();
+    double get_account();
     std::vector<Person *> propose_transfer(int workers_wanted);
     void finalize_transfer(Person * worker);
 
@@ -42,7 +42,7 @@ class Firm : public Agent {
   protected:
     unsigned int id;
     std::unordered_map<Product *, double> average_team_sizes;
-    double pooled_input_value = 0.0;
+    double account = 0.0;
     std::unordered_set<Person *> workers,
         standby_workers;
     std::unordered_map<Product *, double> input_inventory;

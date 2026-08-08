@@ -84,7 +84,7 @@ void Firm::receive_shipment(Plan * plan) {
     product_to_outbound_orders[order->product].erase(order);
     double transaction_amount =
         order->product->price_per_unit * quantity_delivered;
-    pooled_input_value -= transaction_amount;
+    account -= transaction_amount;
     plan->firm->receive_payment(plan, transaction_amount);
     log_shipment_received(order->product, quantity_delivered);
     log_inventory_level(order->product, input_inventory[order->product]);
@@ -92,7 +92,7 @@ void Firm::receive_shipment(Plan * plan) {
 
 void Firm::receive_payment(Plan * plan, double transaction_amount) {
     plan->debt += transaction_amount;
-    pooled_input_value += transaction_amount;
+    account += transaction_amount;
 }
 
 bool Firm::remove_input_from_inventory(
@@ -131,8 +131,8 @@ double Firm::get_busyness() {
     return workers.size() > 0 ? busyness / workers.size() : 0.0;
 }
 
-double Firm::get_pooled_input_value() {
-    return pooled_input_value;
+double Firm::get_account() {
+    return account;
 }
 
 std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
@@ -320,7 +320,7 @@ bool Firm::start_plan(Plan * plan) {
         move_worker_off_standby(worker);
     }
     plan->outlays = plan->inventory;
-    pooled_input_value +=
+    account +=
         plan->raw_materials_budget + plan->machinery_budget;
     if (plan->is_stalled) {
         plan->is_stalled = false;
