@@ -30,10 +30,7 @@ namespace {
     };
 }
 
-void Society::set_abilities(
-        std::vector<Ability *>& abilities,
-        std::vector<Ability *>& distribution_abilities
-        ) {
+void Society::set_abilities() {
     for (unsigned int i = 0; i < Sim::get_num_abilities(); i++) {
         abilities.push_back(new Ability());
     }
@@ -44,10 +41,7 @@ void Society::set_abilities(
     distribution_abilities.resize(ability_count_dist(Sim::get_random_generator()));
 }
 
-void Society::set_initial_account(
-        double& initial_account,
-        const std::vector<ConsumerGood *>& consumer_goods
-        ) {
+void Society::set_initial_account() {
     initial_account = 0.0;
     for (ConsumerGood * consumer_good : consumer_goods) {
         initial_account += consumer_good->price_per_unit *
@@ -67,12 +61,12 @@ Society * Society::get_instance() {
 }
 
 Society::Society() :
-    current_work_hours_daily{Sim::get_work_hours_daily()},
-    current_work_days_weekly{Sim::get_work_days_weekly()}
+    current_work_hours_daily{Sim::get_initial_work_hours_daily()},
+    current_work_days_weekly{Sim::get_initial_work_days_weekly()}
 {}
 
 void Society::initialize() {
-    set_abilities(abilities, distribution_abilities);
+    set_abilities();
     set_initial_products();
     unsigned int num_producers = Sim::get_num_producers();
     for (unsigned int i = 0; i < num_producers; ++i) {
@@ -117,7 +111,7 @@ void Society::initialize() {
         distributors.push_back(distributor);
         firms.push_back(distributor);
     }
-    set_initial_account(initial_account, consumer_goods);
+    set_initial_account();
     for (unsigned int i = 0; i < Sim::get_num_people(); i++) {
         birth_person();
     }
@@ -150,6 +144,8 @@ void Society::on_time_step() {
     }
     PriceController::get_instance()->on_time_step();
     check_expand_public_sector();
+    check_sample_busyness_data();
+    check_update_work_hours();
 }
 
 void Society::set_initial_products() {
@@ -281,7 +277,7 @@ double Society::get_total_employment() {
     return static_cast<double>(employed) / people.size();
 }
 
-std::unordered_map<Product *, int>& Society::get_number_of_producers_for_product() {
+std::unordered_map<Product *, int>& Society::get_product_to_number_of_producers() {
     return product_to_number_of_producers;
 }
 
@@ -359,7 +355,7 @@ static void normalize_consumption_frequencies(
             consumer_good->mean_consumption_frequency;
     }
     double worked_proportion_of_week =
-        static_cast<double>(Sim::get_work_hours_daily()) * Sim::get_work_days_weekly() / WEEK;
+        static_cast<double>(Society::get_instance()->get_current_work_hours_daily()) * Society::get_instance()->get_current_work_days_weekly() / WEEK;
     double consumption_scalar = Sim::get_product_consumption_mult()
         * worked_proportion_of_week
         / value_consumed_per_hour;
@@ -640,6 +636,12 @@ unsigned int Society::get_current_work_days_weekly() {
 	return current_work_days_weekly;
 }
 
+double Society::get_work_week_proportion() {
+    return static_cast<double>(Society::get_instance()->get_current_work_hours_daily()) 
+        * Society::get_instance()->get_current_work_days_weekly()
+        / WEEK;
+}
+
 int Society::get_initial_account() {
     return initial_account;
 }
@@ -684,6 +686,128 @@ void Society::check_expand_public_sector() {
         consumer_good->public_sector = true;
         log_public_sector_expansion(consumer_good);
     }
+}
+
+void Society::check_sample_busyness_data() {
+    if (Sim::get_current_time_step() % BUSYNESS_AVERAGING_WINDOW == 0
+        && Sim::get_current_time_step() > 0) {
+        for (Person * person : people) {
+            busyness_data.push_back(person->get_busyness());
+        }
+    }
+}
+
+static double normal_pdf(
+    double z) {
+    double exponent = -0.5 * std::pow(z, 2);
+    return std::exp(exponent) / std::sqrt(2.0 * M_PI);
+}
+
+static double normal_cdf(double z) {
+    return 0.5 + 0.5 * std::erf(z / std::sqrt(2.0));
+}
+
+static double uncensored_log_likelihood(
+    const std::vector<double>& data,
+    double upper_bound,
+    double delta,
+    double gamma) {
+    double log_likelihood = 0.0;
+    for (double x : data) {
+        if (x < upper_bound) {
+            log_likelihood += std::log(gamma) + std::log(normal_pdf(gamma * x - delta));
+        } else {
+            log_likelihood += std::log(normal_cdf(delta - gamma * upper_bound));
+        }
+    }
+    return log_likelihood / data.size();
+}
+
+static void log_censored_busyness_distribution(double mean, double stddev) {
+    Logger::log(
+            Logger::SOCIETY,
+            0,
+            "censored_busyness_distribution",
+            LogPair("mean", mean),
+            LogPair("stddev", stddev)
+            );
+}
+
+static void log_predicted_uncensored_busyness_distribution(double mean, double stddev) {
+    Logger::log(
+            Logger::SOCIETY,
+            0,
+            "predicted_uncensored_busyness_distribution",
+            LogPair("mean", mean),
+            LogPair("stddev", stddev)
+            );
+}
+
+static std::pair<double, double> predict_uncensored_distribution(
+    const std::vector<double>& data,
+    double upper_bound) {
+    double mean = std::accumulate(data.begin(), data.end(), 0.0) / data.size();
+    double variance = 0.0;
+    std::cout << ":( - ";
+    for (double x : data) {
+        std::cout << x << ",";
+        variance += (x - mean) * (x - mean);
+    }
+    std::cout << std::endl;
+    variance /= data.size();
+    double stddev = std::sqrt(variance);
+    std::cout << ":( - actual mean: " << mean << ", stddev: " << stddev << std::endl;
+    log_censored_busyness_distribution(mean, stddev);
+    double gamma = 1 / stddev;
+    double delta = mean * gamma;
+    std::cout << ":( - initial delta: " << delta << ", gamma: " << gamma << std::endl;
+    double dd_gamma = 0.0;
+    double dd_delta = 0.0;
+    double d_gamma = 0.001;
+    double d_delta = 0.001;
+    double gamma_learning_rate = 0.05;
+    double delta_learning_rate = 0.05;
+    double convergence_threshold = 0.0001;
+    do {
+        dd_delta = (uncensored_log_likelihood(data, upper_bound, delta + d_delta, gamma) 
+            - uncensored_log_likelihood(data, upper_bound, delta, gamma)) / d_delta;
+        dd_gamma = (uncensored_log_likelihood(data, upper_bound, delta, gamma + d_gamma) 
+            - uncensored_log_likelihood(data, upper_bound, delta, gamma)) / d_gamma;
+        delta += delta_learning_rate * dd_delta;
+        gamma += gamma_learning_rate * dd_gamma;
+        gamma = std::max(gamma, 1e-6);
+        std::cout << ":( - updated delta: " << delta << ", gamma: " << gamma << std::endl;
+    } while (std::abs(dd_delta) > convergence_threshold || std::abs(dd_gamma) > convergence_threshold);
+    double predicted_mean = delta / gamma;
+    double predicted_stddev = 1 / gamma;
+    std::cout << ":( - predicted mean: " << predicted_mean << ", stddev: " << predicted_stddev << std::endl;
+    log_predicted_uncensored_busyness_distribution(predicted_mean, predicted_stddev);
+    return {predicted_mean, predicted_stddev};
+}
+
+void Society::check_update_work_hours() {
+    if (Sim::get_current_time_step() % WORK_HOURS_UPDATE_PERIOD
+        || Sim::get_current_time_step() <= 0) {
+        return;
+    }
+    double hard_upper_bound = 
+        static_cast<double>(current_work_hours_daily)
+        * current_work_days_weekly
+        / WEEK;
+    double effective_upper_bound = 
+        hard_upper_bound * (1.0 - EFFECTIVELY_CENSORED_BUSYNESS_BUFFER);
+    std::pair<double, double> predicted_distribution = predict_uncensored_distribution(
+        busyness_data,
+        effective_upper_bound
+    );
+    double confident_lower_bound = 
+        predicted_distribution.first + WORK_HOURS_UPDATE_ZSCORE * predicted_distribution.second;
+    current_work_hours_daily = 
+        std::ceil(confident_lower_bound * WEEK / current_work_days_weekly);
+    current_work_hours_daily = std::min(current_work_hours_daily, DAY);
+    log_busyness_data();
+    log_work_hours_weekly();
+    busyness_data.clear();
 }
 
 void Society::log_io_matrix(Eigen::MatrixXd& A, size_t dim) {
@@ -776,4 +900,26 @@ void Society::log_public_sector_expansion(ConsumerGood * consumer_good) {
         "public_sector_expansion",
         LogPair("product_id", consumer_good->id)
     );
+}
+
+void Society::log_busyness_data() {
+    for (double busyness_value : busyness_data) {
+        Logger::log(
+                Logger::SOCIETY,
+                id,
+                "busyness_data",
+                LogPair("dataset", Sim::get_current_time_step() / WORK_HOURS_UPDATE_PERIOD),
+                LogPair("value", busyness_value)
+                );
+    }
+}
+
+void Society::log_work_hours_weekly() {
+    Logger::log(
+            Logger::SOCIETY,
+            id,
+            "work_hours_weekly",
+            LogPair("work_hours_daily", current_work_hours_daily),
+            LogPair("work_days_weekly", current_work_days_weekly)
+            );
 }

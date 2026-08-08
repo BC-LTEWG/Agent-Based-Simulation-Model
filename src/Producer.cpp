@@ -39,7 +39,7 @@ void Producer::add_to_catalog(Product * product) {
     double gross_hourly_demand = gross_hourly_demand_per_capita * Sim::get_num_people();
     double gross_demand_per_producer = 
         gross_hourly_demand /
-        Society::get_instance()->get_number_of_producers_for_product()[product];
+        Society::get_instance()->get_product_to_number_of_producers()[product];
 
     double starting_num_firms =
         Sim::get_num_producers() +
@@ -65,7 +65,6 @@ void Producer::add_to_catalog(Product * product) {
 }
 
 void Producer::initialize_inventory() {
-
     for (std::pair<Product * const, double>& demand : producer_demands) {
         double input_amount_added = get_reorder_threshold(demand.first);
         if (demand.first->product_type == Product::ProductType::kTypeMachine) {

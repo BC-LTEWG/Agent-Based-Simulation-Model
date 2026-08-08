@@ -41,7 +41,6 @@ class Firm : public Agent {
 
   protected:
     unsigned int id;
-    std::unordered_map<Product *, double> average_team_sizes;
     double pooled_input_value = 0.0;
     std::unordered_set<Person *> workers,
         standby_workers;
@@ -83,7 +82,6 @@ class Firm : public Agent {
     bool is_within_work_schedule(Plan * plan) const;
 
     double get_pending_inventory(Product * product);
-    double get_work_week_proportion();
     void reorder_stalled_plan_input(Product * product, double deficit);
     int predict_workers_needed(const Order * order);
     std::vector<Person *> get_available_workers(const Order * order);

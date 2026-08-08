@@ -17,12 +17,12 @@ unsigned int Sim::get_num_people() {
     return get_instance().args.num_people;
 }
 
-unsigned int Sim::get_work_hours_daily() {
-    return get_instance().args.work_hours_daily;
+unsigned int Sim::get_initial_work_hours_daily() {
+    return get_instance().args.initial_work_hours_daily;
 }
 
-unsigned int Sim::get_work_days_weekly() {
-    return get_instance().args.work_days_weekly;
+unsigned int Sim::get_initial_work_days_weekly() {
+    return get_instance().args.initial_work_days_weekly;
 }
 
 unsigned int Sim::get_num_goods() {

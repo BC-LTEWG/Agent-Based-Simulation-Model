@@ -138,7 +138,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 if (value <= 0 || value > 24) {
                     error = true;
                 } else {
-                    args.work_hours_daily = value;
+                    args.initial_work_hours_daily = value;
                 }
                 break;
             }
@@ -146,7 +146,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 if (value <= 0 || value > 7) {
                     error = true;
                 } else {
-                    args.work_days_weekly = value;
+                    args.initial_work_days_weekly = value;
                 }
                 break;
             }

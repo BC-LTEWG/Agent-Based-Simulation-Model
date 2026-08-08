@@ -47,6 +47,7 @@ Person::Person():
     log_inventory();
     account = Society::get_instance()->get_initial_account();
     log_account();
+    busyness = Sim::get_product_consumption_mult() * Society::get_instance()->get_work_week_proportion();
 }
 
 unsigned int Person::get_id() {
