@@ -267,21 +267,19 @@ void Firm::check_and_reorder_input(Product * product) {
 }
 
 void Firm::return_inputs_to_inventory(
-        const std::unordered_map<Product *, double> deducted_inputs,
-        Firm * firm
-    ) {
+        const std::unordered_map<Product *, double> deducted_inputs) {
     for (const std::pair<Product * const, double>& deduction :
             deducted_inputs) {
         Product * input = deduction.first;
         double quantity = deduction.second;
         input_inventory[input] += quantity;
-        add_demand_signal(input, -quantity, firm);
+        add_demand_signal(input, -quantity, this);
         log_inventory_level(input, input_inventory[input]);
     }
 }
 
-void Firm::rollback_plan_inputs(Plan * plan, Firm * firm) {
-    return_inputs_to_inventory(plan->inventory, firm);
+void Firm::rollback_plan_inputs(Plan * plan) {
+    return_inputs_to_inventory(plan->inventory);
     plan->inventory.clear();
     plan->outlays.clear();
     plan->order->status = Order::OrderStatus::kOrderRequested;
@@ -338,7 +336,7 @@ void Firm::handle_start_plan_failure(
     double have_on_hand = get_inventory_level(missing_resource);
     double deficit = amount_needed - have_on_hand;
 
-    rollback_plan_inputs(plan, plan->order->customer);
+    rollback_plan_inputs(plan);
     bool new_stall =
         !plan->is_stalled || plan->missing_resource != missing_resource;
 
@@ -413,7 +411,7 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
                         plan->order->customer,
                         deducted_inputs
                         )) {
-                return_inputs_to_inventory(deducted_inputs, plan->order->customer);
+                return_inputs_to_inventory(deducted_inputs);
 
                 bool new_stall = !plan->is_stalled ||
                     plan->missing_resource != requirement.first;
@@ -461,10 +459,7 @@ void Firm::end_plan(Plan * plan) {
     for (std::pair<Product *, double> input : plan->inventory) {
         plan->outlays[input.first] -= input.second;
     }
-    return_inputs_to_inventory(
-        plan->inventory,
-        plan->order->customer
-    );
+    return_inputs_to_inventory(plan->inventory);
     recorded_living_labor_per_unit[plan->order->product] = 
         plan->labor_hours_used /
         (plan->order->quantity - plan->quantity_remaining); 

@@ -72,10 +72,9 @@ class Firm : public Agent {
     bool start_plan(Plan * plan);
     void handle_start_plan_failure(Plan * plan, Product * product, double missing);
     void return_inputs_to_inventory(
-        std::unordered_map<Product *, double> deducted_inputs,
-        Firm * firm
+        std::unordered_map<Product *, double> deducted_inputs
     );
-    void rollback_plan_inputs(Plan * plan, Firm * firm);
+    void rollback_plan_inputs(Plan * plan);
     void move_plan_forward_one_step(Plan * plan);
     void end_plan(Plan * plan);
     void move_plans_forward_one_step();
