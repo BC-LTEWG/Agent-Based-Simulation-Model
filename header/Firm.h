@@ -54,7 +54,6 @@ class Firm : public Agent {
     double recent_busyness = 0.0;
     double recent_labor_hours = 0.0;
     double labor_hours_this_time_step = 0.0;
-    unsigned int time_since_last_worker_drafting_failure = 0;
     std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
     std::unordered_map<Product *, double> recorded_living_labor_per_unit;
     std::unordered_set<Plan *> plans_in_progress;

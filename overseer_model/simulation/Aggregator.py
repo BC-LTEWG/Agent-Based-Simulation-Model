@@ -1047,38 +1047,6 @@ class Aggregator:
         sectoral_busyness = np.array([np.average(sector) if sector else 0.0 for sector in sectoral_busyness_data])
         return sectoral_busyness
 
-    # def _get_sectoral_busyness(self):
-    #     n_sectors = self.settings["n_sectors"]
-
-    #     sectoral_labor_hours = np.zeros(n_sectors)
-    #     sectoral_employment = np.zeros(n_sectors)
-
-    #     for properties in self.producers.values():
-    #         employees = properties["employees"]
-    #         recent_labor_hours = properties["recent_labor_hours"]
-
-    #         for prod_id in properties["catalog"]:
-    #             sector_id = self.get_sector_idx(prod_id)
-
-    #             sectoral_labor_hours[sector_id] += recent_labor_hours
-    #             sectoral_employment[sector_id] += employees
-
-    #     distribution_sector = self.settings["n_goods"]
-
-    #     for properties in self.distributors.values():
-    #         sectoral_labor_hours[distribution_sector] += \
-    #             properties["recent_labor_hours"]
-
-    #         sectoral_employment[distribution_sector] += \
-    #             properties["employees"]
-
-    #     return np.divide(
-    #         sectoral_labor_hours,
-    #         sectoral_employment,
-    #         out=np.zeros(n_sectors),
-    #         where=sectoral_employment > 0
-    #     ) * (self.weekly_working_hours / (24*7))
-
     def _get_sectoral_avg_accounts(self):
         sectoral_accounts = [[] for _ in range(self.settings["n_sectors"])]
         for person_dict in self.persons.values():

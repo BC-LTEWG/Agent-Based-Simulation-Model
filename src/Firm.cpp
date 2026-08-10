@@ -742,18 +742,15 @@ Plan * Firm::draft_plan_for_order(Order * order) {
     draft_plan->workers = get_available_workers(draft_plan->order);
     if (draft_plan->workers.empty()) {
         log_drafting_failure_workers(order->product);
-        time_since_last_worker_drafting_failure = 0;
         delete draft_plan;
         return nullptr;
     }
     adjust_quantity_for_deadline(draft_plan);
     if (order->quantity <= 0) {
         log_drafting_failure_workers(order->product);
-        time_since_last_worker_drafting_failure = 0;
         delete draft_plan;
         return nullptr;
     }
-    time_since_last_worker_drafting_failure++;
     assign_plan_dependent_fields(draft_plan);
     return draft_plan;
 }
