@@ -238,7 +238,9 @@ void Person::on_time_step() {
 	if (will_shop()) {
         shop();
     }
-    update_busyness();
+    if (Society::get_instance()->is_within_work_schedule()) {
+        update_busyness();
+    }
 }
 
 void Person::set_firm(Firm * workplace) {

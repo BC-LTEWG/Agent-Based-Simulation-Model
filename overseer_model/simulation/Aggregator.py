@@ -172,6 +172,7 @@ class Aggregator:
             "resupply_rates_weekly": np.zeros(self.settings["n_products"]),
             "resupply_deficits": np.zeros(self.settings["n_products"]),
             "tracked_inputs": np.zeros(self.settings["n_products"], dtype= bool),
+            "recent_labor_hours": 0.0,
             "catalog": [],
             "recent_busyness": 0,
             "inc_inventory": np.zeros(self.settings["n_products"]),
@@ -188,6 +189,7 @@ class Aggregator:
             "resupply_rates_weekly": np.zeros(self.settings["n_products"]),
             "resupply_deficits": np.zeros(self.settings["n_products"]),
             "tracked_inputs": np.zeros(self.settings["n_products"], dtype= bool),
+            "recent_labor_hours": 0.0,
             "catalog": [],
             "recent_busyness": 0,
             "inc_inventory": np.zeros(self.settings["n_products"]),
@@ -385,6 +387,7 @@ class Aggregator:
 
         sectoral_employment = self._get_available_employment_by_sector()
         sectoral_busyness = self._get_sectoral_busyness()
+        surplus_labor_ratios = self.eqb_min_employment / sectoral_employment
 
         drafting_casualty_totals_goods = list(self.drafting_failures_casualties[good_lo:good_hi])
         drafting_casualty_totals_distribution = [np.sum(self.drafting_failures_casualties[c_good_lo:c_good_hi])]
@@ -542,6 +545,7 @@ class Aggregator:
             "drafting_failures_caused_by_machines": Append(drafting_failures_caused_by_machines),
 
             "available_employment_by_sector": Append(sectoral_employment),
+            "surplus_labor_ratios": Append(surplus_labor_ratios),
 
             "sectoral_busyness": Append(sectoral_busyness),
             "overall_busyness": Append(self.overall_busyness),
@@ -552,7 +556,7 @@ class Aggregator:
 
             "transfer_requests_by_sector": Append(self.transfer_requests_by_sector),
             "long_run_employment_by_sector": Append(self.long_run_employment_by_sector / max(self.current_t, 1)),
-            "eqb_employment": Append(self.eqb_employment),
+            "eqb_employment": Append(self.eqb_min_employment),
 
             "min_hrly_output": Append(self.min_hrly_output),
             "long_run_activity": Append(self.long_run_sector_activity / max(self.current_t, 1)),
@@ -721,7 +725,7 @@ class Aggregator:
         init_work_days = self.settings["init_working_week"]
 
         self.predicted_order_sizes = 0.25 * 1.5 * 24*7 * min_hrly_output
-        self.eqb_employment = overall_sectoral_weekly_labor_req / (init_work_hours*init_work_days)
+        self.eqb_min_employment = overall_sectoral_weekly_labor_req / (init_work_hours*init_work_days)
         self.busy_lower_bd = self.settings["consump_epsilon"]*(init_work_hours*init_work_days / (24*7))
         self.busy_upper_bd = (init_work_hours*init_work_days / (24*7))
         self.min_hrly_output = overall_sectoral_activity_levels
@@ -1043,6 +1047,38 @@ class Aggregator:
         sectoral_busyness = np.array([np.average(sector) if sector else 0.0 for sector in sectoral_busyness_data])
         return sectoral_busyness
 
+    # def _get_sectoral_busyness(self):
+    #     n_sectors = self.settings["n_sectors"]
+
+    #     sectoral_labor_hours = np.zeros(n_sectors)
+    #     sectoral_employment = np.zeros(n_sectors)
+
+    #     for properties in self.producers.values():
+    #         employees = properties["employees"]
+    #         recent_labor_hours = properties["recent_labor_hours"]
+
+    #         for prod_id in properties["catalog"]:
+    #             sector_id = self.get_sector_idx(prod_id)
+
+    #             sectoral_labor_hours[sector_id] += recent_labor_hours
+    #             sectoral_employment[sector_id] += employees
+
+    #     distribution_sector = self.settings["n_goods"]
+
+    #     for properties in self.distributors.values():
+    #         sectoral_labor_hours[distribution_sector] += \
+    #             properties["recent_labor_hours"]
+
+    #         sectoral_employment[distribution_sector] += \
+    #             properties["employees"]
+
+    #     return np.divide(
+    #         sectoral_labor_hours,
+    #         sectoral_employment,
+    #         out=np.zeros(n_sectors),
+    #         where=sectoral_employment > 0
+    #     ) * (self.weekly_working_hours / (24*7))
+
     def _get_sectoral_avg_accounts(self):
         sectoral_accounts = [[] for _ in range(self.settings["n_sectors"])]
         for person_dict in self.persons.values():
@@ -1140,7 +1176,7 @@ class Aggregator:
         self.current_employment = dic["total"]
 
     def record_societal_busyness(self, dic):
-        self.overall_busyness = dic["value"]
+        self.overall_busyness = dic["value"] * self.weekly_working_hours / (24 * 7)
 
     def record_fic(self, dic):
         self.fic = dic["value"]
@@ -1411,15 +1447,17 @@ class Aggregator:
     def record_sector_busyness(self, dic):
         firm_id = dic["id"]
         client = dic["client"]
-        firm_busyness = dic["firm_busyness"]
-        # transfers_available = dic["max_workers_for_transfer"]
+        firm_busyness = dic["firm_busyness"] * self.weekly_working_hours / (24 * 7)
+        recent_labor_hours = dic.get("recent_labor_hours",0)
 
         if client == "Producer": 
             self.producers[firm_id]["recent_busyness"] = firm_busyness
+            self.producers[firm_id]["recent_labor_hours"] = recent_labor_hours
 
         if client == "Distributor":
             dist_id = self._get_dist_key(firm_id)
             self.distributors[dist_id]["recent_busyness"] = firm_busyness
+            self.distributors[dist_id]["recent_labor_hours"] = recent_labor_hours
 
     def record_employment_transfer(self, dic):
         old_emp = dic["old_workplace_id"]

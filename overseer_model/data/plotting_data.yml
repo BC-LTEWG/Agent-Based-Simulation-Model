@@ -746,6 +746,15 @@ employment:
       label_template: Minimum Necessary Employment for Sector {i}
       colors: [red, blue, green, purple, orange]
       traj_key: eqb_employment
+    surplus_labor_ratios:
+      checkbox_name: Surplus Labor Ratios
+      toggled: false
+      linestyle: solid
+      linewidth: 1.5
+      markersize: 6.0
+      label_template: Ratio of Minimal to Actual Employment Sector {i}
+      colors: [red, blue, green, purple, orange]
+      traj_key: surplus_labor_ratios
   default_lims: [[-351.723, 10434.2], [-38.3028, 197.973]]
 consumption_initialization:
   name: Consumption Initialization
@@ -1203,6 +1212,7 @@ problems_causes:
   grid_visible: true
   ticks_visible: true
   frame_visible: true
+  default_lims: [[-45.6103, 3666.9], [-2.66164, 9.35292]]
 busyness_data:
   name: Busyness Data
   tooltip: null

@@ -131,17 +131,10 @@ unsigned int Society::get_id() {
 }
 
 void Society::on_time_step() {
-    busyness = 0.0;
-    average_account = 0.0;
-    for (Person * person : people) {
-        busyness += person->get_busyness();
-        average_account += person->get_account();
-    }
-    busyness /= people.size();
+    update_average_account();
+    update_busyness();
     log_busyness();
     log_total_employment();
-    average_account /= people.size();
-
     for (Person * person : people) {
         person->on_time_step();
     }
@@ -266,8 +259,30 @@ std::vector<Producer *>& Society::get_suppliers(Product * product) {
     return product_to_suppliers[product];
 }
 
+void Society::update_busyness() {
+    double total_labor_capacity = 0.0;
+    double weighted_busyness = 0.0;
+    for (Firm * firm : firms) {
+        int num_workers = firm->get_num_workers();
+        weighted_busyness += firm->get_busyness() * num_workers;
+        total_labor_capacity += num_workers;
+    }
+
+    busyness = total_labor_capacity > 0
+        ? weighted_busyness / total_labor_capacity
+        : 0.0;
+}
+
 double Society::get_busyness() {
     return busyness;
+}
+
+void Society::update_average_account() {
+    average_account = 0.0;
+    for (Person * person : people) {
+        average_account += person->get_account();
+    }
+    average_account /= people.size();
 }
 
 double Society::get_average_account() {
@@ -727,6 +742,12 @@ void Society::check_update_work_week() {
     new_work_hours_daily = std::min(new_work_hours_daily, 24);
     current_work_hours_daily = new_work_hours_daily;
     log_work_hours_weekly();
+}
+
+bool Society::is_within_work_schedule() {
+    int time = Sim::get_current_time_step();
+    return time % DAY < get_current_work_hours_daily() &&
+        time / DAY % 7 < get_current_work_days_weekly();
 }
 
 void Society::log_io_matrix(Eigen::MatrixXd& A, size_t dim) {
