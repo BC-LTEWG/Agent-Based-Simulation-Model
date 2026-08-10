@@ -446,6 +446,7 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
     for (std::pair<Product *, double> requirement : plan->needed_this_step) {
         plan->inventory[requirement.first] -= requirement.second;
     }
+    account -= plan->workers.size() * portion_of_hour_worked;
     for (Person * worker : plan->workers) {
     	worker->register_hours_worked(portion_of_hour_worked);
     }
