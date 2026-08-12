@@ -41,7 +41,7 @@ row3:
     type: scalar
     scalar_type: int
     range: [1, 100]
-    label: $N_C=$
+    label: $N_g=$
   N_m:
     param_name: N_m
     tooltip: 'Number of machines (fixed capital). Rather than being consumed during

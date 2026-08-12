@@ -13,7 +13,7 @@ prices:
       linestyle: solid
       linewidth: 1.5
       markersize: 6.0
-      label_template: Price of Good {i}
+      label_template: Price of {i}
       colors: [red, blue, green, purple, orange]
       traj_key: producer_goods_prices
     goods_values:
