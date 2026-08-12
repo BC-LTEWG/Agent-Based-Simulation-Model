@@ -71,6 +71,11 @@ void Firm::update_busyness() {
             labor_hours_this_time_step / workers.size();
     }
 
+    double working_week_length = 
+        Sim::get_work_hours_daily() * Sim::get_work_days_weekly();
+
+    current_busyness *= working_week_length / WEEK;
+
     recent_busyness +=
         (current_busyness - recent_busyness)
         / BUSYNESS_AVERAGING_WINDOW;

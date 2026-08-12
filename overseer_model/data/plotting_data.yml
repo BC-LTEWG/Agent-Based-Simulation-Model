@@ -13,7 +13,7 @@ prices:
       linestyle: solid
       linewidth: 1.5
       markersize: 6.0
-      label_template: Price of {i}
+      label_template: Price of Good {i}
       colors: [red, blue, green, purple, orange]
       traj_key: producer_goods_prices
     goods_values:
@@ -116,6 +116,7 @@ prices:
       colors: ['#0ffbff', '#1eff2d', '#df03db']
       traj_key: machine_prices_living_labor_vals
   default_lims: [[-260.902, 11129.6], [0.100914, 0.450966]]
+  x_label: Time [t] (Hours)
 inventory:
   name: Inventory
   projection: 2d
