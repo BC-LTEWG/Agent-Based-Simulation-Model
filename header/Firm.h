@@ -146,4 +146,5 @@ class Firm : public Agent {
     );
     void log_catalog();
     void log_catalog_addition(Product * product);
+    void log_account();
 };

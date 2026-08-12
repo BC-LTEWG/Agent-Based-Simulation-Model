@@ -51,6 +51,7 @@ void Firm::on_time_step() {
     }
     double firm_busyness = get_busyness();
     log_busyness(firm_busyness);
+    log_account();
 }
 
 void Firm::inject_randomness_into_demand() {
@@ -972,4 +973,13 @@ void Firm::log_start_plan_stall_resolved(Plan * plan) {
         LogPair("plan_id", plan->id),
         LogPair("product_id", plan->order->product->id)
     );
+}
+
+void Firm::log_account() {
+    Logger::log(
+            get_client_type(),
+            id,
+            "account",
+            LogPair("value", account)
+            );
 }
