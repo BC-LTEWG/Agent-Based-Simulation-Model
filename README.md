@@ -19,7 +19,7 @@ If you have already cloned the repo and did not use this flag, you can either cl
 git submodule update --init --recursive
 ```
 2. Navigate inside of the repo and run one of the following two scripts depending on your operating system: 
-- If you are on Mac OS or Linux, run `./setup.sh`. 
+- If you are on Mac OS or Linux, run `./setup.sh`. If you are a Mac OS user, you may first need to make the script executable before this command will work: `chmod +x setup.sh`
 - If you are on Windows, run `.\setup.ps1` (or simply right click the file and choose Run with PowerShell). (Note that you must use PowerShell to run this script. Do not try to use `cmd`.)
 3. In either case, this script will create a file called `run.sh` or `run.ps1`, again depending on your operating system. Running that file in the same way should launch Overseer and immediately begin the simulation. 
 
