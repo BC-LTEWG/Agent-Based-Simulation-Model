@@ -142,7 +142,8 @@ class Aggregator:
                 "busyness": self.record_sector_busyness,
                 "accepted_order": self.record_accepted_order,
                 "transfer_request": self.record_transfer_request,
-                "transfer": self.record_employment_transfer
+                "transfer": self.record_employment_transfer,
+                "account": self.record_firm_account
             },
             "Producer": {},
             "Distributor": {}
@@ -171,6 +172,7 @@ class Aggregator:
             "catalog": [],
             "recent_busyness": 0,
             "inc_inventory": np.zeros(self.settings["n_products"]),
+            "account": 0
         } for i in range(self.settings["n_producers"])}
 
         self.distributors = {i: {
@@ -186,6 +188,7 @@ class Aggregator:
             "catalog": [],
             "recent_busyness": 0,
             "inc_inventory": np.zeros(self.settings["n_products"]),
+            "account": 0
 
         } for i in range(self.settings["n_distributors"])}
 
@@ -442,6 +445,9 @@ class Aggregator:
         n_prod_goods = self.settings["n_goods"]
         l_list = list(self.l)
 
+        producer_accounts = np.array([value["account"] for value in self.producers.values()])
+        distributor_accounts = np.array([value["account"] for value in self.distributors.values()])
+
         self.traj = {
             "producer_goods_prices": Append(self.prices[:n_prod_goods]),
             "consumption_goods_prices": Append(self.prices[n_prod_goods:2*n_prod_goods]),
@@ -576,6 +582,8 @@ class Aggregator:
             "start_plan_stall_causes_machines": Append(start_plan_stall_causes_machines),
             "start_plan_stall_causes_deficits_goods": Append(start_plan_stall_deficits_goods),
             "start_plan_stall_causes_deficits_machines": Append(start_plan_stall_deficits_machines),
+            "producer_accounts": Append(producer_accounts),
+            "distributor_accounts": Append(distributor_accounts),
 
         }
         if self.current_t == 0:
@@ -1476,3 +1484,15 @@ class Aggregator:
                 self.transfer_requests_by_sector_t,
                 self.current_t
             )
+    def record_firm_account(self, dic):
+        client = dic["client"]
+        firm_id = dic["id"]
+        value = dic["value"]
+        if client == "Producer":
+            self.producers[firm_id]["account"] = value
+        elif client == "Distributor":
+            firm_id = self._get_dist_key(firm_id)
+            self.distributors[firm_id]["account"] = value
+        else:
+            return
+
