@@ -1,6 +1,7 @@
 #pragma once
 
 struct Order {
+    unsigned int id;
     enum OrderStatus {
         kOrderRequested,
         kOrderRejected,

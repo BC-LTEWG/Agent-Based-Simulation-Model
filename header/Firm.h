@@ -5,6 +5,7 @@
 #include <vector>
 #include <queue>
 
+#include "Debug.h"
 #include "Agent.h"
 #include "Logger.h"
 #include "Person.h"

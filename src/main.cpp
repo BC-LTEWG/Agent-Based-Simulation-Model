@@ -269,6 +269,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
 int main(int argc, const char ** argv) {
     SimArgs args;
     set_params(argc, argv, args);
+    DEBUG_SEED(args);
     Sim::run(args);
 	return EXIT_SUCCESS;
 }

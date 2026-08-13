@@ -21,6 +21,19 @@
 #include "Sim.h"
 #include "Society.h"
 
+bool Determinism<Product*>::operator()(Product* a, Product* b) const {
+    return a->id < b->id;
+}
+bool Determinism<Order*>::operator()(Order* a, Order* b) const {
+    return a->id < b->id;
+}
+bool Determinism<Plan*>::operator()(Plan* a, Plan* b) const {
+    return a->id < b->id;
+}
+bool Determinism<Person*>::operator()(Person* a, Person* b) const {
+    return a->get_id() < b->get_id();
+}
+
 Firm::Firm() {
     static unsigned int unique_id = 0;
     id = unique_id++;
