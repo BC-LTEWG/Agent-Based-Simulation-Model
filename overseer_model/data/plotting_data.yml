@@ -1256,7 +1256,7 @@ firm_accounts:
       linestyle: solid
       linewidth: 1.5
       markersize: 6.0
-      label_template: Producer {i}'s account
+      label_template: Producer {i}'s Account
       colors: ['']
       traj_key: distributor_accounts
     distributor_accounts:
@@ -1265,7 +1265,7 @@ firm_accounts:
       linestyle: solid
       linewidth: 1.5
       markersize: 6.0
-      label_template: Distributor {i}'s account
+      label_template: Distributor {i}'s Account
       colors: ['']
       traj_key: distributor_accounts
   projection: 2d
