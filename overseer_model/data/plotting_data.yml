@@ -1246,3 +1246,31 @@ busyness_data:
   ticks_visible: true
   frame_visible: true
   default_lims: [[0.00498251, 0.263608], [-0.260721, 17.8723]]
+firm_accounts:
+  name: Firm Accounts
+  tooltip: null
+  plots:
+    producer_accounts:
+      checkbox_name: Producer Accounts
+      toggled: true
+      linestyle: solid
+      linewidth: 1.5
+      markersize: 6.0
+      label_template: Producer {i}'s Account
+      colors: [chartreuse, goldenrod, navy, pink, maroon]
+      traj_key: distributor_accounts
+    distributor_accounts:
+      checkbox_name: Distributor Accounts
+      toggled: true
+      linestyle: solid
+      linewidth: 1.5
+      markersize: 6.0
+      label_template: Distributor {i}'s Account
+      colors: [darkturquoise, blueviolet, firebrick, olive, darkcyan]
+      traj_key: distributor_accounts
+  projection: 2d
+  axis_visible: true
+  grid_visible: true
+  ticks_visible: true
+  frame_visible: true
+  title: Firm Accounts
