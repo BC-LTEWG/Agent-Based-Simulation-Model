@@ -431,8 +431,8 @@ demand:
       traj_key: resupply_deficits_c_goods
   default_lims: [[-162.264, 10242.2], [-3.56474, 107.414]]
   x_label: Time [t] (Hours)
-wealth:
-  name: Wealth
+accounts_persons:
+  name: Accounts (Persons)
   projection: 2d
   axis_visible: true
   grid_visible: true
@@ -477,6 +477,36 @@ wealth:
       colors: [red, blue, green, purple, orange]
       traj_key: sectoral_avg_account
   default_lims: [[-149.854, 10220.7], [-19.7051, 2234.65]]
+accounts_firms:
+  name: Accounts (Firms)
+  tooltip: null
+  plots:
+    producer_accounts:
+      checkbox_name: Producer Accounts
+      toggled: true
+      linestyle: solid
+      linewidth: 1.5
+      markersize: 6.0
+      label_template: Producer {i}'s Account
+      colors: [chartreuse, goldenrod, navy, pink, maroon]
+      traj_key: distributor_accounts
+    distributor_accounts:
+      checkbox_name: Distributor Accounts
+      toggled: true
+      linestyle: solid
+      linewidth: 1.5
+      markersize: 6.0
+      label_template: Distributor {i}'s Account
+      colors: [darkturquoise, blueviolet, firebrick, olive, darkcyan]
+      traj_key: distributor_accounts
+  projection: 2d
+  axis_visible: true
+  grid_visible: true
+  ticks_visible: true
+  frame_visible: true
+  title: Firm Accounts
+  x_label: Time [t hours]
+  default_lims: [[74.1255, 9993.71], [-5945.14, 11513.2]]
 dependency_graph:
   name: Dependency Graph
   projection: 2d
@@ -651,7 +681,7 @@ activity:
       traj_key: min_hrly_output
     sectoral_activity_levels_weekly:
       checkbox_name: Sectoral Activity Levels (Weekly)
-      toggled: true
+      toggled: false
       linestyle: solid
       linewidth: 1.5
       markersize: 6.0
@@ -1280,32 +1310,3 @@ busyness_data:
   ticks_visible: true
   frame_visible: true
   default_lims: [[0.00498251, 0.263608], [-0.260721, 17.8723]]
-firm_accounts:
-  name: Firm Accounts
-  tooltip: null
-  plots:
-    producer_accounts:
-      checkbox_name: Producer Accounts
-      toggled: true
-      linestyle: solid
-      linewidth: 1.5
-      markersize: 6.0
-      label_template: Producer {i}'s Account
-      colors: [chartreuse, goldenrod, navy, pink, maroon]
-      traj_key: distributor_accounts
-    distributor_accounts:
-      checkbox_name: Distributor Accounts
-      toggled: true
-      linestyle: solid
-      linewidth: 1.5
-      markersize: 6.0
-      label_template: Distributor {i}'s Account
-      colors: [darkturquoise, blueviolet, firebrick, olive, darkcyan]
-      traj_key: distributor_accounts
-  projection: 2d
-  axis_visible: true
-  grid_visible: true
-  ticks_visible: true
-  frame_visible: true
-  title: Firm Accounts
-  x_label: Time [t hours]

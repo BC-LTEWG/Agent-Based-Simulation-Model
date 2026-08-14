@@ -389,6 +389,13 @@ class Aggregator:
                         "start_plan_stall_causes_deficits_machines"
                     )
                 },
+                "firm_accounts": {
+                    "function": self.report_firm_accounts,
+                    "keys": (
+                        "producer_accounts",
+                        "distributor_accounts"
+                    )
+                },
             },
             "daily": {
                 "avg_resupply_rates": {
@@ -2004,6 +2011,12 @@ class Aggregator:
             Replace(uncensored_busyness_dist),
             Replace(individual_busyness_data),
             Replace(individual_busyness_data_bins)
+        )
+
+    def report_firm_accounts(self):
+        return (
+            Append(np.array([value["account"] for value in self.producers.values()])),
+            Append(np.array([value["account"] for value in self.distributors.values()]))
         )
 
     def reset_resupply_rate_data(self):
