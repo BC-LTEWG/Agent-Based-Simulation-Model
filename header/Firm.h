@@ -73,7 +73,7 @@ class Firm : public Agent {
         std::unordered_map<Product *, double> deducted_inputs
         );
     void refund_for_unused_inputs(
-            const std::unordered_map<Product *, double> deducted_inputs);
+            const std::unordered_map<Product *, double> returned_inputs);
     void rollback_plan_inputs(Plan * plan);
     void move_plan_forward_one_step(Plan * plan);
     void end_plan(Plan * plan);
