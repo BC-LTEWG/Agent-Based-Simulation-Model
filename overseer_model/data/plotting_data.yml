@@ -649,6 +649,16 @@ activity:
       label_template: Min Hourly Output of Good {i}
       colors: [red, blue, green, purple, orange]
       traj_key: min_hrly_output
+    sectoral_activity_levels_weekly:
+      checkbox_name: Sectoral Activity Levels (Weekly)
+      toggled: true
+      linestyle: solid
+      linewidth: 1.5
+      markersize: 6.0
+      label_template: Weekly Activity Level of Sector {i}
+      colors: [red, blue, green, purple, orange]
+      traj_key: weekly_sectoral_activity_levels
+      traj_key_x: week_counter
   default_lims: [[-94.8601, 10106.0], [94.5651, 614.42]]
   x_label: Time [t hours]
 health:

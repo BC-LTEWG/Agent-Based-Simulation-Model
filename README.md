@@ -10,7 +10,7 @@ Code and supporting documents for the Labor-Time Economy Working Group project a
 
 ## Building and Running Through Overseer
 The LTE comes with a robust visualization layer for [Overseer](https://github.com/alexbcreiner0/Overseer), allowing one to explore the model interactively, experimenting with different parameter settings and viewing evolution in real time. We also provide a script which can get you started with this layer very quickly. 
-1. Open up a terminal and clone the repo. **Important**: Use the `--recurse_submodules` flag when you clone it, so as to also clone Overseer's source code:
+1. Open up a terminal and clone the repo: `git clone --recurse-submodules https://github.com/BC-LTEWG/Labor-Time-Economy-Simulation` **Important**: Use the `--recurse_submodules` flag when you clone it, so as to also clone Overseer's source code:
 ```
 git clone --recurse-submodules 
 ```

@@ -440,6 +440,12 @@ class Aggregator:
                         "individual_busyness_data_bins"
                     )
                 },
+                "activity_levels": {
+                    "function": self.report_weekly_activity_levels,
+                    "keys": (
+                        "weekly_sectoral_activity_levels",
+                    )
+                },
                 "week_counter": {
                     "function": lambda: (Append(self.current_t),),
                     "keys": ("week_counter",)
@@ -520,6 +526,7 @@ class Aggregator:
         self.long_run_employment_by_sector = np.zeros(self.settings["n_goods"]+self.settings["n_machines"]+1)
         self.long_run_sector_activity = np.zeros(self.settings["n_sectors"])
 
+
         self.censored_busyness_mean = None
         self.uncensored_busyness_mean = None
         self.censored_busyness_stddev = None
@@ -571,6 +578,8 @@ class Aggregator:
                     lambda: [[] for _ in range(self.settings["n_products"])],
                 "team_sizes":
                     lambda: [[] for _ in range(self.settings["n_products"])],
+                "weekly_quantities_in_production":
+                    lambda: np.zeros(self.settings["n_sectors"]),
             }
         }
         for interval in self.temporary_data:
@@ -1148,6 +1157,7 @@ class Aggregator:
         self.lead_times[prod_id].append(lead_time)
         self.order_sizes[prod_id].append(quantity)
         self.long_run_sector_activity[sector_id] += quantity
+        self.weekly_quantities_in_production[sector_id] += quantity
 
         if team_size is not None:
             self.team_sizes[prod_id].append(team_size)
@@ -1947,6 +1957,11 @@ class Aggregator:
             Append(team_size_averages[good_lo:good_hi]),
             Append(team_size_averages[c_good_lo:c_good_hi]),
             Append(team_size_averages[m_lo:m_hi])
+        )
+
+    def report_weekly_activity_levels(self):
+        return (
+            Append(self.weekly_quantities_in_production / (24*7)),
         )
 
     def report_busyness_updates(self):
