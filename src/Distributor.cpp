@@ -82,7 +82,7 @@ int Distributor::try_sell_goods(
         return 0;
     }
     account += cost;
-    remove_input_from_inventory(consumer_good, available, this);
+    remove_input_from_inventory(consumer_good, available);
     PriceController::get_instance()->report_distribution(consumer_good, available);
     return available;
 }

@@ -92,17 +92,15 @@ void Firm::receive_shipment(Plan * plan) {
 }
 
 void Firm::receive_payment(Plan * plan, double transaction_amount) {
-    plan->debt += transaction_amount;
-    account += transaction_amount;
+    plan->debt -= transaction_amount;
 }
 
 bool Firm::remove_input_from_inventory(
         Product * product,
         double quantity,
-        Firm * firm,
         std::unordered_map<Product *, double>& deducted_inputs
     ) {
-    if (remove_input_from_inventory(product, quantity, firm)) {
+    if (remove_input_from_inventory(product, quantity)) {
         deducted_inputs[product] += quantity;
         return true;
     }
@@ -111,14 +109,13 @@ bool Firm::remove_input_from_inventory(
 
 bool Firm::remove_input_from_inventory(
         Product * product,
-        double quantity,
-        Firm * firm
+        double quantity
     ) {
     if (!input_inventory.count(product) || input_inventory[product] < quantity) {
         return false;
     }
     input_inventory[product] -= quantity;
-    add_demand_signal(product, quantity, firm);
+    add_demand_signal(product, quantity, this);
     log_inventory_reduction(product, quantity);
     log_inventory_level(product, input_inventory[product]);
     return true;
@@ -279,6 +276,19 @@ void Firm::return_inputs_to_inventory(
     }
 }
 
+void Firm::refund_for_unused_inputs(
+        const std::unordered_map<Product *, double> deducted_inputs) {
+    double refund = 0.0;
+    for (const std::pair<Product * const, double>& deduction :
+            deducted_inputs) {
+        Product * input = deduction.first;
+        double quantity = deduction.second;
+        refund += input->price_per_unit * quantity;
+    }
+    account += refund;
+}
+
+
 void Firm::rollback_plan_inputs(Plan * plan) {
     return_inputs_to_inventory(plan->inventory);
     plan->inventory.clear();
@@ -289,13 +299,13 @@ void Firm::rollback_plan_inputs(Plan * plan) {
 bool Firm::start_plan(Plan * plan) {
     plans_in_progress.insert(plan);
     plan->order->status = Order::kOrderInProgress;
+    account += plan->debt;
     Product * product = plan->order->product;
     for (std::pair<Good * const, double>& input : product->inputs_per_unit) {
         double amount_needed = input.second * plan->order->quantity;
         if (!remove_input_from_inventory(
                     input.first,
                     amount_needed,
-                    plan->order->customer,
                     plan->inventory
                 )) {
             handle_start_plan_failure(plan, input.first, amount_needed);
@@ -308,7 +318,6 @@ bool Firm::start_plan(Plan * plan) {
         if (!remove_input_from_inventory(
                     machine,
                     expected_machine_use,
-                    plan->order->customer,
                     plan->inventory
                 )) {
             handle_start_plan_failure(plan, machine, expected_machine_use);
@@ -319,8 +328,6 @@ bool Firm::start_plan(Plan * plan) {
         move_worker_off_standby(worker);
     }
     plan->outlays = plan->inventory;
-    account +=
-        plan->raw_materials_budget + plan->machinery_budget;
     if (plan->is_stalled) {
         plan->is_stalled = false;
         plan->missing_resource = nullptr;
@@ -409,7 +416,6 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
             if (!remove_input_from_inventory(
                         requirement.first,
                         deficit,
-                        plan->order->customer,
                         deducted_inputs
                         )) {
                 return_inputs_to_inventory(deducted_inputs);
@@ -457,10 +463,13 @@ void Firm::end_plan(Plan * plan) {
     log_ended_plan(plan);
     plan->order->status = Order::kOrderFinished;
     plan->order->customer->receive_shipment(plan);
+    account -= plan->debt;
     for (std::pair<Product *, double> input : plan->inventory) {
         plan->outlays[input.first] -= input.second;
     }
     return_inputs_to_inventory(plan->inventory);
+    refund_for_unused_inputs(plan->inventory);
+    account += plan->labor_budget - plan->labor_hours_used;
     recorded_living_labor_per_unit[plan->order->product] = 
         plan->labor_hours_used /
         (plan->order->quantity - plan->quantity_remaining); 
@@ -624,11 +633,9 @@ void Firm::initialize_plan_budget(Plan * draft_plan) {
     draft_plan->machinery_budget = calculate_machinery_cost_for_plan(draft_plan);
     draft_plan->raw_materials_budget = calculate_raw_material_cost_for_order(draft_plan->order);
     draft_plan->quantity_remaining = draft_plan->order->quantity;
-    draft_plan->debt = -(
-            draft_plan->machinery_budget +
+    draft_plan->debt = draft_plan->machinery_budget +
             draft_plan->raw_materials_budget +
-            draft_plan->labor_budget
-            );
+            draft_plan->labor_budget;
 }
 
 double Firm::calculate_machinery_cost_for_plan(Plan * draft_plan) {
