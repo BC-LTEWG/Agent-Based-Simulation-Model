@@ -150,6 +150,7 @@ void Society::on_time_step() {
     }
     PriceController::get_instance()->on_time_step();
     check_expand_public_sector();
+    check_update_work_week();
 }
 
 void Society::set_initial_products() {
@@ -698,6 +699,29 @@ void Society::check_expand_public_sector() {
     }
 }
 
+void Society::check_update_work_week() {
+    int time = Sim::get_current_time_step();
+    if (time == 0 || time % BUSYNESS_AVERAGING_WINDOW != 0) {
+        return;
+    }
+    double work_week_score = 0.0;
+    double busyness_upper_bound = get_work_week_proportion();
+    for (Person * person : people) {
+        work_week_score += std::pow(person->get_busyness() / busyness_upper_bound, WORKING_WEEK_BUSYNESS_POWER);
+    }
+    work_week_score /= people.size();
+    int new_work_hours_daily = current_work_hours_daily;
+    if (work_week_score < std::pow(WORKING_WEEK_STABLE_START, WORKING_WEEK_BUSYNESS_POWER)) {
+        new_work_hours_daily--;
+    } else if (work_week_score > std::pow(WORKING_WEEK_STABLE_END, WORKING_WEEK_BUSYNESS_POWER)) {
+        new_work_hours_daily++;
+    }
+    new_work_hours_daily = std::max(new_work_hours_daily, 1);
+    new_work_hours_daily = std::min(new_work_hours_daily, 24);
+    current_work_hours_daily = new_work_hours_daily;
+    log_work_hours_weekly();
+}
+
 void Society::log_io_matrix(Eigen::MatrixXd& A, size_t dim) {
     for (size_t i = 0; i < dim; ++i) {
         for (size_t j = 0; j < dim; ++j) {
@@ -788,4 +812,14 @@ void Society::log_public_sector_expansion(ConsumerGood * consumer_good) {
         "public_sector_expansion",
         LogPair("product_id", consumer_good->id)
     );
+}
+
+void Society::log_work_hours_weekly() {
+    Logger::log(
+            Logger::SOCIETY,
+            id,
+            "work_hours_weekly",
+            LogPair("work_hours_daily", current_work_hours_daily),
+            LogPair("work_days_weekly", current_work_days_weekly)
+            );
 }
