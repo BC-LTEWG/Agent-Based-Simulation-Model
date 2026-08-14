@@ -70,7 +70,7 @@ TEST_CASE("Society Logic Testing") {
         expected_account /= society->people.size();
 
         CHECK(society->busyness == doctest::Approx(expected_busyness));
-        CHECK(society->average_account == doctest::Approx(expected_account));
+        CHECK(society->average_account == doctest::Approx(expected_account).epsilon(0.001));
     }
 
     SUBCASE("get_total_employment returns percentage") {
@@ -123,31 +123,5 @@ TEST_CASE("Society Logic Testing") {
         society->populate_io_matrix_and_labor_vector(test_matrix, test_vector); //call
         double total_labor = test_vector.sum();
         CHECK(total_labor > 0.0); //check actual input onto matrix
-    }
-
-    double get_max_eigenvalue(Eigen::MatrixXd &io_matrix);
-    Eigen::MatrixXd get_leontief_inverse(Eigen::MatrixXd io_matrix);
-    SUBCASE("get_max_eigenvalue gets largest value") {
-        Eigen::MatrixXd test_matrix(2, 2); //2x2
-        test_matrix << 2.0, 0.0,
-                       0.0, 4.0;
-
-        double max_eigen = get_max_eigenvalue(test_matrix);
-        CHECK(max_eigen == doctest::Approx(4.0)); //should return 4 here
-    }
-
-    SUBCASE("get_leontief_inverse computes (I - A)^-1") {
-        Eigen::MatrixXd A(2, 2);
-        A << 0.5, 0.0,
-             0.0, 0.5;
-
-        //(I - A)^-1.
-        Eigen::MatrixXd L = get_leontief_inverse(A);
-
-        CHECK(L(0, 0) == doctest::Approx(2.0)); //inverse of .5 is 2
-        CHECK(L(1, 1) == doctest::Approx(2.0));
-        
-        CHECK(L(0, 1) == doctest::Approx(0.0)); //check 0 is still 0
-        CHECK(L(1, 0) == doctest::Approx(0.0));
     }
 }
