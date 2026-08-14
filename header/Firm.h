@@ -47,9 +47,9 @@ class Firm : public Agent {
     virtual double get_inventory_level(Product * product);
     void receive_shipment(Order * order);
     void receive_shipment(Plan * plan);
-    void receive_payment(Plan * plan, double transaction_amount);
+    void process_payment(Plan * plan, double transaction_amount);
     double get_busyness();
-    double get_pooled_input_value();
+    double get_account();
     std::vector<Person *> propose_transfer(int workers_wanted);
     void finalize_transfer(Person * worker);
 
@@ -57,7 +57,7 @@ class Firm : public Agent {
   protected:
     unsigned int id;
     MAP<Product *, double> average_team_sizes;
-    double pooled_input_value = 0.0;
+    double account = 0.0;
     SET<Person *> workers,
         standby_workers;
     MAP<Product *, double> input_inventory;
@@ -72,13 +72,11 @@ class Firm : public Agent {
     Producer * send_order(Order * order);
     bool remove_input_from_inventory(
         Product * product,
-        double quantity,
-        Firm * firm
+        double quantity
     );
     bool remove_input_from_inventory(
         Product * product,
         double quantity,
-        Firm * firm,
         MAP<Product *, double>& container
     );
     double get_reorder_threshold(Product * product);
@@ -87,10 +85,11 @@ class Firm : public Agent {
     bool start_plan(Plan * plan);
     void handle_start_plan_failure(Plan * plan, Product * product, double missing);
     void return_inputs_to_inventory(
-        MAP<Product *, double> deducted_inputs,
-        Firm * firm
-    );
-    void rollback_plan_inputs(Plan * plan, Firm * firm);
+        MAP<Product *, double> deducted_inputs
+        );
+    void refund_for_unused_inputs(
+        const MAP<Product *, double> returned_inputs);
+    void rollback_plan_inputs(Plan * plan);
     void move_plan_forward_one_step(Plan * plan);
     void end_plan(Plan * plan);
     void move_plans_forward_one_step();
@@ -162,4 +161,5 @@ class Firm : public Agent {
     );
     void log_catalog();
     void log_catalog_addition(Product * product);
+    void log_account();
 };

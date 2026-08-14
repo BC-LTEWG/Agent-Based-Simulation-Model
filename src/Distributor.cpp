@@ -81,7 +81,8 @@ int Distributor::try_sell_goods(
     } else if (!person->charge(cost)) {
         return 0;
     }
-    remove_input_from_inventory(consumer_good, available, this);
+    account += cost;
+    remove_input_from_inventory(consumer_good, available);
     PriceController::get_instance()->report_distribution(consumer_good, available);
     return available;
 }

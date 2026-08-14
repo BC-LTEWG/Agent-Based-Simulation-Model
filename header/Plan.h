@@ -21,10 +21,8 @@ struct Plan {
     double debt = 0.0;
     double labor_hours_used = 0.0;
     MAP<Product *, double> inventory;
-    MAP<Product *, double> needed_this_step;
     MAP<Product *, double> outlays;
     double quantity_remaining = 0.0;
-    int outgoing_units_consumed = 0;
     bool is_stalled = false;
     Product * missing_resource = nullptr;
 };

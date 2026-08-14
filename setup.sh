@@ -39,9 +39,9 @@ echo "Successfully created binary!"
 echo ""
 echo "Configuring files..."
 USER_CONFIG_DIR="$(python -c '
-    from platformdirs import user_config_dir
-    print(user_config_dir("Overseer", False, roaming=True))
-    '
+from platformdirs import user_config_dir
+print(user_config_dir("Overseer", False, roaming=True))
+'
 )"
 USER_CONFIG_FILE="$USER_CONFIG_DIR/config.yml"
 USER_MODELS_DIR="$SCRIPT_DIR"
