@@ -71,14 +71,14 @@ void Firm::update_busyness() {
             labor_hours_this_time_step / workers.size();
     }
 
-    double working_week_length = 
-        Sim::get_work_hours_daily() * Sim::get_work_days_weekly();
+    double work_week_proportion =
+        Society::get_instance()->get_work_week_proportion();
 
-    current_busyness *= working_week_length / WEEK;
+    current_busyness *= work_week_proportion;
 
     recent_busyness +=
         (current_busyness - recent_busyness)
-        / BUSYNESS_AVERAGING_WINDOW;
+        / (BUSYNESS_AVERAGING_WINDOW * work_week_proportion);
 
     labor_hours_this_time_step = 0.0;
 }
@@ -213,7 +213,7 @@ std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
 
 int Firm::get_number_available_workers_to_transfer() {
     if (workers.empty()) {
-        return {};
+        return 0;
     }
     double firm_busyness = get_busyness();
     double societal_busyness = Society::get_instance()->get_busyness();
@@ -221,9 +221,9 @@ int Firm::get_number_available_workers_to_transfer() {
     double relative_difference = 
         (societal_busyness - firm_busyness) / societal_busyness;
     if (relative_difference < TRANSFER_BUSYNESS_THRESHOLD) {
-        return {};
+        return 0;
     }
-    double target_workers = workers.size() * (firm_busyness) / societal_busyness;
+    double target_workers = workers.size() * firm_busyness / societal_busyness;
     int available_workers_for_transfer = std::max(
         0,
         static_cast<int>(

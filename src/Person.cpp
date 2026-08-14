@@ -212,17 +212,24 @@ void Person::update_health_status() {
 }
 
 void Person::update_busyness() {
-    double working_busyness_averaging_window = BUSYNESS_AVERAGING_WINDOW;
-    if (plan && Firm::is_within_work_schedule(plan)) {
-        working_busyness_averaging_window *= Firm::get_work_week_proportion(plan);
-    } else if (!plan && Society::get_instance()->is_within_work_schedule()) {
-        working_busyness_averaging_window *= Society::get_instance()->get_work_week_proportion();
+    double growth = busyness_this_time_step;
+    double decay = busyness;
+
+    double work_week_proportion;
+    if (plan) {
+        work_week_proportion =
+            Firm::get_work_week_proportion(plan);
     } else {
-        return;
+        work_week_proportion =
+            Society::get_instance()->get_work_week_proportion();
     }
-    double growth = busyness_this_time_step / BUSYNESS_AVERAGING_WINDOW;
-    double decay = busyness / working_busyness_averaging_window;
-    busyness += growth - decay;
+
+    growth *= work_week_proportion;
+
+    busyness += 
+        (growth - decay) 
+        / (BUSYNESS_AVERAGING_WINDOW * work_week_proportion);
+
     busyness_this_time_step = 0.0;
 }
 
