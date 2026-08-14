@@ -683,31 +683,6 @@ class Aggregator:
         if not self.work_hours_update_this_step:
             return 
 
-        busyness_data = copy.deepcopy(np.array(self.individual_busyness_data))
-        lb = np.min(busyness_data)
-        ub = np.max(busyness_data)
-        x_sample = np.linspace(lb, ub, 400)
-        self.traj["busyness_dist_support"] = Replace(x_sample)
-        if self.censored_busyness_mean is not None:
-            logger.info(f"{self.censored_busyness_mean=}, {self.censored_busyness_stddev=}")
-            dist = norm(
-                loc= self.censored_busyness_mean,
-                scale= self.censored_busyness_stddev
-            )
-            self.traj["censored_busyness_dist"] = Replace(dist.pdf(x_sample))
-        if self.uncensored_busyness_mean is not None:
-            logger.info(f"{self.uncensored_busyness_mean=}, {self.uncensored_busyness_stddev=}")
-            dist = norm(
-                loc= self.uncensored_busyness_mean,
-                scale= self.uncensored_busyness_stddev
-            )
-            self.traj["uncensored_busyness_dist"] = Replace(dist.pdf(x_sample))
-
-        self.traj["individual_busyness_data"] = Replace(busyness_data)
-        self.traj["individual_busyness_data_bins"] = np.histogram_bin_edges(busyness_data, bins= "auto")
-        self.individual_busyness_data.clear()
-        self.work_hours_update_this_step = False
-
     def initialize_properties(self):
         N = self.settings["n_persons"]
         net_weekly_demand = N*24*7*self.consumption_frequencies

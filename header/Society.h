@@ -75,6 +75,7 @@ class Society : public Agent {
         void apply_normalization_to_products(const Eigen::MatrixXd&, double);
         double get_production_spectral_radius(const Eigen::MatrixXd&);
         void check_expand_public_sector();
+        void check_update_work_week();
         void log_io_matrix(Eigen::MatrixXd&, size_t);
         void log_vector(Eigen::VectorXd&, std::string, size_t);
         void log_consumption_frequencies();
@@ -84,6 +85,7 @@ class Society : public Agent {
         void log_public_sector_expansion(ConsumerGood * consumer_good);
         void log_busyness();
         void log_total_employment();
+        void log_work_hours_weekly();
         void set_abilities(std::vector<Ability *>& abilities, std::vector<Ability *>& distribution_abilities);
         void set_initial_account(double& initial_account, const std::vector<ConsumerGood *>& consumer_goods);
 

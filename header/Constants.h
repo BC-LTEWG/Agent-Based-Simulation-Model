@@ -13,6 +13,10 @@ const unsigned int INITIAL_WORK_HOURS_DAILY = 8;
 const unsigned int INITIAL_WORK_DAYS_WEEKLY = 5;
 const double INITIAL_ACCOUNT_DURATION = YEAR;
 
+const double WORKING_WEEK_BUSYNESS_POWER = 2;
+const double WORKING_WEEK_STABLE_START = 0.65;
+const double WORKING_WEEK_STABLE_END = 0.75;
+
 const unsigned int STARTING_NUM_PEOPLE = 1000;
 const unsigned int STARTING_NUM_GOODS = 100;
 const unsigned int STARTING_NUM_MACHINES = 20;
@@ -38,7 +42,7 @@ const double DEFAULT_PRODUCTION_DIFFICULTY = 0.25;
 const int PRODUCT_NUM_MACHINES_MIN = 1;
 const double PRODUCT_LABOR_PER_UNIT_MIN = 0.05;
 const double PRODUCT_LABOR_PER_UNIT_MAX = 0.1; 
-const double DISTRIBUTION_COST_MULT = 0.05;
+const double DISTRIBUTION_COST_MULT = 0.2;
 const double PRODUCT_CONSUMPTION_VARIANCE = 5;
 const double DEFAULT_CONSUMPTION_DEMAND = 0.6;
 const double DEMAND_PREDICTION_VARIANCE = 0.05;
