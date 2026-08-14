@@ -398,18 +398,18 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
         return;
     }
     Product * product = plan->order->product;
+    std::unordered_map<Product *, double> needed_this_step;
     for (std::pair<Good *, double> input : product->inputs_per_unit) {
-        plan->needed_this_step[input.first] = input.second * quantity_produced;
+        needed_this_step[input.first] = input.second * quantity_produced;
     }
     double portion_of_hour_worked =
         quantity_produced / expected_quantity_produced;
     for (Machine * machine : product->machines_needed) {
-        plan->needed_this_step[machine] =
-            portion_of_hour_worked / machine->lifetime;
+        needed_this_step[machine] = portion_of_hour_worked / machine->lifetime;
     }
     std::unordered_map<Product*, double> deducted_inputs;
     bool was_stalled = plan->is_stalled;
-    for (std::pair<Product *, double> requirement : plan->needed_this_step) {
+    for (std::pair<Product *, double> requirement : needed_this_step) {
         double have_on_hand = plan->inventory[requirement.first];
         if (have_on_hand < requirement.second) {
             double deficit = requirement.second - have_on_hand;
@@ -419,10 +419,8 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
                         deducted_inputs
                         )) {
                 return_inputs_to_inventory(deducted_inputs);
-
                 bool new_stall = !plan->is_stalled ||
                     plan->missing_resource != requirement.first;
-
                 if (new_stall) {
                     if (plan->is_stalled) {
                         log_plan_stall_resolved(plan);
@@ -448,7 +446,7 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
         plan->inventory[input.first] += input.second;
         plan->outlays[input.first] += input.second;
     }
-    for (std::pair<Product *, double> requirement : plan->needed_this_step) {
+    for (std::pair<Product *, double> requirement : needed_this_step) {
         plan->inventory[requirement.first] -= requirement.second;
     }
     account -= plan->workers.size() * portion_of_hour_worked;
