@@ -62,6 +62,8 @@ void Firm::on_time_step() {
     if (plans_in_progress.size()) {
         log_plans();
     }
+    double firm_busyness = get_busyness();
+    log_busyness(firm_busyness);
 }
 
 void Firm::inject_randomness_into_demand() {
@@ -156,7 +158,6 @@ std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
     double relative_difference = 
         (societal_busyness - firm_busyness) / societal_busyness;
     if (relative_difference < TRANSFER_BUSYNESS_THRESHOLD) {
-        log_busyness(firm_busyness, 0);
         return {};
     }
     int available_workers_for_transfer = 
@@ -168,7 +169,6 @@ std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
             1
         );
     int max_workers_to_transfer = std::min(available_workers_for_transfer, workers_wanted);
-    log_busyness(firm_busyness, max_workers_to_transfer);
     std::vector<Person *> transfers;
     for (Person * worker : standby_workers) {
         if (static_cast<int>(transfers.size()) == max_workers_to_transfer) break;
@@ -211,7 +211,6 @@ Producer * Firm::send_order(Order * order) {
     if (chosen_producer) {
         chosen_producer->pursue_order(this);
         product_to_outbound_orders[order->product].insert(chosen_return_order);
-        log_reorder(order->product, chosen_return_order->quantity);
         log_accepted_order(order, chosen_return_order);
     }
     return chosen_producer;
@@ -251,6 +250,7 @@ double Firm::get_resupply_deficit(Product * product) {
     double raw_resupply_deficit = inventory_adjusted_demand - resupply_rate;
     double resupply_deficit = 
         raw_resupply_deficit <= 0 ? 0 : raw_resupply_deficit;
+    log_resupply_rate(product, resupply_rate, resupply_deficit);
     return resupply_deficit;
 }
 
@@ -265,6 +265,7 @@ void Firm::check_and_reorder_input(Product * product) {
     if (inventory >= reorder_threshold || !reorder_threshold) {
         return;
     }
+    log_reorder_attempt(product);
     double lead_time = FIRM_STOCKPILE_DURATION * FIRM_REORDER_MAX_PROP;
     int order_quantity = std::ceil(lead_time * resupply_deficit);
     Order * order = new Order(
@@ -273,7 +274,9 @@ void Firm::check_and_reorder_input(Product * product) {
             this,
             lead_time
             );
-    send_order(order);
+    if (!send_order(order)) {
+        log_reorder_failure(product);
+    }
 }
 
 void Firm::return_inputs_to_inventory(
@@ -297,7 +300,7 @@ void Firm::rollback_plan_inputs(Plan * plan, Firm * firm) {
     plan->order->status = Order::OrderStatus::kOrderRequested;
 }
 
-void Firm::start_plan(Plan * plan) {
+bool Firm::start_plan(Plan * plan) {
     plans_in_progress.insert(plan);
     plan->order->status = Order::kOrderInProgress;
     Product * product = plan->order->product;
@@ -309,26 +312,8 @@ void Firm::start_plan(Plan * plan) {
                     plan->order->customer,
                     plan->inventory
                 )) {
-            rollback_plan_inputs(plan, plan->order->customer);
-            if (!plan->is_stalled) {
-                reorder_stalled_plan_input(
-                    input.first,
-                    amount_needed
-                );
-                log_start_plan_stalled(plan, input.first);
-                Logger::log(
-                    get_client_type(),
-                    id,
-                    "text_log",
-                    LogPair("Plan ID", plan->id),
-                    LogPairS("Status", "stalled when starting"),
-                    LogPair("Missing good",  input.first->id),
-                    LogPair("Required", amount_needed),
-                    LogPair("Have on hand", get_inventory_level(input.first))
-                );
-                plan->is_stalled = true;
-            }
-            return;
+            handle_start_plan_failure(plan, input.first, amount_needed);
+            return false;
         }
     }
     double expected_plan_duration = plan->labor_budget / plan->workers.size();
@@ -339,23 +324,9 @@ void Firm::start_plan(Plan * plan) {
                     expected_machine_use,
                     plan->order->customer,
                     plan->inventory
-                    )) {
-            rollback_plan_inputs(plan, plan->order->customer);
-            if (!plan->is_stalled) {
-                log_start_plan_stalled(plan, machine);
-                Logger::log(
-                    get_client_type(),
-                    id,
-                    "text_log",
-                    LogPair("Plan ID", plan->id),
-                    LogPairS("Status", "stalled when starting"),
-                    LogPair("Missing machine",  machine->id),
-                    LogPair("Expected machine use", expected_machine_use),
-                    LogPair("Have on hand", get_inventory_level(machine))
-                );
-                plan->is_stalled = true;
-            }
-            return;
+                )) {
+            handle_start_plan_failure(plan, machine, expected_machine_use);
+            return false;
         }
     }
     for (Person * worker : plan->workers) {
@@ -366,15 +337,33 @@ void Firm::start_plan(Plan * plan) {
         plan->raw_materials_budget + plan->machinery_budget;
     if (plan->is_stalled) {
         plan->is_stalled = false;
-        Logger::log(
-            get_client_type(),
-            id,
-            "text_log",
-            LogPair("Plan ID", plan->id),
-            LogPairS("Status", "stallage resolved")
-        );
-        log_start_plan_stallage_resolved(plan);
+        plan->missing_resource = nullptr;
+        log_start_plan_stall_resolved(plan);
     }
+    return true;
+}
+
+void Firm::handle_start_plan_failure(
+    Plan * plan,
+    Product * missing_resource,
+    double amount_needed) {
+
+    double have_on_hand = get_inventory_level(missing_resource);
+    double deficit = amount_needed - have_on_hand;
+
+    rollback_plan_inputs(plan, plan->order->customer);
+    bool new_stall =
+        !plan->is_stalled || plan->missing_resource != missing_resource;
+
+    if (new_stall) {
+        if (plan->is_stalled) {
+            log_start_plan_stall_resolved(plan);
+        }
+        reorder_stalled_plan_input(missing_resource, deficit);
+        log_start_plan_stalled(plan, missing_resource, deficit);
+        plan->missing_resource = missing_resource;
+    }
+    plan->is_stalled = true;
 }
 
 void Firm::reorder_stalled_plan_input(
@@ -393,6 +382,7 @@ void Firm::reorder_stalled_plan_input(
         static_cast<int>(std::ceil(deficit))
     );
 
+    log_reorder_attempt(product);
     Order * order = new Order(
         product,
         order_quantity,
@@ -400,7 +390,9 @@ void Firm::reorder_stalled_plan_input(
         lead_time
     );
 
-    send_order(order);
+    if (!send_order(order)) {
+        log_reorder_failure(product);
+    }
 }
 
 void Firm::move_plan_forward_one_step(Plan * plan) {
@@ -436,22 +428,19 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
                         )) {
                 return_inputs_to_inventory(deducted_inputs, plan->order->customer);
 
-                if (!plan->is_stalled) {
+                bool new_stall = !plan->is_stalled ||
+                    plan->missing_resource != requirement.first;
+
+                if (new_stall) {
+                    if (plan->is_stalled) {
+                        log_plan_stall_resolved(plan);
+                    }
                     reorder_stalled_plan_input(
                         requirement.first,
                         deficit
                     );
-                    log_plan_stallage(plan, "stalled_plan");
-                    Logger::log(
-                        get_client_type(),
-                        id,
-                        "text_log",
-                        LogPair("Plan ID", plan->id),
-                        LogPairS("Status", "stalled in execution"),
-                        LogPair("Missing resource",  requirement.first->id),
-                        LogPair("Required", requirement.second),
-                        LogPair("Have on hand", have_on_hand)
-                    );
+                    log_plan_stall(plan, requirement.first, deficit);
+                    plan->missing_resource = requirement.first;
                 }
                 plan->is_stalled = true;
                 return;
@@ -460,14 +449,8 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
     }
     if (was_stalled) {
         plan->is_stalled = false;
-        Logger::log(
-            get_client_type(),
-            id,
-            "text_log",
-            LogPair("Plan ID", plan->id),
-            LogPairS("Status", "stallage resolved")
-        );
-        log_plan_stallage(plan, "unstalled_plan");
+        plan->missing_resource = nullptr;
+        log_plan_stall_resolved(plan);
     }
     for (std::pair<Product *, double> input : deducted_inputs) {
         plan->inventory[input.first] += input.second;
@@ -509,12 +492,14 @@ void Firm::move_plans_forward_one_step() {
         if (is_within_work_schedule(plan)) {
             if (plan->order->status == Order::OrderStatus::kOrderInProgress) {
                 move_plan_forward_one_step(plan);
-            if (plan->order->status == Order::kOrderInProgress &&
-                    plan->quantity_remaining <= 0.0) {
-                end_plan(plan);
-            }
+                if (plan->order->status == Order::kOrderInProgress &&
+                        plan->quantity_remaining <= 0.0) {
+                    end_plan(plan);
+                }
             } else if (plan->order->status == Order::kOrderRequested) {
-                start_plan(plan);
+                if (start_plan(plan)) {
+                    log_pursued_plan(plan);
+                }
             }
         }
     }
@@ -682,10 +667,6 @@ void Firm::assign_plan_dependent_fields(Plan * draft_plan) {
 }
 
 Plan * Firm::draft_plan_for_order(Order * order) {
-    if (order->quantity <= 0) {
-        log_reorder_failure(order->product, "insufficient_resources");
-        return nullptr;
-    }
     Plan * draft_plan = new Plan;
     draft_plan->order = order;
     draft_plan->firm = this;
@@ -693,13 +674,13 @@ Plan * Firm::draft_plan_for_order(Order * order) {
         Society::get_instance()->get_current_work_hours_daily();
     draft_plan->workers = get_available_workers(draft_plan->order);
     if (draft_plan->workers.empty()) {
-        log_reorder_failure(order->product, "no_workers_available");
+        log_drafting_failure_workers(order->product);
         delete draft_plan;
         return nullptr;
     }
     adjust_quantity_for_deadline(draft_plan);
     if (order->quantity <= 0) {
-        log_reorder_failure(order->product, "not_enough_workers_available");
+        log_drafting_failure_workers(order->product);
         delete draft_plan;
         return nullptr;
     }
@@ -822,29 +803,67 @@ void Firm::log_employment_transfer(
 }
 
 void Firm::log_busyness(
-    double firm_busyness,
-    int max_workers_for_transfer
+    double firm_busyness
 ) {
     Logger::log(
         get_client_type(),
         id,
         "busyness",
-        LogPair("firm_busyness", firm_busyness),
-        LogPair("max_workers_for_transfer", max_workers_for_transfer)
+        LogPair("firm_busyness", firm_busyness)
     );
 }
 
-void Firm::log_reorder(const Product * product, const int quantity) {
-    log_product_quantity("reorder", product, quantity);
+void Firm::log_drafting_failure_inputs(
+    const Product * product,
+    std::vector<Product *> missing_resources
+) {
+    std::string products;
+
+    for (unsigned int i = 0; i < missing_resources.size(); i++) {
+        products += std::to_string(missing_resources[i]->id);
+
+        if (i + 1 < missing_resources.size()) {
+            products += ",";
+        }
+    }
+
+    Logger::log(
+        get_client_type(),
+        id,
+        "drafting_failure",
+        LogPair("product_id", product->id),
+        LogPairS("reason", "insufficient_resources"),
+        LogPairS("missing_products", products)
+    );
 }
 
-void Firm::log_reorder_failure(const Product * product, const std::string reason) {
+void Firm::log_drafting_failure_workers(
+    const Product * product
+) {
+    Logger::log(
+        get_client_type(),
+        id,
+        "drafting_failure",
+        LogPair("product_id", product->id),
+        LogPairS("reason", "insufficient_workers")
+    );
+}
+
+void Firm::log_reorder_attempt(const Product * product) {
+    Logger::log(
+        get_client_type(),
+        id,
+        "reorder_attempt",
+        LogPair("product_id", product->id)
+    );
+}
+
+void Firm::log_reorder_failure(const Product * product) {
     Logger::log(
         get_client_type(),
         id,
         "reorder_failure",
-        LogPair("product_id", product->id),
-        LogPairS("reason", reason)
+        LogPair("product_id", product->id)
     );
 }
 
@@ -880,14 +899,30 @@ void Firm::log_accepted_order(
             );
 }
 
-void Firm::log_demand(const Product * product, double demand) {
+void Firm::log_demand(Product * product, double reorder_threshold) {
     Logger::log(
             get_client_type(),
             id,
             "current_demand",
             LogPair("product_id", product->id),
-            LogPair("demand", demand)
-            );
+            LogPair("reorder_threshold", reorder_threshold),
+            LogPair("demand", get_demand(product))
+        );
+}
+
+void Firm::log_resupply_rate(
+        const Product * product,
+        double resupply_rate,
+        double resupply_deficit
+    ) {
+    Logger::log(
+            get_client_type(),
+            id,
+            "resupply_rate",
+            LogPair("product_id", product->id),
+            LogPair("resupply_rate", resupply_rate),
+            LogPair("resupply_deficit", resupply_deficit)
+        );
 }
 
 void Firm::log_transfer_request() {
@@ -912,31 +947,46 @@ void Firm::log_catalog_addition(Product * product) {
     Logger::log(get_client_type(), id, "catalog_addition", LogPair("product_id", product->id));
 }
 
-void Firm::log_plan_stallage(Plan * plan, std::string situation) {
+void Firm::log_plan_stall(Plan * plan, Product * missing_product, double deficit) {
     Logger::log(
         get_client_type(),
         id,
-        situation,
+        "stalled_plan",
+        LogPair("plan_id", plan->id),
+        LogPair("product_id", plan->order->product->id),
+        LogPair("missing_resource", missing_product->id),
+        LogPair("deficit", deficit)
+    );
+}
+
+void Firm::log_plan_stall_resolved(Plan * plan) {
+    Logger::log(
+        get_client_type(),
+        id,
+        "unstalled_plan",
         LogPair("plan_id", plan->id),
         LogPair("product_id", plan->order->product->id)
     );
 }
 
-void Firm::log_start_plan_stalled(Plan * plan, Product * product) {
+void Firm::log_start_plan_stalled(Plan * plan, Product * product, double missing) {
     Logger::log(
         get_client_type(),
         id,
         "start_plan_stalled",
         LogPair("plan_id", plan->id),
-        LogPair("product_id", product->id)
+        LogPair("product_id", plan->order->product->id),
+        LogPair("missing_resource", product->id),
+        LogPair("deficit", missing)
     );
 }
 
-void Firm::log_start_plan_stallage_resolved(Plan * plan) {
+void Firm::log_start_plan_stall_resolved(Plan * plan) {
     Logger::log(
         get_client_type(),
         id,
-        "start_plan_stallage_resolved",
-        LogPair("plan_id", plan->id)
+        "start_plan_stall_resolved",
+        LogPair("plan_id", plan->id),
+        LogPair("product_id", plan->order->product->id)
     );
 }

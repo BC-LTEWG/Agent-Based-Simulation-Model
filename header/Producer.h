@@ -29,8 +29,11 @@ class Producer : public Firm {
   private:
     MAP<Firm *, Plan *> customer_to_draft_plan;
 
-    double get_max_order_quantity(const Order * order);
-    void log_draft_plan(const Plan * draft_plan);
+    double get_max_order_quantity(
+        const Order * order,
+        std::vector<Product *>& missing_resources,
+        bool& workers_are_unavailable
+    );
     void log_dropped_order(const Order * order);
     
 };

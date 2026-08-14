@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <iostream>
 #include <numeric>
+#include <vector>
 
 #include "ConsumerGood.h"
 #include "Debug.h"
@@ -89,7 +90,11 @@ bool Producer::can_produce(Product * product) {
     return catalog.count(product);
 }
 
-double Producer::get_max_order_quantity(const Order * order) {
+double Producer::get_max_order_quantity(
+    const Order * order,
+    std::vector<Product *>& missing_resources,
+    bool& workers_are_unavailable
+) {
     double max_order_quantity = std::numeric_limits<double>::infinity();
     for (std::pair<Good * const, double>& input : order->product->inputs_per_unit) {
         if (input.second <= 0.0) {
@@ -97,15 +102,22 @@ double Producer::get_max_order_quantity(const Order * order) {
         }
         double input_max_order_quantity = 
                 get_inventory_level(input.first) / input.second;
+        if (input_max_order_quantity < 1.0) {
+            missing_resources.push_back(input.first);
+        }
         max_order_quantity = 
             std::min(max_order_quantity, input_max_order_quantity);
     }
     std::vector<Person *> available_workers = get_available_workers(order);
+    workers_are_unavailable = available_workers.empty();
     for (Machine * machine : order->product->machines_needed) {
         double machine_max_order_quantity =
-            (input_inventory[machine] * machine->lifetime) *
+            (get_inventory_level(machine) * machine->lifetime) *
             available_workers.size() /
             recorded_living_labor_per_unit[order->product];
+        if (machine_max_order_quantity < 1.0 && !available_workers.empty()) {
+            missing_resources.push_back(machine);
+        }
         max_order_quantity =
             std::min(max_order_quantity, machine_max_order_quantity);
     }
@@ -119,21 +131,34 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
         order->customer,
         order->requested_turnaround_time
     );
+    std::vector<Product *> missing_resources;
+    bool workers_are_unavailable = false;
     return_order->quantity = std::min(
         return_order->quantity,
-        static_cast<int>(get_max_order_quantity(order))
+        static_cast<int>(get_max_order_quantity(
+            order,
+            missing_resources,
+            workers_are_unavailable
+        ))
     );
-    Plan * draft_plan = draft_plan_for_order(return_order);
+    Plan * draft_plan = nullptr;
+    if (return_order->quantity <= 0) {
+        if (workers_are_unavailable) {
+            log_drafting_failure_workers(order->product);
+        } else {
+            log_drafting_failure_inputs(order->product, missing_resources);
+        }
+    } else {
+        draft_plan = draft_plan_for_order(return_order);
+    }
     if (!draft_plan) {
         delete draft_plan;
         return_order->status = Order::kOrderRejected;
         return return_order;
     }
 
-    assign_plan_dependent_fields(draft_plan);
+    // assign_plan_dependent_fields(draft_plan);
     customer_to_draft_plan[order->customer] = draft_plan;
-    log_draft_plan(draft_plan);
-
     return return_order;
 }
 
@@ -149,19 +174,9 @@ void Producer::pursue_order(Firm * customer) {
         return;
     }
     customer_to_draft_plan[customer] = nullptr;
-    start_plan(plan);
-    log_pursued_plan(plan);
-}
-
-void Producer::log_draft_plan(const Plan * draft_plan) {
-    Order * order = draft_plan->order;
-    Logger::log(
-            Logger::PRODUCER,
-            id,
-            "draft_plan",
-            LogPair("product_id", order->product->id),
-            LogPair("quantity", order->quantity)
-            );
+    if (start_plan(plan)) {
+        log_pursued_plan(plan);
+    }
 }
 
 void Producer::log_dropped_order(const Order * order) {

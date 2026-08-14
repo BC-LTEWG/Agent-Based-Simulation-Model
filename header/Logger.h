@@ -67,7 +67,7 @@ void Logger::log(
         << "\"client\":\"" << clients[client] << "\","
         << "\"id\":" << id << ","
         << "\"label\":\"" << label << "\"";
-    (std::cout << ... << pairs) << "}" << std::endl;
+    (std::cout << ... << pairs) << "}\n";
 }
 
 
