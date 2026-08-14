@@ -13,7 +13,7 @@ TEST_CASE("Machine Logic Testing") {
     Machine* test_machine = machines[0]; 
 
     SUBCASE("Product type is assigned") {
-        CHECK(test_machine->product_type == Product::ProductType::TYPE_MACHINE);
+        CHECK(test_machine->product_type == Product::ProductType::kTypeMachine);
     }
 
     SUBCASE("Machine lifetime within bounds") {
