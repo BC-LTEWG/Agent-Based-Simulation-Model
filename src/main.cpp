@@ -1,10 +1,9 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
-#include <unordered_map>
-#include <unordered_set>
 
 #include "Constants.h"
+#include "Debug.h"
 #include "Sim.h"
 
 void print_usage() {
@@ -64,7 +63,7 @@ enum class ArgType {
     kInitPrices
 };
 
-static const std::unordered_set<std::string> valid_init_price_modes = {
+static const SET<std::string> valid_init_price_modes = {
     "labor_values",
     "equilibrium_prices"
 };
@@ -72,7 +71,7 @@ static const std::unordered_set<std::string> valid_init_price_modes = {
 void set_params(int argc, const char ** argv, SimArgs& args) {
     bool error = false;
 
-    static const std::unordered_map<std::string, ArgType> valid_args = {
+    static const MAP<std::string, ArgType> valid_args = {
         {"-n", ArgType::kTimeSteps}, {"--time-steps", ArgType::kTimeSteps},
         {"-p", ArgType::kPeople}, {"--people", ArgType::kPeople},
         {"-h", ArgType::kWorkHours}, {"--work-hours", ArgType::kWorkHours},
@@ -270,10 +269,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
 int main(int argc, const char ** argv) {
     SimArgs args;
     set_params(argc, argv, args);
-#ifdef DEBUG
-    args.seed = 1;
-    args.fixed_seed = true;
-#endif
+    DEBUG_SEED(args);
     Sim::run(args);
 	return EXIT_SUCCESS;
 }

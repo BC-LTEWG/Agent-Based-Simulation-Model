@@ -21,20 +21,18 @@
 #include "Sim.h"
 #include "Society.h"
 
-#ifdef DEBUG
-bool ProductID::operator()(const Product* a, const Product* b) const {
+bool Determinism<Product*>::operator()(Product* a, Product* b) const {
     return a->id < b->id;
 }
-bool OrderID::operator()(Order* a, Order* b) const {
+bool Determinism<Order*>::operator()(Order* a, Order* b) const {
     return a->id < b->id;
 }
-bool PersonID::operator()(Person* a, Person* b) const {
-    return a->get_id() < b->get_id(); 
-}
-bool PlanID::operator()(Plan* a, Plan* b) const {
+bool Determinism<Plan*>::operator()(Plan* a, Plan* b) const {
     return a->id < b->id;
 }
-#endif
+bool Determinism<Person*>::operator()(Person* a, Person* b) const {
+    return a->get_id() < b->get_id();
+}
 
 Firm::Firm() {
     static unsigned int unique_id = 0;
@@ -50,7 +48,7 @@ unsigned int Firm::get_id() {
 
 void Firm::on_time_step() {
     update_demands();
-    std::unordered_set<Product *> products_to_check;
+    SET<Product *> products_to_check;
     for (std::pair<Product * const, double>& demand : producer_demands) {
         products_to_check.insert(demand.first);
     }
@@ -112,7 +110,7 @@ bool Firm::remove_input_from_inventory(
         Product * product,
         double quantity,
         Firm * firm,
-        std::unordered_map<Product *, double>& deducted_inputs
+        MAP<Product *, double>& deducted_inputs
     ) {
     if (remove_input_from_inventory(product, quantity, firm)) {
         deducted_inputs[product] += quantity;
@@ -279,7 +277,7 @@ void Firm::check_and_reorder_input(Product * product) {
 }
 
 void Firm::return_inputs_to_inventory(
-        const std::unordered_map<Product *, double> deducted_inputs,
+        const MAP<Product *, double> deducted_inputs,
         Firm * firm
     ) {
     for (const std::pair<Product * const, double>& deduction :
@@ -424,7 +422,7 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
         plan->needed_this_step[machine] =
             portion_of_hour_worked / machine->lifetime;
     }
-    std::unordered_map<Product*, double> deducted_inputs;
+    MAP<Product*, double> deducted_inputs;
     bool was_stalled = plan->is_stalled;
     for (std::pair<Product *, double> requirement : plan->needed_this_step) {
         double have_on_hand = plan->inventory[requirement.first];
@@ -506,11 +504,7 @@ void Firm::end_plan(Plan * plan) {
 }
 
 void Firm::move_plans_forward_one_step() {
-#ifdef DEBUG
-    std::set<Plan *, PlanID> plans_still_in_progress;
-#else
-    std::unordered_set<Plan *> plans_still_in_progress;
-#endif
+    SET<Plan *> plans_still_in_progress;
     for (Plan * plan : plans_in_progress) {
         if (is_within_work_schedule(plan)) {
             if (plan->order->status == Order::OrderStatus::kOrderInProgress) {

@@ -1,8 +1,9 @@
 #pragma once
 
-#include <unordered_map>
 #include <vector>
+
 #include "Agent.h"
+#include "Debug.h"
 
 struct ConsumerGood;
 struct Plan;
@@ -24,10 +25,10 @@ class Person : public Agent {
     unsigned int get_id() override;
 	void on_time_step() override;
   
-	std::unordered_map<Ability *, double>& get_abilities();
+	MAP<Ability *, double>& get_abilities();
     double get_busyness();
     double get_account();
-	void train(std::unordered_map<Ability *, double>& target_abilities);
+	void train(MAP<Ability *, double>& target_abilities);
     HealthStatus get_health_status();
     float productivity();
     double suitability(std::vector<Ability *>& required_abilities);
@@ -39,11 +40,11 @@ class Person : public Agent {
   
   private:
     unsigned int id;
-    std::unordered_map<Ability *, double> abilities;
+    MAP<Ability *, double> abilities;
     int age;
     HealthStatus health_status;
-    std::unordered_map<ConsumerGood *, int> inventory;
-    std::unordered_map<ConsumerGood *, double> to_consume;
+    MAP<ConsumerGood *, int> inventory;
+    MAP<ConsumerGood *, double> to_consume;
     Firm * firm = nullptr;
     double account;
     double busyness_this_time_step = 0.0;

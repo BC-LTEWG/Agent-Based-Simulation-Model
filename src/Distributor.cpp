@@ -19,7 +19,7 @@
 #include "Society.h"
 
 Distributor::Distributor(
-        const std::unordered_set<Product *>& initial_catalog
+        const SET<Product *>& initial_catalog
         ) :
     Firm()
 {

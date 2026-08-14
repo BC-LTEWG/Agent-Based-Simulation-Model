@@ -1,11 +1,10 @@
 #pragma once
 
-#include <unordered_set>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "Constants.h"
+#include "Debug.h"
 #include "Firm.h"
 
 struct Order;
@@ -17,7 +16,7 @@ class Person;
 class Producer : public Firm {
   public:
     Producer(
-        const std::unordered_set<Product *>& initial_catalog = {}
+        const SET<Product *>& initial_catalog = {}
     );
     Logger::Client get_client_type() override;
     void add_to_catalog(Product * product) override;
@@ -28,7 +27,7 @@ class Producer : public Firm {
 	void pursue_order(Firm * customer);
 
   private:
-    std::unordered_map<Firm *, Plan *> customer_to_draft_plan;
+    MAP<Firm *, Plan *> customer_to_draft_plan;
 
     double get_max_order_quantity(const Order * order);
     void log_draft_plan(const Plan * draft_plan);
