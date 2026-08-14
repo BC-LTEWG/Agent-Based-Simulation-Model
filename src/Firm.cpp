@@ -86,12 +86,12 @@ void Firm::receive_shipment(Plan * plan) {
     double transaction_amount =
         order->product->price_per_unit * quantity_delivered;
     account -= transaction_amount;
-    plan->firm->receive_payment(plan, transaction_amount);
+    plan->firm->process_payment(plan, transaction_amount);
     log_shipment_received(order->product, quantity_delivered);
     log_inventory_level(order->product, input_inventory[order->product]);
 }
 
-void Firm::receive_payment(Plan * plan, double transaction_amount) {
+void Firm::process_payment(Plan * plan, double transaction_amount) {
     plan->debt -= transaction_amount;
 }
 
