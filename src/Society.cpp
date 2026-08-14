@@ -640,6 +640,18 @@ unsigned int Society::get_current_work_days_weekly() {
 	return current_work_days_weekly;
 }
 
+double Society::get_work_week_proportion() {
+    return static_cast<double>(current_work_hours_daily) 
+        * current_work_days_weekly
+        / WEEK;
+}
+
+bool Society::is_within_work_schedule() {
+    int time = Sim::get_current_time_step();
+    return time % DAY < current_work_hours_daily &&
+        time / DAY % 7 < current_work_days_weekly;
+}
+
 int Society::get_initial_account() {
     return initial_account;
 }

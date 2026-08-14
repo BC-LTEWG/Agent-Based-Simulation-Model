@@ -38,6 +38,8 @@ class Society : public Agent {
         void retire_person(Person * person);
         unsigned int get_current_work_hours_daily();
         unsigned int get_current_work_days_weekly();
+        double get_work_week_proportion();
+        bool is_within_work_schedule();
         int get_initial_account();
         std::unordered_map<Product *, double>& get_gross_hourly_demand_per_capita();
         std::vector<Producer *>& get_producers();

@@ -47,6 +47,7 @@ Person::Person():
     log_inventory();
     account = Society::get_instance()->get_initial_account();
     log_account();
+    busyness = Sim::get_product_consumption_mult() * Society::get_instance()->get_work_week_proportion();
 }
 
 unsigned int Person::get_id() {
@@ -212,8 +213,16 @@ void Person::update_health_status() {
 }
 
 void Person::update_busyness() {
+    double working_busyness_averaging_window = BUSYNESS_AVERAGING_WINDOW;
+    if (plan && Firm::is_within_work_schedule(plan)) {
+        working_busyness_averaging_window *= Firm::get_work_week_proportion(plan);
+    } else if (!plan && Society::get_instance()->is_within_work_schedule()) {
+        working_busyness_averaging_window *= Society::get_instance()->get_work_week_proportion();
+    } else {
+        return;
+    }
     double growth = busyness_this_time_step / BUSYNESS_AVERAGING_WINDOW;
-    double decay = busyness / BUSYNESS_AVERAGING_WINDOW;
+    double decay = busyness / working_busyness_averaging_window;
     busyness += growth - decay;
     busyness_this_time_step = 0.0;
 }
@@ -236,6 +245,10 @@ void Person::on_time_step() {
 void Person::set_firm(Firm * workplace) {
     firm = workplace;
     log_placement();
+}
+
+void Person::set_plan(Plan * new_plan) {
+    plan = new_plan;
 }
 
 Firm * Person::get_firm() {
