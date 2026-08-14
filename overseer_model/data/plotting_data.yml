@@ -1257,7 +1257,7 @@ firm_accounts:
       linewidth: 1.5
       markersize: 6.0
       label_template: Producer {i}'s Account
-      colors: ['']
+      colors: [maroon, navy, seagreen, goldenrod, orchid]
       traj_key: distributor_accounts
     distributor_accounts:
       checkbox_name: Distributor Accounts
@@ -1266,7 +1266,7 @@ firm_accounts:
       linewidth: 1.5
       markersize: 6.0
       label_template: Distributor {i}'s Account
-      colors: ['']
+      colors: [firebrick, chartreuse, darkturquoise, sandybrown, blueviolet]
       traj_key: distributor_accounts
   projection: 2d
   axis_visible: true
