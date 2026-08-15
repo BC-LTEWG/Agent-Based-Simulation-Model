@@ -55,9 +55,6 @@ void Firm::on_time_step() {
     double firm_busyness = get_busyness();
     log_busyness(firm_busyness);
     log_account();
-    // if (Sim::get_current_time_step() % WEEK == 0) {
-    //     offer_workers_for_transfer();
-    // }
 }
 
 int Firm::get_num_workers() {
@@ -73,8 +70,6 @@ void Firm::update_recent_labor_hours() {
 }
 
 double Firm::get_busyness() {
-    // update_busyness();
-    // return recent_busyness;
     if (workers.empty()) {
         return 0.0;
     }
@@ -86,8 +81,6 @@ double Firm::get_busyness() {
         / workers.size()
         * working_week_length / WEEK;
 }
-
-
 
 void Firm::update_busyness() {
     double current_busyness = 0.0;
