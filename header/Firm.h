@@ -71,6 +71,7 @@ class Firm : public Agent {
     double get_reorder_threshold(Product * product);
     double get_resupply_deficit(Product * product);
     void update_busyness();
+    void update_recent_labor_hours();
     virtual void check_and_reorder_input(Product * product);
     bool start_plan(Plan * plan);
     void handle_start_plan_failure(Plan * plan, Product * product, double missing);

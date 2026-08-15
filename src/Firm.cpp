@@ -50,19 +50,44 @@ void Firm::on_time_step() {
         log_plans();
     }
     if (Society::get_instance()->is_within_work_schedule()) {
-        update_busyness();
+        update_recent_labor_hours();
     }
     double firm_busyness = get_busyness();
     log_busyness(firm_busyness);
     log_account();
-    if (Sim::get_current_time_step() % WEEK == 0) {
-        offer_workers_for_transfer();
-    }
+    // if (Sim::get_current_time_step() % WEEK == 0) {
+    //     offer_workers_for_transfer();
+    // }
 }
 
 int Firm::get_num_workers() {
     return workers.size();
 }
+
+void Firm::update_recent_labor_hours() {
+    recent_labor_hours +=
+        (labor_hours_this_time_step - recent_labor_hours)
+        / BUSYNESS_AVERAGING_WINDOW;
+
+    labor_hours_this_time_step = 0.0;
+}
+
+double Firm::get_busyness() {
+    // update_busyness();
+    // return recent_busyness;
+    if (workers.empty()) {
+        return 0.0;
+    }
+
+    double working_week_length =
+        Sim::get_work_hours_daily() * Sim::get_work_days_weekly();
+
+    return recent_labor_hours
+        / workers.size()
+        * working_week_length / WEEK;
+}
+
+
 
 void Firm::update_busyness() {
     double current_busyness = 0.0;
@@ -188,10 +213,6 @@ bool Firm::remove_input_from_inventory(
     log_inventory_reduction(product, quantity);
     log_inventory_level(product, input_inventory[product]);
     return true;
-}
-
-double Firm::get_busyness() {
-    return recent_busyness;
 }
 
 double Firm::get_account() {
