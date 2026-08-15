@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <cstdlib>
 #include <unordered_map>
@@ -34,7 +35,7 @@ void print_usage() {
     std::cout << "\t--production_difficulty N: Set the spectral radius of "
         "the I/O requirements matrix. Higher values make surplus generation "
         "more difficult." << std::endl;
-    std::cout << "\t--consumption_demand N: Set the proportion of value "
+    std::cout << "\t--consumption_difficulty N: Set the proportion of value "
         "consumed by society relative to the maximum value producable by "
         "that society." << std::endl;
     std::cout << "\t--public_sector_expansion_period N: Period (in months) "
@@ -59,7 +60,7 @@ enum class ArgType {
     kSickChance,
     kSeed,
     kProductionDifficulty,
-    kConsumptionDemand,
+    kConsumptionDifficulty,
     kPublicSectorExpansionPeriod,
     kInitPrices
 };
@@ -90,7 +91,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
         {"-s", ArgType::kSickChance}, {"--sick-chance", ArgType::kSickChance},
         {"-e", ArgType::kSeed}, {"--seed", ArgType::kSeed},
         {"--production_difficulty", ArgType::kProductionDifficulty},
-        {"--consumption_demand", ArgType::kConsumptionDemand},
+        {"--consumption_difficulty", ArgType::kConsumptionDifficulty},
         {"--public_sector_expansion_period",
             ArgType::kPublicSectorExpansionPeriod},
         {"--init_prices", ArgType::kInitPrices}
@@ -218,15 +219,29 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 if (dvalue < 0.0 || dvalue >= 1.0) {
                     error = true;
                 } else {
-                    args.difficulty_of_production = dvalue;
+                    args.production_difficulty = dvalue;
                 }
                 break;
             }
-            case ArgType::kConsumptionDemand: {
+            case ArgType::kConsumptionDifficulty: {
                 if (dvalue < 0.0 || dvalue >= 1.0) {
                     error = true;
                 } else {
-                    args.consumption_demand_level = dvalue;
+                    args.consumption_difficulties[0] = dvalue;
+                }
+                std::ifstream file("../runtime/consumption_difficulties.in");
+                if (file.is_open()) {
+                    while (!file.eof()) {
+                        int time_step; 
+                        file >> time_step;
+                        double difficulty;
+                        file >> difficulty;
+                        if (time_step < 0 || difficulty < 0.0 || difficulty >= 1.0) {
+                            error = true;
+                            break;
+                        }
+                        args.consumption_difficulties[time_step] = difficulty;
+                    }
                 }
                 break;
             }

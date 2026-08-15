@@ -61,12 +61,12 @@ double Sim::get_annual_sickness_chance() {
     return get_instance().args.sickness_chance;
 }
 
-double Sim::get_difficulty_of_production() {
-    return get_instance().args.difficulty_of_production;
+double Sim::get_production_difficulty() {
+    return get_instance().args.production_difficulty;
 }
 
-double Sim::get_product_consumption_mult() {
-    return get_instance().args.consumption_demand_level;
+std::unordered_map<int, double> Sim::get_consumption_difficulties() {
+    return get_instance().args.consumption_difficulties;
 }
 
 int Sim::get_public_sector_expansion_period() {
@@ -109,7 +109,7 @@ Sim::Sim() {}
 
 void Sim::run() {
     society = Society::get_instance();
-    for (std::size_t i = 0; i < args.time_steps; ++i) {
+    for (size_t i = 0; i < args.time_steps; ++i) {
         society->on_time_step();
         ++current_time_step;
     }

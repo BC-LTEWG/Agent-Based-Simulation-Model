@@ -8,6 +8,7 @@ struct ConsumerGood : public Product {
     ConsumerGood(Good * good);
     void set_inputs() override; 
     void set_machines() override;
+    void set_mean_consumption_frequency();
     void log_mean_consumption_frequency();
 
     Good * corresponding_good = nullptr;

@@ -131,6 +131,9 @@ unsigned int Society::get_id() {
 }
 
 void Society::on_time_step() {
+    if (Sim::get_current_time_step() != 0 && Sim::get_consumption_difficulties().count(Sim::get_current_time_step())) {
+        reset_product_consumption(Sim::get_consumption_difficulties().at(Sim::get_current_time_step()));
+    }
     busyness = 0.0;
     average_account = 0.0;
     for (Person * person : people) {
@@ -297,7 +300,7 @@ void Society::log_total_employment() {
 
 double Society::normalize_io_matrix(Eigen::MatrixXd& io_matrix) {
     const double current_radius = get_production_spectral_radius(io_matrix);
-    const double divisor = current_radius / Sim::get_difficulty_of_production();
+    const double divisor = current_radius / Sim::get_production_difficulty();
 
     for (Product * input_product : products) {
         if (input_product->product_type ==
@@ -352,17 +355,16 @@ Eigen::MatrixXd get_leontief_inverse(
 }
 
 static void normalize_consumption_frequencies(
-        std::vector<ConsumerGood *>& consumer_goods
+        std::vector<ConsumerGood *>& consumer_goods,
+        double consumption_difficulty
         ) {
     double value_consumed_per_hour = 0.0;
     for (ConsumerGood * consumer_good : consumer_goods) {
         value_consumed_per_hour += consumer_good->labor_value *
             consumer_good->mean_consumption_frequency;
     }
-    double worked_proportion_of_week =
-        static_cast<double>(Sim::get_work_hours_daily()) * Sim::get_work_days_weekly() / WEEK;
-    double consumption_scalar = Sim::get_product_consumption_mult()
-        * worked_proportion_of_week
+    double consumption_scalar = 
+        consumption_difficulty
         / value_consumed_per_hour;
     for (ConsumerGood * consumer_good : consumer_goods) {
         consumer_good->mean_consumption_frequency *= consumption_scalar;
@@ -389,7 +391,7 @@ void Society::set_product_prices_production_consumption() {
         }
         products[i]->labor_value = values(i);
     }
-    normalize_consumption_frequencies(consumer_goods);
+    normalize_consumption_frequencies(consumer_goods, Sim::get_consumption_difficulties()[0]);
     set_initial_prices(A, l, consumer_goods, dim);
     Eigen::VectorXd demands = Eigen::VectorXd::Zero(dim);
     for (ConsumerGood * consumer_good : consumer_goods) {
@@ -399,6 +401,13 @@ void Society::set_product_prices_production_consumption() {
     for (std::size_t i = 0; i < dim; ++i) {
         gross_hourly_demand_per_capita[products[i]] = gross_hourly_demand_per_capita_vec(i);
     }
+}
+
+void Society::reset_product_consumption(double consumption_difficulty) {
+    for (ConsumerGood * consumer_good : consumer_goods) {
+        consumer_good->set_mean_consumption_frequency();
+    }
+    normalize_consumption_frequencies(consumer_goods, consumption_difficulty);
 }
 
 static Eigen::VectorXd get_epr_prices(const Eigen::MatrixXd& M, double spectral_radius) {
@@ -509,7 +518,7 @@ void Society::set_initial_prices(
             constexpr int MAX_CONSUMPTION_REDUCTIONS = 10000;
             constexpr double SPECTRAL_RADIUS_TOL = 1e-10;
 
-            double d = Sim::get_difficulty_of_production();
+            double d = Sim::get_production_difficulty();
             double r = std::min(spectral_radius, 1.0);
             double p = std::clamp(DESIRED_INITIAL_PROFITABILITY, 0.0, 1.0);
             double target = (d-r)*p + r;

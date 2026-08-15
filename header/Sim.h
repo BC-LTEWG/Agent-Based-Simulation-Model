@@ -3,6 +3,7 @@
 #include <random>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include "Constants.h"
 #include "Society.h"
 
@@ -19,8 +20,8 @@ struct SimArgs {
     double sickness_chance = ANNUAL_SICKNESS_CHANCE;
     unsigned int num_abilities = NUM_ABILITIES;
     double ability_stddev = ABILITY_STDDEV;
-    double difficulty_of_production = DEFAULT_PRODUCTION_DIFFICULTY;
-    double consumption_demand_level = DEFAULT_CONSUMPTION_DEMAND;
+    double production_difficulty = DEFAULT_PRODUCTION_DIFFICULTY;
+    std::unordered_map<int, double> consumption_difficulties = {{0, DEFAULT_CONSUMPTION_DIFFICULTY}};
     int public_sector_expansion_period = PUBLIC_SECTOR_EXPANSION_PERIOD;
     std::string init_price_mode = "labor_values";
     bool json = false;
@@ -44,8 +45,8 @@ class Sim {
         static unsigned int get_num_abilities();
         static double get_ability_stddev();
         static double get_annual_sickness_chance();
-        static double get_difficulty_of_production();
-        static double get_product_consumption_mult();
+        static double get_production_difficulty();
+        static std::unordered_map<int, double> get_consumption_difficulties();
         static int get_public_sector_expansion_period();
         static std::string get_initial_price_mode();
         static bool does_json();

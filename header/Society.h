@@ -60,6 +60,7 @@ class Society : public Agent {
         void set_initial_products();
         void add_consumer_goods();
         void set_product_prices_production_consumption();
+        void reset_product_consumption(double consumption_difficulty);
         void populate_io_matrix_and_labor_vector(
                 Eigen::MatrixXd&,
                 Eigen::VectorXd&
