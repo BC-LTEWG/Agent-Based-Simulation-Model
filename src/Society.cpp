@@ -392,6 +392,7 @@ void Society::set_product_prices_production_consumption() {
         products[i]->labor_value = values(i);
     }
     normalize_consumption_frequencies(consumer_goods, Sim::get_consumption_difficulties()[0]);
+    log_consumption_difficulty(Sim::get_consumption_difficulties()[0]);
     set_initial_prices(A, l, consumer_goods, dim);
     Eigen::VectorXd demands = Eigen::VectorXd::Zero(dim);
     for (ConsumerGood * consumer_good : consumer_goods) {
@@ -404,10 +405,11 @@ void Society::set_product_prices_production_consumption() {
 }
 
 void Society::reset_product_consumption(double consumption_difficulty) {
-    for (ConsumerGood * consumer_good : consumer_goods) {
-        consumer_good->set_mean_consumption_frequency();
-    }
+    // for (ConsumerGood * consumer_good : consumer_goods) {
+    //     consumer_good->set_mean_consumption_frequency();
+    // }
     normalize_consumption_frequencies(consumer_goods, consumption_difficulty);
+    log_consumption_difficulty(consumption_difficulty);
 }
 
 static Eigen::VectorXd get_epr_prices(const Eigen::MatrixXd& M, double spectral_radius) {
@@ -832,3 +834,13 @@ void Society::log_work_hours_weekly() {
             LogPair("work_days_weekly", current_work_days_weekly)
             );
 }
+
+void Society::log_consumption_difficulty(double consumption_difficulty) {
+    Logger::log(
+        Logger::SOCIETY,
+        id,
+        "consumption_difficulty",
+        LogPair("value", consumption_difficulty)
+    );
+}
+

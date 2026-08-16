@@ -110,6 +110,7 @@ class Aggregator:
                 "censored_busyness_distribution": self.record_censored_busyness_dist,
                 "predicted_uncensored_busyness_distribution": self.record_uncensored_busyness_dist,
                 "work_hours_weekly": self.record_work_hours_weekly,
+                "consumption_difficulty": self.record_consumption_difficulty,
                 "busyness_data": self.record_busyness_data
             },
             "Person": {
@@ -744,7 +745,6 @@ class Aggregator:
 
         self.predicted_order_sizes = 0.25 * 1.5 * 24*7 * min_hrly_output
         self.eqb_employment = overall_sectoral_weekly_labor_req / (init_work_hours*init_work_days)
-        self.busy_lower_bd = self.settings["consump_epsilon"]*(init_work_hours*init_work_days / (24*7))
         self.busy_upper_bd = (init_work_hours*init_work_days / (24*7))
         self.min_hrly_output = overall_sectoral_activity_levels
         dim = self.A.shape[0]
@@ -868,7 +868,7 @@ class Aggregator:
             "-v", str(self.settings["person_ability_stddev"]),
             "-i", str(self.settings["max_num_inputs_per_good"]),
             "--production_difficulty", str(self.settings["productivity"]),
-            "--consumption_demand", str(self.settings["consump_epsilon"]),
+            "--consumption_difficulty", str(self.settings["consump_epsilon"]),
             "--init_prices", str(self.settings["init_prices"]),
         ]
 
@@ -1190,6 +1190,9 @@ class Aggregator:
         work_hours_daily = dic["work_hours_daily"]
         work_days_weekly = dic["work_days_weekly"]
         self.busy_upper_bd = (work_hours_daily * work_days_weekly) / (24*7)
+
+    def record_consumption_difficulty(self, dic):
+        self.busy_lower_bd = dic["value"]
 
     def record_busyness_data(self, dic):
         self.individual_busyness_data.append(dic["value"])

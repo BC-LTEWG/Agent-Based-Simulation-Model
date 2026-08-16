@@ -87,6 +87,7 @@ class Society : public Agent {
         void log_busyness();
         void log_total_employment();
         void log_work_hours_weekly();
+        void log_consumption_difficulty(double consumption_difficulty);
         void set_abilities(std::vector<Ability *>& abilities, std::vector<Ability *>& distribution_abilities);
         void set_initial_account(double& initial_account, const std::vector<ConsumerGood *>& consumer_goods);
 
