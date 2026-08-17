@@ -10,7 +10,7 @@
 TEST_CASE("ConsumerGood Logic Testing") {
     ConsumerGood* test_cg = nullptr; //find consumergood
     for (Product* p : Society::get_instance()->get_products()) {
-        if (p->product_type == Product::ProductType::TYPE_CONSUMER_GOOD) {
+        if (p->product_type == Product::ProductType::kTypeConsumerGood) {
             test_cg = static_cast<ConsumerGood*>(p);
             break;
         }
@@ -19,7 +19,7 @@ TEST_CASE("ConsumerGood Logic Testing") {
     REQUIRE(test_cg != nullptr); //must exist
 
     SUBCASE("Product type is assigned") {
-        CHECK(test_cg->product_type == Product::ProductType::TYPE_CONSUMER_GOOD);
+        CHECK(test_cg->product_type == Product::ProductType::kTypeConsumerGood);
     }
 
     SUBCASE("Pointers are mapped") {
@@ -34,7 +34,7 @@ TEST_CASE("ConsumerGood Logic Testing") {
     SUBCASE("Theoretical basis for consumption frequencies (issue #144)") { //checking dot product of lambda & consumption frequency
         double labor_value_consumed = 0;
         for(Product* p : Society::get_instance()->get_products()) {
-            if(p->product_type == Product::ProductType::TYPE_CONSUMER_GOOD) {
+            if(p->product_type == Product::ProductType::kTypeConsumerGood) {
                 ConsumerGood* test_good = static_cast<ConsumerGood*>(p);
                 double test_lambda = test_good->labor_value; //find labor value (lambda)
                 double test_frequency = test_good->mean_consumption_frequency; //find avg person consume in 1 hr

@@ -13,6 +13,7 @@
 #include "Good.h"
 #include "Machine.h"
 #include "Logger.h"
+#include "Order.h"
 #include <vector>
 #include <climits>
 #include <algorithm>
@@ -32,7 +33,7 @@ TEST_CASE("Producer Logic Testing") {
 
     SUBCASE("add_to_catalog() calculates demand and inventory") { //initial stock > 0
         for (Machine* machine : test_product->machines_needed) {
-            CHECK(test_producer->machines.count(machine) > 0);
+            CHECK(test_producer->input_inventory[machine] > 0);
         }
         for (std::pair<Good * const, double>& input : test_product->inputs_per_unit) {
             Good* input_good = input.first;
@@ -45,13 +46,18 @@ TEST_CASE("Producer Logic Testing") {
     }
 
     SUBCASE("get_max_order_quantity() calculates limits correctly") {
-        int expected_max_quantity = INT_MAX;
+        double expected_max_quantity = INT_MAX;
         for (std::pair<Good * const, double>& input : test_product->inputs_per_unit) { //manually calculate actual value
             double current_inventory = test_producer->input_inventory[input.first];
             double required_per_unit = input.second;
-            int input_max = static_cast<int>(current_inventory / required_per_unit);
+            double input_max = current_inventory / required_per_unit;
             expected_max_quantity = std::min(expected_max_quantity, input_max); 
         }
-        CHECK(test_producer->get_max_order_quantity(test_product) == expected_max_quantity); //projected vs actual
+
+        Order test_order(test_product, 1, test_producer, 1.0);
+        std::vector<Product *> missing;
+        bool test_workers = false;
+
+        CHECK(test_producer->get_max_order_quantity(&test_order, missing, test_workers) == expected_max_quantity); //projected vs actual
     }
 }
