@@ -10,7 +10,8 @@ TEST_SRCS = $(wildcard ${TEST_DIR}/*.cpp)
 TEST_EXECS = $(patsubst %.cpp, %.test, ${TEST_SRCS})
 APP = ${BIN_DIR}/sim
 OPT_FLAG = -O2
-FLAGS = -Wall -Wsign-compare -Iheader -std=c++17 $(OPT_FLAG)
+BASE_FLAGS = -Wall -Wsign-compare -Iheader -std=c++17
+FLAGS = ${BASE_FLAGS} ${OPT_FLAG}
 PLOT_SRC = ${GRAPH_DIR}/plot_producer_distributor_transactions.cpp
 PLOT_APP = ${BIN_DIR}/plot_producer_distributor_transactions
 MATPLOT_INCLUDE ?= ${HOME}/.local/include
@@ -124,6 +125,12 @@ score: coverage
 	}' .gcov_log
 	@rm -f .gcov_log
 
-debug: OPT_FLAG =-O1
-debug: FLAGS= -Wall -Wsign-compare -Iheader -std=c++17 -g $(OPT_FLAG) -DDEBUG
+debug: FLAGS = ${BASE_FLAGS} -g -DDEBUG
 debug: clean ${APP}
+
+
+
+
+
+
+
