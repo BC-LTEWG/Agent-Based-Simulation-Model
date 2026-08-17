@@ -19,21 +19,6 @@ class Firm;
 class Producer;
 class Society;
 
-#ifdef DEBUG
-struct ProductID { 
-    bool operator()(const Product * a, const Product * b) const; 
-};
-struct OrderID { 
-    bool operator()(Order * a, Order * b) const; 
-};
-struct PersonID { 
-    bool operator()(Person * a, Person * b) const; 
-};
-struct PlanID { 
-    bool operator()(Plan * a, Plan * b) const; 
-};
-#endif
-
 class Firm : public Agent {
   public:
     Firm();
