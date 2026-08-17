@@ -54,6 +54,9 @@ void Firm::on_time_step() {
     }
     double firm_busyness = get_busyness();
     log_busyness(firm_busyness);
+    if (Sim::get_current_time_step() % BUSYNESS_AVERAGING_WINDOW == 0) {
+        transfer_surplus_workers();
+    }
     log_account();
 }
 
@@ -74,12 +77,9 @@ double Firm::get_busyness() {
         return 0.0;
     }
 
-    double working_week_length =
-        Sim::get_work_hours_daily() * Sim::get_work_days_weekly();
-
     return recent_labor_hours
         / workers.size()
-        * working_week_length / WEEK;
+        * Society::get_instance()->get_work_week_proportion();
 }
 
 void Firm::update_busyness() {
@@ -89,10 +89,7 @@ void Firm::update_busyness() {
             labor_hours_this_time_step / workers.size();
     }
 
-    double work_week_proportion =
-        Society::get_instance()->get_work_week_proportion();
-
-    current_busyness *= work_week_proportion;
+    current_busyness *= Society::get_instance()->get_work_week_proportion();
 
     recent_busyness +=
         (current_busyness - recent_busyness)
@@ -101,7 +98,7 @@ void Firm::update_busyness() {
     labor_hours_this_time_step = 0.0;
 }
 
-void Firm::offer_workers_for_transfer() {
+void Firm::transfer_surplus_workers() {
     int worker_surplus = get_number_available_workers_to_transfer();
     if (worker_surplus <= 0) {
         return;
@@ -237,7 +234,7 @@ int Firm::get_number_available_workers_to_transfer() {
     if (relative_difference < TRANSFER_BUSYNESS_THRESHOLD) {
         return 0;
     }
-    double target_workers = workers.size() * firm_busyness / societal_busyness;
+    double target_workers = workers.size() * (firm_busyness / societal_busyness);
     int available_workers_for_transfer = std::max(
         0,
         static_cast<int>(

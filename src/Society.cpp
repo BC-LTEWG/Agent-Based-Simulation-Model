@@ -744,12 +744,6 @@ void Society::check_update_work_week() {
     log_work_hours_weekly();
 }
 
-bool Society::is_within_work_schedule() {
-    int time = Sim::get_current_time_step();
-    return time % DAY < get_current_work_hours_daily() &&
-        time / DAY % 7 < get_current_work_days_weekly();
-}
-
 void Society::log_io_matrix(Eigen::MatrixXd& A, size_t dim) {
     for (size_t i = 0; i < dim; ++i) {
         for (size_t j = 0; j < dim; ++j) {

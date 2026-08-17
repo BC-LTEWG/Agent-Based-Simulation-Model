@@ -14,7 +14,7 @@ The LTE comes with a robust visualization layer for [Overseer](https://github.co
 ```
 git clone --recurse-submodules 
 ```
-If you have already cloned the repo and did not use this flag, you can either clone Overseer into the repo's root directory manually, or run the following command from inside of it:
+If you have already cloned the repo and did not use this flag, you can either clone Overseer into the repo's root directory manually, or, equivalently, run the following command from inside of it:
 ```
 git submodule update --init --recursive
 ```
@@ -22,6 +22,8 @@ git submodule update --init --recursive
 - If you are on Mac OS or Linux, run `./setup.sh`. If you are a Mac OS user, you may first need to make the script executable before this command will work: `chmod +x setup.sh`
 - If you are on Windows, run `.\setup.ps1` (or simply right click the file and choose Run with PowerShell). (Note that you must use PowerShell to run this script. Do not try to use `cmd`.)
 3. In either case, this script will create a file called `run.sh` or `run.ps1`, again depending on your operating system. Running that file in the same way should launch Overseer and immediately begin the simulation. 
+
+If the setup script fails for any reason and you address the source of the failure, you should be able to run the script again without any issue. You can also do this if you accidentally delete your `run.sh` file, which is created by the script.
 
 For more information on using Overseer, see [here](https://overseer-modeling.readthedocs.io/en/latest/). 
 

@@ -92,7 +92,7 @@ class Firm : public Agent {
     std::vector<Person *> get_available_workers(const Order * order);
     void assign_workers(Plan * draft_plan);
     bool is_employed_here(Person * worker);
-    void offer_workers_for_transfer();
+    void transfer_surplus_workers();
     int get_number_available_workers_to_transfer();
     void adjust_quantity_for_deadline(Plan * plan);
     double predict_turnaround_time(Plan * plan); 
