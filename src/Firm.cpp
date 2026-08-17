@@ -291,7 +291,7 @@ void Firm::return_inputs_to_inventory(
 }
 
 void Firm::refund_for_unused_inputs(
-        const std::unordered_map<Product *, double> returned_inputs) {
+        MAP<Product *, double> returned_inputs) {
     double refund = 0.0;
     for (const std::pair<Product * const, double>& returned_input :
             returned_inputs) {
