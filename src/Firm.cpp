@@ -21,6 +21,19 @@
 #include "Sim.h"
 #include "Society.h"
 
+bool Determinism<Product*>::operator()(Product* a, Product* b) const {
+    return a->id < b->id;
+}
+bool Determinism<Order*>::operator()(Order* a, Order* b) const {
+    return a->id < b->id;
+}
+bool Determinism<Plan*>::operator()(Plan* a, Plan* b) const {
+    return a->id < b->id;
+}
+bool Determinism<Person*>::operator()(Person* a, Person* b) const {
+    return a->get_id() < b->get_id();
+}
+
 Firm::Firm() {
     static unsigned int unique_id = 0;
     id = unique_id++;
@@ -35,7 +48,7 @@ unsigned int Firm::get_id() {
 
 void Firm::on_time_step() {
     update_demands();
-    std::unordered_set<Product *> products_to_check;
+    SET<Product *> products_to_check;
     for (std::pair<Product * const, double>& demand : producer_demands) {
         products_to_check.insert(demand.first);
     }
@@ -98,7 +111,7 @@ void Firm::process_payment(Plan * plan, double transaction_amount) {
 bool Firm::remove_input_from_inventory(
         Product * product,
         double quantity,
-        std::unordered_map<Product *, double>& deducted_inputs
+        MAP<Product *, double>& deducted_inputs
     ) {
     if (remove_input_from_inventory(product, quantity)) {
         deducted_inputs[product] += quantity;
@@ -265,7 +278,8 @@ void Firm::check_and_reorder_input(Product * product) {
 }
 
 void Firm::return_inputs_to_inventory(
-        const std::unordered_map<Product *, double> deducted_inputs) {
+        const MAP<Product *, double> deducted_inputs
+    ) {
     for (const std::pair<Product * const, double>& deduction :
             deducted_inputs) {
         Product * input = deduction.first;
@@ -277,7 +291,7 @@ void Firm::return_inputs_to_inventory(
 }
 
 void Firm::refund_for_unused_inputs(
-        const std::unordered_map<Product *, double> returned_inputs) {
+        MAP<Product *, double> returned_inputs) {
     double refund = 0.0;
     for (const std::pair<Product * const, double>& returned_input :
             returned_inputs) {
@@ -407,7 +421,7 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
     for (Machine * machine : product->machines_needed) {
         needed_this_step[machine] = portion_of_hour_worked / machine->lifetime;
     }
-    std::unordered_map<Product*, double> deducted_inputs;
+    MAP<Product*, double> deducted_inputs;
     bool was_stalled = plan->is_stalled;
     for (std::pair<Product *, double> requirement : needed_this_step) {
         double have_on_hand = plan->inventory[requirement.first];
@@ -478,7 +492,7 @@ void Firm::end_plan(Plan * plan) {
 }
 
 void Firm::move_plans_forward_one_step() {
-    std::unordered_set<Plan *> plans_still_in_progress;
+    SET<Plan *> plans_still_in_progress;
     for (Plan * plan : plans_in_progress) {
         if (is_within_work_schedule(plan)) {
             if (plan->order->status == Order::OrderStatus::kOrderInProgress) {

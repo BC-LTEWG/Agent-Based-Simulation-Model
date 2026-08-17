@@ -281,7 +281,7 @@ class ThreadLocal {
   // this should never happen, if `capacity_` is a reasonable estimate of the
   // number of threads running in a system.
   EIGEN_MUTEX mu_;  // Protects per_thread_map_.
-  std::unordered_map<std::thread::id, T> per_thread_map_;
+  MAP<std::thread::id, T> per_thread_map_;
 };
 
 }  // namespace Eigen

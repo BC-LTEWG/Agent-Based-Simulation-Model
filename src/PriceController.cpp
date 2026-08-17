@@ -42,7 +42,7 @@ void PriceController::update_price(Plan * plan) {
     plan_history[product].push_back(std::make_pair(plan, now));
     int units = 0.0;
     double hours = 0.0;
-    std::unordered_map<Product *, double> inputs_used;
+    MAP<Product *, double> inputs_used;
     for (std::pair<Plan *, int> entry : plan_history[product]) {
         Plan * plan = entry.first;
         units += plan->order->quantity - plan->quantity_remaining;

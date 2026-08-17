@@ -111,7 +111,7 @@ void Society::initialize() {
         producer->initialize_inventory();
         producer->inject_randomness_into_demand();
     }
-    std::unordered_set<Product *> distributor_catalog(consumer_goods.begin(), consumer_goods.end());
+    SET<Product *> distributor_catalog(consumer_goods.begin(), consumer_goods.end());
     for (unsigned int i = 0; i < Sim::get_num_distributors(); i++) {
         Distributor * distributor = new Distributor(distributor_catalog);
         distributors.push_back(distributor);
@@ -281,7 +281,7 @@ double Society::get_total_employment() {
     return static_cast<double>(employed) / people.size();
 }
 
-std::unordered_map<Product *, int>& Society::get_number_of_producers_for_product() {
+MAP<Product *, int>& Society::get_number_of_producers_for_product() {
     return product_to_number_of_producers;
 }
 
@@ -628,7 +628,7 @@ std::vector<Distributor *> &Society::get_distributors() {
     return distributors;
 }
 
-std::unordered_set<Person *>& Society::get_unemployed_people() {
+SET<Person *>& Society::get_unemployed_people() {
     return unemployed_people;
 }
 
@@ -644,7 +644,7 @@ int Society::get_initial_account() {
     return initial_account;
 }
 
-std::unordered_map<Product *, double>& Society::get_gross_hourly_demand_per_capita() {
+MAP<Product *, double>& Society::get_gross_hourly_demand_per_capita() {
     return gross_hourly_demand_per_capita;
 }
 

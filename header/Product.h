@@ -1,9 +1,9 @@
 #pragma once
 
 #include <string>
-#include <unordered_map>
 #include <vector>
 
+#include "Debug.h"
 #include "Person.h"
 
 struct Good;
@@ -21,7 +21,7 @@ struct Product {
     double price_per_unit;
     double labor_value;
     std::vector<Machine *> machines_needed;
-    std::unordered_map<Good *, double> inputs_per_unit;
+    MAP<Good *, double> inputs_per_unit;
     double living_labor_per_unit;
     std::vector<Ability *> required_abilities;
 };

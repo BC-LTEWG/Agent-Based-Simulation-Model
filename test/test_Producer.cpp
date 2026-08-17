@@ -45,13 +45,13 @@ TEST_CASE("Producer Logic Testing") {
     }
 
     SUBCASE("get_max_order_quantity() calculates limits correctly") {
-        int expected_max_quantity = INT_MAX;
+        double expected_max_quantity = std::numeric_limits<double>::infinity(); //grabbed from producer.cpp
         for (std::pair<Good * const, double>& input : test_product->inputs_per_unit) { //manually calculate actual value
             double current_inventory = test_producer->input_inventory[input.first];
             double required_per_unit = input.second;
-            int input_max = static_cast<int>(current_inventory / required_per_unit);
+            double input_max = current_inventory / required_per_unit;
             expected_max_quantity = std::min(expected_max_quantity, input_max); 
         }
-        CHECK(test_producer->get_max_order_quantity(test_product) == expected_max_quantity); //projected vs actual
+        CHECK(test_producer->get_max_order_quantity(test_product) == doctest::Approx(expected_max_quantity)); //projected vs actual
     }
 }

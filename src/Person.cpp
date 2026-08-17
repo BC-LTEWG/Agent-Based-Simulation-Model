@@ -53,7 +53,7 @@ unsigned int Person::get_id() {
     return id;
 }
 
-std::unordered_map<Ability *, double>& Person::get_abilities() {
+MAP<Ability *, double>& Person::get_abilities() {
     return abilities;
 }
 
@@ -65,7 +65,7 @@ double Person::get_account() {
     return account;
 }
 
-void Person::train(std::unordered_map<Ability *, double>& target_abilities) {
+void Person::train(MAP<Ability *, double>& target_abilities) {
     // can introduce < 100% effectiveness on training later
     for (const std::pair<Ability * const, double>& ability : target_abilities) {
         abilities[ability.first] = ability.second;
@@ -151,7 +151,7 @@ bool Person::will_shop() {
 
 void Person::shop() {
     double total_price = 0.0;
-    static std::unordered_map<ConsumerGood *, int> purchase_quantities;
+    static MAP<ConsumerGood *, int> purchase_quantities;
     for (ConsumerGood * consumer_good : Society::get_instance()->get_consumer_goods()) {
         purchase_quantities[consumer_good] = std::max(0, 
             (int) (PERSON_STOCKPILE_DURATION * consumer_good->mean_consumption_frequency) - 

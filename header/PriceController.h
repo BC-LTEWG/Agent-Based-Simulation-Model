@@ -1,9 +1,9 @@
 #pragma once
 
-#include <unordered_map>
 #include <list>
 
 #include "Agent.h"
+#include "Debug.h"
 
 struct Plan;
 struct Product;
@@ -19,8 +19,8 @@ class PriceController : public Agent {
     private:
         PriceController();
         double fic = 1.0;
-        std::unordered_map<Product *, std::list<std::pair<Plan *, int>>> plan_history;
-        std::unordered_map<ConsumerGood *, double> consumer_good_to_net_value;
+        MAP<Product *, std::list<std::pair<Plan *, int>>> plan_history;
+        MAP<ConsumerGood *, double> consumer_good_to_net_value;
         void update_fic();
         void log_public_sector_net_value(double);
         void log_societal_net_value(double);

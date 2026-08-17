@@ -2,11 +2,10 @@
 
 #include <string>
 #include <tuple>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 #include <queue>
 
+#include "Debug.h"
 #include "Agent.h"
 #include "Logger.h"
 #include "Person.h"
@@ -14,6 +13,7 @@
 struct Ability;
 struct Machine;
 struct Order;
+struct Plan;
 struct Product;
 class Firm;
 class Producer;
@@ -41,18 +41,18 @@ class Firm : public Agent {
 
   protected:
     unsigned int id;
-    std::unordered_map<Product *, double> average_team_sizes;
+    MAP<Product *, double> average_team_sizes;
     double account = 0.0;
-    std::unordered_set<Person *> workers,
+    SET<Person *> workers,
         standby_workers;
-    std::unordered_map<Product *, double> input_inventory;
-    std::unordered_set<Product *> catalog;
+    MAP<Product *, double> input_inventory;
+    SET<Product *> catalog;
     
-    std::unordered_map<Product *, double> consumer_demands;
-    std::unordered_map<Product *, double> producer_demands;
-    std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
-    std::unordered_map<Product *, double> recorded_living_labor_per_unit;
-    std::unordered_set<Plan *> plans_in_progress;
+    MAP<Product *, double> consumer_demands;
+    MAP<Product *, double> producer_demands;
+    MAP<Product *, SET<Order *>> product_to_outbound_orders;
+    MAP<Product *, double> recorded_living_labor_per_unit;
+    SET<Plan *> plans_in_progress;
 
     Producer * send_order(Order * order);
     bool remove_input_from_inventory(
@@ -62,7 +62,7 @@ class Firm : public Agent {
     bool remove_input_from_inventory(
         Product * product,
         double quantity,
-        std::unordered_map<Product *, double>& container
+        MAP<Product *, double>& container
     );
     double get_reorder_threshold(Product * product);
     double get_resupply_deficit(Product * product);
@@ -70,10 +70,10 @@ class Firm : public Agent {
     bool start_plan(Plan * plan);
     void handle_start_plan_failure(Plan * plan, Product * product, double missing);
     void return_inputs_to_inventory(
-        std::unordered_map<Product *, double> deducted_inputs
+        MAP<Product *, double> deducted_inputs
         );
     void refund_for_unused_inputs(
-            const std::unordered_map<Product *, double> returned_inputs);
+        const MAP<Product *, double> returned_inputs);
     void rollback_plan_inputs(Plan * plan);
     void move_plan_forward_one_step(Plan * plan);
     void end_plan(Plan * plan);
