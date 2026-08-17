@@ -25,3 +25,5 @@ class Params:
     init_prices: str = 'labor_values'
     free_goods: bool = False
     new_free_good_interval: int = 2160
+    work_week_adjustments: bool = True
+    work_week_adjustment_interval: int = 336

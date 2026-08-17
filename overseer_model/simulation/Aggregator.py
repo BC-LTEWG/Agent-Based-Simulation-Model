@@ -48,7 +48,9 @@ class Aggregator:
             "n_products": 2 * params.N_g + params.N_m,
             "init_prices": params.init_prices,
             "free_goods": params.free_goods,
-            "new_free_good_interval": params.new_free_good_interval
+            "new_free_good_interval": params.new_free_good_interval,
+            "work_week_adjustments": params.work_week_adjustments,
+            "work_week_adjustment_interval": params.work_week_adjustment_interval
         }
 
         # create and start the collection thread
@@ -857,6 +859,13 @@ class Aggregator:
             args.append(str(self.settings["new_free_good_interval"]))
         else:
             args.append("--public_sector_expansion_period")
+            args.append("0")
+
+        if self.settings["work_week_adjustments"]:
+            args.append("--work_week_adjustment_period")
+            args.append(str(self.settings["work_week_adjustment_interval"]))
+        else:
+            args.append("--work_week_adjustment_period")
             args.append("0")
 
         return args

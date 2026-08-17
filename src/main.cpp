@@ -37,9 +37,12 @@ void print_usage() {
     std::cout << "\t--consumption_demand N: Set the proportion of value "
         "consumed by society relative to the maximum value producable by "
         "that society." << std::endl;
-    std::cout << "\t--public_sector_expansion_period N: Period (in months) "
+    std::cout << "\t--public_sector_expansion_period N: Period (in hours) "
         "of moving goods to be funded by the public sector, transitioning to "
         "communism. N = 0 results in no public sector expansion." << std::endl;
+    std::cout << "\t--work_week_adjustment_period N: After this many hours, "
+        "the working week's length will be re-evaluated. N = 0 results "
+        "in no adjustments." << std::endl;
     std::cout << "\t-j: Write JSON log traces to stdout." << std::endl;
     std::cout << "\t-u: Print this usage message." << std::endl;
 }
@@ -61,6 +64,7 @@ enum class ArgType {
     kProductionDifficulty,
     kConsumptionDemand,
     kPublicSectorExpansionPeriod,
+    kWorkWeekAdjustmentPeriod,
     kInitPrices
 };
 
@@ -93,6 +97,8 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
         {"--consumption_demand", ArgType::kConsumptionDemand},
         {"--public_sector_expansion_period",
             ArgType::kPublicSectorExpansionPeriod},
+        {"--work_week_adjustment_period",
+            ArgType::kWorkWeekAdjustmentPeriod},
         {"--init_prices", ArgType::kInitPrices}
     };
 
@@ -234,7 +240,15 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                 if (value < 0) {
                     error = true;
                 } else {
-                    args.public_sector_expansion_period = value * MONTH;
+                    args.public_sector_expansion_period = value;
+                }
+                break;
+            }
+            case ArgType::kWorkWeekAdjustmentPeriod: {
+                if (value < 0) {
+                    error = true;
+                } else {
+                    args.work_week_adjustment_period = value;
                 }
                 break;
             }

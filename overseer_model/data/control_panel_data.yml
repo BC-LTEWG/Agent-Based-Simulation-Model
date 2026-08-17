@@ -159,6 +159,21 @@ row8:
       run more carefully. '
     param_name: fixed_seed
     change_effect: send_message
+  free_goods:
+    control_type: checkbox
+    label: Free Goods
+    tooltip: If checked, a random good will be made free every $\Delta_F$ many time
+      steps.
+    param_name: free_goods
+    change_effect: send_message
+  work_week_adjustments:
+    control_type: checkbox
+    label: Work Week Adjustments
+    tooltip: If checked, the working week will be periodically adjusted every $\Delta_W$ many time
+      steps
+    param_name: work_week_adjustments
+    change_effect: send_message
+row9:
   seed:
     param_name: seed
     control_type: entry_block
@@ -167,13 +182,6 @@ row8:
     range: [0, 10000]
     label: 'Seed = '
     tooltip: 'The pseudo-RNG seed. '
-  free_goods:
-    control_type: checkbox
-    label: Free Goods
-    tooltip: If checked, a random good will be made free every $\Delta_F$ many time
-      steps.
-    param_name: free_goods
-    change_effect: send_message
   new_free_good_interval:
     param_name: new_free_good_interval
     control_type: entry_block
@@ -183,3 +191,13 @@ row8:
     label: $\Delta_F=$
     tooltip: After this many time steps, a new random good is made free through public
       sector taxation.
+  work_week_adjustment_interval:
+    param_name: work_week_adjustment_interval
+    control_type: entry_block
+    type: scalar
+    scalar_type: int
+    range: [1, 10000]
+    label: $\Delta_W=$
+    tooltip: After this many time steps, the working week's length will be adjusted according to
+      average busyness.
+
