@@ -101,7 +101,7 @@ graphs: trace plot-tool
 clean:
 	rm -rf $(wildcard ${BIN_DIR}/*) $(wildcard ${BUILD_DIR}/*) $(wildcard ${TEST_DIR}/*.test) \
 		$(wildcard ${DATA_DIR}/*) \
-		*.gcno *.gcda *.profraw *.profdata *.info out_coverage/ test/*.gcno test/*.gcda
+		*.gcno *.gcda *.profraw *.profdata *.info out_coverage/ test/*.gcno test/*.gcda *.dSYM test/*.dSYM
 
 coverage: FLAGS += --coverage
 coverage: clean tests

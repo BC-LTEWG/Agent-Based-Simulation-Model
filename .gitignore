@@ -54,6 +54,7 @@ myenv
 
 # debug information files
 *.dwo
+*.dSYM/
 
 # Python cache and build artifacts
 __pycache__/
