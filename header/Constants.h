@@ -14,8 +14,8 @@ const unsigned int INITIAL_WORK_DAYS_WEEKLY = 5;
 const double INITIAL_ACCOUNT_DURATION = YEAR;
 
 const double WORKING_WEEK_BUSYNESS_POWER = 2;
-const double WORKING_WEEK_STABLE_START = 0.65;
-const double WORKING_WEEK_STABLE_END = 0.75;
+const double DESIRED_WORK_HOUR_RATIO = 0.7;
+const double WORK_HOUR_WINDOW_RADIUS = 0.05;
 const int WORK_WEEK_ADJUSTMENT_PERIOD = WEEK;
 
 const unsigned int STARTING_NUM_PEOPLE = 1000;

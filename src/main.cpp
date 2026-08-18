@@ -43,6 +43,8 @@ void print_usage() {
     std::cout << "\t--work_week_adjustment_period N: After this many hours, "
         "the working week's length will be re-evaluated. N = 0 results "
         "in no adjustments." << std::endl;
+    std::cout << "\t--desired_work_hour_ratio N: Inverse of the maximal "
+        "inefficiency allowed in the working week.  " << std::endl;
     std::cout << "\t-j: Write JSON log traces to stdout." << std::endl;
     std::cout << "\t-u: Print this usage message." << std::endl;
 }
@@ -65,6 +67,7 @@ enum class ArgType {
     kConsumptionDemand,
     kPublicSectorExpansionPeriod,
     kWorkWeekAdjustmentPeriod,
+    kDesiredWorkHourRatio,
     kInitPrices
 };
 
@@ -99,6 +102,7 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
             ArgType::kPublicSectorExpansionPeriod},
         {"--work_week_adjustment_period",
             ArgType::kWorkWeekAdjustmentPeriod},
+        {"--desired_work_hour_ratio", ArgType::kDesiredWorkHourRatio},
         {"--init_prices", ArgType::kInitPrices}
     };
 
@@ -249,6 +253,14 @@ void set_params(int argc, const char ** argv, SimArgs& args) {
                     error = true;
                 } else {
                     args.work_week_adjustment_period = value;
+                }
+                break;
+            }
+            case ArgType::kDesiredWorkHourRatio: {
+                if (value < 0) {
+                    error = true;
+                } else {
+                    args.desired_work_hour_ratio = dvalue;
                 }
                 break;
             }

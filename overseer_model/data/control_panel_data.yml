@@ -130,10 +130,12 @@ row6:
     type: scalar
     scalar_type: float
     range: [0.0, 1.0]
-    label: $\epsilon_c=$
-    tooltip: 'Controls how much labor value a person wants to consume per hour. As
-      it gets close to 1, it becomes increasingly the case that people will find themselves
-      working on plans every working hour. '
+    label: $\epsilon_c(0)=$
+    tooltip: 'Controls the initial ratio of the objective minimum labor hours worked
+      to number of hours in the working week. Since the working week is fixed by other
+      parameters, this is done through adjustment of the consumption frequencies. So
+      another way to think about this is that the higher it gets made, the more demanding
+      the consumption needs of the society relative to their working week.'
 row7:
   init_prices:
     control_type: dropdown
@@ -191,6 +193,7 @@ row9:
     label: $\Delta_F=$
     tooltip: After this many time steps, a new random good is made free through public
       sector taxation.
+row10:
   work_week_adjustment_interval:
     param_name: work_week_adjustment_interval
     control_type: entry_block
@@ -200,4 +203,14 @@ row9:
     label: $\Delta_W=$
     tooltip: After this many time steps, the working week's length will be adjusted according to
       average busyness.
+  desired_work_hour_ratio:
+    param_name: desired_work_hour_ratio
+    control_type: entry_block
+    type: scalar
+    scalar_type: float
+    range: [1, 10000]
+    label: $\epsilon_c*=$
+    tooltip: "The inverse of this number can be seen as a minimum level of 'inefficiency' in the working week's length
+    relative to what is necessary. Only factors into the working week recalculation procedure."
+
 

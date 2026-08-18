@@ -27,3 +27,4 @@ class Params:
     new_free_good_interval: int = 2160
     work_week_adjustments: bool = True
     work_week_adjustment_interval: int = 336
+    desired_work_hour_ratio: float = 0.7

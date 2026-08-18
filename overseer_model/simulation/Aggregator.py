@@ -50,7 +50,8 @@ class Aggregator:
             "free_goods": params.free_goods,
             "new_free_good_interval": params.new_free_good_interval,
             "work_week_adjustments": params.work_week_adjustments,
-            "work_week_adjustment_interval": params.work_week_adjustment_interval
+            "work_week_adjustment_interval": params.work_week_adjustment_interval,
+            "desired_work_hour_ratio": params.desired_work_hour_ratio
         }
 
         # create and start the collection thread
@@ -847,6 +848,7 @@ class Aggregator:
             "--production_difficulty", str(self.settings["productivity"]),
             "--consumption_demand", str(self.settings["consump_epsilon"]),
             "--init_prices", str(self.settings["init_prices"]),
+            "--desired_work_hour_ratio", str(self.settings["desired_work_hour_ratio"]),
         ]
 
         logger.info(f"\n   {self.settings["fixed_seed"]=}, \n   {self.settings["seed"]=}")
