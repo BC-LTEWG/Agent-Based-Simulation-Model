@@ -716,7 +716,6 @@ void Society::check_update_work_week() {
     work_week_score /= people.size();
     int new_work_hours_daily = current_work_hours_daily;
     double work_hour_ratio_max = Sim::get_desired_work_hour_ratio();
-    std::cout << work_hour_ratio_max << std::endl;
     double work_hour_stable_lower = std::max(work_hour_ratio_max - WORK_HOUR_WINDOW_RADIUS, 0.0);
     double work_hour_stable_upper = work_hour_ratio_max + WORK_HOUR_WINDOW_RADIUS;
     if (work_week_score < std::pow(work_hour_stable_lower, WORKING_WEEK_BUSYNESS_POWER)) {
