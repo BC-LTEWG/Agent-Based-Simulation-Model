@@ -260,17 +260,11 @@ std::vector<Producer *>& Society::get_suppliers(Product * product) {
 }
 
 void Society::update_busyness() {
-    double total_labor_capacity = 0.0;
-    double weighted_busyness = 0.0;
-    for (Firm * firm : firms) {
-        int num_workers = firm->get_num_workers();
-        weighted_busyness += firm->get_busyness() * num_workers;
-        total_labor_capacity += num_workers;
+    busyness = 0.0;
+    for (Person * person : people) {
+        busyness += person->get_busyness();
     }
-
-    busyness = total_labor_capacity > 0
-        ? weighted_busyness / total_labor_capacity
-        : 0.0;
+    busyness /= people.size();
 }
 
 double Society::get_busyness() {

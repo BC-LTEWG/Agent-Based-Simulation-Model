@@ -224,11 +224,11 @@ void Person::update_busyness() {
             Society::get_instance()->get_work_week_proportion();
     }
 
-    growth *= work_week_proportion;
+    decay /= work_week_proportion;
 
     busyness += 
         (growth - decay) 
-        / (BUSYNESS_AVERAGING_WINDOW * work_week_proportion);
+        / BUSYNESS_AVERAGING_WINDOW;
 
     busyness_this_time_step = 0.0;
 }
@@ -245,7 +245,10 @@ void Person::on_time_step() {
 	if (will_shop()) {
         shop();
     }
-    if (Society::get_instance()->is_within_work_schedule()) {
+    if (
+        (plan && Firm::is_within_work_schedule(plan))
+        || Society::get_instance()->is_within_work_schedule()
+    ) {
         update_busyness();
     }
 }
