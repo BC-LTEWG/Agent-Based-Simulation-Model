@@ -53,7 +53,6 @@ class Firm : public Agent {
     
     std::unordered_map<Product *, double> consumer_demands;
     std::unordered_map<Product *, double> producer_demands;
-    double recent_busyness = 0.0;
     double recent_labor_hours = 0.0;
     double labor_hours_this_time_step = 0.0;
     std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
