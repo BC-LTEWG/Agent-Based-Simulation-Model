@@ -325,7 +325,7 @@ bool Firm::start_plan(Plan * plan) {
         }
     }
     for (Person * worker : plan->workers) {
-        move_worker_off_standby(worker);
+        move_worker_off_standby(worker, plan);
     }
     plan->outlays = plan->inventory;
     if (plan->is_stalled) {
@@ -474,6 +474,7 @@ void Firm::end_plan(Plan * plan) {
     PriceController::get_instance()->update_price(plan);
     for (Person * worker : plan->workers) {
         standby_workers.insert(worker);
+        worker->set_plan(nullptr);
     }
 }
 
@@ -515,10 +516,16 @@ double Firm::calculate_quantity_produced_from_worker_suitability(Plan * plan) {
         Society::get_instance()->get_underlying_living_labor_per_unit(plan->order->product);
 }
 
-bool Firm::is_within_work_schedule(Plan * plan) const {
+bool Firm::is_within_work_schedule(Plan * plan) {
     int time = Sim::get_current_time_step();
-    return time % DAY < Society::get_instance()->get_current_work_hours_daily() &&
+    return time % DAY < plan->local_work_hours_daily &&
         time / DAY % 7 < Society::get_instance()->get_current_work_days_weekly();
+}
+
+double Firm::get_work_week_proportion(Plan * plan) {
+    return static_cast<double>(plan->local_work_hours_daily) 
+        * Society::get_instance()->get_current_work_days_weekly()
+        / WEEK;
 }
 
 double Firm::get_pending_inventory(Product * product) {
@@ -529,16 +536,10 @@ double Firm::get_pending_inventory(Product * product) {
     return pending_inventory;
 }
 
-double Firm::get_work_week_proportion() {
-    return static_cast<double>(Society::get_instance()->get_current_work_hours_daily()) 
-        * Society::get_instance()->get_current_work_days_weekly()
-        / WEEK;
-}
-
 int Firm::predict_workers_needed(const Order * order) {
     double work_time = 
         order->requested_turnaround_time
-        * get_work_week_proportion();
+        * Society::get_instance()->get_work_week_proportion();
     return std::ceil(
             order->quantity *
             recorded_living_labor_per_unit[order->product] /
@@ -586,7 +587,9 @@ std::vector<Person *> Firm::get_available_workers(const Order * order) {
 }
 
 void Firm::adjust_quantity_for_deadline(Plan * plan) {
-    double living_labor_per_timestep = plan->workers.size() * get_work_week_proportion();
+    double living_labor_per_timestep = 
+        plan->workers.size() 
+        * Society::get_instance()->get_work_week_proportion();
     int maximum_quantity_for_deadline = 
         plan->order->requested_turnaround_time *
         living_labor_per_timestep / 
@@ -601,7 +604,7 @@ double Firm::predict_turnaround_time(Plan * plan) {
     }
     double labor_hours_per_timestep = 
         plan->workers.size()
-        * get_work_week_proportion();
+        * Society::get_instance()->get_work_week_proportion();
     return plan->order->quantity *
            recorded_living_labor_per_unit[plan->order->product] /
            labor_hours_per_timestep;
@@ -700,7 +703,7 @@ double Firm::get_demand(Product * product) {
     return producer_demands[product] + consumer_demands[product];
 }
 
-void Firm::move_worker_off_standby(Person * worker) {
+void Firm::move_worker_off_standby(Person * worker, Plan * plan) {
     if (worker->get_firm() == nullptr) {
         Society::get_instance()->get_unemployed_people().erase(worker);
         log_initial_employment(worker->get_id(), id);
@@ -712,6 +715,7 @@ void Firm::move_worker_off_standby(Person * worker) {
         log_employment_transfer(worker->get_id(), old_employer, this->get_id());
     }
     worker->set_firm(this);
+    worker->set_plan(plan);
     workers.insert(worker);
 }
 

@@ -48,7 +48,10 @@ class Aggregator:
             "n_products": 2 * params.N_g + params.N_m,
             "init_prices": params.init_prices,
             "free_goods": params.free_goods,
-            "new_free_good_interval": params.new_free_good_interval
+            "new_free_good_interval": params.new_free_good_interval,
+            "work_week_adjustments": params.work_week_adjustments,
+            "work_week_adjustment_interval": params.work_week_adjustment_interval,
+            "desired_work_hour_ratio": params.desired_work_hour_ratio
         }
 
         # create and start the collection thread
@@ -683,31 +686,6 @@ class Aggregator:
         if not self.work_hours_update_this_step:
             return 
 
-        busyness_data = copy.deepcopy(np.array(self.individual_busyness_data))
-        lb = np.min(busyness_data)
-        ub = np.max(busyness_data)
-        x_sample = np.linspace(lb, ub, 400)
-        self.traj["busyness_dist_support"] = Replace(x_sample)
-        if self.censored_busyness_mean is not None:
-            logger.info(f"{self.censored_busyness_mean=}, {self.censored_busyness_stddev=}")
-            dist = norm(
-                loc= self.censored_busyness_mean,
-                scale= self.censored_busyness_stddev
-            )
-            self.traj["censored_busyness_dist"] = Replace(dist.pdf(x_sample))
-        if self.uncensored_busyness_mean is not None:
-            logger.info(f"{self.uncensored_busyness_mean=}, {self.uncensored_busyness_stddev=}")
-            dist = norm(
-                loc= self.uncensored_busyness_mean,
-                scale= self.uncensored_busyness_stddev
-            )
-            self.traj["uncensored_busyness_dist"] = Replace(dist.pdf(x_sample))
-
-        self.traj["individual_busyness_data"] = Replace(busyness_data)
-        self.traj["individual_busyness_data_bins"] = np.histogram_bin_edges(busyness_data, bins= "auto")
-        self.individual_busyness_data.clear()
-        self.work_hours_update_this_step = False
-
     def initialize_properties(self):
         N = self.settings["n_persons"]
         net_weekly_demand = N*24*7*self.consumption_frequencies
@@ -870,6 +848,7 @@ class Aggregator:
             "--production_difficulty", str(self.settings["productivity"]),
             "--consumption_demand", str(self.settings["consump_epsilon"]),
             "--init_prices", str(self.settings["init_prices"]),
+            "--desired_work_hour_ratio", str(self.settings["desired_work_hour_ratio"]),
         ]
 
         logger.info(f"\n   {self.settings["fixed_seed"]=}, \n   {self.settings["seed"]=}")
@@ -882,6 +861,13 @@ class Aggregator:
             args.append(str(self.settings["new_free_good_interval"]))
         else:
             args.append("--public_sector_expansion_period")
+            args.append("0")
+
+        if self.settings["work_week_adjustments"]:
+            args.append("--work_week_adjustment_period")
+            args.append(str(self.settings["work_week_adjustment_interval"]))
+        else:
+            args.append("--work_week_adjustment_period")
             args.append("0")
 
         return args

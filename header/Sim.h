@@ -22,6 +22,8 @@ struct SimArgs {
     double difficulty_of_production = DEFAULT_PRODUCTION_DIFFICULTY;
     double consumption_demand_level = DEFAULT_CONSUMPTION_DEMAND;
     int public_sector_expansion_period = PUBLIC_SECTOR_EXPANSION_PERIOD;
+    int work_week_adjustment_period = WORK_WEEK_ADJUSTMENT_PERIOD;
+    double desired_work_hour_ratio = DESIRED_WORK_HOUR_RATIO;
     std::string init_price_mode = "labor_values";
     bool json = false;
     unsigned int seed = 0;
@@ -47,6 +49,8 @@ class Sim {
         static double get_difficulty_of_production();
         static double get_product_consumption_mult();
         static int get_public_sector_expansion_period();
+        static int get_work_week_adjustment_period();
+        static double get_desired_work_hour_ratio();
         static std::string get_initial_price_mode();
         static bool does_json();
         static int get_current_time_step();

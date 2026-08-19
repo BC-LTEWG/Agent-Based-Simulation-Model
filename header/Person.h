@@ -26,6 +26,7 @@ class Person : public Agent {
   
 	std::unordered_map<Ability *, double>& get_abilities();
     double get_busyness();
+    void update_busyness();
     double get_account();
 	void train(std::unordered_map<Ability *, double>& target_abilities);
     HealthStatus get_health_status();
@@ -35,6 +36,7 @@ class Person : public Agent {
     bool charge(double cost);
     void purchase_good(ConsumerGood * consumer_good, int quantity);
     void set_firm(Firm *);
+    void set_plan(Plan *);
     Firm * get_firm();
   
   private:
@@ -45,6 +47,7 @@ class Person : public Agent {
     std::unordered_map<ConsumerGood *, int> inventory;
     std::unordered_map<ConsumerGood *, double> to_consume;
     Firm * firm = nullptr;
+    Plan * plan = nullptr;
     double account;
     double busyness_this_time_step = 0.0;
     double busyness = 0.0;
@@ -57,7 +60,6 @@ class Person : public Agent {
     bool will_retire();
 	void retire();
 	void update_health_status();
-    void update_busyness();
     void log_hours_worked(const double hours);
     void log_purchase(const Product * product, int quantity);
     void log_shopping();

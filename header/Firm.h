@@ -37,7 +37,8 @@ class Firm : public Agent {
     double get_account();
     std::vector<Person *> propose_transfer(int workers_wanted);
     void finalize_transfer(Person * worker);
-
+    static bool is_within_work_schedule(Plan * plan);
+    static double get_work_week_proportion(Plan * plan);
 
   protected:
     unsigned int id;
@@ -79,10 +80,8 @@ class Firm : public Agent {
     void end_plan(Plan * plan);
     void move_plans_forward_one_step();
     double calculate_quantity_produced_from_worker_suitability(Plan * plan);
-    bool is_within_work_schedule(Plan * plan) const;
 
     double get_pending_inventory(Product * product);
-    double get_work_week_proportion();
     void reorder_stalled_plan_input(Product * product, double deficit);
     int predict_workers_needed(const Order * order);
     std::vector<Person *> get_available_workers(const Order * order);
@@ -102,7 +101,7 @@ class Firm : public Agent {
     double get_demand(Product * product);
     Plan * draft_plan_for_order(Order * order); 
     void update_demands();
-    void move_worker_off_standby(Person * worker);
+    void move_worker_off_standby(Person * worker, Plan * plan);
 
     void log_plans();
     void log_pursued_plan(const Plan * draft_plan);

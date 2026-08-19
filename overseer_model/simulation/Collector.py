@@ -78,7 +78,16 @@ class Collector:
 
                 if stream_name == "stdout":
                     try:
-                        self.output_queue.put(StreamItem("stdout", "json", json.loads(line)))
+                        payload = json.loads(line)
+
+                        if isinstance(payload, dict) and "t" in payload:
+                            self.output_queue.put(
+                                StreamItem("stdout", "json", payload)
+                            )
+                        else:
+                            self.output_queue.put(
+                                StreamItem("stdout", "text", line)
+                            )
                     except json.JSONDecodeError:
                         self.output_queue.put(StreamItem("stdout", "text", line))
                 else:

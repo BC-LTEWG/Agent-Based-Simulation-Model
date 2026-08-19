@@ -73,8 +73,16 @@ int Sim::get_public_sector_expansion_period() {
     return get_instance().args.public_sector_expansion_period;
 }
 
+int Sim::get_work_week_adjustment_period() {
+    return get_instance().args.work_week_adjustment_period;
+}
+
 std::string Sim::get_initial_price_mode() {
     return get_instance().args.init_price_mode;
+}
+
+double Sim::get_desired_work_hour_ratio() {
+    return get_instance().args.desired_work_hour_ratio;
 }
 
 bool Sim::does_json() {
