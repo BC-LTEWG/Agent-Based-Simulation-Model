@@ -247,7 +247,7 @@ void Person::on_time_step() {
     }
     if (
         (plan && Firm::is_within_work_schedule(plan))
-        || Society::get_instance()->is_within_work_schedule()
+        || (!plan && Society::get_instance()->is_within_work_schedule())
     ) {
         update_busyness();
     }
