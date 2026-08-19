@@ -704,8 +704,8 @@ void Society::check_update_work_week() {
     if (adjustment_period <= 0) {
         return;
     }
-    int time = Sim::get_current_time_step();
-    if (time == 0 || time % adjustment_period != 0) {
+    int time = Sim::get_current_time_step() - WORK_WEEK_ADJUSTMENT_START;
+    if (time <= 0 || time % adjustment_period != 0) {
         return;
     }
     double work_week_score = 0.0;
