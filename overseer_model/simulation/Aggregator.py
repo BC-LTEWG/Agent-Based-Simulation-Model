@@ -98,10 +98,7 @@ class Aggregator:
                 "public_fund": self.record_public_fund,
                 "public_expenditure": self.record_public_expenditure,
                 "public_revenue": self.record_public_revenue,
-                "censored_busyness_distribution": self.record_censored_busyness_dist,
-                "predicted_uncensored_busyness_distribution": self.record_uncensored_busyness_dist,
                 "work_hours_weekly": self.record_work_hours_weekly,
-                "busyness_data": self.record_busyness_data
             },
             "Person": {
                 "age": self.record_person_age,
@@ -435,16 +432,6 @@ class Aggregator:
                         "team_sizes_goods",
                         "team_sizes_c_goods",
                         "team_sizes_machines"
-                    )
-                },
-                "busyness_data": {
-                    "function": self.report_busyness_updates,
-                    "keys": (
-                        "busyness_dist_support",
-                        "censored_busyness_dist",
-                        "uncensored_busyness_dist",
-                        "individual_busyness_data",
-                        "individual_busyness_data_bins"
                     )
                 },
                 "activity_levels": {
@@ -1969,48 +1956,6 @@ class Aggregator:
     def report_weekly_activity_levels(self):
         return (
             Append(self.weekly_quantities_in_production / (24*7)),
-        )
-
-    def report_busyness_updates(self):
-        if not self.work_hours_update_this_step:
-            return None, None, None, None, None
-
-        busyness_data = copy.deepcopy(np.array(self.individual_busyness_data))
-        lb = np.min(busyness_data)
-        ub = np.max(busyness_data)
-        x_sample = np.linspace(lb, ub, 400)
-        busyness_dist_support = Replace(x_sample)
-        if self.censored_busyness_mean is not None:
-            logger.info(f"{self.censored_busyness_mean=}, {self.censored_busyness_stddev=}")
-            dist = norm(
-                loc= self.censored_busyness_mean,
-                scale= self.censored_busyness_stddev
-            )
-            censored_busyness_dist = Replace(dist.pdf(x_sample))
-        else:
-            censored_busyness_dist = None
-        if self.uncensored_busyness_mean is not None:
-            logger.info(f"{self.uncensored_busyness_mean=}, {self.uncensored_busyness_stddev=}")
-            dist = norm(
-                loc= self.uncensored_busyness_mean,
-                scale= self.uncensored_busyness_stddev
-            )
-            uncensored_busyness_dist = Replace(dist.pdf(x_sample))
-        else:
-            uncensored_busyness_dist = None
-
-        individual_busyness_data = Replace(busyness_data)
-        individual_busyness_data_bins = np.histogram_bin_edges(busyness_data, bins= "auto")
-
-        self.work_hours_update_this_step = False
-        self.individual_busyness_data.clear()
-
-        return (
-            Replace(busyness_dist_support),
-            Replace(censored_busyness_dist),
-            Replace(uncensored_busyness_dist),
-            Replace(individual_busyness_data),
-            Replace(individual_busyness_data_bins)
         )
 
     def report_firm_accounts(self):

@@ -39,6 +39,8 @@ class Firm : public Agent {
     std::vector<Person *> propose_transfer(int workers_wanted);
     void hire_worker(Person * worker);
     void unassign_worker(Person * worker);
+    static bool is_within_work_schedule(Plan * plan);
+    static double get_work_week_proportion(Plan * plan);
 
   protected:
     unsigned int id;
@@ -70,7 +72,6 @@ class Firm : public Agent {
     );
     double get_reorder_threshold(Product * product);
     double get_resupply_deficit(Product * product);
-    void update_busyness();
     void update_recent_labor_hours();
     virtual void check_and_reorder_input(Product * product);
     bool start_plan(Plan * plan);

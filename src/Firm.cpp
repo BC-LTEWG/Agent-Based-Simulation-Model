@@ -65,9 +65,15 @@ int Firm::get_num_workers() {
 }
 
 void Firm::update_recent_labor_hours() {
+    double work_week_proportion = 
+        Society::get_instance()->get_work_week_proportion();
+
+    double normalized_labor_hours = 
+        labor_hours_this_time_step * work_week_proportion;
+
     recent_labor_hours +=
-        (labor_hours_this_time_step - recent_labor_hours)
-        / BUSYNESS_AVERAGING_WINDOW;
+        (normalized_labor_hours - recent_labor_hours)
+        / (BUSYNESS_AVERAGING_WINDOW * work_week_proportion);
 
     labor_hours_this_time_step = 0.0;
 }
@@ -77,25 +83,7 @@ double Firm::get_busyness() {
         return 0.0;
     }
 
-    return recent_labor_hours
-        / workers.size()
-        * Society::get_instance()->get_work_week_proportion();
-}
-
-void Firm::update_busyness() {
-    double current_busyness = 0.0;
-    if (!workers.empty()) {
-        current_busyness =
-            labor_hours_this_time_step / workers.size();
-    }
-
-    current_busyness *= Society::get_instance()->get_work_week_proportion();
-
-    recent_busyness +=
-        (current_busyness - recent_busyness)
-        / (BUSYNESS_AVERAGING_WINDOW * work_week_proportion);
-
-    labor_hours_this_time_step = 0.0;
+    return recent_labor_hours / workers.size();
 }
 
 void Firm::transfer_surplus_workers() {
