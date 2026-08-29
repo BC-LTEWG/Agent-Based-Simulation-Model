@@ -93,8 +93,7 @@ bool Producer::can_produce(Product * product) {
 
 double Producer::get_max_order_quantity(
     const Order * order,
-    std::vector<Product *>& missing_resources,
-    bool& workers_are_unavailable
+    std::vector<Product *>& missing_resources
 ) {
     double max_order_quantity = std::numeric_limits<double>::infinity();
     for (std::pair<Good * const, double>& input : order->product->inputs_per_unit) {
@@ -109,18 +108,15 @@ double Producer::get_max_order_quantity(
         max_order_quantity = 
             std::min(max_order_quantity, input_max_order_quantity);
     }
-    std::vector<Person *> available_workers = get_available_workers(order);
-    workers_are_unavailable = available_workers.empty();
     for (Machine * machine : order->product->machines_needed) {
-        double machine_max_order_quantity =
-            (get_inventory_level(machine) * machine->lifetime) *
-            available_workers.size() /
-            recorded_living_labor_per_unit[order->product];
-        if (machine_max_order_quantity < 1.0 && !available_workers.empty()) {
+        double desired_machine_usage =
+            order->requested_turnaround_time
+            * Society::get_instance()->get_work_week_proportion()
+            / machine->lifetime;
+        if (desired_machine_usage > get_inventory_level(machine)) {
             missing_resources.push_back(machine);
+            max_order_quantity = 0;
         }
-        max_order_quantity =
-            std::min(max_order_quantity, machine_max_order_quantity);
     }
     return max_order_quantity;
 }
@@ -133,22 +129,16 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
         order->requested_turnaround_time
     );
     std::vector<Product *> missing_resources;
-    bool workers_are_unavailable = false;
     return_order->quantity = std::min(
         return_order->quantity,
         static_cast<int>(get_max_order_quantity(
             order,
-            missing_resources,
-            workers_are_unavailable
+            missing_resources
         ))
     );
     Plan * draft_plan = nullptr;
     if (return_order->quantity <= 0) {
-        if (workers_are_unavailable) {
-            log_drafting_failure_workers(order->product);
-        } else {
-            log_drafting_failure_inputs(order->product, missing_resources);
-        }
+        log_drafting_failure_inputs(order->product, missing_resources);
     } else {
         draft_plan = draft_plan_for_order(return_order);
     }
@@ -158,7 +148,6 @@ Order * Producer::draft_plan_and_return_order(const Order * order) {
         return return_order;
     }
 
-    // assign_plan_dependent_fields(draft_plan);
     customer_to_draft_plan[order->customer] = draft_plan;
     return return_order;
 }

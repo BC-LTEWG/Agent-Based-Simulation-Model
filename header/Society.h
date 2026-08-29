@@ -39,12 +39,14 @@ class Society : public Agent {
         unsigned int get_current_work_hours_daily();
         unsigned int get_current_work_days_weekly();
         double get_work_week_proportion();
-        bool is_within_work_schedule();
         int get_initial_account();
         std::unordered_map<Product *, double>& get_gross_hourly_demand_per_capita();
         std::vector<Producer *>& get_producers();
         std::vector<Producer *>& get_suppliers(Product * product);
+        void update_busyness();
         double get_busyness();
+        bool is_within_work_schedule();
+        void update_average_account();
         double get_average_account();
         double get_total_employment();
         std::unordered_map<Product *, int>& get_number_of_producers_for_product();

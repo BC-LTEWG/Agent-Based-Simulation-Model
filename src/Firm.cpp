@@ -49,9 +49,81 @@ void Firm::on_time_step() {
     if (plans_in_progress.size()) {
         log_plans();
     }
+    if (Society::get_instance()->is_within_work_schedule()) {
+        update_recent_labor_hours();
+    }
     double firm_busyness = get_busyness();
     log_busyness(firm_busyness);
+    if (Sim::get_current_time_step() % BUSYNESS_AVERAGING_WINDOW == 0) {
+        transfer_surplus_workers();
+    }
     log_account();
+}
+
+int Firm::get_num_workers() {
+    return workers.size();
+}
+
+void Firm::update_recent_labor_hours() {
+    double work_week_proportion = 
+        Society::get_instance()->get_work_week_proportion();
+
+    double normalized_labor_hours = 
+        labor_hours_this_time_step * work_week_proportion;
+
+    recent_labor_hours +=
+        (normalized_labor_hours - recent_labor_hours)
+        / (BUSYNESS_AVERAGING_WINDOW * work_week_proportion);
+
+    labor_hours_this_time_step = 0.0;
+}
+
+double Firm::get_busyness() {
+    if (workers.empty()) {
+        return 0.0;
+    }
+
+    return recent_labor_hours / workers.size();
+}
+
+void Firm::transfer_surplus_workers() {
+    int worker_surplus = get_number_available_workers_to_transfer();
+    if (worker_surplus <= 0) {
+        return;
+    }
+
+    Firm * best_receiver = nullptr;
+    double highest_busyness = -1.0;
+    for (Firm * firm : Society::get_instance()->get_firms()) {
+        if (firm == this) {
+            continue;
+        }
+        double busyness = firm->get_busyness();
+        if (busyness > highest_busyness) {
+            highest_busyness = busyness;
+            best_receiver = firm;
+        }
+    }
+
+    int total_workers_transferred = 0;
+    std::vector<Person *> sorted_standby_workers(
+            standby_workers.begin(),
+            standby_workers.end()
+    );
+    std::sort(
+        sorted_standby_workers.begin(),
+        sorted_standby_workers.end(),
+        [&](Person * a, Person * b) {
+            return a->get_account() < b->get_account();
+        }
+    );
+    for (Person * worker : sorted_standby_workers) {
+        if (total_workers_transferred >= worker_surplus) {
+            break;
+        }
+        best_receiver->hire_worker(worker);
+        total_workers_transferred++;
+    }
 }
 
 void Firm::inject_randomness_into_demand() {
@@ -121,39 +193,15 @@ bool Firm::remove_input_from_inventory(
     return true;
 }
 
-double Firm::get_busyness() {
-    double busyness = 0.0;
-    for (Person * worker : workers) {
-        busyness += worker->get_busyness();
-    }
-    return workers.size() > 0 ? busyness / workers.size() : 0.0;
-}
-
 double Firm::get_account() {
     return account;
 }
 
 std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
-    if (workers.empty()) {
-        return {};
-    }
-    double firm_busyness = get_busyness();
-    double societal_busyness = Society::get_instance()->get_busyness();
-    societal_busyness = std::max(1e-5, societal_busyness);
-    double relative_difference = 
-        (societal_busyness - firm_busyness) / societal_busyness;
-    if (relative_difference < TRANSFER_BUSYNESS_THRESHOLD) {
-        return {};
-    }
-    int available_workers_for_transfer = 
-        std::max(
-            static_cast<int>(
-                workers.size() * 
-                (1 - firm_busyness / (societal_busyness + TRANSFER_BUSYNESS_THRESHOLD))
-            ),
-            1
-        );
-    int max_workers_to_transfer = std::min(available_workers_for_transfer, workers_wanted);
+    int max_workers_to_transfer = std::min(
+        workers_wanted,
+        get_number_available_workers_to_transfer()
+    );
     std::vector<Person *> transfers;
     for (Person * worker : standby_workers) {
         if (static_cast<int>(transfers.size()) == max_workers_to_transfer) break;
@@ -162,9 +210,29 @@ std::vector<Person *> Firm::propose_transfer(int workers_wanted) {
     return transfers;
 }
 
-void Firm::finalize_transfer(Person * worker) {
-    standby_workers.erase(worker);
-    workers.erase(worker);
+int Firm::get_number_available_workers_to_transfer() {
+    if (workers.empty()) {
+        return 0;
+    }
+    double firm_busyness = get_busyness();
+    double societal_busyness = Society::get_instance()->get_busyness();
+    societal_busyness = std::max(1e-5, societal_busyness);
+    double relative_difference = 
+        (societal_busyness - firm_busyness) / societal_busyness;
+    if (relative_difference < TRANSFER_BUSYNESS_THRESHOLD) {
+        return 0;
+    }
+    double target_workers = workers.size() * (firm_busyness / societal_busyness);
+    int available_workers_for_transfer = std::max(
+        0,
+        static_cast<int>(
+            std::floor(workers.size() - target_workers)
+        )
+    );
+    return std::min(
+        available_workers_for_transfer,
+        static_cast<int>(standby_workers.size())
+    );
 }
 
 Producer * Firm::send_order(Order * order) {
@@ -325,7 +393,11 @@ bool Firm::start_plan(Plan * plan) {
         }
     }
     for (Person * worker : plan->workers) {
-        move_worker_off_standby(worker, plan);
+        if (!is_employed_here(worker)) {
+            hire_worker(worker);
+            worker->set_plan(plan);
+        }
+        standby_workers.erase(worker);
     }
     plan->outlays = plan->inventory;
     if (plan->is_stalled) {
@@ -334,6 +406,10 @@ bool Firm::start_plan(Plan * plan) {
         log_start_plan_stall_resolved(plan);
     }
     return true;
+}
+
+bool Firm::is_employed_here(Person * worker) {
+    return workers.count(worker);
 }
 
 void Firm::handle_start_plan_failure(
@@ -453,7 +529,10 @@ void Firm::move_plan_forward_one_step(Plan * plan) {
     for (Person * worker : plan->workers) {
     	worker->register_hours_worked(portion_of_hour_worked);
     }
-    plan->labor_hours_used += portion_of_hour_worked * plan->workers.size();
+    double labor_hours_worked = 
+        portion_of_hour_worked * plan->workers.size();
+    plan->labor_hours_used += labor_hours_worked;
+    labor_hours_this_time_step += labor_hours_worked;
     plan->quantity_remaining -= quantity_produced;
 }
 
@@ -703,20 +782,23 @@ double Firm::get_demand(Product * product) {
     return producer_demands[product] + consumer_demands[product];
 }
 
-void Firm::move_worker_off_standby(Person * worker, Plan * plan) {
+void Firm::hire_worker(Person * worker) {
     if (worker->get_firm() == nullptr) {
         Society::get_instance()->get_unemployed_people().erase(worker);
         log_initial_employment(worker->get_id(), id);
-    } else if (worker->get_firm() == this) {
-        standby_workers.erase(worker);
     } else {
         int old_employer = worker->get_firm()->get_id();
-        worker->get_firm()->finalize_transfer(worker);
+        worker->get_firm()->unassign_worker(worker);
         log_employment_transfer(worker->get_id(), old_employer, this->get_id());
     }
     worker->set_firm(this);
-    worker->set_plan(plan);
+    standby_workers.insert(worker);
     workers.insert(worker);
+}
+
+void Firm::unassign_worker(Person * worker) {
+    standby_workers.erase(worker);
+    workers.erase(worker);
 }
 
 void Firm::log_plans() {
@@ -802,7 +884,8 @@ void Firm::log_busyness(
         get_client_type(),
         id,
         "busyness",
-        LogPair("firm_busyness", firm_busyness)
+        LogPair("firm_busyness", firm_busyness),
+        LogPair("recent_labor_hours", recent_labor_hours)
     );
 }
 

@@ -35,8 +35,10 @@ class Firm : public Agent {
     void process_payment(Plan * plan, double transaction_amount);
     double get_busyness();
     double get_account();
+    int get_num_workers();
     std::vector<Person *> propose_transfer(int workers_wanted);
-    void finalize_transfer(Person * worker);
+    void hire_worker(Person * worker);
+    void unassign_worker(Person * worker);
     static bool is_within_work_schedule(Plan * plan);
     static double get_work_week_proportion(Plan * plan);
 
@@ -51,6 +53,8 @@ class Firm : public Agent {
     
     std::unordered_map<Product *, double> consumer_demands;
     std::unordered_map<Product *, double> producer_demands;
+    double recent_labor_hours = 0.0;
+    double labor_hours_this_time_step = 0.0;
     std::unordered_map<Product *, std::unordered_set<Order *>> product_to_outbound_orders;
     std::unordered_map<Product *, double> recorded_living_labor_per_unit;
     std::unordered_set<Plan *> plans_in_progress;
@@ -67,6 +71,7 @@ class Firm : public Agent {
     );
     double get_reorder_threshold(Product * product);
     double get_resupply_deficit(Product * product);
+    void update_recent_labor_hours();
     virtual void check_and_reorder_input(Product * product);
     bool start_plan(Plan * plan);
     void handle_start_plan_failure(Plan * plan, Product * product, double missing);
@@ -86,6 +91,9 @@ class Firm : public Agent {
     int predict_workers_needed(const Order * order);
     std::vector<Person *> get_available_workers(const Order * order);
     void assign_workers(Plan * draft_plan);
+    bool is_employed_here(Person * worker);
+    void transfer_surplus_workers();
+    int get_number_available_workers_to_transfer();
     void adjust_quantity_for_deadline(Plan * plan);
     double predict_turnaround_time(Plan * plan); 
     double predict_labor_hours(Order * order, std::vector<Person*>& workers);

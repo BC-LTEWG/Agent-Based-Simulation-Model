@@ -116,6 +116,7 @@ prices:
       colors: ['#0ffbff', '#1eff2d', '#df03db']
       traj_key: machine_prices_living_labor_vals
   default_lims: [[-260.902, 11129.6], [0.100914, 0.450966]]
+  x_label: Time [t hours]
 inventory:
   name: Inventory
   projection: 2d
@@ -170,6 +171,7 @@ inventory:
       colors: ['#ff4c4c', '#4e2fff', '#488045', '#803e63', '#ffc76c']
       traj_key: avg_endowments
   default_lims: [[-111.129, 12590.8], [-1864.93, 83876.5]]
+  x_label: Time [t hours]
 supply_chain:
   name: Supply Chain
   tooltip: null
@@ -270,6 +272,7 @@ supply_chain:
   ticks_visible: true
   frame_visible: true
   default_lims: [[25.1523, 10096.1], [-84.5243, 24668.5]]
+  x_label: Time [t hours]
 demand:
   name: Demand
   projection: 2d
@@ -427,8 +430,9 @@ demand:
       colors: [red, blue, green, purple, orange]
       traj_key: resupply_deficits_c_goods
   default_lims: [[-162.264, 10242.2], [-3.56474, 107.414]]
-wealth:
-  name: Wealth
+  x_label: Time [t] (Hours)
+accounts_persons:
+  name: Accounts (Persons)
   projection: 2d
   axis_visible: true
   grid_visible: true
@@ -473,6 +477,36 @@ wealth:
       colors: [red, blue, green, purple, orange]
       traj_key: sectoral_avg_account
   default_lims: [[-149.854, 10220.7], [-19.7051, 2234.65]]
+accounts_firms:
+  name: Accounts (Firms)
+  tooltip: null
+  plots:
+    producer_accounts:
+      checkbox_name: Producer Accounts
+      toggled: true
+      linestyle: solid
+      linewidth: 1.5
+      markersize: 6.0
+      label_template: Producer {i}'s Account
+      colors: [chartreuse, goldenrod, navy, pink, maroon]
+      traj_key: distributor_accounts
+    distributor_accounts:
+      checkbox_name: Distributor Accounts
+      toggled: true
+      linestyle: solid
+      linewidth: 1.5
+      markersize: 6.0
+      label_template: Distributor {i}'s Account
+      colors: [darkturquoise, blueviolet, firebrick, olive, darkcyan]
+      traj_key: distributor_accounts
+  projection: 2d
+  axis_visible: true
+  grid_visible: true
+  ticks_visible: true
+  frame_visible: true
+  title: Firm Accounts
+  x_label: Time [t hours]
+  default_lims: [[74.1255, 9993.71], [-5945.14, 11513.2]]
 dependency_graph:
   name: Dependency Graph
   projection: 2d
@@ -617,6 +651,7 @@ plans:
       colors: ['#0ffbff', '#1eff2d', '#df03db']
       traj_key: reorder_failures_machines
   default_lims: [[-114.676, 9884.2], [-0.604368, 20.7041]]
+  x_label: Time [t hours]
 activity:
   name: Activity
   title: Activity
@@ -644,7 +679,18 @@ activity:
       label_template: Min Hourly Output of Good {i}
       colors: [red, blue, green, purple, orange]
       traj_key: min_hrly_output
+    sectoral_activity_levels_weekly:
+      checkbox_name: Sectoral Activity Levels (Weekly)
+      toggled: false
+      linestyle: solid
+      linewidth: 1.5
+      markersize: 6.0
+      label_template: Weekly Activity Level of Sector {i}
+      colors: [red, blue, green, purple, orange]
+      traj_key: weekly_sectoral_activity_levels
+      traj_key_x: week_counter
   default_lims: [[-94.8601, 10106.0], [94.5651, 614.42]]
+  x_label: Time [t hours]
 health:
   name: Health
   title: Health
@@ -673,6 +719,7 @@ health:
       colors: [red]
       traj_key: n_unhealthy
   default_lims: [[54.1701, 9624.38], [-37.3658, 137.758]]
+  x_label: Time [t hours]
 skills:
   name: Skills
   title: Proficiency
@@ -746,7 +793,17 @@ employment:
       label_template: Minimum Necessary Employment for Sector {i}
       colors: [red, blue, green, purple, orange]
       traj_key: eqb_employment
+    surplus_labor_ratios:
+      checkbox_name: Surplus Labor Ratios
+      toggled: false
+      linestyle: solid
+      linewidth: 1.5
+      markersize: 6.0
+      label_template: Ratio of Minimal to Actual Employment Sector {i}
+      colors: [red, blue, green, purple, orange]
+      traj_key: surplus_labor_ratios
   default_lims: [[-351.723, 10434.2], [-38.3028, 197.973]]
+  x_label: Time [t hours]
 consumption_initialization:
   name: Consumption Initialization
   projection: 2d
@@ -783,6 +840,7 @@ consumption_initialization:
       colors: [red, blue, green, orange, purple]
       traj_key: b
   default_lims: [[0.845397, 62.2449], [-0.247168, 27.5211]]
+  x_label: Time [t hours]
 busyness:
   name: Busyness
   projection: 2d
@@ -849,6 +907,7 @@ busyness:
       colors: [green]
       traj_key: work_hours_daily
   default_lims: [[43.9775, 9977.01], [0.0117958, 0.265722]]
+  x_label: Time [t hours]
 plan_details:
   name: Plan Details
   tooltip: null
@@ -949,6 +1008,7 @@ plan_details:
   ticks_visible: true
   frame_visible: true
   default_lims: [[-229.623, 10030.1], [-391.94, 2880.93]]
+  x_label: Time [t hours]
 public_sector:
   name: Public Sector
   tooltip: null
@@ -995,6 +1055,7 @@ public_sector:
   ticks_visible: true
   frame_visible: true
   default_lims: [[142.249, 5679.75], [-3234.89, 1223.0]]
+  x_label: Time [t hours]
 problems_casualties:
   name: Problems (Casualties)
   tooltip: null
@@ -1077,6 +1138,7 @@ problems_casualties:
   ticks_visible: true
   frame_visible: true
   default_lims: [[-281.604, 10182.0], [-1.57137, 5.32853]]
+  x_label: Time [t hours]
 problems_causes:
   name: Problems (Causes)
   tooltip: null
@@ -1203,74 +1265,5 @@ problems_causes:
   grid_visible: true
   ticks_visible: true
   frame_visible: true
-busyness_data:
-  name: Busyness Data
-  tooltip: null
-  plots:
-    censored_busyness_dist:
-      checkbox_name: Censored Busyness Dist
-      toggled: true
-      linestyle: solid
-      linewidth: 1.5
-      markersize: 6.0
-      labels: [Censored Busyness Distribution]
-      colors: [red]
-      traj_key: censored_busyness_dist
-      traj_key_x: busyness_dist_support
-    uncensored_busyness_dist:
-      checkbox_name: Uncensored Busyness Dist
-      toggled: true
-      linestyle: dashed
-      linewidth: 1.5
-      markersize: 6.0
-      labels: [Uncensored Busyness Distribution]
-      colors: [red]
-      traj_key: uncensored_busyness_dist
-      traj_key_x: busyness_dist_support
-    busyness_data:
-      special: hist
-      checkbox_name: Busyness Data
-      toggled: true
-      dist: individual_busyness_data
-      bins: individual_busyness_data_bins
-      density: true
-      gradient: None
-      labels: [Individual Busyness]
-      colors: [red]
-      edgecolors: [black]
-      histtype: bar
-      align: left
-  projection: 2d
-  axis_visible: true
-  grid_visible: true
-  ticks_visible: true
-  frame_visible: true
-  default_lims: [[0.00498251, 0.263608], [-0.260721, 17.8723]]
-firm_accounts:
-  name: Firm Accounts
-  tooltip: null
-  plots:
-    producer_accounts:
-      checkbox_name: Producer Accounts
-      toggled: true
-      linestyle: solid
-      linewidth: 1.5
-      markersize: 6.0
-      label_template: Producer {i}'s Account
-      colors: [chartreuse, goldenrod, navy, pink, maroon]
-      traj_key: distributor_accounts
-    distributor_accounts:
-      checkbox_name: Distributor Accounts
-      toggled: true
-      linestyle: solid
-      linewidth: 1.5
-      markersize: 6.0
-      label_template: Distributor {i}'s Account
-      colors: [darkturquoise, blueviolet, firebrick, olive, darkcyan]
-      traj_key: distributor_accounts
-  projection: 2d
-  axis_visible: true
-  grid_visible: true
-  ticks_visible: true
-  frame_visible: true
-  title: Firm Accounts
+  default_lims: [[-45.6103, 3666.9], [-2.66164, 9.35292]]
+  x_label: Time [t hours]

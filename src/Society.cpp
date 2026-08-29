@@ -131,17 +131,10 @@ unsigned int Society::get_id() {
 }
 
 void Society::on_time_step() {
-    busyness = 0.0;
-    average_account = 0.0;
-    for (Person * person : people) {
-        busyness += person->get_busyness();
-        average_account += person->get_account();
-    }
-    busyness /= people.size();
+    update_average_account();
+    update_busyness();
     log_busyness();
     log_total_employment();
-    average_account /= people.size();
-
     for (Person * person : people) {
         person->on_time_step();
     }
@@ -266,8 +259,24 @@ std::vector<Producer *>& Society::get_suppliers(Product * product) {
     return product_to_suppliers[product];
 }
 
+void Society::update_busyness() {
+    busyness = 0.0;
+    for (Person * person : people) {
+        busyness += person->get_busyness();
+    }
+    busyness /= people.size();
+}
+
 double Society::get_busyness() {
     return busyness;
+}
+
+void Society::update_average_account() {
+    average_account = 0.0;
+    for (Person * person : people) {
+        average_account += person->get_account();
+    }
+    average_account /= people.size();
 }
 
 double Society::get_average_account() {

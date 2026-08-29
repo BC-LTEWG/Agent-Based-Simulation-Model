@@ -82,3 +82,4 @@ src/*.swp
 header/*.swp
 test/*.swp
 *.txt
+run.sh
