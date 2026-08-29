@@ -1070,12 +1070,9 @@ class Aggregator:
         amt = dic["quantity"]
         id = dic["id"]
         self.persons[id]["endowment"][prod_id] += amt
-        cost = self.prices[prod_id]*amt
-        self.persons[id]["account"] -= cost
 
     def record_hours_worked(self, dic):
-        id = dic["id"]
-        self.persons[id]["account"] += dic["hours"]
+        pass
 
     def record_inventory_level(self, dic):
         prod_id= dic["product_id"]

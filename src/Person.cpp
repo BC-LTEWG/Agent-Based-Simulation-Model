@@ -80,6 +80,7 @@ void Person::register_hours_worked(double hours_worked) {
     double public_portion = hours_worked - individual_portion;
     account += individual_portion;
     Society::get_instance()->pay_into_public_fund(public_portion); 
+    log_account();
 }
 
 bool Person::charge(double cost) {
